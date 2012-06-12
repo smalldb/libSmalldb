@@ -50,7 +50,7 @@ trait DibiEntityDriver {
 			return false;
 		}
 
-		if (!class_exists(dibi)) {
+		if (!class_exists('dibi')) {
 			error_msg('Dibi	is not initialized!');
 			return false;
 		}
@@ -94,16 +94,20 @@ trait DibiEntityDriver {
 	 */
 	protected function createEntity($e)
 	{
+		// TODO
 		return false;
 	}
 
 
 	/**
-	 * Load entity by specified filters.
+	 * Load entity by specified filters. Returns list of entities.
 	 */
 	protected function readEntity($filters)
 	{
-		return false;
+		$q = \dibi::select('*')
+			->from($this->entity_table);
+
+		return $q->fetchAll();
 	}
 
 
@@ -112,6 +116,7 @@ trait DibiEntityDriver {
 	 */
 	protected function updateEntity($id, $e)
 	{
+		// TODO
 		return false;
 	}
 
@@ -121,6 +126,7 @@ trait DibiEntityDriver {
 	 */
 	protected function deleteEntity($id)
 	{
+		// TODO
 		return false;
 	}
 

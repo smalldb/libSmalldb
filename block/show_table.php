@@ -28,22 +28,21 @@
  * SUCH DAMAGE.
  */
 
-class B_entity__read extends Block {
+class B_entity__show_table extends Block {
 
 	use Entity\EntityDriver;
 
 	protected $inputs = array(
-		'*' => null,		// Some filters to use while reading entities from database.
+		'list' => array(),		// List of entities to show
+		'slot' => 'default',
+		'slot_weight' => 50,
 	);
 
 	protected $outputs = array(
-		'id' => true,		// ID of the first of loaded entities. Use array for composed keys.
-		'entity' => true,	// The first of loaded entities
-		'list' => true,		// List of loaded entities
-		'done' => true,		// True if at least one entity has been loaded
+		'done' => true,
 	);
 
-	const force_exec = false;
+	const force_exec = true;
 
 
 	public function main()
@@ -52,43 +51,29 @@ class B_entity__read extends Block {
 			return;
 		}
 
-		$filters = $this->collectFilters();
-		if ($filters === false) {
-			return;
-		}
+		$list = $this->in('list');
 
-		$list = $this->readEntity($filters);
+		$table = new TableView();
+		$this->setup_columns($table);
+		$table->set_data($list);
+		$this->template_add(null, 'core/table', $table);
 
-		if (!empty($list)) {
-			$first = reset($list);
-			$this->out('id', $first['id']);
-			$this->out('entity', $first);
-			$this->out('list', $list);
-			$this->out('done', true);
-		} else {
-			$this->out('done', false);
-		}
+		$this->out('done', $success);
 
 		$this->cleanupEntityDriver();
 	}
 
-
-	/**
-	 * Collect filter values from inputs into array and do basic sanity checks.
-	 */
-	protected function collectFilters()
+	protected function setup_columns($table)
 	{
-		$filters = array();
+		$entity = $this->describeEntity();
 
-		$id = $this->in('id');
-		if ($id !== false) {
-			$filters['id'] = $id;
+		foreach ($entity['properties'] as $p) {
+			$table->add_column('text', array(
+					'title' => $p['name'],
+					'key' => $p['name'],
+				));
 		}
-
-		return $filters;
 	}
 
 }
-
-
 
