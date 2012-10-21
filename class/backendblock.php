@@ -28,40 +28,36 @@
  * SUCH DAMAGE.
  */
 
-class B_entity__update extends Block {
+namespace Smalldb;
 
-	use Entity\EntityDriver;
+class BackendBlock extends \Block
+{
 
 	protected $inputs = array(
-		'id' => array(),	// Entity to create
 	);
 
 	protected $outputs = array(
-		'done' => true,		// True if entity has been created.
+		'smalldb' => true,
+		'done' => true,
 	);
 
-	const force_exec = true;
+
+	/**
+	 * Setup block to act as expected. Configuration is done by Smalldb 
+	 * Block Storage.
+	 */
+	public function __construct($smalldb)
+	{
+		$this->smalldb = $smalldb;
+	}
 
 
 	public function main()
 	{
-		if (!$this->initializeEntityDriver()) {
-			return;
-		}
-
-		$id = $this->in('id');
-
-		if ($id == null) {
-			error_msg('Empty ID!');
-			return;
-		}
-
-		$success = $this->deleteEntity($id);
-
-		$this->out('done', $success);
-
-		$this->cleanupEntityDriver();
+		$this->out('smalldb', $this->smalldb);
+		$this->out('done', true);
 	}
 
 }
+
 

@@ -28,52 +28,27 @@
  * SUCH DAMAGE.
  */
 
-class B_entity__show_table extends Block {
+namespace Smalldb;
 
-	use Entity\EntityDriver;
+interface IBackend
+{
 
-	protected $inputs = array(
-		'list' => array(),		// List of entities to show
-		'slot' => 'default',
-		'slot_weight' => 50,
-	);
-
-	protected $outputs = array(
-		'done' => true,
-	);
-
-	const force_exec = true;
+	/**
+	 * Initialize backend. $alias is used for debugging.
+	 */
+	function __construct($alias);
 
 
-	public function main()
-	{
-		if (!$this->initializeEntityDriver()) {
-			return;
-		}
+	/**
+	 * Get current alias.
+	 */
+	function alias();
 
-		$list = $this->in('list');
 
-		$table = new TableView();
-		$this->setup_columns($table);
-		$table->set_data($list);
-		$this->template_add(null, 'core/table', $table);
-
-		$this->out('done', $success);
-
-		$this->cleanupEntityDriver();
-	}
-
-	protected function setup_columns($table)
-	{
-		$entity = $this->describeEntity();
-
-		foreach ($entity['properties'] as $p) {
-			$table->add_column('text', array(
-					'title' => $p['name'],
-					'key' => $p['name'],
-				));
-		}
-	}
+	/**
+	 * Get all known types.
+	 */
+	function get_known_types();
 
 }
 

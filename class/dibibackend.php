@@ -28,51 +28,39 @@
  * SUCH DAMAGE.
  */
 
-class B_entity__show_entity_description extends Block {
+namespace Smalldb;
 
-	use Entity\EntityDriver;
-
-	protected $inputs = array(
-		'slot' => 'default',
-		'slot_weight' => 50,
-	);
-
-	protected $outputs = array(
-		'done' => true,
-	);
-
-	const force_exec = true;
+/**
+ * Dibi Smalldb backend expects dibi library initialized and global static 
+ * class dibi working.
+ */
+class DibiBackend implements IBackend
+{
+	private $alias;
 
 
-	public function main()
+	public function __construct($alias)
 	{
-		if (!$this->initializeEntityDriver()) {
-			return;
+		$this->alias = $alias;
+	}
+
+
+	public function alias()
+	{
+		return $this->alias;
+	}
+
+
+	/**
+	 * Get all known types.
+	 */
+	public function get_known_types()
+	{
+		$types = array();
+		foreach (\dibi::query('SHOW TABLES') as $row) {
+			$types[] = $this->table_to_type(reset($row));
 		}
-
-		/*
-		$t = new TableView();
-		$t->add_column('text', array(
-				'title' => _('Property'),
-				'key' => 'property',
-			));
-		$t->add_column('text', array(
-				'title' => _('Type'),
-				'key' => 'type',
-			));
-		// */
-
-		$desc = $this->describeEntity();
-
-		$this->template_add(null, 'core/print_r', array(
-				'title' => sprintf(_('Entity: %s'), $desc['name']),
-				'header_level' => 3,
-				'data' => $desc,
-			));
-
-		$this->out('done', true);
-
-		$this->cleanupEntityDriver();
+		return $types;
 	}
 }
 

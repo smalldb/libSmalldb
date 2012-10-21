@@ -28,42 +28,40 @@
  * SUCH DAMAGE.
  */
 
-class B_entity__update extends Block {
-
-	use Entity\EntityDriver;
-
+/**
+ * List all known Smalldb types in way core/out/menu understands.
+ */
+class B_smalldb__build_types_menu extends Block
+{
 	protected $inputs = array(
-		'id' => array(),	// Entity to create
-		'entity' => array(),	// Entity to create
+		'smalldb' => array('backend', 'smalldb'),
+		'link' => '/{alias}/{type}',
 	);
 
 	protected $outputs = array(
-		'done' => true,		// True if entity has been created.
+		'items' => true,
+		'done' => true,
 	);
-
-	const force_exec = true;
-
 
 	public function main()
 	{
-		if (!$this->initializeEntityDriver()) {
-			return;
+		$link = $this->in('link');
+		$smalldb = $this->in('smalldb');
+		$alias = $smalldb->alias();
+
+		$items = array();
+		$types = $smalldb->get_known_types();
+
+		foreach ($types as $type) {
+			$items[] = array(
+				'title' => $type,
+				'link' => str_replace('_', '-', filename_format($link, array('type' => $type, 'alias' => $alias))),
+			);
 		}
 
-		$id = $this->in('id');
-		$e = $this->in('entity');
-
-		if ($id == null || $e == null) {
-			error_msg('Empty ID or Entity!');
-			return;
-		}
-
-		$success = $this->createEntity($e);
-
-		$this->out('done', $success);
-
-		$this->cleanupEntityDriver();
+		
+		$this->out('items', $items);
+		$this->out('done', true);
 	}
-
 }
 
