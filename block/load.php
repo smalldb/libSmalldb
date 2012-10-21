@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-class M_entity__load extends Module {
+class M_entity__load extends Block {
 
 	protected $inputs = array(
 		'id' => false,		// primary key; output is list if empty
