@@ -38,6 +38,7 @@ class DescribeBlock extends \Block
 	);
 
 	protected $outputs = array(
+		'type' => true,
 		'desc' => true,
 		'done' => true,
 	);
@@ -60,6 +61,7 @@ class DescribeBlock extends \Block
 		$smalldb = $this->in('smalldb');
 
 		$description = $smalldb->describe($this->type);
+		$this->out('type', $description['type']);
 		$this->out('desc', $description);
 		$this->out('done', $description !== false);
 	}

@@ -34,6 +34,12 @@ class BlockStorage implements \IBlockStorage
 {
 	protected $backend;
 	protected $alias;
+	protected $known_types;
+
+	private $block_classes = array(
+		// action => block class
+		'describe' => '\Smalldb\DescribeBlock',
+	);
 
 	/**
 	 * Constructor will get options from core.ini.php file.
@@ -44,6 +50,8 @@ class BlockStorage implements \IBlockStorage
 
 		$this->alias = $alias;
 		$this->backend = new $backend_class($alias);
+
+		$this->known_types = array_flip($this->backend->get_known_types());
 	}
 
 
@@ -72,8 +80,19 @@ class BlockStorage implements \IBlockStorage
 		$type = dirname($block);
 		$action = basename($block);
 
-		if ($action == 'backend') {
+		// Backend block
+		if ($type == $this->alias && $action == 'backend') {
 			return new BackendBlock($this->backend);
+		}
+
+		// Check if requested type exists
+		if (!array_key_exists($type, $this->known_types)) {
+			return false;
+		}
+
+		// Create requested block
+		if (array_key_exists($action, $this->block_classes)) {
+			return new $this->block_classes[$action]($type);
 		}
 
 		return false;
@@ -85,6 +104,7 @@ class BlockStorage implements \IBlockStorage
 	 */
 	public function load_block ($block)
 	{
+		return false;
 	}
 
 
@@ -123,10 +143,13 @@ class BlockStorage implements \IBlockStorage
 		if ($this->backend === null) {
 			return;
 		}
+
 		$blocks[$this->alias][] = $this->alias.'/backend';
 
-		foreach ($this->backend->get_known_types() as $type) {
-			// $blocks[$this->alias][] = $type.'/' ... ;
+		foreach ($this->known_types as $type => $x) {
+			foreach ($this->block_classes as $action => $class) {
+				$blocks[$this->alias][] = $type.'/'.$action;
+			}
 		}
 	}
 

@@ -28,33 +28,64 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
-
-interface IBackend
+class B_smalldb__show_properties extends Block
 {
 
-	/**
-	 * Initialize backend. $alias is used for debugging.
-	 */
-	function __construct($alias);
+	protected $inputs = array(
+		'desc' => array(),
+		'slot' => 'default',
+		'slot_weight' => 50,
+	);
+
+	protected $outputs = array(
+		'done' => true,
+	);
+
+	const force_exec = true;
 
 
-	/**
-	 * Get current alias.
-	 */
-	function alias();
+	public function main()
+	{
+		$desc = $this->in('desc');
+		if (!$desc) {
+			return;
+		}
 
+		$table = new TableView();
 
-	/**
-	 * Get all known state machine types.
-	 */
-	function get_known_types();
+		$table->add_column('text', array(
+				'title' => _('PK'),
+				'title_tooltip' => _('Primary key'),
+				'value' => function($row) use ($desc) { return in_array($row['name'], $desc['primary_key']) ? _("\xE2\x97\x8F") : ''; },
+				'width' => '1%',
+			));
+		$table->add_column('text', array(
+				'title' => _('Property'),
+				'key' => 'name',
+			));
+		$table->add_column('text', array(
+				'title' => _('Type'),
+				'key' => 'type',
+			));
+		$table->add_column('number', array(
+				'title' => _('Size'),
+				'value' => function($row) { return $row['size'] > 0 ? $row['size'] : null; },
+				'width' => '1%',
+			));
+		$table->add_column('text', array(
+				'title' => _('Default value'),
+				'key' => 'default',
+			));
+		$table->add_column('text', array(
+				'title' => _('Optional'),
+				'value' => function($row) { return $row['optional'] ? _('Yes') : _('No'); },
+			));
 
-
-	/**
-	 * Describe properties of specified state machine type.
-	 */
-	function describe($type);
+		$table->set_data($desc['properties']);
+                $this->template_add(null, 'core/table', $table);
+                $this->out('done', true);		
+	}
 
 }
+
 

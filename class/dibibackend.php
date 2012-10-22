@@ -37,11 +37,13 @@ namespace Smalldb;
 class DibiBackend implements IBackend
 {
 	private $alias;
+	private $dbinfo;
 
 
 	public function __construct($alias)
 	{
 		$this->alias = $alias;
+		$this->dbinfo = \dibi::getDatabaseInfo();
 	}
 
 
@@ -56,11 +58,52 @@ class DibiBackend implements IBackend
 	 */
 	public function get_known_types()
 	{
-		$types = array();
-		foreach (\dibi::query('SHOW TABLES') as $row) {
-			$types[] = $this->table_to_type(reset($row));
-		}
-		return $types;
+		return array_map(array($this, 'table_to_type'), $this->dbinfo->getTableNames());
 	}
+
+
+	/**
+	 * Describe properties of specified state machine type.
+	 */
+	public function describe($type)
+	{
+		$table = $this->type_to_table($type);
+		if (!$this->dbinfo->hasTable($table)) {
+			return false;
+		}
+
+		$info = $this->dbinfo->getTable($table);
+
+		// Get properties
+		$properties = array();
+		foreach($info->getColumns() as $col) {
+			$properties[$col->getName()] = array(
+				'name' => $col->getName(),
+				'type' => $col->getNativeType(),
+				'size' => $col->getSize(),
+				'default' => $col->getDefault(),
+				'optional' => $col->isNullable(),
+			);
+		}
+
+		// Get primary key
+		$pkinfo = $info->getPrimaryKey();
+		if ($pkinfo) {
+			$pk = array();
+			foreach ($pkinfo->getColumns() as $col) {
+				$pk[] = $col->getName();
+			}
+		} else {
+			$pk = null;
+		}
+
+		return array(
+			'type' => $type,
+			'table' => $table,
+			'primary_key' => $pk,
+			'properties' => $properties,
+		);
+	}
+
 }
 

@@ -28,33 +28,29 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
-
-interface IBackend
+class B_smalldb__describe extends \Smalldb\DescribeBlock
 {
+	protected $inputs = array(
+		'smalldb' => array('backend', 'smalldb'),
+		'type' => array(),
+	);
 
-	/**
-	 * Initialize backend. $alias is used for debugging.
-	 */
-	function __construct($alias);
-
-
-	/**
-	 * Get current alias.
-	 */
-	function alias();
+	protected $type;
 
 
-	/**
-	 * Get all known state machine types.
-	 */
-	function get_known_types();
+	public function __construct()
+	{
+		// do not call parent's constructor
+	}
 
 
-	/**
-	 * Describe properties of specified state machine type.
-	 */
-	function describe($type);
+	public function main()
+	{
+		$this->type = $this->in('type');
+
+		parent::main();
+	}
 
 }
+
 
