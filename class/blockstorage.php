@@ -51,7 +51,7 @@ class BlockStorage implements \IBlockStorage
 		$this->alias = $alias;
 		$this->backend = new $backend_class($alias);
 
-		$this->known_types = array_flip($this->backend->get_known_types());
+		$this->known_types = array_flip($this->backend->getKnownTypes());
 	}
 
 

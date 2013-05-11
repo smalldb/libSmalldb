@@ -30,31 +30,50 @@
 
 namespace Smalldb;
 
-interface IBackend
+abstract class AbstractMachine
 {
-
 	/**
-	 * Initialize backend. $alias is used for debugging.
+	 * Backend, where all machines are stored.
 	 */
-	function __construct($alias);
+	protected $backend;
 
-
-	/**
-	 * Get current alias.
-	 */
-	function alias();
-
-
-	/**
-	 * Get all known state machine types.
-	 */
-	function get_known_types();
+	
+	public function __construct(AbstractBackend $backend)
+	{
+		$this->backend = $backend;
+		$this->initializeMachine();
+	}
 
 
 	/**
-	 * Describe properties of specified state machine type.
+	 * Define state machine used by all instances of this type.
 	 */
-	function describe($type);
+	abstract public function initializeMachine();
+
+
+	/**
+	 * Invoke state machine transition. State machine is not instance of 
+	 * this class, but it is represented by record in database.
+	 */
+	public function invokeTransition($ref, $transition, $args)
+	{
+	}
+
+
+	/**
+	 * Get current state of state machine.
+	 */
+	public function getState($ref)
+	{
+	}
+
+
+	/**
+	 * Get all properties of state machine, including it's state.
+	 */
+	public function getPoperties($ref)
+	{
+	}
 
 }
 

@@ -30,108 +30,62 @@
 
 namespace Smalldb;
 
-/**
- * Dibi Smalldb backend expects dibi library initialized and global static 
- * class dibi working.
- */
-class DibiBackend extends AbstractBackend
+abstract class AbstractBackend
 {
-	private $dbinfo;
+	private $alias;
+	private $machine_cache = array();
 
-
+	/**
+	 * Initialize backend. $alias is used for debugging.
+	 */
 	public function __construct($alias)
 	{
-		parent::__construct($alias);
-		$this->dbinfo = \dibi::getDatabaseInfo();
+		$this->alias = $alias;
 	}
 
 
 	/**
-	 * Get all known types.
+	 * Get current alias.
 	 */
-	public function getKnownTypes()
+	public function getAlias()
 	{
-		return array_map(array($this, 'tableToType'), $this->dbinfo->getTableNames());
+		return $this->alias;
 	}
 
 
 	/**
-	 * Convert table name to type name.
-	 *
-	 * No conversion by default, types match database tables 1:1.
+	 * Get all known state machine types.
 	 */
-	protected function tableToType($table)
-	{
-		return $table;
-	}
-
-
-	/**
-	 * Convert type name to table name.
-	 *
-	 * No conversion by default, types match database tables 1:1.
-	 */
-	protected function typeToTable($type)
-	{
-		return $type;
-	}
+	public abstract function getKnownTypes();
 
 
 	/**
 	 * Describe properties of specified state machine type.
 	 */
-	public function describe($type)
+	public abstract function describe($type);
+
+
+	/**
+	 * Prepare state machine of given type - a model shared between 
+	 * multiple real statemachines stored in backend. Do not forget that 
+	 * actual machine is not reachable, you only get this interface.
+	 */
+	protected abstract function createMachine($type); // tohle je spatne... ten stroj nemam, mam jen iface
+
+
+	/**
+	 * Get reference to state machine of given type and id.
+	 */
+	public function ref($type, $ref)
 	{
-		$table = $this->typeToTable($type);
-		if (!$this->dbinfo->hasTable($table)) {
-			return false;
-		}
-
-		$info = $this->dbinfo->getTable($table);
-
-		// Get properties
-		$properties = array();
-		foreach($info->getColumns() as $col) {
-			$properties[$col->getName()] = array(
-				'name' => $col->getName(),
-				'type' => $col->getNativeType(),
-				'size' => $col->getSize(),
-				'default' => $col->getDefault(),
-				'optional' => $col->isNullable(),
-			);
-		}
-
-		// Get primary key
-		$pkinfo = $info->getPrimaryKey();
-		if ($pkinfo) {
-			$pk = array();
-			foreach ($pkinfo->getColumns() as $col) {
-				$pk[] = $col->getName();
-			}
+		if (isset($this->machine_cache[$type])) {
+			$m = $this->machine_cache[$type];
 		} else {
-			$pk = null;
+			$m = $this->createMachine($type);
+			$this->machine_cache[$type] = $m;
 		}
-
-		return array(
-			'type' => $type,
-			'table' => $table,
-			'primary_key' => $pk,
-			'properties' => $properties,
-		);
+		return new Reference($m, $ref);
 	}
 
-
-	/**
-	 * Get list of available actions for given type and state.
-	 */
-	public function getActions($type, $state)
-	{
-	}
-
-
-	/**
-	 * DELETE ME
-	 */
-	protected function createMachine($type) {}
 }
 

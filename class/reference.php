@@ -28,40 +28,42 @@
  * SUCH DAMAGE.
  */
 
+namespace Smalldb;
+
 /**
- * List all known Smalldb types in way core/out/menu understands.
+ * Reference to one or more state machines. Allows you to invoke transitions in 
+ * the easy way by calling methods on this reference object. This is syntactic 
+ * sugar only, nothing really happen here.
  */
-class B_smalldb__build_types_menu extends Block
+class Reference 
 {
-	protected $inputs = array(
-		'smalldb' => array('backend', 'smalldb'),
-		'link' => '/{alias}/{type}',
-	);
+	protected $ref;
+	protected $machine;
 
-	protected $outputs = array(
-		'items' => true,
-		'done' => true,
-	);
 
-	public function main()
+	/**
+	 * Create reference and initialize it with given primary key or other reference.
+	 */
+	public function __construct($machine, $ref)
 	{
-		$link = $this->in('link');
-		$smalldb = $this->in('smalldb');
-		$alias = $smalldb->getAlias();
+		$this->machine = $machine;
 
-		$items = array();
-		$types = $smalldb->getKnownTypes();
-
-		foreach ($types as $type) {
-			$items[] = array(
-				'title' => $type,
-				'link' => str_replace('_', '-', filename_format($link, array('type' => $type, 'alias' => $alias))),
-			);
+		if ($ref instanceof self) {
+			$this->ref = $ref->ref;
+		} else {
+			$this->ref = $ref;
 		}
-
-		
-		$this->out('items', $items);
-		$this->out('done', true);
 	}
+
+
+	/**
+	 * Function call is transition invocation. Just forward it to backend.
+	 */
+	public function __call($name, $arguments)
+	{
+		$this->machine->invokeTransition($this->ref, $name, $arguments);
+	}
+
+	// todo: what about array_map, reduce, walk, ... ?
 }
 
