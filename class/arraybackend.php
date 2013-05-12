@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,48 +31,43 @@
 namespace Smalldb;
 
 /**
- * Implementation of the state machine. One instance of this class represents 
- * all machines of this type.
+ * Simple testing backend which uses plain array to store all data. It loads 
+ * state machine definitions from json files in specified directory.
  */
-abstract class AbstractMachine
+class ArrayBackend extends AbstractBackend
 {
-	/**
-	 * Backend, where all machines are stored.
-	 */
-	protected $backend;
+	private $known_types = array(
+	//	'foo' => array(
+	//		'name' => 'Foo',
+	//		'src'  => 'example/foo.json',
+	//	),
+	);
 
-	
-	public function __construct(AbstractBackend $backend)
+
+	/**
+	 * Register new state machine type.
+	 */
+	public function addType($type, $name, $machine_definition)
 	{
-		$this->backend = $backend;
-		$this->initializeMachine();
+		$this->known_types[$type] = array(
+			'name' => $name,
+			'machine_def' => $machine_definition,
+		);
 	}
 
 
-	/**
-	 * Define state machine used by all instances of this type.
-	 */
-	abstract public function initializeMachine();
-
-
-	/**
-	 * Get current state of state machine.
-	 */
-	abstract public function getState($ref);
-
-
-	/**
-	 * Get all properties of state machine, including it's state.
-	 */
-	abstract public function getPoperties($ref);
-
-
-	/**
-	 * Invoke state machine transition. State machine is not instance of 
-	 * this class, but it is represented by record in database.
-	 */
-	public function invokeTransition($ref, $transition, $args)
+	public function getKnownTypes()
 	{
+		return $known_types;
+	}
+
+
+	public function createMachine($type)
+	{
+		if (array_key_exists($type, $this->known_types)) {
+			$machine_def = $this->known_types[$type]['machine_def'];
+			return new ArrayMachine($this, $machine_def);
+		}
 	}
 
 }

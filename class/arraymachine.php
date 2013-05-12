@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,48 +31,45 @@
 namespace Smalldb;
 
 /**
- * Implementation of the state machine. One instance of this class represents 
- * all machines of this type.
+ * Simple testing machine implementation. Uses array to store all data.
  */
-abstract class AbstractMachine
+class ArrayMachine extends AbstractMachine
 {
-	/**
-	 * Backend, where all machines are stored.
-	 */
-	protected $backend;
+	private $machine_definition;
 
-	
-	public function __construct(AbstractBackend $backend)
+	// Data storage for all state machines
+	protected $properties = array();
+
+
+	public function __construct(AbstractBackend $backend, $machine_definition)
 	{
-		$this->backend = $backend;
-		$this->initializeMachine();
+		$this->machine_definition = $machine_definition;
+		parent::__construct($backend);
 	}
 
-
 	/**
-	 * Define state machine used by all instances of this type.
+	 * Define state machine using $machine_definition.
 	 */
-	abstract public function initializeMachine();
+	public function initializeMachine()
+	{
+	}
 
 
 	/**
 	 * Get current state of state machine.
 	 */
-	abstract public function getState($ref);
+	public function getState($ref)
+	{
+		return @ $this->properties[$ref]['state'];
+	}
 
 
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	abstract public function getPoperties($ref);
-
-
-	/**
-	 * Invoke state machine transition. State machine is not instance of 
-	 * this class, but it is represented by record in database.
-	 */
-	public function invokeTransition($ref, $transition, $args)
+	public function getPoperties($ref)
 	{
+		return @ $this->properties[$ref];
 	}
 
 }

@@ -1,0 +1,48 @@
+{
+	"info": {
+		"title": "SimpleCRUD"
+	},
+	"state_machine": {
+		"states": {
+			"exists": {
+				"description": "Record exists in database."
+			}
+		},
+		"actions": {
+			"create": {
+				"description": "Inserts new row into SQL table.",
+				"transitions": {
+					"": {
+						"targets": [ "exists" ],
+						"permissions": {
+							"group": "users"
+						}
+					}
+				}
+			},
+			"edit": {
+				"description": "Updates row in SQL table.",
+				"transitions": {
+					"exists": {
+						"targets": [ "exists" ],
+						"permissions": {
+							"owner": true
+						}
+					}
+				}
+			},
+			"delete": {
+				"description": "Deletes row from SQL table.",
+				"transitions": {
+					"exists": {
+						"targets": [ "" ],
+						"permissions": {
+							"owner": true
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
