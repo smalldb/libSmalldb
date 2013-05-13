@@ -34,6 +34,12 @@ namespace Smalldb;
  * Reference to one or more state machines. Allows you to invoke transitions in 
  * the easy way by calling methods on this reference object. This is syntactic 
  * sugar only, nothing really happen here.
+ *
+ * Method call on this class invokes the transition.
+ *
+ * Read-only properties:
+ *   - state = $machine->getState($ref);
+ *   - properties = $machine->getProperties($ref);
  */
 class Reference 
 {
@@ -52,6 +58,20 @@ class Reference
 			$this->ref = $ref->ref;
 		} else {
 			$this->ref = $ref;
+		}
+	}
+
+
+	/**
+	 * Get data from machine
+	 */
+	public function __get($key)
+	{
+		switch ($key) {
+			case 'state':
+				return $this->machine->getState($this->ref);
+			case 'properties':
+				return $this->machine->getProperties($this->ref);
 		}
 	}
 

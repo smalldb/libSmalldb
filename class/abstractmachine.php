@@ -41,6 +41,37 @@ abstract class AbstractMachine
 	 */
 	protected $backend;
 
+	/**
+	 * Descriptions of all known states -- key is state id, value is * description
+	 */
+	protected $states /* = array(
+		'state_name' => array(
+			'label' => 'Human readable name (short)',
+			'description' => 'Human readable description (sentence or two).',
+			'color' => '#eeeeee',		// 6 digit hex code (Graphviz and CSS compatible) [optional]
+		),
+		...
+	); */
+
+	/**
+	 * Description of all known actions -- key is action name.
+	 *
+	 * Each action has transitions (transition function) and each 
+	 * transition can end in various different states (assertion function).
+	 */
+	protected $actions /* = array(
+		'action_name' => array(
+			'label' => 'Human readable name (short)',
+			'description' => 'Human readable description (sentence or two).',
+			'transitions' => array(
+				'source_state' => array(
+					'targets' => array('target_state', ... ),
+					'method' => 'method_name', // same as action_name if missing
+				),
+			),
+		)
+	); */
+
 	
 	public function __construct(AbstractBackend $backend)
 	{
@@ -52,7 +83,13 @@ abstract class AbstractMachine
 	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	abstract public function initializeMachine();
+	abstract protected function initializeMachine();
+
+
+	/**
+	 * Returns true if user has required permissions.
+	 */
+	abstract protected function checkPermissions($permissions, $ref);
 
 
 	/**
@@ -60,19 +97,163 @@ abstract class AbstractMachine
 	 */
 	abstract public function getState($ref);
 
-
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	abstract public function getPoperties($ref);
+	abstract public function getProperties($ref);
+
+
+	/**
+	 * Get list of all available actions for $ref.
+	 */
+	public function getAvailableTransitions($ref)
+	{
+	}
 
 
 	/**
 	 * Invoke state machine transition. State machine is not instance of 
 	 * this class, but it is represented by record in database.
 	 */
-	public function invokeTransition($ref, $transition, $args)
+	public function invokeTransition($ref, $transition_name, $args)
 	{
+		$state = $this->getState($ref);
+
+		// get action
+		$action = @ $this->actions[$transition_name];
+		if ($action === null) {
+			throw new \DomainException('Unknown transition requested: '.$transition_name);
+		}
+
+		// get transition (instance of action)
+		$transition = @ $action['transitions'][$state];
+		if ($transition === null) {
+			throw new \DomainException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
+		}
+
+		// check permissions
+		$perms = @ $transition['permissions'];
+		if (!$this->checkPermissions($transition['permissions'], $ref)) {
+			throw new \Exception('Access denied to transition "'.$transition_name.'".');
+		}
+
+		// get method
+		$method = empty($transition['method']) ? $action : $transition['method'];
+
+		// invoke method -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
+		array_unshift($args, $ref);
+		$ret = call_user_func_array(array($this, $method), $args);
+
+		// check result using assertion function
+		$new_state = $this->getState($ref);
+		if (!in_array($new_state, $transition['target_state'])) {
+			throw new \RuntimeException('State machine ended in unexpected state "'.$new_state
+				.'" after transition "'.$transition_name.'" from state "'.$state.'".');
+		}
+
+		return $ret;
+	}
+
+
+	/**
+	 * Export state machine to Graphviz source code.
+	 */
+	public function exportDot()
+	{
+		ob_start();
+
+		// DOT Header
+		echo	"#\n",
+			"# State machine visualization\n",
+			"#\n",
+			"# Use \"dot -Tpng this-file.dot -o this-file.png\" to compile.\n",
+			"#\n",
+			"digraph structs {\n",
+			"	rankdir = LR;\n",
+			"	margin = 0;\n",
+			"	bgcolor = transparent;\n",
+			"	edge [ arrowtail=none, arrowhead=normal, arrowsize=0.6, fontsize=8 ];\n",
+			"	node [ shape=box, fontsize=9, style=\"rounded,filled\", fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
+			"	graph [ shape=none, color=blueviolet, fontcolor=blueviolet, fontsize=9, fontname=\"sans\" ];\n",
+			"\n";
+
+		// Start state
+		echo "\t", "BEGIN [\n",
+			"label = \"\",",
+			"shape = circle,",
+			"color = black,",
+			"fillcolor = black,",
+			"penwidth = 0,",
+			"width = 0.25,",
+			"style = filled",
+			"];\n";
+
+		// States
+		echo "\t", "node [ shape=ellipse, fontsize=9, style=\"filled\", fontname=\"sans\", fillcolor=\"#eeeeee\", penwidth=2 ];\n";
+		foreach ($this->states as $s => $state) {
+			echo "\t", "s_", $s, " [ label=\"", addcslashes(empty($state['label']) ? $s : $s['label'], '"'), "\"";
+			if (!empty($state['color'])) {
+				echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
+			}
+			echo " ];\n";
+		}
+
+		$have_final_state = false;
+		$missing_states = array();
+
+		// Transitions
+		$used_actions = array();
+		foreach ($this->actions as $a => $action) {
+			$a_a = 'a_'.$a;
+			foreach ($action['transitions'] as $src => $transition) {
+				if ($src === null || $src === '') {
+					$s_src = 'BEGIN';
+				} else {
+					$s_src = 's_'.$src;
+					if (!array_key_exists($src, $this->states)) {
+						$missing_states[$src] = true;
+					}
+				}
+				foreach ($transition['targets'] as $dst) {
+					if ($dst === null || $dst === '') {
+						$s_dst = 'END';
+						$have_final_state = true;
+					} else {
+						$s_dst = 's_'.$dst;
+						if (!array_key_exists($dst, $this->states)) {
+							$missing_states[$dst] = true;
+						}
+					}
+					echo "\t", $s_src, " -> ", $s_dst,
+						" [ label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\" ];\n";
+				}
+			}
+		}
+		echo "\n";
+
+		// Missing states
+		foreach ($missing_states as $s => $state) {
+			echo "\t", "s_", $s, " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
+		}
+
+		// Final state
+		if ($have_final_state) {
+			echo "\t", "END [\n",
+				"label = \"\",",
+				"shape = doublecircle,",
+				"color = black,",
+				"fillcolor = black,",
+				"penwidth = 1.8,",
+				"width = 0.20,",
+				"style = filled",
+				"];\n\n";
+		}
+
+
+		// DOT Footer
+		echo "}\n";
+
+		return ob_get_clean();
 	}
 
 }
