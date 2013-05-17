@@ -108,6 +108,20 @@ abstract class AbstractMachine
 	 */
 	public function getAvailableTransitions($ref)
 	{
+		$state = $this->getState($ref);
+
+		$available_transitions = array();
+
+		foreach ($this->actions as $a => $action) {
+			$tr = @ $action['transitions'][$state];
+			if ($tr !== null) {
+				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $ref)) {
+					$available_transitions[$a] = $tr;
+				}
+			}
+		}
+
+		return $available_transitions;
 	}
 
 
