@@ -48,28 +48,31 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Get all known state machine types and their description. Intended as 
-	 * data source for user interface generators (menu, navigation, ...).
+	 * Get all known state machine types.
 	 *
-	 * Returns array of machine descriptions. Keys are state machine types, 
-	 * values are properties of given state machine type. There are few 
-	 * well-known property names which should be used if possible.
+	 * Returns array of strings.
+	 */
+	public abstract function getKnownTypes();
+
+	/**
+	 * Describe given type. Intended as data source for user interface 
+	 * generators (menu, navigation, ...).
+	 *
+	 * Returns machine description as propery-value pairs in array. There 
+	 * are few well-known property names which should be used if possible.
 	 * Any unknown properties will be ignored.
 	 *
 	 * array(
-	 * 	'foo' => array(
-	 * 		// Human-friendly name of the type
-	 * 		'name' => 'Foo Bar',
-	 *		// Human-friendly description (one short paragraph, plain text)
-	 * 		'desc' => 'Lorem ipsum dolor sit amet, ...',
-	 *		// Name of the file containing full machine definition 
-	 * 		'src'  => 'example/foo.json',
-	 * 		...
-	 * 	),
-	 * 	...
+	 *  	// Human-friendly name of the type
+	 *  	'name' => 'Foo Bar',
+	 *  	// Human-friendly description (one short paragraph, plain text)
+	 *  	'desc' => 'Lorem ipsum dolor sit amet, ...',
+	 *  	// Name of the file containing full machine definition 
+	 *  	'src'  => 'example/foo.json',
+	 *  	...
 	 * )
 	 */
-	public abstract function getKnownTypes();
+	public abstract function describeType($type);
 
 
 	/**
@@ -125,7 +128,7 @@ abstract class AbstractBackend
 	/**
 	 * Get reference to state machine of given type and id.
 	 */
-	public function ref($type, $ref)
+	public function ref($type, $ref = null)
 	{
 		$m = $this->getMachine($type);
 		return new Reference($m, $ref);

@@ -3,7 +3,7 @@ all: tests
 	make -C ./test/example --no-print-directory
 
 tests:
-	pear run-tests ./test
+	echo ; pear run-tests ./test ; echo
 
 .PHONY: all tests
 

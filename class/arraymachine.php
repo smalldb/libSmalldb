@@ -41,10 +41,11 @@ class ArrayMachine extends AbstractMachine
 	protected $properties = array();
 
 
-	public function __construct(AbstractBackend $backend, $machine_definition)
+	public function __construct(AbstractBackend $backend, $type, $machine_definition)
 	{
-		$this->machine_definition = $machine_definition;
-		parent::__construct($backend);
+		$this->states = $machine_definition['states'];
+		$this->actions = $machine_definition['actions'];
+		parent::__construct($backend, $type);
 	}
 
 	/**
@@ -52,6 +53,16 @@ class ArrayMachine extends AbstractMachine
 	 */
 	public function initializeMachine()
 	{
+		// done in constructor
+	}
+
+
+	/**
+	 * Returns true if user has required permissions.
+	 */
+	protected function checkPermissions($permissions, $ref)
+	{
+		return true;
 	}
 
 
@@ -60,17 +71,48 @@ class ArrayMachine extends AbstractMachine
 	 */
 	public function getState($ref)
 	{
-		return @ $this->properties[$ref]['state'];
+		if ($ref === null) {
+			return '';
+		} else {
+			return @ $this->properties[$ref]['state'];
+		}
 	}
 
 
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	public function getPoperties($ref)
+	public function getProperties($ref)
 	{
 		return @ $this->properties[$ref];
 	}
 
+
+	/**
+	 * Fake method for all transitions
+	 */
+	public function __call($method, $args)
+	{
+		$ref = $args[0];
+		$state = $this->getState($ref);
+
+		echo "Transition invoked: ", var_export($state), " (ref = ", var_export($ref), ") -> ",
+			get_class($this), "::", $method, "(", join(', ', array_map('var_export', $args)), ")";
+
+		$expected_states = $this->actions[$method]['transitions'][$state]['targets'];
+
+		// create new machine
+		if ($ref === null) {
+			$ref = count($this->properties);
+			echo " [new]";
+		}
+
+		$this->properties[$ref]['state'] = $expected_states[0];
+
+		$new_state = $this->getState($ref);
+		echo " -> ", var_export($new_state), " (ref = ", var_export($ref), ").\n";
+
+		return $ref;
+	}
 }
 

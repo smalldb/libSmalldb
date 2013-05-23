@@ -42,9 +42,14 @@ abstract class AbstractMachine
 	protected $backend;
 
 	/**
+	 * Identification within $backend.
+	 */
+	protected $machine_type;
+
+	/**
 	 * Descriptions of all known states -- key is state id, value is * description
 	 */
-	protected $states /* = array(
+	protected $states; /* = array(
 		'state_name' => array(
 			'label' => 'Human readable name (short)',
 			'description' => 'Human readable description (sentence or two).',
@@ -59,7 +64,7 @@ abstract class AbstractMachine
 	 * Each action has transitions (transition function) and each 
 	 * transition can end in various different states (assertion function).
 	 */
-	protected $actions /* = array(
+	protected $actions; /* = array(
 		'action_name' => array(
 			'label' => 'Human readable name (short)',
 			'description' => 'Human readable description (sentence or two).',
@@ -73,9 +78,10 @@ abstract class AbstractMachine
 	); */
 
 	
-	public function __construct(AbstractBackend $backend)
+	public function __construct(AbstractBackend $backend, $type)
 	{
 		$this->backend = $backend;
+		$this->machine_type = $type;
 		$this->initializeMachine();
 	}
 
@@ -97,10 +103,20 @@ abstract class AbstractMachine
 	 */
 	abstract public function getState($ref);
 
+
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
 	abstract public function getProperties($ref);
+
+
+	/**
+	 * Get type of this machine.
+	 */
+	public function getMachineType()
+	{
+		return $this->machine_type;
+	}
 
 
 	/**
@@ -147,25 +163,36 @@ abstract class AbstractMachine
 
 		// check permissions
 		$perms = @ $transition['permissions'];
-		if (!$this->checkPermissions($transition['permissions'], $ref)) {
+		if (!$this->checkPermissions($perms, $ref)) {
 			throw new \Exception('Access denied to transition "'.$transition_name.'".');
 		}
 
 		// get method
-		$method = empty($transition['method']) ? $action : $transition['method'];
+		$method = empty($transition['method']) ? $transition_name : $transition['method'];
 
 		// invoke method -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
 		array_unshift($args, $ref);
-		$ret = call_user_func_array(array($this, $method), $args);
+		$r = call_user_func_array(array($this, $method), $args);
+
+		// interpret return value
+		if (@$action['returns'] === 'new_ref') {
+			$ref = $r;
+			$r = new Reference($this, $ref);
+		}
 
 		// check result using assertion function
 		$new_state = $this->getState($ref);
-		if (!in_array($new_state, $transition['target_state'])) {
+		$target_states = $transition['targets'];
+		if (!is_array($target_states)) {
+			throw new \Exception('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
+		}
+		if (!in_array($new_state, $target_states)) {
 			throw new \RuntimeException('State machine ended in unexpected state "'.$new_state
-				.'" after transition "'.$transition_name.'" from state "'.$state.'".');
+				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
+				.'Expected states: '.join(', ', $target_states).'.');
 		}
 
-		return $ret;
+		return $r;
 	}
 
 

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,68 +28,15 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+spl_autoload_register(function($class) {
+	$dir = dirname(__FILE__).'/../class/';
+	$lc_class = strtolower($class);
+        @ list($head, $tail) = explode("\\", $lc_class, 2);
 
-/**
- * Reference to one or more state machines. Allows you to invoke transitions in 
- * the easy way by calling methods on this reference object. This is syntactic 
- * sugar only, nothing really happen here.
- *
- * Method call on this class invokes the transition.
- *
- * Read-only properties:
- *   - state = $machine->getState($ref);
- *   - properties = $machine->getProperties($ref);
- */
-class Reference 
-{
-	protected $ref;
-	protected $machine;
-
-
-	/**
-	 * Create reference and initialize it with given primary key or other reference.
-	 */
-	public function __construct($machine, $ref = null)
-	{
-		$this->machine = $machine;
-
-		if ($ref instanceof self) {
-			$this->ref = $ref->ref;
-		} else {
-			$this->ref = $ref;
-		}
+	if ($head == 'smalldb') {
+		require($dir.str_replace('\\', '/', $tail).'.php');
 	}
+});
 
 
-	/**
-	 * Get data from machine
-	 */
-	public function __get($key)
-	{
-		switch ($key) {
-			case 'ref':
-				return $this->ref;
-			case 'machine':
-				return $this->machine;
-			case 'state':
-				return $this->machine->getState($this->ref);
-			case 'properties':
-				return $this->machine->getProperties($this->ref);
-			case 'actions':
-				return $this->machine->getAvailableTransitions($this->ref);
-		}
-	}
-
-
-	/**
-	 * Function call is transition invocation. Just forward it to backend.
-	 */
-	public function __call($name, $arguments)
-	{
-		return $this->machine->invokeTransition($this->ref, $name, $arguments);
-	}
-
-	// todo: what about array_map, reduce, walk, ... ?
-}
 

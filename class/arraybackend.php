@@ -58,7 +58,13 @@ class ArrayBackend extends AbstractBackend
 
 	public function getKnownTypes()
 	{
-		return $known_types;
+		return array_keys($this->known_types);
+	}
+
+
+	public function describeType($type)
+	{
+		return $this->known_types[$type];
 	}
 
 
@@ -66,7 +72,7 @@ class ArrayBackend extends AbstractBackend
 	{
 		if (array_key_exists($type, $this->known_types)) {
 			$machine_def = $this->known_types[$type]['machine_def'];
-			return new ArrayMachine($this, $machine_def);
+			return new ArrayMachine($this, $type, $machine_def);
 		}
 	}
 
