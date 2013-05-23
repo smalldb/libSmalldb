@@ -128,7 +128,7 @@ abstract class AbstractBackend
 	/**
 	 * Get reference to state machine of given type and id.
 	 */
-	public function ref($type, $ref = null)
+	public function ref($type, $ref)
 	{
 		$m = $this->getMachine($type);
 		return new Reference($m, $ref);

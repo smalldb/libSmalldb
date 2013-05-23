@@ -50,7 +50,7 @@ class Reference
 	/**
 	 * Create reference and initialize it with given primary key or other reference.
 	 */
-	public function __construct($machine, $ref = null)
+	public function __construct($machine, $ref)
 	{
 		$this->machine = $machine;
 
