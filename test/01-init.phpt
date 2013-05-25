@@ -6,11 +6,11 @@ State machine initialization - Hello world
 require(dirname(__FILE__).'/init.php');
 
 echo "Initialize backend ...\n";
-$smalldb = new SmallDb\SimpleBackend('foo');
+$smalldb = new SmallDb\StateMachine\SimpleBackend('foo');
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);
-$smalldb->addType('article', $article_json['info']['title'], '\SmallDb\ArrayMachine', $article_json['state_machine']);
+$smalldb->addType('article', $article_json['info']['title'], '\SmallDb\StateMachine\ArrayMachine', $article_json['state_machine']);
 
 echo "Known types:\n";
 foreach ($smalldb->getKnownTypes() as $t) {
@@ -43,7 +43,7 @@ Register machine type ...
 Known types:
 	article:
 		name: 'Article in web CMS'
-		class: '\\SmallDb\\ArrayMachine'
+		class: '\\SmallDb\\StateMachine\\ArrayMachine'
 		args: [array]
 
 Get null ref ...
@@ -61,7 +61,7 @@ Array
 
 )
 Create machine instantion - invoke initial transition ...
-Transition invoked: '' (ref = NULL) -> Smalldb\ArrayMachine::create(NULL) [new] -> 'writing' (ref = 0).
+Transition invoked: '' (ref = NULL) -> Smalldb\StateMachine\ArrayMachine::create(NULL) [new] -> 'writing' (ref = 0).
 Result state: 'writing'
 
 Available actions for the new ref:

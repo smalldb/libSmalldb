@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+namespace Smalldb\StateMachine;
 
 /**
  * Reference to one or more state machines. Allows you to invoke transitions in 

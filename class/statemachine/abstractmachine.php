@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+namespace Smalldb\StateMachine;
 
 /**
  * Implementation of the state machine. One instance of this class represents 

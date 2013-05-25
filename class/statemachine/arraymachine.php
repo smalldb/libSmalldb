@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+namespace Smalldb\StateMachine;
 
 /**
  * Simple testing machine implementation. Uses array to store all data.

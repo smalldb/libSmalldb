@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+namespace Smalldb\StateMachine;
 
 /**
  * Container and factory of all state machines. It creates state machines when
