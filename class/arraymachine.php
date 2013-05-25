@@ -41,19 +41,13 @@ class ArrayMachine extends AbstractMachine
 	protected $properties = array();
 
 
-	public function __construct(AbstractBackend $backend, $type, $machine_definition)
-	{
-		$this->states = $machine_definition['states'];
-		$this->actions = $machine_definition['actions'];
-		parent::__construct($backend, $type);
-	}
-
 	/**
 	 * Define state machine using $machine_definition.
 	 */
-	public function initializeMachine()
+	public function initializeMachine($args)
 	{
-		// done in constructor
+		$this->states  = $args['states'];
+		$this->actions = $args['actions'];
 	}
 
 

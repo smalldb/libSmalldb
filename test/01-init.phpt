@@ -6,16 +6,18 @@ State machine initialization - Hello world
 require(dirname(__FILE__).'/init.php');
 
 echo "Initialize backend ...\n";
-$smalldb = new SmallDb\ArrayBackend('foo');
+$smalldb = new SmallDb\SimpleBackend('foo');
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);
-$smalldb->addType('article', $article_json['info']['title'], $article_json['state_machine']);
+$smalldb->addType('article', $article_json['info']['title'], '\SmallDb\ArrayMachine', $article_json['state_machine']);
 
 echo "Known types:\n";
 foreach ($smalldb->getKnownTypes() as $t) {
-	$def = $smalldb->describeType($t);
-	echo "  - ", $t, ': ', $def['name'], "\n";
+	echo "\t", $t, ":\n";
+	foreach ($smalldb->describeType($t) as $k => $v) {
+		echo "\t\t", $k, ": ", is_array($v) ? (empty($v) ? '[empty array]' : '[array]') : (is_object($v) ? '{'.get_class($v).'}' : var_export($v)), "\n";
+	}
 }
 echo "\n";
 
@@ -39,7 +41,10 @@ print_r($ref->actions);
 Initialize backend ...
 Register machine type ...
 Known types:
-  - article: Article in web CMS
+	article:
+		name: 'Article in web CMS'
+		class: '\\SmallDb\\ArrayMachine'
+		args: [array]
 
 Get null ref ...
 Available actions for the null ref:

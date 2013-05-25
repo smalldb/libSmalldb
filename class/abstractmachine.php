@@ -77,19 +77,25 @@ abstract class AbstractMachine
 		)
 	); */
 
-	
-	public function __construct(AbstractBackend $backend, $type)
+
+	/**
+	 * Constructor. Machine gets reference to owning backend, name of its
+	 * type (under which is this machine registered in backend) and
+	 * optional array of additional configuration (passed directly
+	 * to initializeMachine method).
+	 */
+	public function __construct(AbstractBackend $backend, $type, $args = array())
 	{
 		$this->backend = $backend;
 		$this->machine_type = $type;
-		$this->initializeMachine();
+		$this->initializeMachine($args);
 	}
 
 
 	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	abstract protected function initializeMachine();
+	abstract protected function initializeMachine($args);
 
 
 	/**
@@ -116,6 +122,15 @@ abstract class AbstractMachine
 	public function getMachineType()
 	{
 		return $this->machine_type;
+	}
+
+
+	/**
+	 * If machine properties are cached, flush all cached data.
+	 */
+	public function flushCache()
+	{
+		// No cache
 	}
 
 

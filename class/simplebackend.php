@@ -31,28 +31,53 @@
 namespace Smalldb;
 
 /**
- * Simple testing backend which uses plain array to store all data. It loads 
- * state machine definitions from json files in specified directory.
+ * Simple and stupid backend which must be told about everything. Good enough 
+ * if configuration is loaded by some other part of application from config 
+ * files, but too dumb to scan database automatically.
  */
-class ArrayBackend extends AbstractBackend
+class SimpleBackend extends AbstractBackend
 {
 	private $known_types = array(
 	//	'foo' => array(
 	//		'name' => 'Foo',
-	//		'src'  => 'example/foo.json',
+	//		'class' => '\SomePlugin\FooMachine',
+	//		'args' => array(/* additional arguments passed to machine constructor */),
 	//	),
 	);
 
 
 	/**
-	 * Register new state machine type.
+	 * Register new state machine of type $type named $name, which is
+	 * instance of class $class. And when creating this machine, pass $args
+	 * to its constructor. Also additional meta-data can be attached using 
+	 * $description (will be merged with name, class and args).
 	 */
-	public function addType($type, $name, $machine_definition)
+	public function addType($type, $name, $class, $args = array(), $description = array())
 	{
-		$this->known_types[$type] = array(
-			'name' => $name,
-			'machine_def' => $machine_definition,
-		);
+		$this->known_types[$type] = array_merge($description, array(
+			'name'  => (string) $name,
+			'class' => (string) $class,
+			'args'  => (array)  $args,
+		));
+	}
+
+
+	/**
+	 * Load all types at once. Argument must be exactly the same as return
+	 * value of getKnownTypes method (array of arrays). Useful for loading
+	 * types from cache.
+	 */
+	public function addAllTypes($known_types)
+	{
+		if ($this->getCachedMachinesCount() > 0) {
+			throw new \RuntimeException('Cannot load all machine types after backend has been used (cache is not empty).');
+		}
+
+		if (!empty($this->known_types)) {
+			throw new \RuntimeException('Cannot load all machine types when there are some types defined already.');
+		}
+
+		$this->known_types = $known_types;
 	}
 
 
@@ -68,13 +93,15 @@ class ArrayBackend extends AbstractBackend
 	}
 
 
-	public function createMachine($type)
+	protected function createMachine($type)
 	{
 		if (array_key_exists($type, $this->known_types)) {
-			$machine_def = $this->known_types[$type]['machine_def'];
-			return new ArrayMachine($this, $type, $machine_def);
+			$t = $this->known_types[$type];
+			return new $t['class']($this, $type, $t['args']);
 		}
 	}
 
 }
+
+
 

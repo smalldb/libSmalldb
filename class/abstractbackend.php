@@ -31,7 +31,11 @@
 namespace Smalldb;
 
 /**
- * Container of all state machines. This is whereReferences come from.
+ * Container and factory of all state machines. It creates state machines when
+ * required and caches them for further use. Backend also knows what types of
+ * state machines can create and knows few useful details about them.
+ *
+ * This is where \Smalldb\References come from.
  */
 abstract class AbstractBackend
 {
@@ -55,10 +59,11 @@ abstract class AbstractBackend
 	public abstract function getKnownTypes();
 
 	/**
-	 * Describe given type. Intended as data source for user interface 
-	 * generators (menu, navigation, ...).
+	 * Describe given type without creating an instance of related state
+	 * machine. Intended as data source for user interface generators
+	 * (menu, navigation, ...).
 	 *
-	 * Returns machine description as propery-value pairs in array. There 
+	 * Returns machine description as propery-value pairs in array. There
 	 * are few well-known property names which should be used if possible.
 	 * Any unknown properties will be ignored.
 	 *
@@ -86,6 +91,16 @@ abstract class AbstractBackend
 	 * Returns descendant of AbstractMachine or null.
 	 */
 	protected abstract function createMachine($type);
+
+
+	/**
+	 * Get number of instantiated machines in cache. Useful for statistics
+	 * and check whether backend has not been used yet.
+	 */
+	public function getCachedMachinesCount()
+	{
+		return count($this->machine_type_cache);
+	}
 
 
 	/**
@@ -133,6 +148,18 @@ abstract class AbstractBackend
 		$m = $this->getMachine($type);
 		return new Reference($m, $ref);
 	}
+
+
+	/**
+	 * Flush caches of all machines
+	 */
+	public function flushCache()
+	{
+		foreach ($this->machine_type_cache as $t => $m) {
+			$m->flushCache();
+		}
+	}
+
 
 }
 
