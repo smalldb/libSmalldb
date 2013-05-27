@@ -126,6 +126,46 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Reflection: Get all states
+	 */
+	public function getAllMachineStates()
+	{
+		return array_keys($this->states);
+	}
+
+
+	/**
+	 * Reflection: Describe given machine state
+	 *
+	 * Returns state description in array or null.
+	 */
+	public function describeMachineState($state)
+	{
+		return @ $this->states[$state];
+	}
+
+
+	/**
+	 * Reflection: Get all actions (transitions)
+	 */
+	public function getAllMachineActions()
+	{
+		return array_keys($this->actions);
+	}
+
+
+	/**
+	 * Reflection: Describe given machine action (transition)
+	 *
+	 * Returns action description in array or null.
+	 */
+	public function describeMachineAction($action)
+	{
+		return @ $this->actions[$action];
+	}
+
+
+	/**
 	 * If machine properties are cached, flush all cached data.
 	 */
 	public function flushCache()

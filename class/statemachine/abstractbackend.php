@@ -121,10 +121,9 @@ abstract class AbstractBackend
 			return $this->machine_type_cache[$type];
 		} else {
 			$m = $this->createMachine($type);
-			if ($m === null) {
-				throw new \RuntimeException('Machine of type "'.$type.'" cannot be created.');
+			if ($m !== null) {
+				$this->machine_type_cache[$type] = $m;
 			}
-			$this->machine_type_cache[$type] = $m;
 			return $m;
 		}
 	}

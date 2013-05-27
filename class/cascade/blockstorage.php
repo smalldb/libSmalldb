@@ -28,18 +28,13 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb;
+namespace Smalldb\Cascade;
 
 class BlockStorage implements \IBlockStorage
 {
 	protected $backend;
 	protected $alias;
-	protected $known_types;
 
-	private $block_classes = array(
-		// action => block class
-		'describe' => '\Smalldb\DescribeBlock',
-	);
 
 	/**
 	 * Constructor will get options from core.ini.php file.
@@ -50,8 +45,6 @@ class BlockStorage implements \IBlockStorage
 
 		$this->alias = $alias;
 		$this->backend = new $backend_class($alias);
-
-		$this->known_types = array_flip($this->backend->getKnownTypes());
 	}
 
 
@@ -60,7 +53,7 @@ class BlockStorage implements \IBlockStorage
 	 * create blocks. When creating or modifying block, first storage that 
 	 * returns true will be used.
 	 */
-	public function is_read_only()
+	public function isReadOnly()
 	{
 		return true;
 	}
@@ -71,28 +64,38 @@ class BlockStorage implements \IBlockStorage
 	 * No further initialisation here, that is job for cascade controller. 
 	 * Returns created instance or false.
 	 */
-	public function create_block_instance ($block)
+	public function createBlockInstance ($block)
 	{
+		// Is backend prepared ?
 		if ($this->backend === null) {
-			return false;
+			throw new \RuntimeException('Backend is not initialized.');
 		}
 
 		$type = dirname($block);
 		$action = basename($block);
 
-		// Backend block
-		if ($type == $this->alias && $action == 'backend') {
-			return new BackendBlock($this->backend);
+		// Backend related blocks
+		if ($type == $this->alias) {
+			switch ($action) {
+				case 'init':
+					return new InitBlock($this->backend);
+			}
 		}
 
-		// Check if requested type exists
-		if (!array_key_exists($type, $this->known_types)) {
+		// Machine related blocks
+		$machine = $this->backend->getMachine($type);
+
+		// Ignore requests to other unknown types
+		if ($machine === null) {
 			return false;
 		}
 
-		// Create requested block
-		if (array_key_exists($action, $this->block_classes)) {
-			return new $this->block_classes[$action]($type);
+		// Get action description
+		$action_desc = $machine->describeMachineAction($action);
+
+		// Create block if action exists
+		if ($action_desc !== null) {
+			return new ActionBlock($machine, $action, $action_desc);
 		}
 
 		return false;
@@ -102,7 +105,7 @@ class BlockStorage implements \IBlockStorage
 	/**
 	 * Load block configuration. Returns false if block is not found.
 	 */
-	public function load_block ($block)
+	public function loadBlock ($block)
 	{
 		return false;
 	}
@@ -111,7 +114,7 @@ class BlockStorage implements \IBlockStorage
 	/**
 	 * Store block configuration.
 	 */
-	public function store_block ($block, $config)
+	public function storeBlock ($block, $config)
 	{
 		return false;
 	}
@@ -120,7 +123,7 @@ class BlockStorage implements \IBlockStorage
 	/**
 	 * Delete block configuration.
 	 */
-	public function delete_block ($block)
+	public function deleteBlock ($block)
 	{
 		return false;
 	}
@@ -129,7 +132,7 @@ class BlockStorage implements \IBlockStorage
 	/**
 	 * Get time (unix timestamp) of last modification of the block.
 	 */
-	public function block_mtime ($block)
+	public function blockMTime ($block)
 	{
 		return 0;
 	}
@@ -138,19 +141,25 @@ class BlockStorage implements \IBlockStorage
 	/**
 	 * List all available blocks in this storage.
 	 */
-	public function get_known_blocks (& $blocks = array())
+	public function getKnownBlocks (& $blocks = array())
 	{
 		if ($this->backend === null) {
-			return;
+			throw new \RuntimeException('Backend is not initialized.');
 		}
 
-		$blocks[$this->alias][] = $this->alias.'/backend';
+		// Backend related blocks
+		$blocks[$this->alias][] = $this->alias.'/init';
 
-		foreach ($this->known_types as $type => $x) {
-			foreach ($this->block_classes as $action => $class) {
-				$blocks[$this->alias][] = $type.'/'.$action;
+		// State machine related blocks
+		foreach ($this->backend->getKnownTypes() as $type) {
+			$machine = $this->backend->getMachine($type);
+			$actions = $machine->getAllMachineActions();
+			foreach ($actions as $a) {
+				$blocks[$this->alias][] = $type.'/'.$a;
 			}
 		}
+
+		return $blocks;
 	}
 
 }

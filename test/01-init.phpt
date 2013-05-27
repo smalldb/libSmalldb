@@ -10,7 +10,7 @@ $smalldb = new SmallDb\StateMachine\SimpleBackend('foo');
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);
-$smalldb->addType('article', $article_json['info']['title'], '\SmallDb\StateMachine\ArrayMachine', $article_json['state_machine']);
+$smalldb->addType('article', '\SmallDb\StateMachine\ArrayMachine', $article_json['state_machine'], array('name' => $article_json['info']['title']));
 
 echo "Known types:\n";
 foreach ($smalldb->getKnownTypes() as $t) {

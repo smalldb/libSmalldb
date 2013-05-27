@@ -52,10 +52,9 @@ class SimpleBackend extends AbstractBackend
 	 * to its constructor. Also additional meta-data can be attached using 
 	 * $description (will be merged with name, class and args).
 	 */
-	public function addType($type, $name, $class, $args = array(), $description = array())
+	public function addType($type, $class, $args = array(), $description = array())
 	{
 		$this->known_types[$type] = array_merge($description, array(
-			'name'  => (string) $name,
 			'class' => (string) $class,
 			'args'  => (array)  $args,
 		));
@@ -95,9 +94,11 @@ class SimpleBackend extends AbstractBackend
 
 	protected function createMachine($type)
 	{
-		if (array_key_exists($type, $this->known_types)) {
+		if (isset($this->known_types[$type])) {
 			$t = $this->known_types[$type];
 			return new $t['class']($this, $type, $t['args']);
+		} else {
+			return null;
 		}
 	}
 
