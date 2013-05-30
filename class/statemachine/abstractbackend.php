@@ -150,6 +150,17 @@ abstract class AbstractBackend
 
 
 	/**
+	 * Get reference to non-existent state machine of given type. You may 
+	 * want to invoke 'create' or similar transition using this reference.
+	 */
+	public function nullRef($type)
+	{
+		$m = $this->getMachine($type);
+		return new Reference($m, null);
+	}
+
+
+	/**
 	 * Flush caches of all machines
 	 */
 	public function flushCache()

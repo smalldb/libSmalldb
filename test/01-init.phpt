@@ -22,7 +22,7 @@ foreach ($smalldb->getKnownTypes() as $t) {
 echo "\n";
 
 echo "Get null ref ...\n";
-$null_ref = $smalldb->ref('article', null);
+$null_ref = $smalldb->nullRef('article');
 
 echo "Available actions for the null ref:\n";
 print_r($null_ref->actions);
