@@ -22,7 +22,7 @@
 		},
 		"actions": {
 			"create": {
-				"returns": "new_ref",
+				"returns": "new_id",
 				"transitions": {
 					"": {
 						"targets": [ "writing" ]

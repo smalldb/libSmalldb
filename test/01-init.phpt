@@ -31,6 +31,7 @@ echo "Create machine instantion - invoke initial transition ...\n";
 $ref = $null_ref->create();
 
 echo "Result state: ", var_export($ref->state), "\n";
+echo "Result machine type: ", var_export($ref->machineType), "\n";
 
 echo "\n";
 echo "Available actions for the new ref:\n";
@@ -61,8 +62,9 @@ Array
 
 )
 Create machine instantion - invoke initial transition ...
-Transition invoked: '' (ref = NULL) -> Smalldb\StateMachine\ArrayMachine::create(NULL) [new] -> 'writing' (ref = 0).
+Transition invoked: '' (id = NULL) -> Smalldb\StateMachine\ArrayMachine::create(NULL) [new] -> 'writing' (id = 0).
 Result state: 'writing'
+Result machine type: 'article'
 
 Available actions for the new ref:
 Array

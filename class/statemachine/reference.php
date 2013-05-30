@@ -33,32 +33,32 @@ namespace Smalldb\StateMachine;
 /**
  * Reference to one or more state machines. Allows you to invoke transitions in 
  * the easy way by calling methods on this reference object. This is syntactic 
- * sugar only, nothing really happen here.
+ * sugar only, nothing really happens here.
+ *
+ * $id is per machine type unique identifier. It is always a single literal
+ * or an array of literals for compound primary keys.
  *
  * Method call on this class invokes the transition.
  *
  * Read-only properties:
- *   - state = $machine->getState($ref);
- *   - properties = $machine->getProperties($ref);
+ *   - state = $machine->getState($id);
+ *   - properties = $machine->getProperties($id);
+ *   - ... see __get().
  */
 class Reference 
 {
-	protected $ref;
 	protected $machine;
+	protected $id;
 
 
 	/**
-	 * Create reference and initialize it with given primary key or other reference.
+	 * Create reference and initialize it with given ID. To copy
+	 * a reference use clone keyword.
 	 */
-	public function __construct($machine, $ref)
+	public function __construct(AbstractMachine $machine, $id)
 	{
 		$this->machine = $machine;
-
-		if ($ref instanceof self) {
-			$this->ref = $ref->ref;
-		} else {
-			$this->ref = $ref;
-		}
+		$this->id = $id;
 	}
 
 
@@ -68,16 +68,18 @@ class Reference
 	public function __get($key)
 	{
 		switch ($key) {
-			case 'ref':
-				return $this->ref;
+			case 'id':
+				return $this->id;
 			case 'machine':
 				return $this->machine;
+			case 'machineType':
+				return $this->machine->getMachineType();
 			case 'state':
-				return $this->machine->getState($this->ref);
+				return $this->machine->getState($this->id);
 			case 'properties':
-				return $this->machine->getProperties($this->ref);
+				return $this->machine->getProperties($this->id);
 			case 'actions':
-				return $this->machine->getAvailableTransitions($this->ref);
+				return $this->machine->getAvailableTransitions($this->id);
 		}
 	}
 
@@ -87,7 +89,16 @@ class Reference
 	 */
 	public function __call($name, $arguments)
 	{
-		return $this->machine->invokeTransition($this->ref, $name, $arguments);
+		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
+
+		switch ($returns) {
+			case AbstractMachine::RETURNS_VALUE:
+				return $r;
+			case AbstractMachine::RETURNS_NEW_ID:
+				return new self($this->machine, $r);
+			default:
+				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+		}
 	}
 
 	// todo: what about array_map, reduce, walk, ... ?

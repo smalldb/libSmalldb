@@ -54,7 +54,7 @@ class ArrayMachine extends AbstractMachine
 	/**
 	 * Returns true if user has required permissions.
 	 */
-	protected function checkPermissions($permissions, $ref)
+	protected function checkPermissions($permissions, $id)
 	{
 		return true;
 	}
@@ -63,12 +63,12 @@ class ArrayMachine extends AbstractMachine
 	/**
 	 * Get current state of state machine.
 	 */
-	public function getState($ref)
+	public function getState($id)
 	{
-		if ($ref === null) {
+		if ($id === null) {
 			return '';
 		} else {
-			return @ $this->properties[$ref]['state'];
+			return @ $this->properties[$id]['state'];
 		}
 	}
 
@@ -76,9 +76,9 @@ class ArrayMachine extends AbstractMachine
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	public function getProperties($ref)
+	public function getProperties($id)
 	{
-		return @ $this->properties[$ref];
+		return @ $this->properties[$id];
 	}
 
 
@@ -87,26 +87,26 @@ class ArrayMachine extends AbstractMachine
 	 */
 	public function __call($method, $args)
 	{
-		$ref = $args[0];
-		$state = $this->getState($ref);
+		$id = $args[0];
+		$state = $this->getState($id);
 
-		echo "Transition invoked: ", var_export($state), " (ref = ", var_export($ref), ") -> ",
+		echo "Transition invoked: ", var_export($state), " (id = ", var_export($id), ") -> ",
 			get_class($this), "::", $method, "(", join(', ', array_map('var_export', $args)), ")";
 
 		$expected_states = $this->actions[$method]['transitions'][$state]['targets'];
 
 		// create new machine
-		if ($ref === null) {
-			$ref = count($this->properties);
+		if ($id === null) {
+			$id = count($this->properties);
 			echo " [new]";
 		}
 
-		$this->properties[$ref]['state'] = $expected_states[0];
+		$this->properties[$id]['state'] = $expected_states[0];
 
-		$new_state = $this->getState($ref);
-		echo " -> ", var_export($new_state), " (ref = ", var_export($ref), ").\n";
+		$new_state = $this->getState($id);
+		echo " -> ", var_export($new_state), " (id = ", var_export($id), ").\n";
 
-		return $ref;
+		return $id;
 	}
 }
 

@@ -58,6 +58,7 @@ abstract class AbstractBackend
 	 */
 	public abstract function getKnownTypes();
 
+
 	/**
 	 * Describe given type without creating an instance of related state
 	 * machine. Intended as data source for user interface generators
@@ -78,6 +79,29 @@ abstract class AbstractBackend
 	 * )
 	 */
 	public abstract function describeType($type);
+
+
+	/**
+	 * Infer type of referenced machine type.
+	 *
+	 * Returns true if decoding is successful, $type and $id are set to 
+	 * decoded values. Otherwise returns false.
+	 *
+	 * Since references are global identifier, this method identifies the 
+	 * type of referenced machine. In simple cases it maps part of ref to 
+	 * type, in more complex scenarios it may ask database.
+	 *
+	 * In simple applications ref consists of pair $type and $id, where $id 
+	 * is uniquie within given $type.
+	 *
+	 * $ref is array of arguments passed to AbstractBackend::ref() or 
+	 * single literal if only one argument was passed.
+	 *
+	 * $type is string.
+	 *
+	 * $id is literal or array of literals (in case of compound key).
+	 */
+	public abstract function inferMachineType($ref, & $type, & $id);
 
 
 	/**
@@ -135,17 +159,58 @@ abstract class AbstractBackend
 	public function describe($type)
 	{
 		$m = $this->getMachine($type);
-
 	}
 
 
 	/**
 	 * Get reference to state machine of given type and id.
+	 *
+	 * If the first argument is instance of Reference, this makes copy of it.
+	 * If the first argument is an array, it will be used instead of all arguments.
+	 *
+	 * These calls are equivalent:
+	 *   $ref = $this->ref('item', 1, 2, 3);
+	 *   $ref = $this->ref(array('item', 1, 2, 3));
+	 *   $ref = $this->ref($this->ref('item', 1, 2, 3)));
 	 */
-	public function ref($type, $ref)
+	public function ref($arg1 /* ... */)
 	{
+		$argc = func_num_args();
+
+		// Clone if Reference is given
+		if ($arg1 instanceof Reference) {
+			if ($argc != 1) {
+				throw new \InvalidArgumentException('The first argument is Reference and more than one argument given.');
+			}
+			return clone $arg1;
+		}
+
+		// Get arguments
+		if (is_array($arg1)) {
+			if ($argc != 1) {
+				throw new \InvalidArgumentException('The first argument is array and more than one argument given.');
+			}
+			$args = $arg1;
+			$argc = count($arg1);
+		} else if ($argc == 1) {
+			$args = $arg1;
+		} else {
+			$args = func_get_args();
+		}
+
+		// Flatten arrays
+		if ($argc == 1 && is_array($args)) {
+			list($args) = $args;
+		}
+
+		// Decode arguments to machine type and machine-specific ID
+		if (!$this->inferMachineType($args, $type, $id)) {
+			throw new \InvalidArgumentException('Invalid reference');
+		}
+
+		// Create reference
 		$m = $this->getMachine($type);
-		return new Reference($m, $ref);
+		return new Reference($m, $id);
 	}
 
 

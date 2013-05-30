@@ -34,6 +34,9 @@ namespace Smalldb\StateMachine;
  * Simple and stupid backend which must be told about everything. Good enough 
  * if configuration is loaded by some other part of application from config 
  * files, but too dumb to scan database automatically.
+ *
+ * References are expected to be a pair of $type and $id, where $id is integer 
+ * or string.
  */
 class SimpleBackend extends AbstractBackend
 {
@@ -89,6 +92,24 @@ class SimpleBackend extends AbstractBackend
 	public function describeType($type)
 	{
 		return $this->known_types[$type];
+	}
+
+
+	public function inferMachineType($ref, & $type, & $id)
+	{
+		if (!is_array($ref) || count($ref) != 2) {
+			throw new \InvalidArgumentException('Invalid reference');
+		}
+
+		list($type, $id) = $ref;
+
+		if (isset($this->known_types[$type])) {
+			return true;
+		} else {
+			$type = null;
+			$id = null;
+			return false;
+		}
 	}
 
 

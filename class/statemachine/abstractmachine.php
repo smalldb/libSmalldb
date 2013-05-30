@@ -33,9 +33,22 @@ namespace Smalldb\StateMachine;
 /**
  * Implementation of the state machine. One instance of this class represents 
  * all machines of this type.
+ *
+ * State machine always work with ID, never with Reference. References are 
+ * decoded within backend.
  */
 abstract class AbstractMachine
 {
+	/**
+	 * Return value of invoked transition is just some value.
+	 */
+	const RETURNS_VALUE = null;
+
+	/**
+	 * Return value of invoked transition is new ID of the state machine.
+	 */
+	const RETURNS_NEW_ID = 'new_id';
+
 	/**
 	 * Backend, where all machines are stored.
 	 */
@@ -101,19 +114,19 @@ abstract class AbstractMachine
 	/**
 	 * Returns true if user has required permissions.
 	 */
-	abstract protected function checkPermissions($permissions, $ref);
+	abstract protected function checkPermissions($permissions, $id);
 
 
 	/**
 	 * Get current state of state machine.
 	 */
-	abstract public function getState($ref);
+	abstract public function getState($id);
 
 
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	abstract public function getProperties($ref);
+	abstract public function getProperties($id);
 
 
 	/**
@@ -166,6 +179,15 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Get backend which owns this machine.
+	 */
+	public function getBackend()
+	{
+		return $this->backend;
+	}
+
+
+	/**
 	 * If machine properties are cached, flush all cached data.
 	 */
 	public function flushCache()
@@ -175,18 +197,18 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get list of all available actions for $ref.
+	 * Get list of all available actions for state machine instance identified by $id.
 	 */
-	public function getAvailableTransitions($ref)
+	public function getAvailableTransitions($id)
 	{
-		$state = $this->getState($ref);
+		$state = $this->getState($id);
 
 		$available_transitions = array();
 
 		foreach ($this->actions as $a => $action) {
 			$tr = @ $action['transitions'][$state];
 			if ($tr !== null) {
-				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $ref)) {
+				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id)) {
 					$available_transitions[$a] = $tr;
 				}
 			}
@@ -200,9 +222,9 @@ abstract class AbstractMachine
 	 * Invoke state machine transition. State machine is not instance of 
 	 * this class, but it is represented by record in database.
 	 */
-	public function invokeTransition($ref, $transition_name, $args)
+	public function invokeTransition($id, $transition_name, $args, & $returns)
 	{
-		$state = $this->getState($ref);
+		$state = $this->getState($id);
 
 		// get action
 		$action = @ $this->actions[$transition_name];
@@ -218,25 +240,32 @@ abstract class AbstractMachine
 
 		// check permissions
 		$perms = @ $transition['permissions'];
-		if (!$this->checkPermissions($perms, $ref)) {
+		if (!$this->checkPermissions($perms, $id)) {
 			throw new \Exception('Access denied to transition "'.$transition_name.'".');
 		}
 
 		// get method
 		$method = empty($transition['method']) ? $transition_name : $transition['method'];
 
-		// invoke method -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
-		array_unshift($args, $ref);
-		$r = call_user_func_array(array($this, $method), $args);
+		// invoke method -- the first argument is $id, rest are $args as passed to $ref->action($args...).
+		array_unshift($args, $id);
+		$ret = call_user_func_array(array($this, $method), $args);
 
 		// interpret return value
-		if (@$action['returns'] === 'new_ref') {
-			$ref = $r;
-			$r = new Reference($this, $ref);
+		$returns = @ $action['returns'];
+		switch ($returns) {
+			case self::RETURNS_VALUE:
+				// nop, just pass it back
+				break;
+			case self::RETURNS_NEW_ID:
+				$id = $ret;
+				break;
+			default:
+				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
 		}
 
 		// check result using assertion function
-		$new_state = $this->getState($ref);
+		$new_state = $this->getState($id);
 		$target_states = $transition['targets'];
 		if (!is_array($target_states)) {
 			throw new \Exception('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
@@ -247,7 +276,7 @@ abstract class AbstractMachine
 				.'Expected states: '.join(', ', $target_states).'.');
 		}
 
-		return $r;
+		return $ret;
 	}
 
 
