@@ -41,10 +41,8 @@ class BlockStorage implements \IBlockStorage
 	 */
 	public function __construct($storage_opts)
 	{
-		list($alias, $backend_class) = explode(':', $storage_opts);
-
-		$this->alias = $alias;
-		$this->backend = new $backend_class($alias);
+		$this->alias = $storage_opts['alias'];
+		$this->backend = new $storage_opts['backend_class']($this->alias);
 	}
 
 

@@ -94,14 +94,14 @@ abstract class AbstractBackend
 	 * In simple applications ref consists of pair $type and $id, where $id 
 	 * is uniquie within given $type.
 	 *
-	 * $ref is array of arguments passed to AbstractBackend::ref() or 
+	 * $aref is array of arguments passed to AbstractBackend::ref() or 
 	 * single literal if only one argument was passed.
 	 *
 	 * $type is string.
 	 *
 	 * $id is literal or array of literals (in case of compound key).
 	 */
-	public abstract function inferMachineType($ref, & $type, & $id);
+	public abstract function inferMachineType($aref, & $type, & $id);
 
 
 	/**
