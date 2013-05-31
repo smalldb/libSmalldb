@@ -35,6 +35,10 @@ class BlockStorage implements \IBlockStorage
 	protected $backend;
 	protected $alias;
 
+	protected $backend_blocks = array(
+		'init' => 'InitBlock',
+		'show_diagram' => 'ShowDiagramBlock',
+	);
 
 	/**
 	 * Constructor will get options from core.ini.php file.
@@ -74,9 +78,12 @@ class BlockStorage implements \IBlockStorage
 
 		// Backend related blocks
 		if ($type == $this->alias) {
-			switch ($action) {
-				case 'init':
-					return new InitBlock($this->backend);
+			$c = @ $this->backend_blocks[$action];
+			if ($c !== null) {
+				$fc = __NAMESPACE__.'\\'.$c;
+				return new $fc($this->backend);
+			} else {
+				return false;
 			}
 		}
 
@@ -146,7 +153,9 @@ class BlockStorage implements \IBlockStorage
 		}
 
 		// Backend related blocks
-		$blocks[$this->alias][] = $this->alias.'/init';
+		foreach ($this->backend_blocks as $block => $class) {
+			$blocks[$this->alias][] = $this->alias.'/'.$block;
+		}
 
 		// State machine related blocks
 		foreach ($this->backend->getKnownTypes() as $type) {
