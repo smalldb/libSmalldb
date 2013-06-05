@@ -130,6 +130,18 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Reflection: Describe ID (primary key).
+	 *
+	 * Returns array of all parts of the primary key and its
+	 * types (as strings). If primary key is not compound, something
+	 * like array('id' => 'string') is returned.
+	 *
+	 * Order of the parts may be mandatory.
+	 */
+	abstract public function describeId();
+
+
+	/**
 	 * Get type of this machine.
 	 */
 	public function getMachineType()
@@ -160,10 +172,19 @@ abstract class AbstractMachine
 
 	/**
 	 * Reflection: Get all actions (transitions)
+	 *
+	 * List of actions can be filtered by section defined in action 
+	 * configuration. For example $this->getAllMachineStates('block') will 
+	 * return only actions which have 'block' configuration defined.
 	 */
-	public function getAllMachineActions()
+	public function getAllMachineActions($having_section = null)
 	{
-		return array_keys($this->actions);
+		if ($having_section === null) {
+			return array_keys($this->actions);
+		} else {
+			return array_keys(array_filter($this->actions,
+				function($a) use ($having_section) { return isset($a[$having_section]); }));
+		}
 	}
 
 

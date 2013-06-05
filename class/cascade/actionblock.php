@@ -30,6 +30,13 @@
 
 namespace Smalldb\Cascade;
 
+use Smalldb\Machine\AbstractMachine;
+
+/**
+ * Universal implemntation of state machine action invocation. Inputs are 
+ * passed as arguments to the transition, returned value is set on one or more 
+ * outputs.
+ */
 class ActionBlock extends \Block
 {
 
@@ -42,6 +49,11 @@ class ActionBlock extends \Block
 		'done' => true,
 	);
 
+	const force_exec = true;
+
+	protected $machine;
+	protected $action;
+	protected $output_values;
 
 	/**
 	 * Setup block to act as expected. Configuration is done by Smalldb 
@@ -49,13 +61,71 @@ class ActionBlock extends \Block
 	 */
 	public function __construct($machine, $action, $action_desc)
 	{
-		// TODO
+		$this->machine = $machine;
+		$this->action = $action;
+
+		// get block description (block is not created unless this is defined)
+		$block_desc = $action_desc['block'];
+
+		// define inputs
+		if (!is_array($block_desc['inputs'])) {
+			throw new \RuntimeException('Inputs are not specified in block configuration.');
+		}
+		$this->inputs = $block_desc['inputs'];
+
+		// define outputs
+		if (!is_array($block_desc['outputs'])) {
+			throw new \RuntimeException('Outputs are not specified in block configuration.');
+		}
+		$this->output_values = $block_desc['outputs'];
+		$this->outputs = array_combine(array_keys($this->output_values), array_pad(array(), count($this->output_values), true));
+		$this->outputs['done'] = true;
 	}
 
 
 	public function main()
 	{
-		// TODO
+		$args = $this->inAll();
+
+		// get ID if specified
+		if (array_key_exists('id', $args)) {
+			$id = $args['id'];
+			unset($args['id']);
+		} else {
+			$id = null;
+		}
+
+		// invoke transition
+		// TODO: Handle exceptions
+		$result = $this->machine->invokeTransition($id, $action, $args, $returns);
+
+		// interpret return value
+		switch ($returns) {
+			case AbstractMachine::RETURNS_VALUE:
+				break;
+			case AbstractMachine::RETURNS_NEW_ID:
+				$id = $result;
+			default:
+				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+		}
+
+		// set outputs
+		foreach ($this->output_values as $output => $out_value) {
+			switch ($out_value) {
+				case 'id':
+					$this->out($output, $id);
+					break;
+				case 'return_value':
+					$this->out($output, $result);
+					break;
+				case 'properties':
+					$this->out($output, $this->machine->getProperties($id));
+					break;
+				case 'state':
+					$this->out($output, $this->machine->getState($id));
+					break;
+			}
+		}
 
 		$this->out('done', true);
 	}

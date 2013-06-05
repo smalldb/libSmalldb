@@ -99,8 +99,13 @@ class BlockStorage implements \IBlockStorage
 		$action_desc = $machine->describeMachineAction($action);
 
 		// Create block if action exists
-		if ($action_desc !== null) {
-			return new ActionBlock($machine, $action, $action_desc);
+		if ($action_desc !== null && isset($action_desc['block'])) {
+			$block_class = @ $action_desc['block']['class'];
+			if ($block_class !== null) {
+				return new $block_class($machine, $action, $action_desc);
+			} else {
+				return new ActionBlock($machine, $action, $action_desc);
+			}
 		}
 
 		return false;
@@ -160,7 +165,7 @@ class BlockStorage implements \IBlockStorage
 		// State machine related blocks
 		foreach ($this->backend->getKnownTypes() as $type) {
 			$machine = $this->backend->getMachine($type);
-			$actions = $machine->getAllMachineActions();
+			$actions = $machine->getAllMachineActions('block');
 			foreach ($actions as $a) {
 				$blocks[$this->alias][] = $type.'/'.$a;
 			}

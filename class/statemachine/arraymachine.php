@@ -52,6 +52,15 @@ class ArrayMachine extends AbstractMachine
 
 
 	/**
+	 * Reflection: Describe ID (primary key).
+	 */
+	public function describeId()
+	{
+		return array('id' => 'string');
+	}
+
+
+	/**
 	 * Returns true if user has required permissions.
 	 */
 	protected function checkPermissions($permissions, $id)

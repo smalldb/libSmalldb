@@ -39,5 +39,20 @@ level = "2"
 text = "Article"
 slot_weight = "40"
 
+[block:create]
+.block = "item/create"
+.x = 376
+.y = 35
+
+[block:delete]
+.block = "item/delete"
+.x = 377
+.y = 207
+
+[block:edit]
+.block = "item/edit"
+.x = 376
+.y = 114
+
 
 ; vim:filetype=dosini:
