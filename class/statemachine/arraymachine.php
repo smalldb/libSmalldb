@@ -48,6 +48,7 @@ class ArrayMachine extends AbstractMachine
 	{
 		$this->states  = $args['states'];
 		$this->actions = $args['actions'];
+		$this->state_groups = (array) @ $args['state_groups'];
 	}
 
 

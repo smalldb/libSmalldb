@@ -64,11 +64,25 @@ abstract class AbstractMachine
 	 */
 	protected $states; /* = array(
 		'state_name' => array(
-			'label' => 'Human readable name (short)',
-			'description' => 'Human readable description (sentence or two).',
+			'label' => _('Human readable name (short)'),
+			'description' => _('Human readable description (sentence or two).'),
+			'group' => 'state_group_name',	// See $state_groups.
 			'color' => '#eeeeee',		// 6 digit hex code (Graphviz and CSS compatible) [optional]
 		),
 		...
+	); */
+
+	/**
+	 * State groups. This state machine is flat -- no sub-states. To make 
+	 * diagrams easier to read, this allows to group relevant states 
+	 * together. This has no influence on the behaviour.
+	 */
+	protected $state_groups; /* = array(
+		'group_name' => array(
+			'label' => _('Human readable name (short)'),
+			'color' => '#eeeeee',		// 6 digit hex code (Graphviz and CSS compatible) [optional]
+			'groups' => array( ... nested state groups ... ),
+		),
 	); */
 
 	/**
@@ -302,6 +316,15 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Escape string for use as dot identifier.
+	 */
+	private function escapeDotIdentifier($str)
+	{
+		return preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
+	}
+
+
+	/**
 	 * Export state machine to Graphviz source code.
 	 */
 	public function exportDot()
@@ -315,16 +338,16 @@ abstract class AbstractMachine
 			"# Use \"dot -Tpng this-file.dot -o this-file.png\" to compile.\n",
 			"#\n",
 			"digraph structs {\n",
-			"	rankdir = LR;\n",
+			"	rankdir = TB;\n",
 			"	margin = 0;\n",
 			"	bgcolor = transparent;\n",
 			"	edge [ arrowtail=none, arrowhead=normal, arrowsize=0.6, fontsize=8 ];\n",
 			"	node [ shape=box, fontsize=9, style=\"rounded,filled\", fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
-			"	graph [ shape=none, color=blueviolet, fontcolor=blueviolet, fontsize=9, fontname=\"sans\" ];\n",
+			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
 			"\n";
 
 		// Start state
-		echo "\t", "BEGIN [\n",
+		echo "\t", "BEGIN [",
 			"label = \"\",",
 			"shape = circle,",
 			"color = black,",
@@ -336,13 +359,22 @@ abstract class AbstractMachine
 
 		// States
 		echo "\t", "node [ shape=ellipse, fontsize=9, style=\"filled\", fontname=\"sans\", fillcolor=\"#eeeeee\", penwidth=2 ];\n";
+		$group_content = array();
 		foreach ($this->states as $s => $state) {
-			echo "\t", "s_", $s, " [ label=\"", addcslashes(empty($state['label']) ? $s : $s['label'], '"'), "\"";
+			echo "\t", "s_", $this->escapeDotIdentifier($s),
+				" [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
 			if (!empty($state['color'])) {
 				echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
 			}
 			echo " ];\n";
+
+			if (isset($state['group'])) {
+				$group_content[$state['group']][] = $s;
+			}
 		}
+
+		// State groups
+		$this->exportDotRenderGroups($this->state_groups, $group_content);
 
 		$have_final_state = false;
 		$missing_states = array();
@@ -350,12 +382,12 @@ abstract class AbstractMachine
 		// Transitions
 		$used_actions = array();
 		foreach ($this->actions as $a => $action) {
-			$a_a = 'a_'.$a;
+			$a_a = 'a_'.$this->escapeDotIdentifier($a);
 			foreach ($action['transitions'] as $src => $transition) {
 				if ($src === null || $src === '') {
 					$s_src = 'BEGIN';
 				} else {
-					$s_src = 's_'.$src;
+					$s_src = 's_'.$this->escapeDotIdentifier($src);
 					if (!array_key_exists($src, $this->states)) {
 						$missing_states[$src] = true;
 					}
@@ -365,13 +397,17 @@ abstract class AbstractMachine
 						$s_dst = 'END';
 						$have_final_state = true;
 					} else {
-						$s_dst = 's_'.$dst;
+						$s_dst = 's_'.$this->escapeDotIdentifier($dst);
 						if (!array_key_exists($dst, $this->states)) {
 							$missing_states[$dst] = true;
 						}
 					}
-					echo "\t", $s_src, " -> ", $s_dst,
-						" [ label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\" ];\n";
+					echo "\t", $s_src, " -> ", $s_dst, " [ ";
+					echo "label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\"";
+					if (isset($transition['weight'])) {
+						echo ", weight=", (int) $transition['weight'];
+					}
+					echo " ];\n";
 				}
 			}
 		}
@@ -379,7 +415,7 @@ abstract class AbstractMachine
 
 		// Missing states
 		foreach ($missing_states as $s => $state) {
-			echo "\t", "s_", $s, " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
+			echo "\t", "s_", $this->escapeDotIdentifier($s), " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
 		}
 
 		// Final state
@@ -400,6 +436,34 @@ abstract class AbstractMachine
 		echo "}\n";
 
 		return ob_get_clean();
+	}
+
+
+	/**
+	 * Recursively render groups in state machine diagram.
+	 */
+	private function exportDotRenderGroups($groups, $group_content, $indent = "\t") {
+		foreach ($groups as $g => $group) {
+			echo $indent, "subgraph cluster_", $this->escapeDotIdentifier($g), " {\n";
+			if (isset($group['label'])) {
+				echo $indent, "\t", "label = \"", addcslashes($group['label'], '"'), "\";\n";
+			}
+			if (!empty($group['color'])) {
+				echo $indent, "\t", "color=\"", addcslashes($group['color'], '"'), "\";\n";
+				echo $indent, "\t", "fontcolor=\"", addcslashes($group['color'], '"'), "\";\n";
+			} else {
+				// This cannot be defined globally, since nested groups inherit the settings.
+				echo $indent, "\t", "color=\"#666666\";\n";
+				echo $indent, "\t", "fontcolor=\"#666666\";\n";
+			}
+			foreach ($group_content[$g] as $s) {
+				echo $indent, "\t", "s_", $this->escapeDotIdentifier($s), ";\n";
+			}
+			if (isset($group['groups'])) {
+				$this->exportDotRenderGroups($group['groups'], $group_content, "\t".$indent);
+			}
+			echo $indent, "}\n"; 
+		}
 	}
 
 }
