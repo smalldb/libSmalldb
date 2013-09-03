@@ -34,9 +34,63 @@ spl_autoload_register(function($class) {
         @ list($head, $tail) = explode("\\", $lc_class, 2);
 
 	if ($head == 'smalldb') {
-		require($dir.str_replace('\\', '/', $tail).'.php');
+		include($dir.str_replace('\\', '/', $tail).'.php');
 	}
 });
 
 
+/**
+ * Print SQL result in a nice table
+ */
+function print_table($data)
+{
+	$col_width = array();
+
+	// pre-calculate column width
+	foreach ($data as $row) {
+		foreach ($row as $col => $value) {
+			$col_width[$col] = max(@$col_width[$col], mb_strlen(var_export($value, true)));
+		}
+	}
+
+	// include key width
+	foreach ($col_width as $label => & $width) {
+		$width = max(mb_strlen($label), $width);
+	}
+	
+	// show table header
+	echo "\n  ";
+	foreach ($col_width as $label => $width) {
+		echo "+", str_repeat('-', $width + 2);
+	}
+	echo "+\n  ";
+	foreach ($col_width as $label => $width) {
+		$pad = ($width - mb_strlen($label)) / 2.;
+		echo "| ", str_repeat(' ', floor($pad)), $label, str_repeat(' ', ceil($pad)), " ";
+	}
+	echo "|\n  ";
+	foreach ($col_width as $label => $width) {
+		echo "+", str_repeat('-', $width + 2);
+	}
+	echo "+\n  ";
+
+	// show table
+	foreach ($data as $row) {
+		foreach ($row as $col => $value) {
+			$value_str = var_export($value, true);
+			$pad = $col_width[$col] - mb_strlen($value_str);
+			if (is_numeric($value)) {
+				echo "| ", str_repeat(' ', $pad), $value_str, " ";
+			} else {
+				echo "| ", $value_str, str_repeat(' ', $pad), " ";
+			}
+		}
+		echo "|\n  ";
+	}
+
+	foreach ($col_width as $label => $width) {
+		echo "+", str_repeat('-', $width + 2);
+	}
+	echo "+\n\n";
+}
 
