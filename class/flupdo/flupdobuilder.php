@@ -32,53 +32,229 @@ namespace Smalldb\Flupdo;
 
 class FlupdoBuilder
 {
+	/**
+	 * PDO driver used to execute query and escape strings.
+	 */
 	protected $pdo;
 
-	protected $clause_tree = null;
+	protected $indent = "\t";
+	protected $sub_indent = "\t\t";
+
+	/**
+	 * Built query
+	 */
+	protected $query_sql = null;
+	protected $query_params = null;
+
+	/**
+	 * List of clauses used to composed result query. Shared constant data.
+	 */
+	protected static $clauses = array();
+
+	/**
+	 * List of methods used to fill the $buffers. Shared constant data.
+	 */
+	protected static $methods = array();
+
+	/**
+	 * Buffers containing SQL fragments.
+	 */
 	protected $buffers = array();
-	protected $clause_stack = array();
-	protected $buffer_stack = array();
 
 
-	public function __construct(\PDO $pdo, & $clause_tree)
+
+	public function __construct(\PDO $pdo)
 	{
-		$this->clause_tree = $clause_tree;
-
 		$this->pdo = $pdo;
-		$this->clause_stack[] = & $this->clause_tree;
 	}
 
 
 	public function __call($method, $args)
 	{
-		echo __CLASS__, "::", $method, " (", join(', ', array_map(function($x) { return var_export($x, true);}, $args)), ")\n";
+		//echo __CLASS__, "::", $method, " (", join(', ', array_map(function($x) { return var_export($x, true);}, $args)), ")\n";
 
-		$cur_clause = end($this->clause_stack);
-
-		while (!isset($cur_clause[$method]) && !empty($this->clause_stack)) {
-			array_pop($this->clause_stack);
-			$cur_clause = end($this->clause_stack);
-			echo "  - Method not found ... pop!\n";
+		if (!isset(static::$methods[$method])) {
+			throw new \BadMethodCallException('Undefined method "'.$method.'".');
 		}
 
-		if (empty($this->clause_stack)) {
-			echo "  - Stack is empty!\n";
-			throw new \BadMethodCallException('Unknown method "'.$method.'".');
-		}
+		@ list($action, $buffer_id, $label) = static::$methods[$method];
 
-		echo "  - Method ok.\n";
-		$this->clause_stack[] = & $cur_clause[$method];
+		$this->$action($args, $buffer_id, $label);
 
-		list($n) = $this->clause_stack;
-		echo "  - Node ID: ", $n['#'], "\n";
-		echo "\n";
 		return $this;
+	}
+
+
+	/**
+	 * Add SQL fragment to buffer.
+	 */
+	protected function add($args, $buffer_id)
+	{
+		$this->buffers[$buffer_id][] = $args;
+	}
+
+
+	/**
+	 * Replace buffer content with SQL fragment.
+	 */
+	protected function replace($args, $buffer_id)
+	{
+		$this->buffers[$buffer_id] = array($args);
+	}
+
+
+	/**
+	 * Set flag. Replace buffer with new label of this flag.
+	 */
+	protected function setFlag($args, $buffer_id, $label)
+	{
+		$this->buffers[$buffer_id] = $label;
+	}
+
+
+	/**
+	 * Add join statement to buffer.
+	 */
+	protected function addJoin($args, $buffer_id, $label)
+	{
+		$this->buffers[$buffer_id][] = $args;
+	}
+
+
+	/**
+	 * Process all buffers and build SQL query. Side product is array of 
+	 * parameters (stored in $this->args) to bind with query.
+	 */
+	protected function compile()
+	{
+		$this->sqlStart();
+
+		echo 'SELECT NULL -- ('.__CLASS__.') --';
+
+		$this->sqlFinish();
 	}
 
 
 	public function __toString()
 	{
-		return 'SELECT NULL -- ('.__CLASS__.') --';
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+		return $this->query_sql;
+	}
+
+
+	protected function sqlStart()
+	{
+		$this->query_params = array();
+		ob_start();
+	}
+
+
+	protected function sqlFinish()
+	{
+		$this->query_sql = ob_get_clean();
+	}
+
+
+	protected function sqlComment($buffer_id)
+	{
+		if (isset($this->buffers[$buffer_id])) {
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				echo $this->indent, '-- ', str_replace(array("\r", "\n"), array('', "\n".$this->indent.'-- '), $buf[0]), "\n";
+			}
+		}
+	}
+
+
+	protected function sqlFlag($buffer_id)
+	{
+		if (isset($this->buffers[$buffer_id])) {
+			if (isset($this->buffers[$flag_buf])) {
+				echo ' ', $this->buffers[$flag_buf];
+			}
+		}
+	}
+
+
+	protected function sqlStatement_Flags_NoEol($buffer_id, $flag_buffer_ids)
+	{
+		if (isset($this->buffers[$buffer_id])) {
+			echo $this->indent, $buffer_id;
+			foreach ($flag_buffer_ids as $flag_buf) {
+				if (isset($this->buffers[$flag_buf])) {
+					echo ' ', $this->buffers[$flag_buf];
+				}
+			}
+		}
+	}
+
+
+	protected function sqlSpace_PlainList_Eol($buffer_id)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				if ($first) {
+					$first = false;
+					echo ' ';
+				} else {
+					echo ",\n", $this->sub_indent;
+				}
+				echo $buf[0];
+			}
+		}
+		echo "\n";
+	}
+
+
+	protected function sqlList($buffer_id)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			echo $this->indent, $buffer_id;
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				if ($first) {
+					$first = false;
+					echo ' ';
+				} else {
+					echo ",\n", $this->sub_indent;
+				}
+				echo $buf[0];
+			}
+			echo "\n";
+		}
+	}
+
+
+	protected function sqlConditions($buffer_id)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			echo $this->indent, $buffer_id;
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				if ($first) {
+					$first = false;
+					echo ' (';
+				} else {
+					echo $this->sub_indent, "AND (";
+				}
+				echo $buf[0], ")\n";
+			}
+		}
+	}
+
+
+	protected function sqlStatement($buffer_id)
+	{
+		if (isset($this->buffers[$buffer_id])) {
+			echo $this->indent, $buffer_id, " ";
+			echo $this->buffers[$buffer_id][0][0];
+			echo "\n";
+		}
 	}
 
 
