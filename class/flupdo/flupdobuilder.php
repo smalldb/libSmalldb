@@ -263,11 +263,33 @@ class FlupdoBuilder
 	{
 		if (empty($buf)) {
 			return;
-		} else if (count($buf) > 1) {
-			echo array_shift($buf);
-			$this->query_params[] = $buf;
+		}
+		
+		$sql = array_shift($buf);
+
+		if (is_array($sql)) {
+			$first = true;
+			foreach ($sql as $fragment) {
+				if ($first) {
+					$first = false;
+				} else {
+					echo ' ';
+				}
+				if ($fragment instanceof self) {
+					$fragment->indent = $this->sub_indent."\t";
+					$fragment->compile();
+					echo "(\n", $fragment->query_sql, $this->sub_indent, ")";
+					$this->query_params[] = $fragment->query_params;
+				} else {
+					echo $fragment;
+				}
+			}
 		} else {
-			echo $buf[0];
+			echo $sql;
+		}
+
+		if (!empty($buf)) {
+			$this->query_params[] = $buf;
 		}
 	}
 

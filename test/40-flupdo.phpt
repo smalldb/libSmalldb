@@ -64,7 +64,7 @@ echo "\n";
 echo "Sub-select:\n";
 $q = $flupdo->select('n')
 	->from('numbers')
-	->where(array('n > ', $flupdo->select('MIN(n)')->from('numbers')))
+	->where(array('n >', $flupdo->select('MIN(n) + ?', 2)->from('numbers')))
 	->where('n < ?', 100)
 	->orderBy('n DESC');
 echo "\n", $q, "\n";
