@@ -31,26 +31,66 @@
 namespace Smalldb\Flupdo;
 
 /**
- * Extend PDO class with query builder starting methods. These methods are 
- * simple factory & proxy to FlupdoBuilder.
+ * Flupdo Builder for UPDATE statement
+ *
+ * -- http://dev.mysql.com/doc/refman/5.5/en/update.html
+ *
+ * UPDATE [LOW_PRIORITY] [IGNORE] table_reference
+ *  SET col_name1={expr1|DEFAULT} [, col_name2={expr2|DEFAULT}] ...
+ *  [WHERE where_condition]
+ *  [ORDER BY ...]
+ *  [LIMIT row_count]
+ *
+ * -- OR --
+ *
+ * UPDATE [LOW_PRIORITY] [IGNORE] table_references
+ *  SET col_name1={expr1|DEFAULT} [, col_name2={expr2|DEFAULT}] ...
+ *  [WHERE where_condition]
+ *
  */
-class Flupdo extends \PDO
+
+class UpdateBuilder extends FlupdoBuilder
 {
 
-	/**
-	 * Returns fresh instance of Flupdo query builder.
-	 */
-	function __call($method, $args)
+	protected static $methods = array(
+		// Header
+		'headerComment'		=> array('replace',	'-- HEADER'),
+		'update'		=> array('add',		'UPDATE'),
+
+		// Flags
+		'lowPriority'		=> array('setFlag',	'PRIORITY',		'LOW_PRIORITY'),
+		'ignore'		=> array('setFlag',	'IGNORE',		'IGNORE'),
+
+		// Conditions & Values
+		'set'			=> array('add',		'SET'),
+		'where'			=> array('add',		'WHERE'),
+		'orderBy'		=> array('add',		'ORDER BY'),
+		'limit'			=> array('replace',	'LIMIT'),
+
+		// Footer
+		'footerComment'		=> array('replace',	'-- FOOTER'),
+	);
+
+
+	public function compile()
 	{
-		$class = __NAMESPACE__.'\\'.ucfirst($method).'Builder';
-		if (!class_exists($class)) {
-			throw new \BadMethodCallException('Undefined method "'.$method.'".');
-		}
-		$builder = new $class($this);
-		if (!empty($args)) {
-			$builder->__call($method, $args);
-		}
-		return $builder;
+		$this->sqlStart();
+
+		$this->sqlComment('-- HEADER');
+		$this->sqlStatementFlags('UPDATE', array(
+				'PRIORITY',
+				'IGNORE'
+			), self::INDENT | self::LABEL);
+		$this->sqlList('UPDATE', self::EOL);
+
+		$this->sqlList('SET', self::INDENT | self::LABEL | self::EOL);
+		$this->sqlConditions('WHERE', self::INDENT | self::LABEL | self::EOL);
+		$this->sqlList('ORDER BY', self::INDENT | self::LABEL | self::EOL);
+		$this->sqlList('LIMIT', self::INDENT | self::LABEL | self::EOL);
+
+		$this->sqlComment('-- FOOTER');
+
+		return $this->sqlFinish();
 	}
 
 }

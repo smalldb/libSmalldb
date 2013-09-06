@@ -31,26 +31,69 @@
 namespace Smalldb\Flupdo;
 
 /**
- * Extend PDO class with query builder starting methods. These methods are 
- * simple factory & proxy to FlupdoBuilder.
+ * Flupdo Builder for REPLACE statement
+ *
+ * -- http://dev.mysql.com/doc/refman/5.5/en/replace.html
+ *
+ * REPLACE [LOW_PRIORITY | DELAYED]
+ *  [INTO] tbl_name [(col_name,...)]
+ *  {VALUES | VALUE} ({expr | DEFAULT},...),(...),...
+ *
+ * -- OR --
+ *
+ * REPLACE [LOW_PRIORITY | DELAYED]
+ *  [INTO] tbl_name
+ *  SET col_name={expr | DEFAULT}, ...
+ * 
+ * -- OR --
+ *
+ * REPLACE [LOW_PRIORITY | DELAYED]
+ *  [INTO] tbl_name [(col_name,...)]
+ *  SELECT ...
+ *
  */
-class Flupdo extends \PDO
+
+class ReplaceBuilder extends FlupdoBuilder
 {
 
-	/**
-	 * Returns fresh instance of Flupdo query builder.
-	 */
-	function __call($method, $args)
+	protected static $methods = array(
+		// Header
+		'headerComment'		=> array('replace',	'-- HEADER'),
+		'replace'		=> array('add',		'REPLACE'),
+		'into'			=> array('replace',	'INTO'),
+
+		// Flags
+		'lowPriority'		=> array('setFlag',	'PRIORITY',		'LOW_PRIORITY'),
+		'delayed'		=> array('setFlag',	'PRIORITY',		'DELAYED'),
+
+		// Conditions & Values
+		'values'		=> array('add',		'VALUES'),
+		'set'			=> array('add',		'SET'),
+		'where'			=> array('add',		'WHERE'),
+
+		// Footer
+		'footerComment'		=> array('replace',	'-- FOOTER'),
+	);
+
+
+	public function compile()
 	{
-		$class = __NAMESPACE__.'\\'.ucfirst($method).'Builder';
-		if (!class_exists($class)) {
-			throw new \BadMethodCallException('Undefined method "'.$method.'".');
-		}
-		$builder = new $class($this);
-		if (!empty($args)) {
-			$builder->__call($method, $args);
-		}
-		return $builder;
+		$this->sqlStart();
+
+		$this->sqlComment('-- HEADER');
+		$this->sqlStatementFlags('REPLACE', array(
+				'PRIORITY',
+			), self::INDENT | self::LABEL);
+		$this->sqlList('INTO', self::LABEL | self::EOL);
+		$this->sqlList('REPLACE', self::INDENT | self::BRACKETS | self::EOL);
+
+		$this->sqlValuesList('VALUES');
+		$this->sqlList('SET', self::INDENT | self::LABEL | self::EOL);
+		$this->sqlConditions('WHERE');
+
+		$this->sqlComment('-- FOOTER');
+
+		return $this->sqlFinish();
 	}
 
 }

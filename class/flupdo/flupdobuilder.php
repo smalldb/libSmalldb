@@ -62,6 +62,12 @@ class FlupdoBuilder
 	protected $buffers = array();
 
 
+	const INDENT		= 0x01;
+	const LABEL		= 0x02;
+	const BRACKETS		= 0x04;
+	const EOL		= 0x80;
+	const ALL_DECORATIONS	= 0xFF;
+
 
 	public function __construct(\PDO $pdo)
 	{
@@ -80,6 +86,8 @@ class FlupdoBuilder
 		@ list($action, $buffer_id, $label) = static::$methods[$method];
 
 		$this->$action($args, $buffer_id, $label);
+
+		$this->query_sql = null;
 
 		return $this;
 	}
@@ -117,6 +125,7 @@ class FlupdoBuilder
 	 */
 	protected function addJoin($args, $buffer_id, $label)
 	{
+		array_push($args, $label);
 		$this->buffers[$buffer_id][] = $args;
 	}
 
@@ -125,13 +134,13 @@ class FlupdoBuilder
 	 * Process all buffers and build SQL query. Side product is array of 
 	 * parameters (stored in $this->args) to bind with query.
 	 */
-	protected function compile()
+	public function compile()
 	{
 		$this->sqlStart();
 
 		echo 'SELECT NULL -- ('.__CLASS__.') --';
 
-		$this->sqlFinish();
+		return $this->sqlFinish();
 	}
 
 
@@ -154,6 +163,27 @@ class FlupdoBuilder
 	protected function sqlFinish()
 	{
 		$this->query_sql = ob_get_clean();
+		return $this;
+	}
+
+
+	protected function sqlBuffer($buf)
+	{
+		if (is_array($buf)) {
+			echo join("\n", $buf);
+		} else {
+			echo $buf;
+		}
+	}
+
+
+	protected function sqlRawBuffer($buf)
+	{
+		if (is_array($buf)) {
+			echo join("\n", $buf);
+		} else {
+			echo $buf;
+		}
 	}
 
 
@@ -161,7 +191,7 @@ class FlupdoBuilder
 	{
 		if (isset($this->buffers[$buffer_id])) {
 			foreach ($this->buffers[$buffer_id] as $buf) {
-				echo $this->indent, '-- ', str_replace(array("\r", "\n"), array('', "\n".$this->indent.'-- '), $buf[0]), "\n";
+				echo $this->indent, '-- ', str_replace(array("\r", "\n"), array('', "\n".$this->indent.'-- '), $this->sqlRawBuffer($buf)), "\n";
 			}
 		}
 	}
@@ -177,54 +207,128 @@ class FlupdoBuilder
 	}
 
 
-	protected function sqlStatement_Flags_NoEol($buffer_id, $flag_buffer_ids)
+	protected function sqlStatementFlags($buffer_id, $flag_buffer_ids, $decorations)
 	{
-		if (isset($this->buffers[$buffer_id])) {
-			echo $this->indent, $buffer_id;
-			foreach ($flag_buffer_ids as $flag_buf) {
-				if (isset($this->buffers[$flag_buf])) {
-					echo ' ', $this->buffers[$flag_buf];
-				}
-			}
+		$first = false;
+
+		if ($decorations & self::INDENT) {
+			echo $this->indent;
+			$first = true;
 		}
-	}
 
+		if ($decorations & self::LABEL) {
+			if ($first) {
+				$first = false;
+			} else {
+				echo ' ';
+			}
+			echo $buffer_id;
+			$first = false;
+		}
 
-	protected function sqlSpace_PlainList_Eol($buffer_id)
-	{
-		$first = true;
-
-		if (isset($this->buffers[$buffer_id])) {
-			foreach ($this->buffers[$buffer_id] as $buf) {
+		foreach ($flag_buffer_ids as $flag_buf) {
+			if (isset($this->buffers[$flag_buf])) {
 				if ($first) {
 					$first = false;
-					echo ' ';
 				} else {
-					echo ",\n", $this->sub_indent;
+					echo ' ';
 				}
-				echo $buf[0];
+				echo $this->buffers[$flag_buf];
 			}
 		}
-		echo "\n";
-	}
 
-
-	protected function sqlList($buffer_id)
-	{
-		$first = true;
-
-		if (isset($this->buffers[$buffer_id])) {
-			echo $this->indent, $buffer_id;
-			foreach ($this->buffers[$buffer_id] as $buf) {
-				if ($first) {
-					$first = false;
-					echo ' ';
-				} else {
-					echo ",\n", $this->sub_indent;
-				}
-				echo $buf[0];
-			}
+		if ($decorations & self::EOL) {
 			echo "\n";
+		}
+	}
+
+
+	protected function sqlList($buffer_id, $decorations)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			if ($decorations & self::INDENT) {
+				if ($decorations & self::BRACKETS) {
+					echo $this->sub_indent;
+				} else {
+					echo $this->indent;
+				}
+			} else if ($decorations & (self::LABEL | self::BRACKETS)) {
+				echo ' ';
+			}
+			if ($decorations & self::LABEL) {
+				echo $buffer_id;
+			}
+			if ($decorations & self::BRACKETS) {
+				echo '(';
+			}
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				if ($decorations & self::BRACKETS) {
+					if ($first) {
+						$first = false;
+					} else {
+						echo ", ";
+					}
+				} else {
+					if ($first) {
+						$first = false;
+						echo ' ';
+					} else {
+						echo ",\n", $this->sub_indent;
+					}
+				}
+				$this->sqlBuffer($buf[0]);
+			}
+			if ($decorations & self::BRACKETS) {
+				echo ')';
+			}
+			if ($decorations & self::EOL) {
+				echo "\n";
+			}
+		}
+	}
+
+
+	protected function sqlValuesList($buffer_id)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			echo $this->indent, $buffer_id, "\n";
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				if ($first) {
+					$first = false;
+					echo $this->sub_indent, '(';
+				} else {
+					echo "),\n", $this->sub_indent, '(';
+				}
+
+				$sub_first = true;
+				foreach ($buf[0] as $v) {
+					if ($sub_first) {
+						$sub_first = false;
+					} else {
+						echo ", ";
+					}
+					$this->sqlBuffer($v);
+				}
+			}
+			echo ')';
+			echo "\n";
+		}
+	}
+
+
+	protected function sqlJoins($buffer_id)
+	{
+		$first = true;
+
+		if (isset($this->buffers[$buffer_id])) {
+			foreach ($this->buffers[$buffer_id] as $buf) {
+				$join = array_pop($buf);
+				echo $this->indent, $join, " ", $this->sqlBuffer($buf), "\n";
+			}
 		}
 	}
 
@@ -244,16 +348,6 @@ class FlupdoBuilder
 				}
 				echo $buf[0], ")\n";
 			}
-		}
-	}
-
-
-	protected function sqlStatement($buffer_id)
-	{
-		if (isset($this->buffers[$buffer_id])) {
-			echo $this->indent, $buffer_id, " ";
-			echo $this->buffers[$buffer_id][0][0];
-			echo "\n";
 		}
 	}
 
