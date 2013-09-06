@@ -88,4 +88,76 @@ if (file_exists($db_filename)) {
 
 ?>
 --EXPECT--
+Creating training dummy ...
 
+Initializing Flupdo on training dummy ...
+
+Simple insert:
+	INSERT INTO numbers
+		(n)
+	VALUES
+		('1'),
+		('2'),
+		('4'),
+		('8'),
+		('16'),
+		('32'),
+		('64'),
+		('128'),
+		('256')
+
+
+Simple update:
+
+	UPDATE numbers
+	SET n = n + 1
+	WHERE (n > ?)
+		AND (n < ?)
+	LIMIT 2
+
+Affected rows: 2
+
+Simple select:
+
+	-- Simple select
+	SELECT DISTINCT n AS TheNumber,
+		n + 1,
+		n + 2
+	FROM numbers
+	WHERE (n > ?)
+		AND (n < ?)
+	ORDER BY n DESC
+
+
+  +-----------+-------+-------+
+  | TheNumber | n + 1 | n + 2 |
+  +-----------+-------+-------+
+  |     '128' | '129' | '130' |
+  |      '64' |  '65' |  '66' |
+  |      '33' |  '34' |  '35' |
+  |      '17' |  '18' |  '19' |
+  |       '8' |   '9' |  '10' |
+  +-----------+-------+-------+
+
+
+Sub-select:
+
+	SELECT n
+	FROM numbers
+	WHERE (n > (
+			SELECT MIN(n) + ?
+			FROM numbers
+		))
+		AND (n < ?)
+	ORDER BY n DESC
+
+
+  +------+
+  |  n   |
+  +------+
+  | '64' |
+  | '33' |
+  | '17' |
+  |  '8' |
+  |  '4' |
+  +------+
