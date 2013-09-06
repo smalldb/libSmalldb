@@ -28,58 +28,47 @@
  * SUCH DAMAGE.
  */
 
-namespace Smalldb\StateMachine;
-
-use \Smalldb\Flupdo\Flupdo,
-    \Smalldb\Flupdo\FlupdoProxy;
+namespace Smalldb\Flupdo;
 
 /**
- * SmallDB Backend which uses database via Flupdo as storage.
+ * Extend PDO class with query builder starting methods. These methods are 
+ * simple factory & proxy to FlupdoBuilder.
  */
-class FlupdoBackend extends AbstractBackend
+class FlupdoProxy
 {
-	private $flupdo;
+	private $pdo;
 
-	public function __construct($alias, $options)
+	function __construct(\PDO $pdo)
 	{
-		parent::__construct($alias, $options);
+		$this->pdo = $pdo;
+	}
 
-        // Use, wrap or create database connection
-        if (isset($options['flupdo'])) {
-			$this->flupdo = $options['flupdo'];
-			if (!($this->flupdo instanceof Flupdo || $this->flupdo instanceof FlupdoProxy)) {
-				throw new \InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
-			}
-        } else if (isset($options['pdo'])) {
-			if (!($options['pdo'] instanceof \PDO)) {
-				throw new \InvalidArgumentException('The "pdo" option must contain an instance of PDO class.');
-            }
-            $this->flupdo = new FlupdoProxy($options['pdo']);
-		} else {
-			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], @ $options['driver_options']);
+	/**
+	 * Call $this->pdo method if exist, otherwise return fresh instance
+	 * of Flupdo query builder.
+	 */
+	function __call($method, $args)
+	{
+		// Call original method if exists
+		if (method_exists($this->pdo, $method)) {
+			return call_user_func_array(array($this->pdo, $method), $args);
 		}
-    }
 
-
-
-    public function getKnownTypes()
-    {
-    }
-
-
-    public function describeType($type)
-    {
-    }
-
-
-    public function inferMachineType($aref, & $type, & $id)
-    {
-    }
-
-
-    protected function createMachine($type)
-    {
-    }
+		// Almost the same invocation code as in Flupdo::__call
+		$class = __NAMESPACE__.'\\'.ucfirst($method).'Builder';
+		if (!class_exists($class)) {
+			if (method_exists($this->pdo, '__call')) {
+				return $this->pdo->__call($method, $args);
+			} else {
+				throw new \BadMethodCallException('Undefined method "'.$method.'".');
+			}
+		}
+		$builder = new $class($this);
+		if (!empty($args)) {
+			$builder->__call($method, $args);
+		}
+		return $builder;
+	}
 
 }
 
