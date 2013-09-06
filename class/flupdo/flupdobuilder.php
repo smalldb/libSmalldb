@@ -83,6 +83,10 @@ class FlupdoBuilder
 			throw new \BadMethodCallException('Undefined method "'.$method.'".');
 		}
 
+		if ($this->query_sql !== null) {
+			throw new \RuntimeException('Query is already compiled.');
+		}
+
 		@ list($action, $buffer_id, $label) = static::$methods[$method];
 
 		$this->$action($args, $buffer_id, $label);
@@ -144,6 +148,85 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Quotes a string for use in a query.
+	 *
+	 * Proxy to PDO::quote().
+	 */
+	public function quote($value)
+	{
+		return $this->pdo->quote($value);
+	}
+
+
+	/**
+	 * Builds and executes an SQL statement, returning the number of affected rows.
+	 *
+	 * Proxy to PDO::exec().
+	 */
+	public function exec()
+	{
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+		return $this->pdo->exec($this->query_sql);
+	}
+
+
+	/**
+	 * Builds, binds and executes an SQL statement, returning a result set 
+	 * as a PDOStatement object.
+	 *
+	 * Proxy to PDOStatement::prepare() & PDOStatement::bindValue() & PDOStatement::query().
+	 * But if there is nothing to bind, PDO::query() is called instead.
+	 */
+	public function query()
+	{
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+
+		if (empty($this->query_params)) {
+			return $this->pdo->query($this->query_sql);
+		} else {
+			$stmt = $this->prepare();
+
+			$i = 1;
+			foreach ($this->query_params as $param) {
+				if (is_bool($param)) {
+					$stmt->bindValue($i, $param, \PDO::PARAM_BOOL);
+				} else if (is_null($param)) {
+					$stmt->bindValue($i, $param, \PDO::PARAM_NULL);
+				} else if (is_int($param)) {
+					$stmt->bindValue($i, $param, \PDO::PARAM_INT);
+				} else {
+					// ignore locales when convertiong to string
+					$stmt->bindValue($i, strval($param), \PDO::PARAM_STR);
+				}
+				$i++;
+			}
+
+			$stmt->execute();
+			return $stmt;
+		}
+	}
+
+
+	/**
+	 * Builds and prepares a statement for execution, returns a statement object.
+	 *
+	 * Proxy to PDO::prepare().
+	 */
+	public function prepare($driver_options = array())
+	{
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+
+		return $this->pdo->prepare($this->query_sql, $driver_options);
+	}
+
+
 	public function __toString()
 	{
 		if ($this->query_sql === null) {
@@ -163,26 +246,38 @@ class FlupdoBuilder
 	protected function sqlFinish()
 	{
 		$this->query_sql = ob_get_clean();
+
+		// Flatten parameters before bind
+		if (!empty($this->query_params)) {
+			$this->query_params = call_user_func_array('array_merge', $this->query_params);
+		}
 		return $this;
 	}
 
 
+	/**
+	 * Add SQL with parameters. Parameters are stored in groups, merge to 
+	 * one array is done at the end (using single array_merge call).
+	 */
 	protected function sqlBuffer($buf)
 	{
-		if (is_array($buf)) {
-			echo join("\n", $buf);
+		if (empty($buf)) {
+			return;
+		} else if (count($buf) > 1) {
+			echo array_shift($buf);
+			$this->query_params[] = $buf;
 		} else {
-			echo $buf;
+			echo $buf[0];
 		}
 	}
 
 
 	protected function sqlRawBuffer($buf)
 	{
-		if (is_array($buf)) {
-			echo join("\n", $buf);
+		if (is_array($buf[0])) {
+			echo join("\n", $buf[0]);
 		} else {
-			echo $buf;
+			echo $buf[0];
 		}
 	}
 
@@ -278,7 +373,7 @@ class FlupdoBuilder
 						echo ",\n", $this->sub_indent;
 					}
 				}
-				$this->sqlBuffer($buf[0]);
+				$this->sqlBuffer($buf);
 			}
 			if ($decorations & self::BRACKETS) {
 				echo ')';
@@ -297,21 +392,20 @@ class FlupdoBuilder
 		if (isset($this->buffers[$buffer_id])) {
 			echo $this->indent, $buffer_id, "\n";
 			foreach ($this->buffers[$buffer_id] as $buf) {
-				if ($first) {
-					$first = false;
-					echo $this->sub_indent, '(';
-				} else {
-					echo "),\n", $this->sub_indent, '(';
-				}
+				if (count($buf) == 1) {
+					// One argument -- insert values from array
+					foreach ($buf[0] as $row) {
+						if ($first) {
+							$first = false;
+							echo $this->sub_indent, '(';
+						} else {
+							echo "),\n", $this->sub_indent, '(';
+						}
 
-				$sub_first = true;
-				foreach ($buf[0] as $v) {
-					if ($sub_first) {
-						$sub_first = false;
-					} else {
-						echo ", ";
+						echo join(', ', array_map(array($this, 'quote'), $row)); // FIXME: bind values
 					}
-					$this->sqlBuffer($v);
+				} else {
+					throw new \Exception('Not implemented yet.');
 				}
 			}
 			echo ')';
@@ -346,55 +440,9 @@ class FlupdoBuilder
 				} else {
 					echo $this->sub_indent, "AND (";
 				}
-				echo $buf[0], ")\n";
+				echo $this->sqlBuffer($buf), ")\n";
 			}
 		}
-	}
-
-
-	/**
-	 * Quotes a string for use in a query.
-	 *
-	 * Proxy to PDO::quote().
-	 */
-	public function quote($value)
-	{
-		return $this->pdo->quote($value);
-	}
-
-
-	/**
-	 * Builds and executes an SQL statement, returning the number of affected rows.
-	 *
-	 * Proxy to PDO::exec().
-	 */
-	public function exec()
-	{
-		return $this->pdo->exec((string) $this);
-	}
-
-
-	/**
-	 * Builds and executes an SQL statement, returning a result set as a PDOStatement object.
-	 *
-	 * Proxy to PDO::query().
-	 */
-	public function query()
-	{
-		$args = func_get_args();
-		array_unshift($args, (string) $this);
-		return call_user_func_array(array($this->pdo, 'query'), $args);
-	}
-
-
-	/**
-	 * Builds and prepares a statement for execution, returns a statement object.
-	 *
-	 * Proxy to PDO::prepare().
-	 */
-	public function prepare($driver_options = array())
-	{
-		return $this->pdo->prepare((string) $this, $driver_options);
 	}
 
 }
