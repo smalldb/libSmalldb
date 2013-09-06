@@ -43,9 +43,11 @@ abstract class AbstractBackend
 	private $machine_type_cache = array();
 
 	/**
-	 * Initialize backend. $alias is used for debugging.
+	 * Initialize backend. $alias is used for debugging and logging. 
+	 * Options should contain all required backend-specific data for 
+	 * backend initialization.
 	 */
-	public function __construct($alias)
+	public function __construct($alias, $options)
 	{
 		$this->alias = $alias;
 	}
