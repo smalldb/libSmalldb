@@ -113,6 +113,10 @@ class SelectBuilder extends FlupdoBuilder
 
 	public function compile()
 	{
+		if (empty($this->buffers['SELECT'])) {
+			$this->select('*');
+		}
+
 		$this->sqlStart();
 
 		$this->sqlComment('-- HEADER');

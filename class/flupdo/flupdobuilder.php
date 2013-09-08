@@ -167,6 +167,16 @@ class FlupdoBuilder
 
 
 	/**
+	 * Fluently dump query to error log.
+	 */
+	public function debugDump()
+	{
+		error_log("Query:\n".$this);
+		return $this;
+	}
+
+
+	/**
 	 * Quotes a string for use in a query.
 	 *
 	 * Proxy to PDO::quote().
@@ -255,6 +265,34 @@ class FlupdoBuilder
 		}
 
 		return $this->pdo->prepare($this->query_sql, $driver_options);
+	}
+
+
+	/**
+	 * Fetch one row from result and close cursor.
+	 *
+	 * Returns what PDOStatement::fetch() would return.
+	 */
+	public function fetchSingleRow()
+	{
+		$result = $this->query();
+		$row = $result->fetch(\PDO::FETCH_ASSOC);
+		$result->closeCursor();
+		return $row;
+	}
+
+
+	/**
+	 * Fetch one row from result and close cursor.
+	 *
+	 * Returns what PDOStatement::fetch() would return.
+	 */
+	public function fetchSingleValue()
+	{
+		$result = $this->query();
+		$value = $result->fetchColumn(0);
+		$result->closeCursor();
+		return $value;
 	}
 
 
