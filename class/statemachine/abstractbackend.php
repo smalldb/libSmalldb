@@ -120,6 +120,14 @@ abstract class AbstractBackend
 
 
 	/**
+	 * Create query builder (like FlupdoBuilder) which shall be used to create 
+	 * and execute database query to retrieve list of state machine instances 
+	 * and their properties.
+	 */
+	abstract public function createQueryBuilder($type);
+
+
+	/**
 	 * Get number of instantiated machines in cache. Useful for statistics
 	 * and check whether backend has not been used yet.
 	 */
@@ -207,11 +215,14 @@ abstract class AbstractBackend
 
 		// Decode arguments to machine type and machine-specific ID
 		if (!$this->inferMachineType($args, $type, $id)) {
-			throw new \InvalidArgumentException('Invalid reference');
+			throw new \InvalidArgumentException('Invalid reference - cannot infer machine type: '.$type);
 		}
 
 		// Create reference
 		$m = $this->getMachine($type);
+		if ($m === null) {
+			throw new \InvalidArgumentException('Invalid reference - cannot create machine: '.$type);
+		}
 		return new Reference($m, $id);
 	}
 
@@ -236,7 +247,6 @@ abstract class AbstractBackend
 			$m->flushCache();
 		}
 	}
-
 
 }
 

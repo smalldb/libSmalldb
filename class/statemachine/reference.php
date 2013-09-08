@@ -31,8 +31,8 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Reference to one or more state machines. Allows you to invoke transitions in 
- * the easy way by calling methods on this reference object. This is syntactic 
+ * Reference to one or more state machines. Allows you to invoke transitions in
+ * the easy way by calling methods on this reference object. This is syntactic
  * sugar only, nothing really happens here.
  *
  * $id is per machine type unique identifier. It is always a single literal
@@ -44,11 +44,22 @@ namespace Smalldb\StateMachine;
  *   - state = $machine->getState($id);
  *   - properties = $machine->getProperties($id);
  *   - ... see __get().
+ *
+ * Read one property (will load all of them):
+ *   $ref['property']
+ *
+ * Flush property cache:
+ *   unset($ref->properties);
+ *
  */
-class Reference 
+class Reference implements \ArrayAccess, \Iterator
 {
 	protected $machine;
 	protected $id;
+	protected $state = null;
+
+	protected $properties_cache = null;
+	protected $state_cache = null;
 
 
 	/**
@@ -59,6 +70,25 @@ class Reference
 	{
 		$this->machine = $machine;
 		$this->id = $id;
+	}
+
+
+	/**
+	 * Function call is transition invocation. Just forward it to backend.
+	 */
+	public function __call($name, $arguments)
+	{
+		$this->properties = null;
+		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
+
+		switch ($returns) {
+			case AbstractMachine::RETURNS_VALUE:
+				return $r;
+			case AbstractMachine::RETURNS_NEW_ID:
+				return new self($this->machine, $r);
+			default:
+				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+		}
 	}
 
 
@@ -75,32 +105,115 @@ class Reference
 			case 'machineType':
 				return $this->machine->getMachineType();
 			case 'state':
-				return $this->machine->getState($this->id);
+				if ($this->state_cache !== null) {
+					return $this->state_cache;
+				} else {
+					return ($this->state_cache = $this->machine->getState($this->id));
+				}
 			case 'properties':
-				return $this->machine->getProperties($this->id);
+				if ($this->properties_cache !== null) {
+					return $this->properties_cache;
+				} else {
+					return ($this->properties_cache = $this->machine->getProperties($this->id));
+				}
 			case 'actions':
 				return $this->machine->getAvailableTransitions($this->id);
+			default:
+				throw new \InvalidArgumentException('Unknown property: '.$key);
 		}
 	}
 
 
 	/**
-	 * Function call is transition invocation. Just forward it to backend.
+	 * Flush cached data.
 	 */
-	public function __call($name, $arguments)
+	public function __unset($key)
 	{
-		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
-
-		switch ($returns) {
-			case AbstractMachine::RETURNS_VALUE:
-				return $r;
-			case AbstractMachine::RETURNS_NEW_ID:
-				return new self($this->machine, $r);
+		switch ($key) {
+			case 'id':
+			case 'machine':
+			case 'machineType':
+			case 'actions':
+				throw new \InvalidArgumentException('Property is not cached: '.$key);
+			case 'state':
+				$this->state_cache = null;
+			case 'properties':
+				$this->properties_cache = null;
 			default:
-				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+				throw new \InvalidArgumentException('Unknown property: '.$key);
 		}
 	}
 
-	// todo: what about array_map, reduce, walk, ... ?
+
+	/*
+	 * Read cached properties one by one using array access.
+	 */
+
+	public function offsetExists($offset)
+	{
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return array_key_exists($offset, $this->properties_cache);
+	}
+
+	public function offsetGet($offset)
+	{
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return $this->properties_cache[$offset];
+	}
+
+	public function offsetSet($offset, $value)
+	{
+		throw new \InvalidArgumentException('Cannot set property: Property cache is read only.');
+	}
+
+	public function offsetUnset($offset)
+	{
+		throw new \InvalidArgumentException('Cannot unset property: Property cache is read only.');
+	}
+
+	
+	/*
+	 * Iterator interface implementation.
+	 */
+
+	function rewind() {
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return reset($this->properties_cache);
+	}
+
+	function current() {
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return current($this->properties_cache);
+	}
+
+	function key() {
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return key($this->properties_cache);
+	}
+
+	function next() {
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return next($this->properties_cache);
+	}
+
+	function valid() {
+		if ($this->properties_cache === null) {
+			$this->properties_cache = $this->machine->getProperties($this->id);
+		}
+		return key($this->properties_cache) !== null;
+	}
+
 }
 

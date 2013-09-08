@@ -69,12 +69,17 @@ class FlupdoBuilder
 	const ALL_DECORATIONS	= 0xFF;
 
 
-	public function __construct(\PDO $pdo)
+	public function __construct($pdo)
 	{
 		$this->pdo = $pdo;
 	}
 
 
+	/**
+	 * Call buffer-specific method to process arguments.
+	 *
+	 * If the first argument is null, corresponding buffer will be deleted.
+	 */
 	public function __call($method, $args)
 	{
 		//echo __CLASS__, "::", $method, " (", join(', ', array_map(function($x) { return var_export($x, true);}, $args)), ")\n";
@@ -89,11 +94,24 @@ class FlupdoBuilder
 
 		@ list($action, $buffer_id, $label) = static::$methods[$method];
 
-		$this->$action($args, $buffer_id, $label);
+		if ($args[0] === null) {
+			unset($this->buffers[$buffer_id]);
+		} else {
+			$this->$action($args, $buffer_id, $label);
+		}
 
 		$this->query_sql = null;
 
 		return $this;
+	}
+
+
+	/**
+	 * Quote `identifier`.
+	 */
+	public function quoteIdent($ident)
+	{
+		return '`'.str_replace("`", "``", $ident).'`';
 	}
 
 
@@ -187,9 +205,16 @@ class FlupdoBuilder
 		}
 
 		if (empty($this->query_params)) {
-			return $this->pdo->query($this->query_sql);
+			$result = $this->pdo->query($this->query_sql);
+			if (!$result) {
+				throw new \RuntimeException($this->pdo->errorInfo());
+			}
+			return $result;
 		} else {
 			$stmt = $this->prepare();
+			if (!$stmt) {
+				throw new \RuntimeException($this->pdo->errorInfo());
+			}
 
 			$i = 1;
 			foreach ($this->query_params as $param) {
@@ -200,13 +225,19 @@ class FlupdoBuilder
 				} else if (is_int($param)) {
 					$stmt->bindValue($i, $param, \PDO::PARAM_INT);
 				} else {
-					// ignore locales when convertiong to string
+					if (is_array($param)) {
+						print_r($param);
+						debug_print_backtrace();
+					}
+					// ignore locales when converting to string
 					$stmt->bindValue($i, strval($param), \PDO::PARAM_STR);
 				}
 				$i++;
 			}
 
-			$stmt->execute();
+			if (!$stmt->execute()) {
+				throw new \RuntimeException(join(', ', $stmt->errorInfo())."\n\nQuery: ".$this->query_sql);
+			}
 			return $stmt;
 		}
 	}

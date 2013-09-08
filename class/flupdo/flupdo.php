@@ -53,5 +53,11 @@ class Flupdo extends \PDO
 		return $builder;
 	}
 
+
+	public function quoteIdent($ident)
+	{
+		return str_replace("`", "``", $ident);
+	}
+
 }
 
