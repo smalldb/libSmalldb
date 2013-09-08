@@ -41,7 +41,7 @@ class FlupdoBackend extends AbstractBackend
 	private $flupdo;
 
 	/**
-	 * Static table of known machine types. Inherit this class and replace this 
+	 * Static table of known machine types. Inherit this class and replace this
 	 * table, or use 'machine_types' option when creating this backend.
 	 *
 	 * Each record is also passed to AbstractMachine::initializeMachine().
@@ -54,7 +54,7 @@ class FlupdoBackend extends AbstractBackend
 		 *  	'name' => 'Foo Bar',
 		 *  	// Human-friendly description (one short paragraph, plain text)
 		 *  	'desc' => 'Lorem ipsum dolor sit amet, ...',
-		 *  	// Name of the file containing full machine definition 
+		 *  	// Name of the file containing full machine definition
 		 *  	'src'  => 'example/foo.json',
 		 */
 	);
@@ -123,7 +123,7 @@ class FlupdoBackend extends AbstractBackend
 	 *  	'name' => 'Foo Bar',
 	 *  	// Human-friendly description (one short paragraph, plain text)
 	 *  	'desc' => 'Lorem ipsum dolor sit amet, ...',
-	 *  	// Name of the file containing full machine definition 
+	 *  	// Name of the file containing full machine definition
 	 *  	'src'  => 'example/foo.json',
 	 *  	...
 	 * )
@@ -139,17 +139,17 @@ class FlupdoBackend extends AbstractBackend
 	 *
 	 * Reference is pair: Table name + Primary key.
 	 *
-	 * Returns true if decoding is successful, $type and $id are set to 
+	 * Returns true if decoding is successful, $type and $id are set to
 	 * decoded values. Otherwise returns false.
 	 *
-	 * Since references are global identifier, this method identifies the 
-	 * type of referenced machine. In simple cases it maps part of ref to 
+	 * Since references are global identifier, this method identifies the
+	 * type of referenced machine. In simple cases it maps part of ref to
 	 * type, in more complex scenarios it may ask database.
 	 *
-	 * In simple applications ref consists of pair $type and $id, where $id 
+	 * In simple applications ref consists of pair $type and $id, where $id
 	 * is uniquie within given $type.
 	 *
-	 * $aref is array of arguments passed to AbstractBackend::ref() or 
+	 * $aref is array of arguments passed to AbstractBackend::ref() or
 	 * single literal if only one argument was passed.
 	 *
 	 * $type is string.
@@ -181,11 +181,11 @@ class FlupdoBackend extends AbstractBackend
 
 
 	/**
-	 * Factory method: Prepare state machine of given type - a model shared 
-	 * between multiple real statemachines stored in backend. Do not forget 
+	 * Factory method: Prepare state machine of given type - a model shared
+	 * between multiple real statemachines stored in backend. Do not forget
 	 * that actual machine is not reachable, you only get this interface.
 	 *
-	 * This creates only implementation of the machine, not concrete 
+	 * This creates only implementation of the machine, not concrete
 	 * instance. See AbstractMachine.
 	 *
 	 * Returns descendant of AbstractMachine or null.

@@ -31,11 +31,11 @@
 namespace Entity;
 
 /**
- * DibiEntityDriver uses Dibi to access MySQL database and expects that Dibi is 
+ * DibiEntityDriver uses Dibi to access MySQL database and expects that Dibi is
  * propperly initialized. It maps every row in specified table to one entity.
  *
- * This is not supposed to be fully featured ORM, but rather simple way to 
- * manage simple records (which are 90% of web applications). If you need to 
+ * This is not supposed to be fully featured ORM, but rather simple way to
+ * manage simple records (which are 90% of web applications). If you need to
  * implement more complex entities, write your own driver.
  */
 trait DibiEntityDriver {

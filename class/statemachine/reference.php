@@ -175,7 +175,7 @@ class Reference implements \ArrayAccess, \Iterator
 		throw new \InvalidArgumentException('Cannot unset property: Property cache is read only.');
 	}
 
-	
+
 	/*
 	 * Iterator interface implementation.
 	 */

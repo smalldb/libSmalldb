@@ -33,8 +33,8 @@ namespace Smalldb\Cascade;
 use Smalldb\Machine\AbstractMachine;
 
 /**
- * Universal implemntation of state machine action invocation. Inputs are 
- * passed as arguments to the transition, returned value is set on one or more 
+ * Universal implemntation of state machine action invocation. Inputs are
+ * passed as arguments to the transition, returned value is set on one or more
  * outputs.
  */
 class ActionBlock extends \Block
@@ -56,7 +56,7 @@ class ActionBlock extends \Block
 	protected $output_values;
 
 	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb 
+	 * Setup block to act as expected. Configuration is done by Smalldb
 	 * Block Storage.
 	 */
 	public function __construct($machine, $action, $action_desc)

@@ -51,8 +51,8 @@ class BlockStorage implements \IBlockStorage
 
 
 	/**
-	 * Returns true if there is no way that this storage can modify or 
-	 * create blocks. When creating or modifying block, first storage that 
+	 * Returns true if there is no way that this storage can modify or
+	 * create blocks. When creating or modifying block, first storage that
 	 * returns true will be used.
 	 */
 	public function isReadOnly()
@@ -62,8 +62,8 @@ class BlockStorage implements \IBlockStorage
 
 
 	/**
-	 * Create instance of requested block and give it loaded configuration. 
-	 * No further initialisation here, that is job for cascade controller. 
+	 * Create instance of requested block and give it loaded configuration.
+	 * No further initialisation here, that is job for cascade controller.
 	 * Returns created instance or false.
 	 */
 	public function createBlockInstance ($block)

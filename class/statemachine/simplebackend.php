@@ -31,11 +31,11 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Simple and stupid backend which must be told about everything. Good enough 
- * if configuration is loaded by some other part of application from config 
+ * Simple and stupid backend which must be told about everything. Good enough
+ * if configuration is loaded by some other part of application from config
  * files, but too dumb to scan database automatically.
  *
- * References are expected to be a pair of $type and $id, where $id is integer 
+ * References are expected to be a pair of $type and $id, where $id is integer
  * or string.
  */
 class SimpleBackend extends AbstractBackend
@@ -52,7 +52,7 @@ class SimpleBackend extends AbstractBackend
 	/**
 	 * Register new state machine of type $type named $name, which is
 	 * instance of class $class. And when creating this machine, pass $args
-	 * to its constructor. Also additional meta-data can be attached using 
+	 * to its constructor. Also additional meta-data can be attached using
 	 * $description (will be merged with name, class and args).
 	 */
 	public function addType($type, $class, $args = array(), $description = array())

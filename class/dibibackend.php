@@ -31,7 +31,7 @@
 namespace Smalldb;
 
 /**
- * Dibi Smalldb backend expects dibi library initialized and global static 
+ * Dibi Smalldb backend expects dibi library initialized and global static
  * class dibi working.
  */
 class DibiBackend extends AbstractBackend

@@ -62,7 +62,7 @@ class SelectBuilder extends FlupdoBuilder
 {
 
 	protected static $methods = array(
-		// 
+		//
 		'headerComment'		=> array('replace',	'-- HEADER'),
 		'select'		=> array('add',		'SELECT'),
 

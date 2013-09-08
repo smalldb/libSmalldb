@@ -47,7 +47,7 @@ class DescribeBlock extends \Block
 
 
 	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb 
+	 * Setup block to act as expected. Configuration is done by Smalldb
 	 * Block Storage.
 	 */
 	public function __construct($type)

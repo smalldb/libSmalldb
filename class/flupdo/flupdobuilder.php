@@ -153,7 +153,7 @@ class FlupdoBuilder
 
 
 	/**
-	 * Process all buffers and build SQL query. Side product is array of 
+	 * Process all buffers and build SQL query. Side product is array of
 	 * parameters (stored in $this->args) to bind with query.
 	 */
 	public function compile()
@@ -192,7 +192,7 @@ class FlupdoBuilder
 
 
 	/**
-	 * Builds, binds and executes an SQL statement, returning a result set 
+	 * Builds, binds and executes an SQL statement, returning a result set
 	 * as a PDOStatement object.
 	 *
 	 * Proxy to PDOStatement::prepare() & PDOStatement::bindValue() & PDOStatement::query().
@@ -287,7 +287,7 @@ class FlupdoBuilder
 
 
 	/**
-	 * Add SQL with parameters. Parameters are stored in groups, merge to 
+	 * Add SQL with parameters. Parameters are stored in groups, merge to
 	 * one array is done at the end (using single array_merge call).
 	 */
 	protected function sqlBuffer($buf)
@@ -295,7 +295,7 @@ class FlupdoBuilder
 		if (empty($buf)) {
 			return;
 		}
-		
+
 		$sql = array_shift($buf);
 
 		if (is_array($sql)) {

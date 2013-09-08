@@ -80,7 +80,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
-	 * Add primary key condition to where clause. Result should contain 
+	 * Add primary key condition to where clause. Result should contain
 	 * only one row now.
 	 *
 	 * Returns $query.

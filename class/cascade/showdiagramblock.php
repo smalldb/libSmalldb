@@ -49,7 +49,7 @@ class ShowDiagramBlock extends \Block
 
 
 	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb 
+	 * Setup block to act as expected. Configuration is done by Smalldb
 	 * Block Storage.
 	 */
 	public function __construct($smalldb)
@@ -77,7 +77,7 @@ class ShowDiagramBlock extends \Block
 
 		$dot = $machine->exportDot();
 		$hash = md5($dot);
-		
+
 		$dot_file = filename_format($config[$profile]['src_file'], array('hash' => $hash, 'ext' => 'dot'));
 		$len = file_put_contents($dot_file, $dot);
 

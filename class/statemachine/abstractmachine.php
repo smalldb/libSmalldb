@@ -31,10 +31,10 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Implementation of the state machine. One instance of this class represents 
+ * Implementation of the state machine. One instance of this class represents
  * all machines of this type.
  *
- * State machine always work with ID, never with Reference. References are 
+ * State machine always work with ID, never with Reference. References are
  * decoded within backend.
  */
 abstract class AbstractMachine
@@ -73,8 +73,8 @@ abstract class AbstractMachine
 	); */
 
 	/**
-	 * State groups. This state machine is flat -- no sub-states. To make 
-	 * diagrams easier to read, this allows to group relevant states 
+	 * State groups. This state machine is flat -- no sub-states. To make
+	 * diagrams easier to read, this allows to group relevant states
 	 * together. This has no influence on the behaviour.
 	 */
 	protected $state_groups; /* = array(
@@ -88,7 +88,7 @@ abstract class AbstractMachine
 	/**
 	 * Description of all known actions -- key is action name.
 	 *
-	 * Each action has transitions (transition function) and each 
+	 * Each action has transitions (transition function) and each
 	 * transition can end in various different states (assertion function).
 	 */
 	protected $actions; /* = array(
@@ -187,8 +187,8 @@ abstract class AbstractMachine
 	/**
 	 * Reflection: Get all actions (transitions)
 	 *
-	 * List of actions can be filtered by section defined in action 
-	 * configuration. For example $this->getAllMachineStates('block') will 
+	 * List of actions can be filtered by section defined in action
+	 * configuration. For example $this->getAllMachineStates('block') will
 	 * return only actions which have 'block' configuration defined.
 	 */
 	public function getAllMachineActions($having_section = null)
@@ -254,7 +254,7 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Invoke state machine transition. State machine is not instance of 
+	 * Invoke state machine transition. State machine is not instance of
 	 * this class, but it is represented by record in database.
 	 */
 	public function invokeTransition($id, $transition_name, $args, & $returns)
@@ -462,7 +462,7 @@ abstract class AbstractMachine
 			if (isset($group['groups'])) {
 				$this->exportDotRenderGroups($group['groups'], $group_content, "\t".$indent);
 			}
-			echo $indent, "}\n"; 
+			echo $indent, "}\n";
 		}
 	}
 

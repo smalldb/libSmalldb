@@ -31,7 +31,7 @@
 namespace Smalldb\Flupdo;
 
 /**
- * Extend PDO class with query builder starting methods. These methods are 
+ * Extend PDO class with query builder starting methods. These methods are
  * simple factory & proxy to FlupdoBuilder.
  */
 class Flupdo extends \PDO

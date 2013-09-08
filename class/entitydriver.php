@@ -41,7 +41,7 @@ trait EntityDriver {
 
 
 	/**
-	 * Initialize this driver before use. Returns true when successful, 
+	 * Initialize this driver before use. Returns true when successful,
 	 * otherwise block would terminate.
 	 */
 	protected function initializeEntityDriver()
