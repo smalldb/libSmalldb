@@ -66,10 +66,18 @@ class Reference implements \ArrayAccess, \Iterator
 	 * Create reference and initialize it with given ID. To copy
 	 * a reference use clone keyword.
 	 */
-	public function __construct(AbstractMachine $machine, $id)
+	public function __construct(AbstractMachine $machine, $id = null)
 	{
+		$args = func_get_args();
 		$this->machine = $machine;
-		$this->id = $id;
+
+		if (count($args) > 2) {
+			// composite primary key as multiple arguments
+			array_shift($args);
+			$this->id = $args;
+		} else {
+			$this->id = $id;
+		}
 	}
 
 

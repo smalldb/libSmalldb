@@ -38,7 +38,7 @@ use	\Smalldb\Flupdo\Flupdo,
  */
 class FlupdoBackend extends AbstractBackend
 {
-	private $flupdo;
+	protected $flupdo;
 
 	/**
 	 * Static table of known machine types. Inherit this class and replace this
@@ -70,11 +70,6 @@ class FlupdoBackend extends AbstractBackend
 			if (!($this->flupdo instanceof Flupdo || $this->flupdo instanceof FlupdoProxy)) {
 				throw new \InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
 			}
-		} else if (isset($options['pdo'])) {
-			if (!($options['pdo'] instanceof \PDO)) {
-				throw new \InvalidArgumentException('The "pdo" option must contain an instance of PDO class.');
-			}
-			$this->flupdo = new FlupdoProxy($options['pdo']);
 		} else {
 			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], @ $options['driver_options']);
 		}
@@ -92,8 +87,9 @@ class FlupdoBackend extends AbstractBackend
 	}
 
 
+    // FIXME: This should be machine listing, not general query builder.
 	public function createQueryBuilder($type)
-	{
+    {
 		return $this->getMachine($type)->createQueryBuilder();
 	}
 
@@ -149,15 +145,14 @@ class FlupdoBackend extends AbstractBackend
 	 * In simple applications ref consists of pair $type and $id, where $id
 	 * is uniquie within given $type.
 	 *
-	 * $aref is array of arguments passed to AbstractBackend::ref() or
-	 * single literal if only one argument was passed.
+	 * $aref is array of arguments passed to AbstractBackend::ref().
 	 *
 	 * $type is string.
 	 *
 	 * $id is literal or array of literals (in case of compound key).
 	 */
 	public function inferMachineType($aref, & $type, & $id)
-	{
+    {
 		$len = count($aref);
 
 		if ($len == 0) {
@@ -173,7 +168,7 @@ class FlupdoBackend extends AbstractBackend
 		if ($len > 2) {
 			$id = $aref;
 		} else {
-			list($id) = $aref;
+			$id = reset($aref);
 		}
 
 		return true;

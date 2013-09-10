@@ -35,7 +35,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $flupdo;
 	protected $table;
 
-	private $pk_columns = null;
+	protected $pk_columns = null;
 
 	/**
 	 * Define state machine used by all instances of this type.
@@ -58,6 +58,9 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	public function createQueryBuilder()
 	{
+		// FIXME: This should not be here. There should be generic 
+		// listing API and separate listing class.
+
 		$q = $this->flupdo->select();
 		$q->from($q->quoteIdent($this->table));
 		return $q;
@@ -87,6 +90,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddPrimaryKeyWhere($query, $id)
 	{
+		if (empty($id)) {
+			throw new \InvalidArgumentException('Empty ID.');
+		} else if (count($id) != count($this->describeId())) {
+			throw new \InvalidArgumentException('Malformed ID.');
+		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
 			$query->where($query->quoteIdent($col).' = ?', $val);
 		}
@@ -99,6 +107,10 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	public function getState($id)
 	{
+		if ($id === null) {
+			return null;
+		}
+
 		$q = $this->createQueryBuilder()
 			->select(null)
 			->limit(1);
@@ -110,7 +122,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		$state = $r->fetchColumn(0);
 		$r->closeCursor();
 
-		return $state;
+		return (string) $state;
 	}
 
 
@@ -119,6 +131,10 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	public function getProperties($id)
 	{
+		if ($id === null) {
+			throw new \RuntimeException('State machine instance does not exist.');
+		}
+
 		$q = $this->createQueryBuilder()
 			->limit(1);
 

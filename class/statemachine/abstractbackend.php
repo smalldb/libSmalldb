@@ -202,15 +202,8 @@ abstract class AbstractBackend
 			}
 			$args = $arg1;
 			$argc = count($arg1);
-		} else if ($argc == 1) {
-			$args = $arg1;
 		} else {
 			$args = func_get_args();
-		}
-
-		// Flatten arrays
-		if ($argc == 1 && is_array($args)) {
-			list($args) = $args;
 		}
 
 		// Decode arguments to machine type and machine-specific ID

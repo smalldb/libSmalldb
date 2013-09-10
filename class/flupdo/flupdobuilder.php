@@ -94,7 +94,7 @@ class FlupdoBuilder
 
 		@ list($action, $buffer_id, $label) = static::$methods[$method];
 
-		if ($args[0] === null) {
+		if (count($args) == 1 && $args[0] === null) {
 			unset($this->buffers[$buffer_id]);
 		} else {
 			$this->$action($args, $buffer_id, $label);
@@ -183,7 +183,17 @@ class FlupdoBuilder
 	 */
 	public function quote($value)
 	{
-		return $this->pdo->quote($value);
+		if ($value instanceof FlupdoRawSql) {
+			return $value;
+		} else {
+			return $this->pdo->quote($value);
+		}
+	}
+
+
+	public function rawSql($sql)
+	{
+		return new FlupdoRawSql($sql);
 	}
 
 
@@ -197,7 +207,11 @@ class FlupdoBuilder
 		if ($this->query_sql === null) {
 			$this->compile();
 		}
-		return $this->pdo->exec($this->query_sql);
+		$r = $this->pdo->exec($this->query_sql);
+		if ($r === FALSE) {
+			throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
+		}
+		return $r;
 	}
 
 
@@ -222,8 +236,8 @@ class FlupdoBuilder
 			return $result;
 		} else {
 			$stmt = $this->prepare();
-			if (!$stmt) {
-				throw new \RuntimeException($this->pdo->errorInfo());
+			if ($stmt === FALSE) {
+				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
 			}
 
 			$i = 1;
@@ -246,7 +260,7 @@ class FlupdoBuilder
 			}
 
 			if (!$stmt->execute()) {
-				throw new \RuntimeException(join(', ', $stmt->errorInfo())."\n\nQuery: ".$this->query_sql);
+				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
 			}
 			return $stmt;
 		}
@@ -265,6 +279,15 @@ class FlupdoBuilder
 		}
 
 		return $this->pdo->prepare($this->query_sql, $driver_options);
+	}
+
+
+	/**
+	 * Proxy to PDO::lastInsertId().
+	 */
+	public function lastInsertId()
+	{
+		return $this->pdo->lastInsertId();
 	}
 
 

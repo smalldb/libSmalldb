@@ -61,6 +61,8 @@ abstract class AbstractMachine
 
 	/**
 	 * Descriptions of all known states -- key is state id, value is * description
+	 *
+	 * Fill these data in self::initializeMachine().
 	 */
 	protected $states; /* = array(
 		'state_name' => array(
@@ -76,6 +78,8 @@ abstract class AbstractMachine
 	 * State groups. This state machine is flat -- no sub-states. To make
 	 * diagrams easier to read, this allows to group relevant states
 	 * together. This has no influence on the behaviour.
+	 *
+	 * Fill these data in self::initializeMachine().
 	 */
 	protected $state_groups; /* = array(
 		'group_name' => array(
@@ -90,11 +94,14 @@ abstract class AbstractMachine
 	 *
 	 * Each action has transitions (transition function) and each
 	 * transition can end in various different states (assertion function).
+	 *
+	 * Fill these data in self::initializeMachine().
 	 */
 	protected $actions; /* = array(
 		'action_name' => array(
-			'label' => 'Human readable name (short)',
-			'description' => 'Human readable description (sentence or two).',
+			'label' => _('Human readable name (short)'),
+			'description' => _('Human readable description (sentence or two).'),
+			'returns' => 'new_id',	// Use this if machine ID is changed after transition. If null, value is returned as is.
 			'transitions' => array(
 				'source_state' => array(
 					'targets' => array('target_state', ... ),
@@ -102,6 +109,25 @@ abstract class AbstractMachine
 				),
 			),
 		)
+	); */
+
+
+	/**
+	 * Description of machine properties -- key is property name.
+	 *
+	 * Each property has some metadata available, so it is possible to
+	 * generate simple forms or present data to user without writing
+	 * per-machine specific templates. These metadata should be
+	 * as little implementation specific as possible.
+	 */
+	protected $properties; /* = array(
+		'property_name' => array(
+			'label' => _('Human readable name (short)'),
+			'description' => _('Human readable description (sentence or two).'),
+			'type' => 'type_identifier', // Logical type -- eg. 'price', not 'int'.
+			'enum' => array('key' => _('Label'), ...), // Available values for enum types
+			'note' => _('Some additional note displayed in forms under the field.'),
+		),
 	); */
 
 
@@ -166,10 +192,18 @@ abstract class AbstractMachine
 
 	/**
 	 * Reflection: Get all states
+	 *
+	 * List of can be filtered by section, just like getAllMachineActions 
+	 * method does.
 	 */
-	public function getAllMachineStates()
+	public function getAllMachineStates($having_section = null)
 	{
-		return array_keys($this->states);
+		if ($having_section === null) {
+			return array_keys($this->states);
+		} else {
+			return array_keys(array_filter($this->states,
+				function($a) use ($having_section) { return !empty($a[$having_section]); }));
+		}
 	}
 
 
@@ -190,6 +224,7 @@ abstract class AbstractMachine
 	 * List of actions can be filtered by section defined in action
 	 * configuration. For example $this->getAllMachineStates('block') will
 	 * return only actions which have 'block' configuration defined.
+	 * Requested section must contain non-empty() value.
 	 */
 	public function getAllMachineActions($having_section = null)
 	{
@@ -197,7 +232,7 @@ abstract class AbstractMachine
 			return array_keys($this->actions);
 		} else {
 			return array_keys(array_filter($this->actions,
-				function($a) use ($having_section) { return isset($a[$having_section]); }));
+				function($a) use ($having_section) { return !empty($a[$having_section]); }));
 		}
 	}
 
@@ -210,6 +245,34 @@ abstract class AbstractMachine
 	public function describeMachineAction($action)
 	{
 		return @ $this->actions[$action];
+	}
+
+
+	/**
+	 * Reflection: Get all properties
+	 *
+	 * List of can be filtered by section, just like getAllMachineActions 
+	 * method does.
+	 */
+	public function getAllMachineProperties($having_section = null)
+	{
+		if ($having_section === null) {
+			return array_keys($this->properties);
+		} else {
+			return array_keys(array_filter($this->properties,
+				function($a) use ($having_section) { return !empty($a[$having_section]); }));
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe given property
+	 *
+	 * Returns property description in array or null.
+	 */
+	public function describeMachineProperty($property)
+	{
+		return @ $this->properties[$property];
 	}
 
 
