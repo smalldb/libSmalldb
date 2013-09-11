@@ -145,8 +145,10 @@ class Reference implements \ArrayAccess, \Iterator
 				throw new \InvalidArgumentException('Property is not cached: '.$key);
 			case 'state':
 				$this->state_cache = null;
+				break;
 			case 'properties':
 				$this->properties_cache = null;
+				break;
 			default:
 				throw new \InvalidArgumentException('Unknown property: '.$key);
 		}
