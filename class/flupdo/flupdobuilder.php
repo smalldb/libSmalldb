@@ -259,8 +259,8 @@ class FlupdoBuilder
 				$i++;
 			}
 
-			if (!$stmt->execute()) {
-				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
+			if ($stmt->execute() === FALSE) {
+				throw new FlupdoSqlException($stmt->errorInfo(), $this->query_sql, $this->query_params);
 			}
 			return $stmt;
 		}
