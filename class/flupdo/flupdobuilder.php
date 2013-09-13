@@ -183,10 +183,20 @@ class FlupdoBuilder
 	 */
 	public function quote($value)
 	{
+		// PDO::quote() does not work as it should ...
 		if ($value instanceof FlupdoRawSql) {
 			return $value;
+		} else if (is_bool($value)) {
+			return $value ? 'TRUE' : 'FALSE';
+		} else if (is_null($value)) {
+			return 'NULL';
+		} else if (is_int($value)) {
+			return (string) $value;
+		} else if (is_float($value)) {
+			return sprintf('%F', $value);
 		} else {
-			return $this->pdo->quote($value);
+			// ignore locales when converting to string
+			return $this->pdo->quote(strval($value), \PDO::PARAM_STR);
 		}
 	}
 
@@ -249,10 +259,6 @@ class FlupdoBuilder
 				} else if (is_int($param)) {
 					$stmt->bindValue($i, $param, \PDO::PARAM_INT);
 				} else {
-					if (is_array($param)) {
-						print_r($param);
-						debug_print_backtrace();
-					}
 					// ignore locales when converting to string
 					$stmt->bindValue($i, strval($param), \PDO::PARAM_STR);
 				}
