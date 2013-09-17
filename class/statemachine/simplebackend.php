@@ -123,6 +123,12 @@ class SimpleBackend extends AbstractBackend
 		}
 	}
 
+
+	public function createQueryBuilder($type)
+	{
+		throw new \Exception('Not implemented.');
+	}
+
 }
 
 
