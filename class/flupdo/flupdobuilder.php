@@ -217,9 +217,14 @@ class FlupdoBuilder
 		if ($this->query_sql === null) {
 			$this->compile();
 		}
-		$r = $this->pdo->exec($this->query_sql);
-		if ($r === FALSE) {
-			throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
+		if (empty($this->query_params)) {
+			$r = $this->pdo->exec($this->query_sql);
+			if ($r === FALSE) {
+				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
+			}
+		} else {
+			$stmt = $this->query();
+			return $stmt->rowCount();
 		}
 		return $r;
 	}
