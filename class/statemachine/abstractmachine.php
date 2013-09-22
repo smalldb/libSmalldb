@@ -191,6 +191,22 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Get mtime of machine implementation.
+	 *
+	 * Useful to detect outdated cache entry in generated documentation.
+	 *
+	 * No need to override this method, it handles inherited classes 
+	 * correctly. However if machine is loaded from database, a new 
+	 * implementation is needed.
+	 */
+	public function getMachineMTime()
+	{
+		$reflector = new \ReflectionObject($this);
+		return filemtime($reflector->getFilename());
+	}
+
+
+	/**
 	 * Reflection: Get all states
 	 *
 	 * List of can be filtered by section, just like getAllMachineActions 
@@ -423,58 +439,64 @@ abstract class AbstractMachine
 		// States
 		echo "\t", "node [ shape=ellipse, fontsize=9, style=\"filled\", fontname=\"sans\", fillcolor=\"#eeeeee\", penwidth=2 ];\n";
 		$group_content = array();
-		foreach ($this->states as $s => $state) {
-			echo "\t", "s_", $this->escapeDotIdentifier($s),
-				" [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
-			if (!empty($state['color'])) {
-				echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
-			}
-			echo " ];\n";
+		if (!empty($this->states)) {
+			foreach ($this->states as $s => $state) {
+				echo "\t", "s_", $this->escapeDotIdentifier($s),
+					" [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
+				if (!empty($state['color'])) {
+					echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
+				}
+				echo " ];\n";
 
-			if (isset($state['group'])) {
-				$group_content[$state['group']][] = $s;
+				if (isset($state['group'])) {
+					$group_content[$state['group']][] = $s;
+				}
 			}
 		}
 
 		// State groups
-		$this->exportDotRenderGroups($this->state_groups, $group_content);
+		if (!empty($this->state_groups)) {
+			$this->exportDotRenderGroups($this->state_groups, $group_content);
+		}
 
 		$have_final_state = false;
 		$missing_states = array();
 
 		// Transitions
 		$used_actions = array();
-		foreach ($this->actions as $a => $action) {
-			$a_a = 'a_'.$this->escapeDotIdentifier($a);
-			foreach ($action['transitions'] as $src => $transition) {
-				if ($src === null || $src === '') {
-					$s_src = 'BEGIN';
-				} else {
-					$s_src = 's_'.$this->escapeDotIdentifier($src);
-					if (!array_key_exists($src, $this->states)) {
-						$missing_states[$src] = true;
-					}
-				}
-				foreach ($transition['targets'] as $dst) {
-					if ($dst === null || $dst === '') {
-						$s_dst = 'END';
-						$have_final_state = true;
+		if (!empty($this->actions)) {
+			foreach ($this->actions as $a => $action) {
+				$a_a = 'a_'.$this->escapeDotIdentifier($a);
+				foreach ($action['transitions'] as $src => $transition) {
+					if ($src === null || $src === '') {
+						$s_src = 'BEGIN';
 					} else {
-						$s_dst = 's_'.$this->escapeDotIdentifier($dst);
-						if (!array_key_exists($dst, $this->states)) {
-							$missing_states[$dst] = true;
+						$s_src = 's_'.$this->escapeDotIdentifier($src);
+						if (!array_key_exists($src, $this->states)) {
+							$missing_states[$src] = true;
 						}
 					}
-					echo "\t", $s_src, " -> ", $s_dst, " [ ";
-					echo "label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\"";
-					if (isset($transition['weight'])) {
-						echo ", weight=", (int) $transition['weight'];
+					foreach ($transition['targets'] as $dst) {
+						if ($dst === null || $dst === '') {
+							$s_dst = 'END';
+							$have_final_state = true;
+						} else {
+							$s_dst = 's_'.$this->escapeDotIdentifier($dst);
+							if (!array_key_exists($dst, $this->states)) {
+								$missing_states[$dst] = true;
+							}
+						}
+						echo "\t", $s_src, " -> ", $s_dst, " [ ";
+						echo "label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\"";
+						if (isset($transition['weight'])) {
+							echo ", weight=", (int) $transition['weight'];
+						}
+						echo " ];\n";
 					}
-					echo " ];\n";
 				}
 			}
+			echo "\n";
 		}
-		echo "\n";
 
 		// Missing states
 		foreach ($missing_states as $s => $state) {
