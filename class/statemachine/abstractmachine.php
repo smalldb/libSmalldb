@@ -198,6 +198,8 @@ abstract class AbstractMachine
 	 * No need to override this method, it handles inherited classes 
 	 * correctly. However if machine is loaded from database, a new 
 	 * implementation is needed.
+	 *
+	 * This does not include filemtime(__FILE__) intentionaly.
 	 */
 	public function getMachineMTime()
 	{
@@ -311,11 +313,21 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Called when state is changed, when transition invocation is completed.
+	 */
+	protected function onStateChanged($id, $old_state, $transition_name, $new_state)
+	{
+	}
+
+
+	/**
 	 * Get list of all available actions for state machine instance identified by $id.
 	 */
-	public function getAvailableTransitions($id)
+	public function getAvailableTransitions($id, $state = null)
 	{
-		$state = $this->getState($id);
+		if ($state === null) {
+			$state = $this->getState($id);
+		}
 
 		$available_transitions = array();
 
@@ -323,12 +335,32 @@ abstract class AbstractMachine
 			$tr = @ $action['transitions'][$state];
 			if ($tr !== null) {
 				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id)) {
-					$available_transitions[$a] = $tr;
+					$tr = array_merge($action, $tr);
+					unset($tr['transitions']);
+					$available_transitions[] = $a;
 				}
 			}
 		}
 
 		return $available_transitions;
+	}
+
+
+	/**
+	 * Returns true if transition can be invoked right now.
+	 */
+	public function isTransitionAllowed($id, $transition_name, $state = null)
+	{
+		if ($state === null) {
+			$state = $this->getState($id);
+		}
+
+		$tr = @ $this->actions[$transition_name]['transitions'][$state];
+		if (!isset($tr)) {
+			return false;
+		}
+
+		return (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id));
 	}
 
 
@@ -351,6 +383,7 @@ abstract class AbstractMachine
 		if ($transition === null) {
 			throw new \DomainException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
 		}
+		$transition = array_merge($action, $transition);
 
 		// check permissions
 		$perms = @ $transition['permissions'];
@@ -388,6 +421,11 @@ abstract class AbstractMachine
 			throw new \RuntimeException('State machine ended in unexpected state "'.$new_state
 				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
 				.'Expected states: '.join(', ', $target_states).'.');
+		}
+
+		// state changed notification
+		if ($state != $new_state) {
+			$this->onStateChanged($id, $state, $transition_name, $new_state);
 		}
 
 		return $ret;
@@ -468,6 +506,7 @@ abstract class AbstractMachine
 			foreach ($this->actions as $a => $action) {
 				$a_a = 'a_'.$this->escapeDotIdentifier($a);
 				foreach ($action['transitions'] as $src => $transition) {
+					$transition = array_merge($action, $transition);
 					if ($src === null || $src === '') {
 						$s_src = 'BEGIN';
 					} else {
@@ -487,7 +526,11 @@ abstract class AbstractMachine
 							}
 						}
 						echo "\t", $s_src, " -> ", $s_dst, " [ ";
-						echo "label=\"", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "\"";
+						echo "label=\" ", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "  \"";
+						if (!empty($transition['color'])) {
+							echo ", color=\"", addcslashes($transition['color'], '"'), "\"";
+							echo ", fontcolor=\"", addcslashes($transition['color'], '"'), "\"";
+						}
 						if (isset($transition['weight'])) {
 							echo ", weight=", (int) $transition['weight'];
 						}
