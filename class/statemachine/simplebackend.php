@@ -72,11 +72,11 @@ class SimpleBackend extends AbstractBackend
 	public function addAllTypes($known_types)
 	{
 		if ($this->getCachedMachinesCount() > 0) {
-			throw new \RuntimeException('Cannot load all machine types after backend has been used (cache is not empty).');
+			throw new RuntimeException('Cannot load all machine types after backend has been used (cache is not empty).');
 		}
 
 		if (!empty($this->known_types)) {
-			throw new \RuntimeException('Cannot load all machine types when there are some types defined already.');
+			throw new RuntimeException('Cannot load all machine types when there are some types defined already.');
 		}
 
 		$this->known_types = $known_types;
@@ -98,7 +98,7 @@ class SimpleBackend extends AbstractBackend
 	public function inferMachineType($ref, & $type, & $id)
 	{
 		if (!is_array($ref) || count($ref) != 2) {
-			throw new \InvalidArgumentException('Invalid reference');
+			throw new InvalidArgumentException('Invalid reference');
 		}
 
 		list($type, $id) = $ref;

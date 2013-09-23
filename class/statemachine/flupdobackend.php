@@ -68,7 +68,7 @@ class FlupdoBackend extends AbstractBackend
 		if (isset($options['flupdo'])) {
 			$this->flupdo = $options['flupdo'];
 			if (!($this->flupdo instanceof Flupdo || $this->flupdo instanceof FlupdoProxy)) {
-				throw new \InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
+				throw new InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
 			}
 		} else {
 			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], @ $options['driver_options']);

@@ -375,20 +375,20 @@ abstract class AbstractMachine
 		// get action
 		$action = @ $this->actions[$transition_name];
 		if ($action === null) {
-			throw new \DomainException('Unknown transition requested: '.$transition_name);
+			throw new TransitionException('Unknown transition requested: '.$transition_name);
 		}
 
 		// get transition (instance of action)
 		$transition = @ $action['transitions'][$state];
 		if ($transition === null) {
-			throw new \DomainException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
+			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
 		}
 		$transition = array_merge($action, $transition);
 
 		// check permissions
 		$perms = @ $transition['permissions'];
 		if (!$this->checkPermissions($perms, $id)) {
-			throw new \Exception('Access denied to transition "'.$transition_name.'".');
+			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
 		}
 
 		// get method
@@ -408,17 +408,17 @@ abstract class AbstractMachine
 				$id = $ret;
 				break;
 			default:
-				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
 		}
 
 		// check result using assertion function
 		$new_state = $this->getState($id);
 		$target_states = $transition['targets'];
 		if (!is_array($target_states)) {
-			throw new \Exception('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
+			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
 		}
 		if (!in_array($new_state, $target_states)) {
-			throw new \RuntimeException('State machine ended in unexpected state "'.$new_state
+			throw new RuntimeException('State machine ended in unexpected state "'.$new_state
 				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
 				.'Expected states: '.join(', ', $target_states).'.');
 		}

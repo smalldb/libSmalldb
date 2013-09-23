@@ -91,9 +91,9 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected function queryAddPrimaryKeyWhere($query, $id)
 	{
 		if (empty($id)) {
-			throw new \InvalidArgumentException('Empty ID.');
+			throw new InvalidArgumentException('Empty ID.');
 		} else if (count($id) != count($this->describeId())) {
-			throw new \InvalidArgumentException('Malformed ID.');
+			throw new InvalidArgumentException('Malformed ID.');
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
 			$query->where($query->quoteIdent($col).' = ?', $val);
@@ -132,7 +132,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	public function getProperties($id)
 	{
 		if ($id === null) {
-			throw new \RuntimeException('State machine instance does not exist.');
+			throw new RuntimeException('State machine instance does not exist.');
 		}
 
 		$q = $this->createQueryBuilder()
@@ -146,7 +146,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		$r->closeCursor();
 
 		if ($props === null) {
-			throw new \RuntimeException('State machine instance not found.');
+			throw new RuntimeException('State machine instance not found.');
 		}
 
 		return $props;

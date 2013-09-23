@@ -95,7 +95,7 @@ class Reference implements \ArrayAccess, \Iterator
 			case AbstractMachine::RETURNS_NEW_ID:
 				return new self($this->machine, $r);
 			default:
-				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
+				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
 		}
 	}
 
@@ -127,7 +127,7 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'actions':
 				return $this->machine->getAvailableTransitions($this->id);
 			default:
-				throw new \InvalidArgumentException('Unknown property: '.$key);
+				throw new InvalidArgumentException('Unknown property: '.$key);
 		}
 	}
 
@@ -142,7 +142,7 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'machine':
 			case 'machineType':
 			case 'actions':
-				throw new \InvalidArgumentException('Property is not cached: '.$key);
+				throw new InvalidArgumentException('Property is not cached: '.$key);
 			case 'state':
 				$this->state_cache = null;
 				break;
@@ -150,7 +150,7 @@ class Reference implements \ArrayAccess, \Iterator
 				$this->properties_cache = null;
 				break;
 			default:
-				throw new \InvalidArgumentException('Unknown property: '.$key);
+				throw new InvalidArgumentException('Unknown property: '.$key);
 		}
 	}
 
@@ -177,12 +177,12 @@ class Reference implements \ArrayAccess, \Iterator
 
 	public function offsetSet($offset, $value)
 	{
-		throw new \InvalidArgumentException('Cannot set property: Property cache is read only.');
+		throw new InvalidArgumentException('Cannot set property: Property cache is read only.');
 	}
 
 	public function offsetUnset($offset)
 	{
-		throw new \InvalidArgumentException('Cannot unset property: Property cache is read only.');
+		throw new InvalidArgumentException('Cannot unset property: Property cache is read only.');
 	}
 
 

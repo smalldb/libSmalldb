@@ -190,7 +190,7 @@ abstract class AbstractBackend
 		// Clone if Reference is given
 		if ($arg1 instanceof Reference) {
 			if ($argc != 1) {
-				throw new \InvalidArgumentException('The first argument is Reference and more than one argument given.');
+				throw new InvalidArgumentException('The first argument is Reference and more than one argument given.');
 			}
 			return clone $arg1;
 		}
@@ -198,7 +198,7 @@ abstract class AbstractBackend
 		// Get arguments
 		if (is_array($arg1)) {
 			if ($argc != 1) {
-				throw new \InvalidArgumentException('The first argument is array and more than one argument given.');
+				throw new InvalidArgumentException('The first argument is array and more than one argument given.');
 			}
 			$args = $arg1;
 			$argc = count($arg1);
@@ -208,13 +208,13 @@ abstract class AbstractBackend
 
 		// Decode arguments to machine type and machine-specific ID
 		if (!$this->inferMachineType($args, $type, $id)) {
-			throw new \InvalidArgumentException('Invalid reference - cannot infer machine type: '.$type);
+			throw new InvalidArgumentException('Invalid reference - cannot infer machine type: '.$type);
 		}
 
 		// Create reference
 		$m = $this->getMachine($type);
 		if ($m === null) {
-			throw new \InvalidArgumentException('Invalid reference - cannot create machine: '.$type);
+			throw new InvalidArgumentException('Invalid reference - cannot create machine: '.$type);
 		}
 		return new Reference($m, $id);
 	}
