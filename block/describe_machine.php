@@ -28,27 +28,39 @@
  * SUCH DAMAGE.
  */
 
-class B_smalldb__describe extends \Smalldb\DescribeBlock
+class B_smalldb__describe_machine extends Block
 {
 	protected $inputs = array(
-		'smalldb' => array('backend', 'smalldb'),
 		'type' => array(),
 	);
 
-	protected $type;
-
-
-	public function __construct()
-	{
-		// do not call parent's constructor
-	}
-
+	protected $outputs = array(
+		'type' => true,
+		'desc' => true,
+		'done' => true,
+	);
 
 	public function main()
 	{
-		$this->type = $this->in('type');
+		$type = $this->in('type');
 
-		parent::main();
+		$block_storages = $this->getCascadeController()->getBlockStorages();
+
+		foreach ($block_storages as $storage) {
+			if (!($storage instanceof \Smalldb\Cascade\BlockStorage)) {
+				continue;
+			}
+
+			$smalldb = $storage->getSmalldbBackend();
+			$desc = $smalldb->describeType($type);
+
+			if ($desc) {
+				$this->out('type', $type);
+				$this->out('desc', $desc);
+				$this->out('done', true);
+				return true;
+			}
+		}
 	}
 
 }

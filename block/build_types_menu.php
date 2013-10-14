@@ -29,13 +29,12 @@
  */
 
 /**
- * List all known Smalldb types in way core/out/menu understands.
+ * List all known Smalldb types of all backends in way core/out/menu understands.
  */
 class B_smalldb__build_types_menu extends Block
 {
 	protected $inputs = array(
-		'smalldb' => array('backend', 'smalldb'),
-		'link' => '/{alias}/{type}',
+		'link' => '/admin/doc/smalldb/{type}',
 	);
 
 	protected $outputs = array(
@@ -46,19 +45,28 @@ class B_smalldb__build_types_menu extends Block
 	public function main()
 	{
 		$link = $this->in('link');
-		$smalldb = $this->in('smalldb');
-		$alias = $smalldb->getAlias();
 
+		$block_storages = $this->getCascadeController()->getBlockStorages();
 		$items = array();
-		$types = $smalldb->getKnownTypes();
 
-		foreach ($types as $type) {
-			$items[] = array(
-				'title' => $type,
-				'link' => str_replace('_', '-', filename_format($link, array('type' => $type, 'alias' => $alias))),
-			);
+		foreach ($block_storages as $storage) {
+			if (!($storage instanceof \Smalldb\Cascade\BlockStorage)) {
+				continue;
+			}
+
+			$smalldb = $storage->getSmalldbBackend();
+			$alias = $smalldb->getAlias();
+
+			$types = $smalldb->getKnownTypes();
+
+			foreach ($types as $type) {
+				$desc = $smalldb->describeType($type);
+				$items[] = array_merge($desc, array(
+					'type' => $type,
+					'link' => str_replace('_', '-', filename_format($link, array('type' => $type))),
+				));
+			}
 		}
-
 		
 		$this->out('items', $items);
 		$this->out('done', true);
