@@ -228,11 +228,16 @@ abstract class AbstractMachine
 	/**
 	 * Reflection: Describe given machine state
 	 *
-	 * Returns state description in array or null.
+	 * Returns state description in array or null. If field is specified, 
+	 * only given field is returned.
 	 */
-	public function describeMachineState($state)
+	public function describeMachineState($state, $field = null)
 	{
-		return @ $this->states[$state];
+		if ($field === null) {
+			return @ $this->states[$state];
+		} else {
+			return @ $this->states[$state][$field];
+		}
 	}
 
 
@@ -258,11 +263,16 @@ abstract class AbstractMachine
 	/**
 	 * Reflection: Describe given machine action (transition)
 	 *
-	 * Returns action description in array or null.
+	 * Returns action description in array or null. If field is specified, 
+	 * only given field is returned.
 	 */
-	public function describeMachineAction($action)
+	public function describeMachineAction($action, $field = null)
 	{
-		return @ $this->actions[$action];
+		if ($field === null) {
+			return @ $this->actions[$action];
+		} else {
+			return @ $this->actions[$action][$field];
+		}
 	}
 
 
@@ -286,11 +296,16 @@ abstract class AbstractMachine
 	/**
 	 * Reflection: Describe given property
 	 *
-	 * Returns property description in array or null.
+	 * Returns property description in array or null. If field is 
+	 * specified, only given field is returned.
 	 */
-	public function describeMachineProperty($property)
+	public function describeMachineProperty($property, $field = null)
 	{
-		return @ $this->properties[$property];
+		if ($field === null) {
+			return @ $this->properties[$property];
+		} else {
+			return @ $this->properties[$property][$field];
+		}
 	}
 
 
