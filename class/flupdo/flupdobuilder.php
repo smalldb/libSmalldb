@@ -246,7 +246,7 @@ class FlupdoBuilder
 		if (empty($this->query_params)) {
 			$result = $this->pdo->query($this->query_sql);
 			if (!$result) {
-				throw new \RuntimeException($this->pdo->errorInfo());
+				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
 			}
 			return $result;
 		} else {
