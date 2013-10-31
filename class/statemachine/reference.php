@@ -58,8 +58,10 @@ class Reference implements \ArrayAccess, \Iterator
 	protected $id;
 	protected $state = null;
 
-	protected $properties_cache = null;
-	protected $state_cache = null;
+	protected $state_cache;
+	protected $properties_cache;
+	protected $view_cache;
+	protected $persistent_view_cache = array();
 
 
 	/**
@@ -68,6 +70,7 @@ class Reference implements \ArrayAccess, \Iterator
 	 */
 	public function __construct(AbstractMachine $machine, $id = null)
 	{
+		$this->clearCache();
 		$args = func_get_args();
 		$this->machine = $machine;
 
@@ -82,11 +85,22 @@ class Reference implements \ArrayAccess, \Iterator
 
 
 	/**
+	 * Drop all cached data.
+	 */
+	protected function clearCache()
+	{
+		$this->state_cache = null;
+		$this->properties_cache = null;
+		$this->view_cache = array();
+	}
+
+
+	/**
 	 * Function call is transition invocation. Just forward it to backend.
 	 */
 	public function __call($name, $arguments)
 	{
-		$this->properties = null;
+		$this->clearCache();
 		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
 
 		switch ($returns) {
@@ -127,7 +141,7 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'actions':
 				return $this->machine->getAvailableTransitions($this->id);
 			default:
-				throw new InvalidArgumentException('Unknown property: '.$key);
+				return $this->machine->getView($this->id, $key, $this->properties_cache, $this->view_cache, $this->persistent_view_cache);
 		}
 	}
 
@@ -144,10 +158,8 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'actions':
 				throw new InvalidArgumentException('Property is not cached: '.$key);
 			case 'state':
-				$this->state_cache = null;
-				break;
 			case 'properties':
-				$this->properties_cache = null;
+				$this->clearCache();
 				break;
 			default:
 				throw new InvalidArgumentException('Unknown property: '.$key);

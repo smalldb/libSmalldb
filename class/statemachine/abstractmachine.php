@@ -132,6 +132,27 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Description of machine views -- key is view name.
+	 *
+	 * Some properties may require heavy computations and may not be used 
+	 * as often as other properties, so it is reasonable to put them into 
+	 * separate view instead.
+	 *
+	 * These views are just like SQL views. They are somehow transformed 
+	 * view on the machine and its properties. There is no explicit 
+	 * definition of structure of the view -- it can be single value, 
+	 * subset of properties, or something completely different.
+	 */
+	protected $views; /* = array(
+		'view_name' => array(
+			'label' => _('Human readable name (short)'),
+			'description' => _('Human readable description (sentence or two).'),
+			'properties' => array('property_name', ...), // Names of included properties, if the view is subset of properties.
+		),
+	); */
+
+
+	/**
 	 * Constructor. Machine gets reference to owning backend, name of its
 	 * type (under which is this machine registered in backend) and
 	 * optional array of additional configuration (passed directly
@@ -164,9 +185,40 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get all properties of state machine, including it's state.
+	 * Get properties of state machine, including it's state.
+	 *
+	 * If state machine uses property views, not all properties may be 
+	 * returned by this method. Some of them may be computed or too big.
 	 */
 	abstract public function getProperties($id);
+
+
+	/**
+	 * Get properties in given view.
+	 *
+	 * Just like SQL view, the property view is transformed set of 
+	 * properties. These views are useful when some properties require 
+	 * heavy calculations.
+	 *
+	 * Keep in ming, that view name must not interfere with Reference 
+	 * properties, otherwise the view is inaccessible directly.
+	 *
+	 * Array $properties_cache is supplied by Reference class to make some 
+	 * calculations faster and without duplicate database queries.
+	 * Make sure these cached properties are up to date or null.
+	 *
+	 * Array $view_cache is writable cache inside the Reference class, 
+	 * flushed together with $properties_cache. If cache is empty, but 
+	 * available, an empty array is supplied.
+	 *
+	 * Array $persistent_view_cache is kept untouched for entire Reference 
+	 * lifetime. If cache is empty, but available, an empty array is 
+	 * supplied.
+	 */
+	public function getView($id, $view, $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	{
+		throw new InvalidArgumentException('Unknown view: '.$view);
+	}
 
 
 	/**
@@ -305,6 +357,39 @@ abstract class AbstractMachine
 			return @ $this->properties[$property];
 		} else {
 			return @ $this->properties[$property][$field];
+		}
+	}
+
+
+	/**
+	 * Reflection: Get all views
+	 *
+	 * List of can be filtered by section, just like getAllMachineActions 
+	 * method does.
+	 */
+	public function getAllMachineViews($having_section = null)
+	{
+		if ($having_section === null) {
+			return array_keys((array) @ $this->views);
+		} else {
+			return array_keys(array_filter((array) @ $this->views,
+				function($a) use ($having_section) { return !empty($a[$having_section]); }));
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe given view
+	 *
+	 * Returns view description in array or null. If field is 
+	 * specified, only given field is returned.
+	 */
+	public function describeMachineView($view, $field = null)
+	{
+		if ($field === null) {
+			return @ $this->views[$view];
+		} else {
+			return @ $this->views[$view][$field];
 		}
 	}
 
