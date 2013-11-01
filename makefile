@@ -5,5 +5,9 @@ all: tests
 tests:
 	echo ; pear run-tests ./test ; echo
 
-.PHONY: all tests
+doc:
+	cd doc/ && doxygen
+
+
+.PHONY: all tests doc
 
