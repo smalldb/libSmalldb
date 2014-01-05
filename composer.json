@@ -1,0 +1,19 @@
+{
+	"name": "cascade/smalldb",
+	"type": "cascade-plugin",
+	"description": "Smalldb: State machine abstraction layer",
+	"license": "BSD-3-Clause",
+	"authors": [
+		{
+			"name": "Josef Kufner",
+			"email": "jk@frozen-doe.net"
+		}
+	],
+	"extra": {
+		"plugin": "smalldb"
+	},
+	"require": {
+		"cascade/composer-plugin": "dev-master"
+	}
+}
+
