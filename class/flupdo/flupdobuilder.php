@@ -111,7 +111,11 @@ class FlupdoBuilder
 	 */
 	public function quoteIdent($ident)
 	{
-		return '`'.str_replace("`", "``", $ident).'`';
+		if (is_array($ident)) {
+			return array_map(function($ident) { return str_replace("`", "``", $ident); }, $ident);
+		} else {
+			return str_replace("`", "``", $ident);
+		}
 	}
 
 
@@ -222,11 +226,11 @@ class FlupdoBuilder
 			if ($r === FALSE) {
 				throw new FlupdoSqlException($this->pdo->errorInfo(), $this->query_sql, $this->query_params);
 			}
+			return $r;
 		} else {
 			$stmt = $this->query();
 			return $stmt->rowCount();
 		}
-		return $r;
 	}
 
 

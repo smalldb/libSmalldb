@@ -55,6 +55,10 @@ class B_smalldb__describe_machine extends Block
 			$desc = $smalldb->describeType($type);
 
 			if ($desc) {
+				$machine = $smalldb->getMachine($type);
+				$desc['primary_key'] = $machine->describeId();
+				$desc['properties'] = $machine->describeAllMachineProperties();
+
 				$this->out('type', $type);
 				$this->out('desc', $desc);
 				$this->out('done', true);

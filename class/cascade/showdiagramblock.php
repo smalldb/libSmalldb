@@ -30,7 +30,7 @@
 
 namespace Smalldb\Cascade;
 
-class ShowDiagramBlock extends \Block
+class ShowDiagramBlock extends BackendBlock
 {
 
 	protected $inputs = array(
@@ -46,16 +46,6 @@ class ShowDiagramBlock extends \Block
 	);
 
 	const force_exec = true;
-
-
-	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb
-	 * Block Storage.
-	 */
-	public function __construct($smalldb)
-	{
-		$this->smalldb = $smalldb;
-	}
 
 
 	public function main()

@@ -189,8 +189,11 @@ abstract class AbstractMachine
 	 *
 	 * If state machine uses property views, not all properties may be 
 	 * returned by this method. Some of them may be computed or too big.
+	 *
+	 * Some implementations may store current state to $state_cache, so it 
+	 * does not have to be retireved in the second query.
 	 */
-	abstract public function getProperties($id);
+	abstract public function getProperties($id, & $state_cache = null);
 
 
 	/**
@@ -294,6 +297,20 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Reflection: Describe all states
+	 */
+	public function describeAllMachineStates($having_section = null)
+	{
+		if ($having_section === null) {
+			return $this->states;
+		} else {
+			return array_filter($this->states,
+				function($a) use ($having_section) { return !empty($a[$having_section]); });
+		}
+	}
+
+
+	/**
 	 * Reflection: Get all actions (transitions)
 	 *
 	 * List of actions can be filtered by section defined in action
@@ -324,6 +341,20 @@ abstract class AbstractMachine
 			return @ $this->actions[$action];
 		} else {
 			return @ $this->actions[$action][$field];
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe all actions (transitions)
+	 */
+	public function describeAllMachineActions($having_section = null)
+	{
+		if ($having_section === null) {
+			return $this->actions;
+		} else {
+			return array_filter($this->actions,
+				function($a) use ($having_section) { return !empty($a[$having_section]); });
 		}
 	}
 
@@ -362,6 +393,23 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Reflection: Describe all properties
+	 *
+	 * Returns array of all properties and their descriptions.
+	 * See describeMachineProperty and getAllMachineProperties.
+	 */
+	public function describeAllMachineProperties($having_section)
+	{
+		if ($having_section === null) {
+			return $this->properties;
+		} else {
+			return array_filter($this->properties,
+				function($a) use ($having_section) { return !empty($a[$having_section]); });
+		}
+	}
+
+
+	/**
 	 * Reflection: Get all views
 	 *
 	 * List of can be filtered by section, just like getAllMachineActions 
@@ -390,6 +438,20 @@ abstract class AbstractMachine
 			return @ $this->views[$view];
 		} else {
 			return @ $this->views[$view][$field];
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe all views
+	 */
+	public function describeAllMachineViews($having_section = null)
+	{
+		if ($having_section === null) {
+			return (array) @ $this->views;
+		} else {
+			return array_filter((array) @ $this->views,
+				function($a) use ($having_section) { return !empty($a[$having_section]); });
 		}
 	}
 

@@ -116,6 +116,9 @@ class Reference implements \ArrayAccess, \Iterator
 
 	/**
 	 * Get data from machine
+	 *
+	 * If you want to retrieve both state and properties, ask for 
+	 * properties first. The state may get pre-cached.
 	 */
 	public function __get($key)
 	{
@@ -136,7 +139,7 @@ class Reference implements \ArrayAccess, \Iterator
 				if ($this->properties_cache !== null) {
 					return $this->properties_cache;
 				} else {
-					return ($this->properties_cache = $this->machine->getProperties($this->id));
+					return ($this->properties_cache = $this->machine->getProperties($this->id, $this->state_cache));
 				}
 			case 'actions':
 				return $this->machine->getAvailableTransitions($this->id);

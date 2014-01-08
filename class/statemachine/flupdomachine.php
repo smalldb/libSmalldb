@@ -33,9 +33,19 @@ namespace Smalldb\StateMachine;
 abstract class FlupdoMachine extends AbstractMachine
 {
 	protected $flupdo;
+
+	/**
+	 * Name of SQL table, where machine properties are stored.
+	 */
 	protected $table;
 
 	protected $pk_columns = null;
+
+	/**
+	 * True if state should not be loaded with properties.
+	 */
+	protected $load_state_with_properties = true;
+
 
 	/**
 	 * Define state machine used by all instances of this type.
@@ -43,7 +53,6 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected function initializeMachine($args)
 	{
 		$this->flupdo = $this->backend->getFlupdo();
-		$this->table = $args['table'];
 	}
 
 
@@ -69,6 +78,8 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	/**
 	 * Add state column into select clause of the $query.
+	 *
+	 * Must add only one column.
 	 */
 	abstract protected function queryAddStateSelect($query);
 
@@ -90,7 +101,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddPrimaryKeyWhere($query, $id)
 	{
-		if (empty($id)) {
+		if ($id === null || $id === array() || $id === false || $id === '') {
 			throw new InvalidArgumentException('Empty ID.');
 		} else if (count($id) != count($this->describeId())) {
 			throw new InvalidArgumentException('Malformed ID.');
@@ -107,8 +118,8 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	public function getState($id)
 	{
-		if ($id === null) {
-			return null;
+		if ($id === null || $id === array()) {
+			return '';
 		}
 
 		$q = $this->createQueryBuilder()
@@ -129,17 +140,22 @@ abstract class FlupdoMachine extends AbstractMachine
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	public function getProperties($id)
+	public function getProperties($id, & $state_cache = null)
 	{
-		if ($id === null) {
+		if ($id === null || $id === array()) {
 			throw new RuntimeException('State machine instance does not exist.');
 		}
 
 		$q = $this->createQueryBuilder()
+			->select(null)
 			->limit(1);
 
-		$this->queryAddPropertiesSelect($q, $id);
+		$this->queryAddPropertiesSelect($q);
 		$this->queryAddPrimaryKeyWhere($q, $id);
+
+		if ($this->load_state_with_properties) {
+			$this->queryAddStateSelect($q);
+		}
 
 		$r = $q->query();
 		$props = $r->fetch(\PDO::FETCH_ASSOC);
@@ -147,6 +163,10 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		if ($props === null) {
 			throw new RuntimeException('State machine instance not found.');
+		}
+
+		if ($this->load_state_with_properties) {
+			$state_cache = array_pop($props);
 		}
 
 		return $props;

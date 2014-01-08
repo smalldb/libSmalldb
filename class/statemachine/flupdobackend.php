@@ -34,7 +34,9 @@ use	\Smalldb\Flupdo\Flupdo,
 	\Smalldb\Flupdo\FlupdoProxy;
 
 /**
- * SmallDB Backend which uses database via Flupdo as storage.
+ * SmallDB Backend which provides database via Flupdo.
+ *
+ * TODO: Make this dumb and provide it from somewhere else.
  */
 class FlupdoBackend extends AbstractBackend
 {
@@ -71,7 +73,13 @@ class FlupdoBackend extends AbstractBackend
 				throw new InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
 			}
 		} else {
-			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], @ $options['driver_options']);
+			$driver_options = @ $options['driver_options'];
+			if ($driver_options === null) {
+				$driver_options = array(
+					\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
+				);
+			}
+			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], $driver_options);
 		}
 
 		// Machine type table
@@ -81,15 +89,50 @@ class FlupdoBackend extends AbstractBackend
 	}
 
 
+	/**
+	 * Register new state machine of type $type named $name, which is
+	 * instance of class $class. And when creating this machine, pass $args
+	 * to its constructor. Also additional meta-data can be attached using
+	 * $description (will be merged with name, class and args).
+	 */
+	public function addType($type, $class, $args = array(), $description = array())
+	{
+		$this->machine_type_table[$type] = array_merge($description, array(
+			'class' => (string) $class,
+			'args'  => (array)  $args,
+		));
+	}
+
+
+	/**
+	 * Load all types at once. Argument must be exactly the same as return
+	 * value of getKnownTypes method (array of arrays). Useful for loading
+	 * types from cache.
+	 */
+	public function addAllTypes($mahine_types)
+	{
+		if ($this->getCachedMachinesCount() > 0) {
+			throw new RuntimeException('Cannot load all machine types after backend has been used (cache is not empty).');
+		}
+
+		if (!empty($this->known_types)) {
+			throw new RuntimeException('Cannot load all machine types when there are some types defined already.');
+		}
+
+		$this->machine_type_table = $machine_types;
+	}
+
+
+	// FIXME: There should be no dependencies between backend and machines
 	public function getFlupdo()
 	{
 		return $this->flupdo;
 	}
 
 
-    // FIXME: This should be machine listing, not general query builder.
+	// FIXME: This should be machine listing, not general query builder.
 	public function createQueryBuilder($type)
-    {
+	{
 		return $this->getMachine($type)->createQueryBuilder();
 	}
 
@@ -152,7 +195,7 @@ class FlupdoBackend extends AbstractBackend
 	 * $id is literal or array of literals (in case of compound key).
 	 */
 	public function inferMachineType($aref, & $type, & $id)
-    {
+	{
 		$len = count($aref);
 
 		if ($len == 0) {
@@ -165,10 +208,10 @@ class FlupdoBackend extends AbstractBackend
 			return false;
 		}
 
-		if ($len > 2) {
-			$id = $aref;
-		} else {
-			$id = reset($aref);
+		switch ($len) {
+			case 1: $id = null; break;
+			case 2: $id = reset($aref); break;
+			default: $id = $aref;
 		}
 
 		return true;
@@ -192,7 +235,7 @@ class FlupdoBackend extends AbstractBackend
 			return null;
 		}
 
-		return new $desc['class']($this, $type, $desc);
+		return new $desc['class']($this, $type, $desc['args']);
 	}
 
 }

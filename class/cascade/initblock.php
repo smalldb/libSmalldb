@@ -30,7 +30,7 @@
 
 namespace Smalldb\Cascade;
 
-class InitBlock extends \Block
+class InitBlock extends BackendBlock
 {
 
 	protected $inputs = array(
@@ -40,16 +40,6 @@ class InitBlock extends \Block
 	protected $outputs = array(
 		'done' => true,
 	);
-
-
-	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb
-	 * Block Storage.
-	 */
-	public function __construct($smalldb)
-	{
-		$this->smalldb = $smalldb;
-	}
 
 
 	public function main()

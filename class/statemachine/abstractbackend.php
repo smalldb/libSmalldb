@@ -208,13 +208,13 @@ abstract class AbstractBackend
 
 		// Decode arguments to machine type and machine-specific ID
 		if (!$this->inferMachineType($args, $type, $id)) {
-			throw new InvalidArgumentException('Invalid reference - cannot infer machine type: '.$type);
+			throw new InvalidReferenceException('Cannot infer machine type: '.$type);
 		}
 
 		// Create reference
 		$m = $this->getMachine($type);
 		if ($m === null) {
-			throw new InvalidArgumentException('Invalid reference - cannot create machine: '.$type);
+			throw new RuntimeException('Cannot create machine: '.$type);
 		}
 		return new Reference($m, $id);
 	}

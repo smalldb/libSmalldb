@@ -35,9 +35,13 @@ class BlockStorage implements \IBlockStorage
 	protected $backend;
 	protected $alias;
 
+	/**
+	 * Backend-related blocks. All of these should inherit from BackendBlock class.
+	 */
 	protected $backend_blocks = array(
 		'init' => 'InitBlock',
 		'show_diagram' => 'ShowDiagramBlock',
+		'raw_api' => 'RawApiBlock',
 	);
 
 	/**
