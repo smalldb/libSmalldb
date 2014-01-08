@@ -96,6 +96,12 @@ class RawApiBlock extends BackendBlock
 						'id' => $result->id,
 						'state' => $result->state,
 					);
+				} else {
+					$result = array(
+						'id' => $ref->id,
+						'state' => $ref->state,
+						'result' => $result,
+					);
 				}
 			} else {
 

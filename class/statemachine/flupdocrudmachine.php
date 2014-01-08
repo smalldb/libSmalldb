@@ -175,6 +175,23 @@ class FlupdoCrudMachine extends FlupdoMachine
 	 */
 	protected function edit($id, $properties)
 	{
+		// filter out unknown keys
+		$properties = array_intersect_key($properties, $this->properties);
+
+		// build update query
+		$q = $this->flupdo->update($this->flupdo->quoteIdent($this->table));
+		$this->queryAddPrimaryKeyWhere($q, $id);
+		foreach ($properties as $k => $v) {
+			$q->set($q->quoteIdent($k).' = ?', $v);
+		}
+
+		$n = $q->debugDump()->exec();
+
+		if ($n) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 
@@ -183,6 +200,17 @@ class FlupdoCrudMachine extends FlupdoMachine
 	 */
 	protected function delete($id)
 	{
+		// build update query
+		$q = $this->flupdo->delete()->from($this->flupdo->quoteIdent($this->table));
+		$this->queryAddPrimaryKeyWhere($q, $id);
+
+		$n = $q->debugDump()->exec();
+
+		if ($n) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 }
