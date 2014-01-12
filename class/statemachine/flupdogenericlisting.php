@@ -35,7 +35,7 @@ namespace Smalldb\StateMachine;
  */
 class FlupdoGenericListing
 	extends \Smalldb\Flupdo\SelectBuilder
-	implements IListing
+	//implements IListing
 {
 	// TODO
 }

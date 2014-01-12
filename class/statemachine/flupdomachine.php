@@ -82,6 +82,21 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Create generic listing on this machine type
+	 *
+	 * TODO: Fix this.
+	 */
+	public function createListing($filters)
+	{
+		$listing = new \Smalldb\StateMachine\FlupdoGenericListing($this->flupdo);
+		$this->queryAddFrom($listing);
+		$this->queryAddStateSelect($listing);
+		$this->queryAddPropertiesSelect($listing);
+		return $listing;
+	}
+
+
+	/**
 	 * Add FROM clause
 	 */
 	protected function queryAddFrom($query)
@@ -103,7 +118,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddPropertiesSelect($query)
 	{
-		$query->select('*');
+		$query->select($query->quoteIdent($this->table).'.*');
 	}
 
 

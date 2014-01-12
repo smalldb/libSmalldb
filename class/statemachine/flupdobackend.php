@@ -129,13 +129,7 @@ class FlupdoBackend extends AbstractBackend
 	public function createListing($filters)
 	{
 		$type = $filters['type'];
-		$machine = $this->getMachine($type);
-
-		$listing = new \Smalldb\StateMachine\FlupdoGenericListing($this->flupdo);
-		$machine->queryAddStateSelect($listing);
-		$machine->queryAddPropertiesSelect($listing);
-
-		return $listing;
+		return $this->getMachine($type)->createListing($filters)->query()->fetchAll(\PDO::FETCH_ASSOC);
 	}
 
 

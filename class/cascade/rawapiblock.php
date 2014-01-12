@@ -63,13 +63,9 @@ class RawApiBlock extends BackendBlock
 			$id = null;
 		}
 
-
 		$request_is_http_post = ($_SERVER['REQUEST_METHOD'] == 'POST');
-		$action = @ $_GET['action'];
 
 		try {
-			$ref = $this->smalldb->ref($id);
-
 			if ($request_is_http_post) {
 
 				// Optionally accept action from POST
@@ -89,6 +85,7 @@ class RawApiBlock extends BackendBlock
 				}
 
 				// Invoke transition
+				$ref = $this->smalldb->ref($id);
 				$result = $ref->__call((string) $action, (array) $args);
 
 				if ($result instanceof \Smalldb\StateMachine\Reference) {
@@ -104,13 +101,18 @@ class RawApiBlock extends BackendBlock
 					);
 				}
 			} else {
+				if ($id === null) {
+					$result = $this->smalldb->createListing($_GET);
+				} else {
+					$ref = $this->smalldb->ref($id);
+					$action = @ $_GET['action'];
+					$result = array(
+						'id' => $ref->id,
+						'properties' => $ref->properties,
+						'state' => $ref->state,
+					);
 
-				$result = array(
-					'id' => $ref->id,
-					'properties' => $ref->properties,
-					'state' => $ref->state,
-				);
-
+				}
 			}
 		}
 		catch (\Smalldb\StateMachine\InvalidReferenceException $ex) {
