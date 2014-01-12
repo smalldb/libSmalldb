@@ -36,6 +36,7 @@ namespace Smalldb\StateMachine;
  *
  * State machine always work with ID, never with Reference. References are
  * decoded within backend.
+ *
  */
 abstract class AbstractMachine
 {
@@ -225,15 +226,132 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Reflection: Describe ID (primary key).
-	 *
-	 * Returns array of all parts of the primary key and its
-	 * types (as strings). If primary key is not compound, something
-	 * like array('id' => 'string') is returned.
-	 *
-	 * Order of the parts may be mandatory.
+	 * Returns true if transition can be invoked right now.
 	 */
-	abstract public function describeId();
+	public function isTransitionAllowed($id, $transition_name, $state = null)
+	{
+		if ($state === null) {
+			$state = $this->getState($id);
+		}
+
+		$tr = @ $this->actions[$transition_name]['transitions'][$state];
+		if (!isset($tr)) {
+			return false;
+		}
+
+		return (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id));
+	}
+
+
+	/**
+	 * Get list of all available actions for state machine instance identified by $id.
+	 */
+	public function getAvailableTransitions($id, $state = null)
+	{
+		if ($state === null) {
+			$state = $this->getState($id);
+		}
+
+		$available_transitions = array();
+
+		foreach ($this->actions as $a => $action) {
+			$tr = @ $action['transitions'][$state];
+			if ($tr !== null) {
+				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id)) {
+					$tr = array_merge($action, $tr);
+					unset($tr['transitions']);
+					$available_transitions[] = $a;
+				}
+			}
+		}
+
+		return $available_transitions;
+	}
+
+
+	/**
+	 * Invoke state machine transition. State machine is not instance of
+	 * this class, but it is represented by record in database.
+	 */
+	public function invokeTransition($id, $transition_name, $args, & $returns)
+	{
+		$state = $this->getState($id);
+
+		// get action
+		$action = @ $this->actions[$transition_name];
+		if ($action === null) {
+			throw new TransitionException('Unknown transition requested: '.$transition_name);
+		}
+
+		// get transition (instance of action)
+		$transition = @ $action['transitions'][$state];
+		if ($transition === null) {
+			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
+		}
+		$transition = array_merge($action, $transition);
+
+		// check permissions
+		$perms = @ $transition['permissions'];
+		if (!$this->checkPermissions($perms, $id)) {
+			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
+		}
+
+		// get method
+		$method = empty($transition['method']) ? $transition_name : $transition['method'];
+
+		// invoke method -- the first argument is $id, rest are $args as passed to $ref->action($args...).
+		array_unshift($args, $id);
+		$ret = call_user_func_array(array($this, $method), $args);
+
+		// interpret return value
+		$returns = @ $action['returns'];
+		switch ($returns) {
+			case self::RETURNS_VALUE:
+				// nop, just pass it back
+				break;
+			case self::RETURNS_NEW_ID:
+				$id = $ret;
+				break;
+			default:
+				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
+		}
+
+		// check result using assertion function
+		$new_state = $this->getState($id);
+		$target_states = $transition['targets'];
+		if (!is_array($target_states)) {
+			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
+		}
+		if (!in_array($new_state, $target_states)) {
+			throw new RuntimeException('State machine ended in unexpected state "'.$new_state
+				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
+				.'Expected states: '.join(', ', $target_states).'.');
+		}
+
+		// state changed notification
+		if ($state != $new_state) {
+			$this->onStateChanged($id, $state, $transition_name, $new_state);
+		}
+
+		return $ret;
+	}
+
+
+	/**
+	 * If machine properties are cached, flush all cached data.
+	 */
+	public function flushCache()
+	{
+		// No cache
+	}
+
+
+	/**
+	 * Called when state is changed, when transition invocation is completed.
+	 */
+	protected function onStateChanged($id, $old_state, $transition_name, $new_state)
+	{
+	}
 
 
 	/**
@@ -243,6 +361,52 @@ abstract class AbstractMachine
 	{
 		return $this->machine_type;
 	}
+
+
+	/**
+	 * Get backend which owns this machine.
+	 */
+	public function getBackend()
+	{
+		return $this->backend;
+	}
+
+
+	/**
+	 * Low level API for querying underlaying database. It is 
+	 * implementation specific and should not be used. However, itis better 
+	 * to have one specified shortcut than many ugly hacks.
+	 */
+	public function createQueryBuilder()
+	{
+		// FIXME: This should not be here. There should be generic 
+		// listing API and separate listing class.
+
+		$q = $this->flupdo->select();
+		$q->from($q->quoteIdent($this->table));
+		return $q;
+	}
+
+
+
+	/******************************************************************//**
+	 *
+	 * \name	Reflection API
+	 *
+	 * @{
+	 */
+
+
+	/**
+	 * Reflection: Describe ID (primary key).
+	 *
+	 * Returns array of all parts of the primary key and its
+	 * types (as strings). If primary key is not compound, something
+	 * like array('id' => 'string') is returned.
+	 *
+	 * Order of the parts may be mandatory.
+	 */
+	abstract public function describeId();
 
 
 	/**
@@ -256,7 +420,7 @@ abstract class AbstractMachine
 	 *
 	 * This does not include filemtime(__FILE__) intentionaly.
 	 */
-	public function getMachineMTime()
+	public function getMachineImplementationMTime()
 	{
 		$reflector = new \ReflectionObject($this);
 		return filemtime($reflector->getFilename());
@@ -457,153 +621,6 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get backend which owns this machine.
-	 */
-	public function getBackend()
-	{
-		return $this->backend;
-	}
-
-
-	/**
-	 * If machine properties are cached, flush all cached data.
-	 */
-	public function flushCache()
-	{
-		// No cache
-	}
-
-
-	/**
-	 * Called when state is changed, when transition invocation is completed.
-	 */
-	protected function onStateChanged($id, $old_state, $transition_name, $new_state)
-	{
-	}
-
-
-	/**
-	 * Get list of all available actions for state machine instance identified by $id.
-	 */
-	public function getAvailableTransitions($id, $state = null)
-	{
-		if ($state === null) {
-			$state = $this->getState($id);
-		}
-
-		$available_transitions = array();
-
-		foreach ($this->actions as $a => $action) {
-			$tr = @ $action['transitions'][$state];
-			if ($tr !== null) {
-				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id)) {
-					$tr = array_merge($action, $tr);
-					unset($tr['transitions']);
-					$available_transitions[] = $a;
-				}
-			}
-		}
-
-		return $available_transitions;
-	}
-
-
-	/**
-	 * Returns true if transition can be invoked right now.
-	 */
-	public function isTransitionAllowed($id, $transition_name, $state = null)
-	{
-		if ($state === null) {
-			$state = $this->getState($id);
-		}
-
-		$tr = @ $this->actions[$transition_name]['transitions'][$state];
-		if (!isset($tr)) {
-			return false;
-		}
-
-		return (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id));
-	}
-
-
-	/**
-	 * Invoke state machine transition. State machine is not instance of
-	 * this class, but it is represented by record in database.
-	 */
-	public function invokeTransition($id, $transition_name, $args, & $returns)
-	{
-		$state = $this->getState($id);
-
-		// get action
-		$action = @ $this->actions[$transition_name];
-		if ($action === null) {
-			throw new TransitionException('Unknown transition requested: '.$transition_name);
-		}
-
-		// get transition (instance of action)
-		$transition = @ $action['transitions'][$state];
-		if ($transition === null) {
-			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
-		}
-		$transition = array_merge($action, $transition);
-
-		// check permissions
-		$perms = @ $transition['permissions'];
-		if (!$this->checkPermissions($perms, $id)) {
-			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
-		}
-
-		// get method
-		$method = empty($transition['method']) ? $transition_name : $transition['method'];
-
-		// invoke method -- the first argument is $id, rest are $args as passed to $ref->action($args...).
-		array_unshift($args, $id);
-		$ret = call_user_func_array(array($this, $method), $args);
-
-		// interpret return value
-		$returns = @ $action['returns'];
-		switch ($returns) {
-			case self::RETURNS_VALUE:
-				// nop, just pass it back
-				break;
-			case self::RETURNS_NEW_ID:
-				$id = $ret;
-				break;
-			default:
-				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
-		}
-
-		// check result using assertion function
-		$new_state = $this->getState($id);
-		$target_states = $transition['targets'];
-		if (!is_array($target_states)) {
-			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
-		}
-		if (!in_array($new_state, $target_states)) {
-			throw new RuntimeException('State machine ended in unexpected state "'.$new_state
-				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
-				.'Expected states: '.join(', ', $target_states).'.');
-		}
-
-		// state changed notification
-		if ($state != $new_state) {
-			$this->onStateChanged($id, $state, $transition_name, $new_state);
-		}
-
-		return $ret;
-	}
-
-
-	/**
-	 * Escape string for use as dot identifier.
-	 */
-	private function escapeDotIdentifier($str)
-	{
-		return preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
-	}
-
-
-	/**
 	 * Export state machine to Graphviz source code.
 	 */
 	public function exportDot()
@@ -730,6 +747,15 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Escape string for use as dot identifier.
+	 */
+	private function escapeDotIdentifier($str)
+	{
+		return preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
+	}
+
+
+	/**
 	 * Recursively render groups in state machine diagram.
 	 */
 	private function exportDotRenderGroups($groups, $group_content, $indent = "\t") {
@@ -755,6 +781,8 @@ abstract class AbstractMachine
 			echo $indent, "}\n";
 		}
 	}
+
+	/** @} */
 
 }
 

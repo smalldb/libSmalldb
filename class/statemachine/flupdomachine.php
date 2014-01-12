@@ -65,6 +65,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	}
 
 
+	/**
+	 * Low level API for querying underlaying database. It is 
+	 * implementation specific and should not be used. However, itis better 
+	 * to have one specified shortcut than many ugly hacks.
+	 */
 	public function createQueryBuilder()
 	{
 		// FIXME: This should not be here. There should be generic 
