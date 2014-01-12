@@ -76,8 +76,17 @@ abstract class FlupdoMachine extends AbstractMachine
 		// listing API and separate listing class.
 
 		$q = $this->flupdo->select();
-		$q->from($q->quoteIdent($this->table));
+		$this->queryAddFrom($q);
 		return $q;
+	}
+
+
+	/**
+	 * Add FROM clause
+	 */
+	protected function queryAddFrom($query)
+	{
+		$query->from($query->quoteIdent($this->table));
 	}
 
 
