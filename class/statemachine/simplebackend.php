@@ -112,6 +112,12 @@ class SimpleBackend extends AbstractBackend
 	}
 
 
+	public function createListing($query_filters)
+	{
+		throw new \Exception('Not implemented.');
+	}
+
+
 	public function createQueryBuilder($type)
 	{
 		throw new \Exception('Not implemented.');

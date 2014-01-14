@@ -74,7 +74,7 @@ class ArrayMachine extends AbstractMachine
 	/**
 	 * Get all properties of state machine, including it's state.
 	 */
-	public function getProperties($id)
+	public function getProperties($id, & $state_cache = null)
 	{
 		return @ $this->properties[$id];
 	}
