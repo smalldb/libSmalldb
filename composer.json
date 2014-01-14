@@ -2,7 +2,7 @@
 	"name": "cascade/smalldb",
 	"type": "cascade-plugin",
 	"description": "Smalldb: State machine abstraction layer",
-	"license": "BSD-3-Clause",
+	"license": "Apache-2.0",
 	"authors": [
 		{
 			"name": "Josef Kufner",
