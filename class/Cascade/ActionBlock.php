@@ -25,7 +25,7 @@ use Smalldb\Machine\AbstractMachine;
  * passed as arguments to the transition, returned value is set on one or more
  * outputs.
  */
-class ActionBlock extends \Block
+class ActionBlock extends \Cascade\Core\Block
 {
 
 	protected $inputs = array(

@@ -18,7 +18,7 @@
 
 namespace Smalldb\Cascade;
 
-abstract class BackendBlock extends \Block
+abstract class BackendBlock extends \Cascade\Core\Block
 {
 
 	protected $smalldb;

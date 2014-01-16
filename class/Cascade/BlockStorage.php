@@ -18,7 +18,7 @@
 
 namespace Smalldb\Cascade;
 
-class BlockStorage implements \IBlockStorage
+class BlockStorage implements \Cascade\Core\IBlockStorage
 {
 	protected $backend;
 	protected $alias;

@@ -550,7 +550,7 @@ abstract class AbstractMachine
 	 * Returns array of all properties and their descriptions.
 	 * See describeMachineProperty and getAllMachineProperties.
 	 */
-	public function describeAllMachineProperties($having_section)
+	public function describeAllMachineProperties($having_section = null)
 	{
 		if ($having_section === null) {
 			return $this->properties;

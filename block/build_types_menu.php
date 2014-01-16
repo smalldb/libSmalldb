@@ -19,7 +19,7 @@
 /**
  * List all known Smalldb types of all backends in way core/out/menu understands.
  */
-class B_smalldb__build_types_menu extends Block
+class B_smalldb__build_types_menu extends \Cascade\Core\Block
 {
 	protected $inputs = array(
 		'link' => '/admin/doc/smalldb/{type}',

@@ -12,6 +12,9 @@
 	"extra": {
 		"plugin": "smalldb"
 	},
+	"autoload": {
+		"psr-4": { "Smalldb\\": "class/" }
+	},
 	"require": {
 		"cascade/composer-plugin": "dev-master"
 	}

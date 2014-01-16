@@ -16,7 +16,7 @@
  *
  */
 
-class B_smalldb__show_properties extends Block
+class B_smalldb__show_properties extends \Cascade\Core\Block
 {
 
 	protected $inputs = array(
@@ -39,7 +39,7 @@ class B_smalldb__show_properties extends Block
 			return;
 		}
 
-		$table = new TableView();
+		$table = new \Cascade\Core\TableView();
 
 		$table->addColumn('text', array(
 				'title' => _('PK'),

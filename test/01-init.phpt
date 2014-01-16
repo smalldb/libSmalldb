@@ -6,11 +6,11 @@ State machine initialization - Hello world
 require(dirname(__FILE__).'/init.php');
 
 echo "Initialize backend ...\n";
-$smalldb = new SmallDb\StateMachine\SimpleBackend('foo');
+$smalldb = new Smalldb\StateMachine\SimpleBackend('foo');
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);
-$smalldb->addType('article', '\SmallDb\StateMachine\ArrayMachine', $article_json['state_machine'], array('name' => $article_json['info']['title']));
+$smalldb->addType('article', '\Smalldb\StateMachine\ArrayMachine', $article_json['state_machine'], array('name' => $article_json['info']['title']));
 
 echo "Known types:\n";
 foreach ($smalldb->getKnownTypes() as $t) {
@@ -44,7 +44,7 @@ Register machine type ...
 Known types:
 	article:
 		name: 'Article in web CMS'
-		class: '\\SmallDb\\StateMachine\\ArrayMachine'
+		class: '\\Smalldb\\StateMachine\\ArrayMachine'
 		args: [array]
 
 Get null ref ...
