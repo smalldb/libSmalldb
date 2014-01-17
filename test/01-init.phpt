@@ -6,7 +6,7 @@ State machine initialization - Hello world
 require(dirname(__FILE__).'/init.php');
 
 echo "Initialize backend ...\n";
-$smalldb = new Smalldb\StateMachine\SimpleBackend('foo');
+$smalldb = new Smalldb\StateMachine\SimpleBackend('foo', array());
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);
@@ -51,15 +51,7 @@ Get null ref ...
 Available actions for the null ref:
 Array
 (
-    [create] => Array
-        (
-            [targets] => Array
-                (
-                    [0] => writing
-                )
-
-        )
-
+    [0] => create
 )
 Create machine instantion - invoke initial transition ...
 Transition invoked: '' (id = NULL) -> Smalldb\StateMachine\ArrayMachine::create(NULL) [new] -> 'writing' (id = 0).
@@ -69,22 +61,6 @@ Result machine type: 'article'
 Available actions for the new ref:
 Array
 (
-    [edit] => Array
-        (
-            [targets] => Array
-                (
-                    [0] => writing
-                )
-
-        )
-
-    [submit] => Array
-        (
-            [targets] => Array
-                (
-                    [0] => submitted
-                )
-
-        )
-
+    [0] => edit
+    [1] => submit
 )
