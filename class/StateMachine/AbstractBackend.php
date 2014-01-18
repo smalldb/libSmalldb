@@ -25,7 +25,7 @@ namespace Smalldb\StateMachine;
  * Backend also knows what types of state machines can create and knows few 
  * useful details about them.
  *
- * This is where \Smalldb\References come from.
+ * This is where References come from.
  */
 abstract class AbstractBackend
 {
