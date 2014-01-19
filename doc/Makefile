@@ -12,11 +12,7 @@ pdf: $(pdf)
 
 
 doc:
-	( cat ../../../core/doc/Doxyfile \
-		&& echo "PROJECT_NAME=\"`head -n 1 ../README.md`\"" \
-		&& echo "PROJECT_BRIEF=" \
-		&& echo "PROJECT_NUMBER=\"`git describe --tag --match "v[0-9]*"`\"" \
-		) | ( cd .. && doxygen - )
+	../../../core/bin/build-plugin-documentation.sh
 
 clean:
 	rm -f $(pdf) $(png)
