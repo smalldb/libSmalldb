@@ -114,6 +114,17 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 
 
 	/**
+	 * Describe block for documentation generator.
+	 *
+	 * @todo
+	 */
+	public function describeBlock ($block)
+	{
+		return false;
+	}
+
+
+	/**
 	 * Load block configuration. Returns false if block is not found.
 	 */
 	public function loadBlock ($block)
