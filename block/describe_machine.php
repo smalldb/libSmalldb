@@ -19,8 +19,12 @@
 class B_smalldb__describe_machine extends \Cascade\Core\Block
 {
 	protected $inputs = array(
-		'type' => array(),
+		'type' => null,
 	);
+
+	protected $connections = array(
+		'type' => array(),
+	);	
 
 	protected $outputs = array(
 		'type' => true,

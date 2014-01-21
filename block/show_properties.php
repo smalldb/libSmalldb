@@ -20,9 +20,13 @@ class B_smalldb__show_properties extends \Cascade\Core\Block
 {
 
 	protected $inputs = array(
-		'desc' => array(),
+		'desc' => null,
 		'slot' => 'default',
 		'slot_weight' => 50,
+	);
+
+	protected $connections = array(
+		'desc' => array(),
 	);
 
 	protected $outputs = array(

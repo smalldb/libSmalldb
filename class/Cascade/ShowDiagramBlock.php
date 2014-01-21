@@ -22,11 +22,16 @@ class ShowDiagramBlock extends BackendBlock
 {
 
 	protected $inputs = array(
-		'machine_type' => array(),
-		'gv_config' => array('config', 'core.graphviz'),
+		'machine_type' => null,
+		'gv_config' => null,
 		'gv_profile' => 'smalldb',
 		'slot' => 'default',
 		'slot_weight' => 50,
+	);
+
+	protected $connections = array(
+		'machine_type' => array(),
+		'gv_config' => array('config', 'core.graphviz'),
 	);
 
 	protected $outputs = array(

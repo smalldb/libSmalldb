@@ -22,6 +22,10 @@ class InitBlock extends BackendBlock
 {
 
 	protected $inputs = array(
+		'config' => null,
+	);
+
+	protected $connections = array(
 		'config' => array(),
 	);
 
