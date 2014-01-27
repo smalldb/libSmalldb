@@ -28,6 +28,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	 */
 	protected $backend_blocks = array(
 		'init' => 'InitBlock',
+		'listing' => 'ListingBlock',
 		'show_diagram' => 'ShowDiagramBlock',
 		'raw_api' => 'RawApiBlock',
 	);
