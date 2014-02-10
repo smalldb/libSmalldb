@@ -23,10 +23,49 @@ use Smalldb\Machine\AbstractMachine;
 /**
  * Raw and ugly connector to access Smalldb interface from outter world.
  *
- * Deprecated! This connector will be replaced with something better soon.
+ * @deprecated
+ *    This connector will be replaced with something better soon.
  *
- * This connector also directly reads $_GET and $_POST, which is also ugly.
- * And to make it even worse, it produces output!
+ * @warning
+ *    This connector directly reads $_GET and $_POST, which is ugly.  And to 
+ *    make it even worse, it produces output!
+ *
+ *
+ * ### HTTP API ###
+ *
+ * Following examples assume that this block is located at 
+ * `http://example.com/smalldb-api/` and input `id` is connected to router's 
+ * `path_tail`, so any additional path in uRL is interpreted as entity ID.
+ *
+ *
+ * #### Retrieving state machine state and properties ####
+ *
+ *     HTTP GET: http://example.com/smalldb-api/state/machine/id
+ *
+ * State machine ID, state and properties are JSON encoded and sent back.
+ *
+ *
+ * #### Browsing state machine space ####
+ *
+ *     HTTP GET: http://example.com/smalldb-api/?filter1=value1&filter2=value2&...
+ *
+ * Entire `$_GET` is passed as an only argument to StateMachine::AbstractBackend::createListing().
+ *
+ * Return value is JSON encoded and sent back.
+ *
+ *
+ * #### Invoking a transition ####
+ *
+ *     HTTP POST: http://example.com/smalldb-api/state/machine/id
+ *     DATA: action, args_json
+ *
+ * `action` is the action to be invoked, `args_json` contains JSON encoded list 
+ * of arguments passed to StateMachine::Reference::__call().
+ *
+ * Return value is JSON encoded and sent back.
+ *
+ * @warning json_args is array of arguments! It must be always an array.
+ *
  */
 class RawApiBlock extends BackendBlock
 {
@@ -63,7 +102,7 @@ class RawApiBlock extends BackendBlock
 
 				// Get action arguments
 				$args = @ $_POST['args_json'];
-				if ($args !== null) {
+				if (is_string($args)) {
 					$args = json_decode($args, TRUE);
 				}
 
