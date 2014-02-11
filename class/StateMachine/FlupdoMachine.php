@@ -53,7 +53,17 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function checkPermissions($permissions, $id)
 	{
-		return true; // FIXME
+		// Check owner
+		if (@ $permissions['owner'] && $this->user_id_table_column && ($a = $this->user_id_auth_method)) {
+			$properties = $this->getProperties();
+			if ($properties[$this->user_id_table_column] == $this->backend->getAuth()->$a()) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 
