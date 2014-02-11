@@ -36,10 +36,10 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	/**
 	 * Constructor will get options from core.ini.php file.
 	 */
-	public function __construct($storage_opts, $context)
+	public function __construct($storage_opts, $auth, $context)
 	{
 		$this->alias = $storage_opts['alias'];
-		$this->backend = new $storage_opts['backend_class']($this->alias, $storage_opts);
+		$this->backend = new $storage_opts['backend_class']($this->alias, $storage_opts, $auth, $context);
 	}
 
 

@@ -59,6 +59,14 @@ class ArrayMachine extends AbstractMachine
 
 
 	/**
+	 * Adds conditions to enforce read permissions to query object.
+	 */
+	protected function addPermissionsCondition($query)
+	{
+	}
+
+
+	/**
 	 * Get current state of state machine.
 	 */
 	public function getState($id)

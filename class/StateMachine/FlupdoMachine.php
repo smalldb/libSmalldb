@@ -29,6 +29,10 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	protected $pk_columns = null;
 
+	protected $user_id_table_column = null;
+	protected $user_id_auth_method = null;
+
+
 	/**
 	 * True if state should not be loaded with properties.
 	 */
@@ -50,6 +54,17 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected function checkPermissions($permissions, $id)
 	{
 		return true; // FIXME
+	}
+
+
+	/**
+	 * Adds conditions to enforce read permissions to query object.
+	 */
+	protected function addPermissionsCondition($query)
+	{
+		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
+			$query->where('`'.$this->flupdo->quoteIdent($this->user_id_table_column).'` = ?', $this->backend->getAuth()->$a());
+		}
 	}
 
 
@@ -80,6 +95,8 @@ abstract class FlupdoMachine extends AbstractMachine
 		$this->queryAddFrom($listing);
 		$this->queryAddStateSelect($listing);
 		$this->queryAddPropertiesSelect($listing);
+		$this->addPermissionsCondition($listing);
+		$listing->debugDump();
 		return $listing;
 	}
 

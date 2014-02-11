@@ -33,6 +33,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 			$io_name = 'item';
 		}
 
+		// user_id table column & auth property
+		$this->user_id_table_column = @ $args['user_id_table_column'];
+		$this->user_id_auth_method  = @ $args['user_id_auth_method'];
+
 		// fetch properties from database
 		$r = $this->flupdo->select('*')
 			->from($this->flupdo->quoteIdent($this->table))
@@ -141,6 +145,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		if ($id !== null) {
 			$properties = array_merge($properties, array_combine($this->describeId(), (array) $id));
+		}
+
+		// Set owner
+		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
+			$properties[$this->user_id_table_column] = $this->backend->getAuth()->$a();
 		}
 
 		// insert

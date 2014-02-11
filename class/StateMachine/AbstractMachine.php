@@ -162,9 +162,16 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Returns true if user has required permissions.
+	 * Returns true if user has required permissions to invoke a 
+	 * transition, which requires given permissions.
 	 */
 	abstract protected function checkPermissions($permissions, $id);
+
+
+	/**
+	 * Adds conditions to enforce read permissions to query object.
+	 */
+	abstract protected function addPermissionsCondition($query);
 
 
 	/**

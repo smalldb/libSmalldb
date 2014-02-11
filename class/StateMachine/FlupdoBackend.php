@@ -50,9 +50,9 @@ class FlupdoBackend extends AbstractBackend
 	);
 
 
-	public function __construct($alias, $options)
+	public function __construct($alias, $options, $auth, $context)
 	{
-		parent::__construct($alias, $options);
+		parent::__construct($alias, $options, $auth, $context);
 
 		// Use, wrap or create database connection
 		if (isset($options['flupdo'])) {

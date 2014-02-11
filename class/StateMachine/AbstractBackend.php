@@ -30,16 +30,24 @@ namespace Smalldb\StateMachine;
 abstract class AbstractBackend
 {
 	private $alias;
+	private $auth;
+	private $context;
 	private $machine_type_cache = array();
+
 
 	/**
 	 * Initialize backend. $alias is used for debugging and logging.
 	 * Options should contain all required backend-specific data for
 	 * backend initialization.
+	 *
+	 * $auth and $context is accessible to AbstractMachine, which can use them 
+	 * to determine wheter or not is user allowed to invoke transition.
 	 */
-	public function __construct($alias, $options)
+	public function __construct($alias, $options, $auth, $context)
 	{
 		$this->alias = $alias;
+		$this->auth = $auth;
+		$this->context = $context;
 	}
 
 
@@ -49,6 +57,24 @@ abstract class AbstractBackend
 	public function getAlias()
 	{
 		return $this->alias;
+	}
+
+
+	/**
+	 * Get auth object (whatever it is).
+	 */
+	public function getAuth()
+	{
+		return $this->auth;
+	}
+
+
+	/**
+	 * Get context object (whatever it is).
+	 */
+	public function getContext()
+	{
+		return $this->context;
 	}
 
 
