@@ -64,7 +64,7 @@ class FlupdoBackend extends AbstractBackend
 			$driver_options = @ $options['driver_options'];
 			if ($driver_options === null) {
 				$driver_options = array(
-					\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
+					self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
 				);
 			}
 			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], $driver_options);
@@ -117,7 +117,7 @@ class FlupdoBackend extends AbstractBackend
 	public function createListing($filters)
 	{
 		$type = $filters['type'];
-		return $this->getMachine($type)->createListing($filters)->query()->fetchAll(\PDO::FETCH_ASSOC);
+		return $this->getMachine($type)->createListing($filters)->query()->fetchAll(Flupdo::FETCH_ASSOC);
 	}
 
 

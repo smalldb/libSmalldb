@@ -51,5 +51,41 @@ class Flupdo extends \PDO
 		}
 	}
 
+
+	/**
+	 * Creates instance of this class using configuration specified in array.
+	 *
+	 * $config is array containing these keys:
+	 *
+	 *   - dsn
+	 *   - username
+	 *   - password
+	 *
+	 * Or:
+	 *
+	 *   - driver
+	 *   - database
+	 *   - host
+	 *   - username
+	 *   - password
+	 *
+	 * See [PDO](http://www.php.net/manual/en/class.pdo.php) documentation for details.
+	 */
+	public static function createInstanceFromConfig($config)
+	{
+		if (isset($config['dsn'])) {
+			return new self($config['dsn'], $config['username'], $config['password']);
+		} else if ($config['driver'] == 'mysql') {
+			return new self('mysql:dbname='.$config['database'].';host='.$config['host'].';charset=UTF8',
+				$config['username'], $config['password'],
+				array(self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';'));
+		} else {
+			return new self($config['driver'].':dbname='.$config['database'].';host='.$config['host'].';charset=UTF8',
+				$config['username'], $config['password']);
+		}
+
+		throw new \Exception('Not implemented.');
+	}
+
 }
 

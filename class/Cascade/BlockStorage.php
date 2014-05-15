@@ -27,7 +27,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	 * Backend-related blocks. All of these should inherit from BackendBlock class.
 	 */
 	protected $backend_blocks = array(
-		'init' => 'InitBlock',
+		'router_factory' => 'RouterFactoryBlock',
 		'listing' => 'ListingBlock',
 		'show_diagram' => 'ShowDiagramBlock',
 		'raw_api' => 'RawApiBlock',
@@ -39,6 +39,12 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	public function __construct($storage_opts, $auth, $context)
 	{
 		$this->alias = $storage_opts['alias'];
+
+		foreach ((array) @ $storage_opts['resources'] as $option => $resource_name) {
+			$storage_opts[$option] = $context->$resource_name;
+		}
+		unset($storage_opts['resources']);
+
 		$this->backend = new $storage_opts['backend_class']($this->alias, $storage_opts, $auth, $context);
 	}
 

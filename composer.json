@@ -16,7 +16,8 @@
 		"psr-4": { "Smalldb\\": "class/" }
 	},
 	"require": {
-		"cascade/composer-plugin": ">=1.1"
+		"cascade/composer-plugin": ">=1.1",
+		"cascade/core": ">=0.11"
 	}
 }
 
