@@ -42,9 +42,17 @@ abstract class FlupdoMachine extends AbstractMachine
 	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	protected function initializeMachine($args)
+	protected function initializeMachine($config)
 	{
-		$this->flupdo = $this->backend->getFlupdo();
+		$flupdo_resource_name = @ $config['flupdo_resource'];
+		if ($flupdo_resource_name == null) {
+			$flupdo_resource_name = 'database';
+		}
+		$this->flupdo = $this->context->$flupdo_resource_name;
+
+		if (!($this->flupdo instanceof \Smalldb\Flupdo\Flupdo)) {
+			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+		}
 	}
 
 

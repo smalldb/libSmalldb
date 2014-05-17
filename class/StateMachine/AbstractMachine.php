@@ -44,6 +44,11 @@ abstract class AbstractMachine
 	protected $backend;
 
 	/**
+	 * Global context passed from backend.
+	 */
+	protected $context;
+
+	/**
 	 * Identification within $backend.
 	 */
 	protected $machine_type;
@@ -147,18 +152,19 @@ abstract class AbstractMachine
 	 * optional array of additional configuration (passed directly
 	 * to initializeMachine method).
 	 */
-	public function __construct(AbstractBackend $backend, $type, $args = array())
+	public function __construct(AbstractBackend $backend, $type, $config, $context)
 	{
 		$this->backend = $backend;
+		$this->context = $context;
 		$this->machine_type = $type;
-		$this->initializeMachine($args);
+		$this->initializeMachine($config);
 	}
 
 
 	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	abstract protected function initializeMachine($args);
+	abstract protected function initializeMachine($config);
 
 
 	/**

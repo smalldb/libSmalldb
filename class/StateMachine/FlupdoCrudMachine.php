@@ -21,21 +21,21 @@ namespace Smalldb\StateMachine;
 class FlupdoCrudMachine extends FlupdoMachine
 {
 
-	protected function initializeMachine($args)
+	protected function initializeMachine($config)
 	{
-		parent::initializeMachine($args);
+		parent::initializeMachine($config);
 
-		$this->table = (string) $args['table'];
+		$this->table = (string) $config['table'];
 
 		// Name of inputs and outputs with properties
-		$io_name = (string) $args['io_name'];
+		$io_name = (string) $config['io_name'];
 		if ($io_name == '') {
 			$io_name = 'item';
 		}
 
 		// user_id table column & auth property
-		$this->user_id_table_column = @ $args['user_id_table_column'];
-		$this->user_id_auth_method  = @ $args['user_id_auth_method'];
+		$this->user_id_table_column = @ $config['user_id_table_column'];
+		$this->user_id_auth_method  = @ $config['user_id_auth_method'];
 
 		// fetch properties from database
 		$r = $this->flupdo->select('*')
@@ -46,12 +46,16 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// build properties description
 		$this->properties = array();
+		$this->pk_columns = array();
 		for ($i = 0; $i < $col_cnt; $i++) {
 			$cm = $r->getColumnMeta($i);
 			$this->properties[$cm['name']] = array(
 				'name' => $cm['name'],
 				//'type' => $cm['native_type'], // do not include corrupted information
 			);
+			if (in_array('primary_key', $cm['flags'])) {
+				$this->pk_columns[] = $cm['name'];
+			}
 		}
 
 		// Exists state only

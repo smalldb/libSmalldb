@@ -22,15 +22,14 @@ use	\Smalldb\Flupdo\Flupdo,
 	\Smalldb\Flupdo\FlupdoProxy;
 
 /**
- * Smalldb Backend which provides database via Flupdo.
+ * Smalldb Backend which loads state machine definitions from a directory full 
+ * of JSON files.
  *
- * TODO: Make this dumb and provide it from somewhere else.
- *
- * $deprecated Use JsonDirBackend instead.
+ * TODO: Caching!
  */
-class FlupdoBackend extends AbstractBackend
+class JsonDirBackend extends AbstractBackend
 {
-	protected $flupdo;
+	protected $base_dir;
 
 	/**
 	 * Static table of known machine types. Inherit this class and replace this
@@ -56,60 +55,22 @@ class FlupdoBackend extends AbstractBackend
 	{
 		parent::__construct($alias, $options, $auth, $context);
 
-		// Use, wrap or create database connection
-		if (isset($options['flupdo'])) {
-			$this->flupdo = $options['flupdo'];
-			if (!($this->flupdo instanceof Flupdo || $this->flupdo instanceof FlupdoProxy)) {
-				throw new InvalidArgumentException('The "flupdo" option must contain an instance of Flupdo class.');
+		// Get base dir
+		$this->base_dir = filename_format($options['base_dir']);
+
+		// Scan base dir for machines
+		// TODO: Use APC cache!
+		$dh = opendir($this->base_dir);
+		if (!$dh) {
+			throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
+		}
+		while (($file = readdir($dh)) !== false) {
+			if (preg_match('/^([^.].*)\.json\.php$/', $file, $m)) {
+				$type = $m[1];
+				$this->machine_type_table[$type] = parse_json_file($this->base_dir.$file);
 			}
-		} else {
-			$driver_options = @ $options['driver_options'];
-			if ($driver_options === null) {
-				$driver_options = array(
-					self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
-				);
-			}
-			$this->flupdo = new Flupdo($options['dsn'], @ $options['username'], @ $options['password'], $driver_options);
 		}
-
-		// Machine type table
-		if (isset($options['machine_types'])) {
-			$this->machine_type_table = $options['machine_types'];
-		}
-	}
-
-
-	/**
-	 * Register new state machine of type $type named $name, which is
-	 * instance of class $class. And when creating this machine, pass $args
-	 * to its constructor. Also additional meta-data can be attached using
-	 * $description (will be merged with name, class and args).
-	 */
-	public function addType($type, $class, $args = array(), $description = array())
-	{
-		$this->machine_type_table[$type] = array_merge($description, array(
-			'class' => (string) $class,
-			'args'  => (array)  $args,
-		));
-	}
-
-
-	/**
-	 * Load all types at once. Argument must be exactly the same as return
-	 * value of getKnownTypes method (array of arrays). Useful for loading
-	 * types from cache.
-	 */
-	public function addAllTypes($mahine_types)
-	{
-		if ($this->getCachedMachinesCount() > 0) {
-			throw new RuntimeException('Cannot load all machine types after backend has been used (cache is not empty).');
-		}
-
-		if (!empty($this->known_types)) {
-			throw new RuntimeException('Cannot load all machine types when there are some types defined already.');
-		}
-
-		$this->machine_type_table = $machine_types;
+		closedir($dh);
 	}
 
 
@@ -119,15 +80,9 @@ class FlupdoBackend extends AbstractBackend
 	public function createListing($filters)
 	{
 		$type = $filters['type'];
-		return $this->getMachine($type)->createListing($filters)->query()->fetchAll(Flupdo::FETCH_ASSOC);
+		return $this->getMachine($type)->createListing($filters);
 	}
 
-
-	// FIXME: There should be no dependencies between backend and machines
-	public function getFlupdo()
-	{
-		return $this->flupdo;
-	}
 
 
 	// FIXME: This should be machine listing, not general query builder.
@@ -235,7 +190,7 @@ class FlupdoBackend extends AbstractBackend
 			return null;
 		}
 
-		return new $desc['class']($this, $type, $desc['args']);
+		return new $desc['class']($this, $type, $desc, $this->getContext());
 	}
 
 }
