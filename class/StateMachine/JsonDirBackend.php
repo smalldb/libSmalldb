@@ -51,9 +51,9 @@ class JsonDirBackend extends AbstractBackend
 	);
 
 
-	public function __construct($alias, $options, $auth, $context)
+	public function __construct($options, $context, $alias)
 	{
-		parent::__construct($alias, $options, $auth, $context);
+		parent::__construct($options, $context, $alias);
 
 		// Get base dir
 		$this->base_dir = filename_format($options['base_dir']);

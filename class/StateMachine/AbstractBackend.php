@@ -30,7 +30,6 @@ namespace Smalldb\StateMachine;
 abstract class AbstractBackend
 {
 	private $alias;
-	private $auth;
 	private $context;
 	private $machine_type_cache = array();
 
@@ -40,14 +39,20 @@ abstract class AbstractBackend
 	 * Options should contain all required backend-specific data for
 	 * backend initialization.
 	 *
-	 * $auth and $context is accessible to AbstractMachine, which can use them 
-	 * to determine wheter or not is user allowed to invoke transition.
+	 * $context is accessible to AbstractMachine.
 	 */
-	public function __construct($alias, $options, $auth, $context)
+	public function __construct($options, $context, $alias)
 	{
 		$this->alias = $alias;
-		$this->auth = $auth;
 		$this->context = $context;
+
+		// Resolve resources
+		if ($context) {
+			foreach ((array) @ $options['resources'] as $option => $resource_name) {
+				$options[$option] = $context->$resource_name;
+			}
+			unset($options['resources']);
+		}
 	}
 
 
@@ -57,15 +62,6 @@ abstract class AbstractBackend
 	public function getAlias()
 	{
 		return $this->alias;
-	}
-
-
-	/**
-	 * Get auth object (whatever it is).
-	 */
-	public function getAuth()
-	{
-		return $this->auth;
 	}
 
 
