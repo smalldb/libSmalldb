@@ -64,3 +64,33 @@ Machine implementation should have option to specify which resource from the
 context should be used. For example there may be more than one database
 connection, and `$context->database` cannot be used in both cases.
 
+
+URL Routing
+-----------
+
+\todo Review routing.
+
+State machine space can be two-way mapped to URL space, because state machine
+ID is global identifier, just like URL (well, except hostname). This mapping is
+done by Backend.
+
+To use this mapping in cascade router it is neccessary to inject the router
+with an additional piece of logic, which will create reference from URL and
+publish it on router's output.
+
+**Example:** Connect `core/router` to `postproc` output of
+`smalldb/router_factory` block and add following routing rule group. The
+`postprocessor` option tells router to use Smalldb router for mathing routes.
+See Smalldb::Cascade::RouterFactoryBlock documentation for example of its configuration.
+
+        "smalldb": {
+            "defaults": {
+            },
+            "postprocessor": "smalldb",
+            "routes": {
+                    "/**": {
+                    }
+            }
+        },
+
+
