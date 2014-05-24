@@ -81,7 +81,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 						$io_name => array()
 					),
 					'outputs' => array(
-						'id' => 'return_value'
+						'ref' => 'return_value'
 					),
 				),
 			),
@@ -97,11 +97,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 				),
 				'block' => array(
 					'inputs' => array(
-						'id' => array(),
+						'ref' => array(),
 						$io_name => array()
 					),
 					'outputs' => array(
-						'id' => 'id'
+						'ref' => 'ref'
 					),
 				),
 			),
@@ -117,7 +117,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 				),
 				'block' => array(
 					'inputs' => array(
-						'id' => array(),
+						'ref' => array(),
 					),
 					'outputs' => array(
 					),

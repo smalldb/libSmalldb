@@ -75,42 +75,33 @@ class ActionBlock extends \Cascade\Core\Block
 	{
 		$args = $this->inAll();
 
-		// get ID if specified
-		if (array_key_exists('id', $args)) {
-			$id = $args['id'];
-			unset($args['id']);
+		// get Reference if specified
+		if (array_key_exists('ref', $args)) {
+			$ref = $args['ref'];
+			unset($args['ref']);
 		} else {
-			$id = null;
+			$ref = null;
 		}
 
 		// invoke transition
 		// TODO: Handle exceptions
-		$result = $this->machine->invokeTransition($id, $action, $args, $returns);
-
-		// interpret return value
-		switch ($returns) {
-			case AbstractMachine::RETURNS_VALUE:
-				break;
-			case AbstractMachine::RETURNS_NEW_ID:
-				$id = $result;
-			default:
-				throw new \RuntimeException('Unknown semantics of the return value: '.$returns);
-		}
+		$action = $this->action;
+		$result = $ref->$action($args);
 
 		// set outputs
 		foreach ($this->output_values as $output => $out_value) {
 			switch ($out_value) {
-				case 'id':
-					$this->out($output, $id);
+				case 'ref':
+					$this->out($output, $ref);
 					break;
 				case 'return_value':
 					$this->out($output, $result);
 					break;
 				case 'properties':
-					$this->out($output, $this->machine->getProperties($id));
+					$this->out($output, $ref->properties);
 					break;
 				case 'state':
-					$this->out($output, $this->machine->getState($id));
+					$this->out($output, $ref->state);
 					break;
 			}
 		}

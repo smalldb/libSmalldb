@@ -31,6 +31,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 		'listing' => 'ListingBlock',
 		'show_diagram' => 'ShowDiagramBlock',
 		'raw_api' => 'RawApiBlock',
+		'load_ref' => 'LoadRefBlock',
 	);
 
 	/**
