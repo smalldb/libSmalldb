@@ -85,8 +85,7 @@ class ActionBlock extends \Cascade\Core\Block
 
 		// invoke transition
 		// TODO: Handle exceptions
-		$action = $this->action;
-		$result = $ref->$action($args);
+		$result = call_user_func_array(array($ref, $this->action), $args);
 
 		// set outputs
 		foreach ($this->output_values as $output => $out_value) {
