@@ -37,24 +37,30 @@ class FlupdoCrudMachine extends FlupdoMachine
 		$this->user_id_table_column = @ $config['user_id_table_column'];
 		$this->user_id_auth_method  = @ $config['user_id_auth_method'];
 
-		// fetch properties from database
-		$r = $this->flupdo->select('*')
-			->from($this->flupdo->quoteIdent($this->table))
-			->where('FALSE')->limit(0)
-			->query();
-		$col_cnt = $r->columnCount();
+		// properties
+		if (!empty($config['properties'])) {
+			// if properties are difined manualy, use them
+			$this->properties = $config['properties'];
+		} else {
+			// otherwise fetch properties from database
+			$r = $this->flupdo->select('*')
+				->from($this->flupdo->quoteIdent($this->table))
+				->where('FALSE')->limit(0)
+				->query();
+			$col_cnt = $r->columnCount();
 
-		// build properties description
-		$this->properties = array();
-		$this->pk_columns = array();
-		for ($i = 0; $i < $col_cnt; $i++) {
-			$cm = $r->getColumnMeta($i);
-			$this->properties[$cm['name']] = array(
-				'name' => $cm['name'],
-				//'type' => $cm['native_type'], // do not include corrupted information
-			);
-			if (in_array('primary_key', $cm['flags'])) {
-				$this->pk_columns[] = $cm['name'];
+			// build properties description
+			$this->properties = array();
+			$this->pk_columns = array();
+			for ($i = 0; $i < $col_cnt; $i++) {
+				$cm = $r->getColumnMeta($i);
+				$this->properties[$cm['name']] = array(
+					'name' => $cm['name'],
+					'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
+				);
+				if (in_array('primary_key', $cm['flags'])) {
+					$this->pk_columns[] = $cm['name'];
+				}
 			}
 		}
 
