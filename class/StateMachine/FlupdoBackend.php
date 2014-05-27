@@ -26,10 +26,13 @@ use	\Smalldb\Flupdo\Flupdo,
  *
  * TODO: Make this dumb and provide it from somewhere else.
  *
- * $deprecated Use JsonDirBackend instead.
+ * @deprecated Use JsonDirBackend instead.
  */
 class FlupdoBackend extends AbstractBackend
 {
+	/**
+	 * Database connection.
+	 */
 	protected $flupdo;
 
 	/**
@@ -52,6 +55,9 @@ class FlupdoBackend extends AbstractBackend
 	);
 
 
+	/**
+	 * Constructor compatible with cascade resource factory.
+	 */
 	public function __construct($options, $context, $alias)
 	{
 		parent::__construct($options, $context, $alias);
@@ -123,14 +129,11 @@ class FlupdoBackend extends AbstractBackend
 	}
 
 
-	// FIXME: There should be no dependencies between backend and machines
-	public function getFlupdo()
-	{
-		return $this->flupdo;
-	}
-
-
-	// FIXME: This should be machine listing, not general query builder.
+	/**
+	 * @deprecated This should not be here.
+	 *
+	 * FIXME: This should be machine listing, not general query builder.
+	 */
 	public function createQueryBuilder($type)
 	{
 		return $this->getMachine($type)->createQueryBuilder();

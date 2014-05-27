@@ -83,6 +83,7 @@ publish it on router's output.
 `postprocessor` option tells router to use Smalldb router for mathing routes.
 See Smalldb::Cascade::RouterFactoryBlock documentation for example of its configuration.
 
+~~~~~
         "smalldb": {
             "defaults": {
             },
@@ -92,5 +93,6 @@ See Smalldb::Cascade::RouterFactoryBlock documentation for example of its config
                     }
             }
         },
-
+~~~~~
+<!--- */ -->
 

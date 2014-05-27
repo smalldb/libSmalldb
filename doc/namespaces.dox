@@ -1,0 +1,22 @@
+/*!
+	@namespace Cascade
+
+Block storage and some useful blocks for the cascade.
+
+*/
+
+
+/*!
+	@namespace Flupdo
+
+PDO based SQL query builder.
+
+*/
+ 
+/*!
+	@namespace StateMachine
+
+Implementation of Smalldb state machine, the nondeterministic parametric finite automaton.
+
+*/
+

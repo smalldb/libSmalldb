@@ -31,19 +31,31 @@ use Smalldb\Machine\AbstractMachine;
 class ListingBlock extends BackendBlock
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'filters' => null,
 		'*' => null,		// Filters
 	);
 
+	/**
+	 * Block outputs
+	 */
 	protected $outputs = array(
 		'list' => true,
 		'done' => true,
 	);
 
+	/**
+	 * Block must be always executed.
+	 */
 	const force_exec = true;
 
 
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$filters = (array) $this->in('filters');

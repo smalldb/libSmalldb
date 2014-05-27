@@ -18,12 +18,30 @@
 
 namespace Smalldb\Flupdo;
 
+/**
+ * Something is wrong in SQL query.
+ */
 class FlupdoSqlException extends \Exception
 {
+	/**
+	 * Error info from database.
+	 */
 	protected $error_info;
+
+	/**
+	 * Failed SQL query.
+	 */
 	protected $query_sql;
+
+	/**
+	 * Parameters bounded to SQL query.
+	 */
 	protected $query_params;
 
+
+	/**
+	 * Constructor.
+	 */
 	function __construct($error_info, $query_sql, $query_params)
 	{
 		$this->error_info = (array) $error_info;
@@ -35,18 +53,27 @@ class FlupdoSqlException extends \Exception
 	}
 
 
+	/**
+	 * Get failed SQL query.
+	 */
 	function getQuerySql()
 	{
 		return $this->query_sql;
 	}
 
 
+	/**
+	 * Get parameters bounded to failed SQL query.
+	 */
 	function getQueryParams()
 	{
 		return $this->query_params;
 	}
 
 
+	/**
+	 * Get error info received from database.
+	 */
 	function getErrorInfo()
 	{
 		return $this->error_info;

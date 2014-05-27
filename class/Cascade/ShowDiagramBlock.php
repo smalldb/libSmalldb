@@ -18,9 +18,15 @@
 
 namespace Smalldb\Cascade;
 
+/**
+ * Block which displays state diagram of given state machine.
+ */
 class ShowDiagramBlock extends BackendBlock
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'machine_type' => null,
 		'gv_config' => null,
@@ -29,18 +35,30 @@ class ShowDiagramBlock extends BackendBlock
 		'slot_weight' => 50,
 	);
 
+	/**
+	 * Default input connections.
+	 */
 	protected $connections = array(
 		'machine_type' => array(),
 		'gv_config' => array('config', 'core.graphviz'),
 	);
 
+	/**
+	 * Block inputs
+	 */
 	protected $outputs = array(
 		'done' => true,
 	);
 
+	/**
+	 * Block must be always executed.
+	 */
 	const force_exec = true;
 
 
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$type = $this->in('machine_type');

@@ -18,9 +18,15 @@
 
 namespace Smalldb\StateMachine;
 
+/**
+ * Simple state machine for typical CRUD entities accessed via Flupdo.
+ */
 class FlupdoCrudMachine extends FlupdoMachine
 {
 
+	/**
+	 * @copydoc FlupdoMachine::initializeMachine()
+	 */
 	protected function initializeMachine($config)
 	{
 		parent::initializeMachine($config);

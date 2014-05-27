@@ -43,10 +43,12 @@ namespace Smalldb\Flupdo;
  *  [WHERE where_condition]
  *
  */
-
 class DeleteBuilder extends FlupdoBuilder
 {
 
+	/**
+	 * Magic methods mapped to SQL fragments.
+	 */
 	protected static $methods = array(
 		// Header
 		'headerComment'		=> array('replace',	'-- HEADER'),
@@ -69,6 +71,9 @@ class DeleteBuilder extends FlupdoBuilder
 	);
 
 
+	/**
+	 * Compose SQL query from registered fragments.
+	 */
 	public function compile()
 	{
 		$this->sqlStart();

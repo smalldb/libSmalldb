@@ -35,7 +35,7 @@ namespace Smalldb\Cascade;
  *   - `{smalldb_action_or_show}`: "show" is used when action is empty.
  *
  * If input is set to "{smalldb_ref}", then it is set to 
- * \Smalldb\Smalldb\Reference object instead of string.
+ * Smalldb\StateMachine\Reference object instead of string.
  *
  * Example: If input "block" is set to "{smalldb_type}/{smalldb_action_or_show}",
  * then output 'block' will be usable as input for block_loader.
@@ -43,18 +43,30 @@ namespace Smalldb\Cascade;
 class RouterFactoryBlock extends BackendBlock
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'*' => null,
 	);
 
+	/**
+	 * Block inputs
+	 */
 	protected $outputs = array(
 		'postproc' => true,
 		'done' => true,
 	);
 
+	/**
+	 * Block must be always executed.
+	 */
 	const force_exec = true;
 
 
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$this->out('postproc', array($this, 'postprocessor'));
@@ -62,6 +74,12 @@ class RouterFactoryBlock extends BackendBlock
 	}
 
 
+	/**
+	 * Route postprocessor to be registered in router. Route will call this 
+	 * method to check whether a Smalldb route is valid reference to some 
+	 * statemachine. If valid reference is found, the reference is 
+	 * published at router's output.
+	 */
 	public function postprocessor($route)
 	{
 		try {

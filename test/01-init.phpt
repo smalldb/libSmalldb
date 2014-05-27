@@ -6,7 +6,7 @@ State machine initialization - Hello world
 require(dirname(__FILE__).'/init.php');
 
 echo "Initialize backend ...\n";
-$smalldb = new Smalldb\StateMachine\SimpleBackend('foo', array());
+$smalldb = new Smalldb\StateMachine\SimpleBackend('foo', array(), 'backend');
 
 echo "Register machine type ...\n";
 $article_json = json_decode(file_get_contents(dirname(__FILE__).'/example/article.json'), TRUE);

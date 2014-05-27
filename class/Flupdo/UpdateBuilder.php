@@ -40,6 +40,9 @@ namespace Smalldb\Flupdo;
 class UpdateBuilder extends FlupdoBuilder
 {
 
+	/**
+	 * @copydoc FlupdoBuilder\$methods
+	 */
 	protected static $methods = array(
 		// Header
 		'headerComment'		=> array('replace',	'-- HEADER'),
@@ -60,6 +63,9 @@ class UpdateBuilder extends FlupdoBuilder
 	);
 
 
+	/**
+	 * @copydoc FlupdoBuilder\compile()
+	 */
 	public function compile()
 	{
 		$this->sqlStart();

@@ -1,8 +1,7 @@
 Example: core.json.php configuration
 ====================================
 
-.
-
+~~~~~
     {
         "block_storage": {
             "smalldb": {
@@ -28,4 +27,5 @@ Example: core.json.php configuration
             }
         }
     }
+~~~~~
 

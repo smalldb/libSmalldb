@@ -25,7 +25,9 @@ class ArrayMachine extends AbstractMachine
 {
 	private $machine_definition;
 
-	// Data storage for all state machines
+	/**
+	 * Data storage for all state machines
+	 */
 	protected $properties = array();
 
 

@@ -28,19 +28,39 @@ use Smalldb\Machine\AbstractMachine;
 class ActionBlock extends \Cascade\Core\Block
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'*' => null,
 	);
 
+	/**
+	 * Block outputs
+	 */
 	protected $outputs = array(
 		'*' => true,
 		'done' => true,
 	);
 
+	/**
+	 * Block must be always executed.
+	 */
 	const force_exec = true;
 
+	/**
+	 * State machine
+	 */
 	protected $machine;
+
+	/**
+	 * Name of the action to invoke.
+	 */
 	protected $action;
+
+	/**
+	 * How block outputs should be set after action is finished.
+	 */
 	protected $output_values;
 
 	/**
@@ -71,6 +91,9 @@ class ActionBlock extends \Cascade\Core\Block
 	}
 
 
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$args = $this->inAll();

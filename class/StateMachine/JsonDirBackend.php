@@ -29,6 +29,9 @@ use	\Smalldb\Flupdo\Flupdo,
  */
 class JsonDirBackend extends AbstractBackend
 {
+	/**
+	 * Name of directory which contains JSON files with state machine definitions.
+	 */
 	protected $base_dir;
 
 	/**
@@ -51,6 +54,9 @@ class JsonDirBackend extends AbstractBackend
 	);
 
 
+	/**
+	 * Constructor compatible with cascade resource factory.
+	 */
 	public function __construct($options, $context, $alias)
 	{
 		parent::__construct($options, $context, $alias);
@@ -85,7 +91,11 @@ class JsonDirBackend extends AbstractBackend
 
 
 
-	// FIXME: This should be machine listing, not general query builder.
+	/**
+	 * Create qury builder.
+	 *
+	 * FIXME: This should be machine listing, not general query builder.
+	 */
 	public function createQueryBuilder($type)
 	{
 		return $this->getMachine($type)->createQueryBuilder();

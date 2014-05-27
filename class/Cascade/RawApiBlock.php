@@ -70,18 +70,30 @@ use Smalldb\Machine\AbstractMachine;
 class RawApiBlock extends BackendBlock
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'id' => null,		// Entity ID
 	);
 
+	/**
+	 * Block inputs
+	 */
 	protected $outputs = array(
 		'result' => true,
 		'done' => true,
 	);
 
+	/**
+	 * Block must be always executed.
+	 */
 	const force_exec = true;
 
 
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$id = $this->in('id');

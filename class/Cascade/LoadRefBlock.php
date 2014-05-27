@@ -25,11 +25,17 @@ namespace Smalldb\Cascade;
 class LoadRefBlock extends BackendBlock
 {
 
+	/**
+	 * Block inputs
+	 */
 	protected $inputs = array(
 		'ref' => null,
 		'preload' => true,	/// Preload properties?
 	);
 
+	/**
+	 * Block inputs
+	 */
 	protected $outputs = array(
 		'ref' => true,
 		'state' => true,
@@ -43,6 +49,10 @@ class LoadRefBlock extends BackendBlock
 
 	private $ref;
 
+
+	/**
+	 * Block body
+	 */
 	public function main()
 	{
 		$this->ref = $this->in('ref');

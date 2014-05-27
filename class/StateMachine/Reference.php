@@ -42,13 +42,34 @@ namespace Smalldb\StateMachine;
  */
 class Reference implements \ArrayAccess, \Iterator
 {
+	/**
+	 * State machine.
+	 */
 	protected $machine;
-	protected $id;
-	protected $state = null;
 
+	/**
+	 * Primary key (unique within $machine).
+	 */
+	protected $id;
+
+	/**
+	 * Cached state of the machine.
+	 */
 	protected $state_cache;
+
+	/**
+	 * Cached properties of the machine.
+	 */
 	protected $properties_cache;
+
+	/**
+	 * Cached values from views on machine properties.
+	 */
 	protected $view_cache;
+
+	/**
+	 * Persisten view cache, which is not flushed automaticaly.
+	 */
 	protected $persistent_view_cache = array();
 
 
@@ -116,6 +137,7 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'machine':
 				return $this->machine;
 			case 'machineType':
+			case 'machine_type':
 				return $this->machine->getMachineType();
 			case 'state':
 				if ($this->state_cache !== null) {
@@ -158,8 +180,10 @@ class Reference implements \ArrayAccess, \Iterator
 	}
 
 
-	/*
-	 * Read cached properties one by one using array access.
+	/******************************************************************//**
+	 * @}
+	 * @name 	Array access for properties
+	 * @{
 	 */
 
 	public function offsetExists($offset)
@@ -189,8 +213,10 @@ class Reference implements \ArrayAccess, \Iterator
 	}
 
 
-	/*
-	 * Iterator interface implementation.
+	/******************************************************************//**
+	 * @}
+	 * @name	Iterator interface to iterate over properties
+	 * @{
 	 */
 
 	function rewind() {
@@ -228,5 +254,6 @@ class Reference implements \ArrayAccess, \Iterator
 		return key($this->properties_cache) !== null;
 	}
 
+	/** @} */
 }
 

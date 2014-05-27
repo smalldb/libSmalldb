@@ -42,6 +42,9 @@ class Flupdo extends \PDO
 	}
 
 
+	/**
+	 * Quote identifier for use in SQL query (i.e. table name, column name).
+	 */
 	public function quoteIdent($ident)
 	{
 		if (is_array($ident)) {

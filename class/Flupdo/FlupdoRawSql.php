@@ -28,12 +28,18 @@ class FlupdoRawSql
 	private $sql;
 
 
+	/**
+	 * Constructor.
+	 */
 	public function __construct($sql)
 	{
 		$this->sql = $sql;
 	}
 
 
+	/**
+	 * Raw SQL fragment does not need any processing.
+	 */
 	public function __toString()
 	{
 		return $this->sql;

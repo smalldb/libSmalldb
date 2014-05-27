@@ -18,8 +18,14 @@
 
 namespace Smalldb\StateMachine;
 
+/**
+ * Base class for state machines accessed via Flupdo.
+ */
 abstract class FlupdoMachine extends AbstractMachine
 {
+	/**
+	 * Database connection.
+	 */
 	protected $flupdo;
 
 	/**
@@ -27,9 +33,21 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected $table;
 
+	/**
+	 * List of columns which are used as primary key.
+	 */
 	protected $pk_columns = null;
 
+	/**
+	 * Column containing entity owner.
+	 */
 	protected $user_id_table_column = null;
+
+	/**
+	 * Auth object method name to retrieve current user ID.
+	 *
+	 * TODO: Review this.
+	 */
 	protected $user_id_auth_method = null;
 
 

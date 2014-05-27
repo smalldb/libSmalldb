@@ -49,6 +49,9 @@ namespace Smalldb\Flupdo;
 class SelectBuilder extends FlupdoBuilder
 {
 
+	/**
+	 * @copydoc FlupdoBuilder\$methods
+	 */
 	protected static $methods = array(
 		//
 		'headerComment'		=> array('replace',	'-- HEADER'),
@@ -99,6 +102,9 @@ class SelectBuilder extends FlupdoBuilder
 	);
 
 
+	/**
+	 * @copydoc FlupdoBuilder\compile()
+	 */
 	public function compile()
 	{
 		if (empty($this->buffers['SELECT'])) {

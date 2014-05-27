@@ -18,10 +18,17 @@
 
 namespace Smalldb\Cascade;
 
+/**
+ * Base class for backend-related blocks.
+ */
 abstract class BackendBlock extends \Cascade\Core\Block
 {
 
+	/**
+	 * Smalldb backend obtained from block storage.
+	 */
 	protected $smalldb;
+
 
 	/**
 	 * Setup block to act as expected. Configuration is done by Smalldb

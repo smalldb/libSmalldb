@@ -71,25 +71,34 @@ class SimpleBackend extends AbstractBackend
 	}
 
 
+	/**
+	 * @copydoc AbstractBackend::getKnownTypes()
+	 */
 	public function getKnownTypes()
 	{
 		return array_keys($this->known_types);
 	}
 
 
+	/**
+	 * @copydoc AbstractBackend::describeType()
+	 */
 	public function describeType($type)
 	{
 		return $this->known_types[$type];
 	}
 
 
-	public function inferMachineType($ref, & $type, & $id)
+	/**
+	 * @copydoc AbstractBackend::inferMachineType()
+	 */
+	public function inferMachineType($aref, & $type, & $id)
 	{
-		if (!is_array($ref) || count($ref) != 2) {
+		if (!is_array($aref) || count($aref) != 2) {
 			throw new InvalidArgumentException('Invalid reference');
 		}
 
-		list($type, $id) = $ref;
+		list($type, $id) = $aref;
 
 		if (isset($this->known_types[$type])) {
 			return true;
@@ -101,23 +110,32 @@ class SimpleBackend extends AbstractBackend
 	}
 
 
+	/**
+	 * @copydoc AbstractBackend::createMachine()
+	 */
 	protected function createMachine($type)
 	{
 		if (isset($this->known_types[$type])) {
 			$t = $this->known_types[$type];
-			return new $t['class']($this, $type, $t['args']);
+			return new $t['class']($this, $type, $t['args'], $this->getContext());
 		} else {
 			return null;
 		}
 	}
 
 
+	/**
+	 * @copydoc AbstractBackend::createListing()
+	 */
 	public function createListing($query_filters)
 	{
 		throw new \Exception('Not implemented.');
 	}
 
 
+	/**
+	 * @copydoc AbstractBackend::createQueryBuilder()
+	 */
 	public function createQueryBuilder($type)
 	{
 		throw new \Exception('Not implemented.');

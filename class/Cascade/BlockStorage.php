@@ -18,9 +18,22 @@
 
 namespace Smalldb\Cascade;
 
+
+/**
+ * Smalldb block storage generates blocks for each action of each state machine 
+ * and also few useful blocks for each backend.
+ */
 class BlockStorage implements \Cascade\Core\IBlockStorage
 {
+
+	/**
+	 * Smalldb Backend.
+	 */
 	protected $backend;
+
+	/**
+	 * Name of this block storage.
+	 */
 	protected $alias;
 
 	/**

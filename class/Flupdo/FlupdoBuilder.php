@@ -18,20 +18,34 @@
 
 namespace Smalldb\Flupdo;
 
-class FlupdoBuilder
+/**
+ * Query builder base class, which provides some magic to build queries.
+ */
+abstract class FlupdoBuilder
 {
 	/**
 	 * PDO driver used to execute query and escape strings.
 	 */
 	protected $pdo;
 
+	/**
+	 * Indentation string.
+	 */
 	protected $indent = "\t";
+
+	/**
+	 * Second level indentation string.
+	 */
 	protected $sub_indent = "\t\t";
 
 	/**
 	 * Built query
 	 */
 	protected $query_sql = null;
+
+	/**
+	 * Parameters for prepared statement (to be bound before query is executed).
+	 */
 	protected $query_params = null;
 
 	/**
@@ -50,13 +64,23 @@ class FlupdoBuilder
 	protected $buffers = array();
 
 
-	const INDENT		= 0x01;
-	const LABEL		= 0x02;
-	const BRACKETS		= 0x04;
-	const EOL		= 0x80;
-	const ALL_DECORATIONS	= 0xFF;
+	/**
+	 * @name Flags for helper methods.
+	 * 
+	 * Used by sqlList() and sqlStatementFlags().
+	 * @{
+	 */
+	const INDENT		= 0x01;	///< List items should be indented.
+	const LABEL		= 0x02;	///< SQL fragment has a label.
+	const BRACKETS		= 0x04;	///< There are brackets around each item in the list.
+	const EOL		= 0x80;	///< Add EOL after the SQL fragment.
+	const ALL_DECORATIONS	= 0xFF;	///< Make it fancy!
+	/** @} */
 
 
+	/**
+	 * Constructor.
+	 */
 	public function __construct($pdo)
 	{
 		$this->pdo = $pdo;
@@ -193,6 +217,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Returns object marking raw SQL statement.
+	 */
 	public function rawSql($sql)
 	{
 		return new FlupdoRawSql($sql);
@@ -322,6 +349,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Get SQL query as a string.
+	 */
 	public function __toString()
 	{
 		if ($this->query_sql === null) {
@@ -331,6 +361,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Start SQL generating. Uses output buffering to concatenate the query.
+	 */
 	protected function sqlStart()
 	{
 		$this->query_params = array();
@@ -338,6 +371,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Finish SQL generating. Picks up the query from output buffer.
+	 */
 	protected function sqlFinish()
 	{
 		$this->query_sql = ob_get_clean();
@@ -389,6 +425,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate raw SQL fragment.
+	 */
 	protected function sqlRawBuffer($buf)
 	{
 		if (is_array($buf[0])) {
@@ -399,6 +438,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL comment.
+	 */
 	protected function sqlComment($buffer_id)
 	{
 		if (isset($this->buffers[$buffer_id])) {
@@ -409,6 +451,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate flag fragment.
+	 */
 	protected function sqlFlag($buffer_id)
 	{
 		if (isset($this->buffers[$buffer_id])) {
@@ -419,6 +464,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL fragment made of flags.
+	 */
 	protected function sqlStatementFlags($buffer_id, $flag_buffer_ids, $decorations)
 	{
 		$first = false;
@@ -455,6 +503,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL fragment made of list.
+	 */
 	protected function sqlList($buffer_id, $decorations)
 	{
 		$first = true;
@@ -502,6 +553,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL fragment made of list values.
+	 */
 	protected function sqlValuesList($buffer_id)
 	{
 		$first = true;
@@ -531,6 +585,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL fragment made of joins.
+	 */
 	protected function sqlJoins($buffer_id)
 	{
 		$first = true;
@@ -544,6 +601,9 @@ class FlupdoBuilder
 	}
 
 
+	/**
+	 * Generate SQL fragment made of conditions in AND statement.
+	 */
 	protected function sqlConditions($buffer_id)
 	{
 		$first = true;
