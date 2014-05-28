@@ -20,9 +20,11 @@ namespace Smalldb\StateMachine;
 
 /**
  * Something went wrong in state machine.
+ *
+ * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class RuntimeException extends \RuntimeException
 {
-	// Just simple exception in Smalldb namespace, so it is clear who threw it.
+	// Empty.
 }
 

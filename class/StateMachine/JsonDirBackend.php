@@ -22,7 +22,7 @@ use	\Smalldb\Flupdo\Flupdo,
 	\Smalldb\Flupdo\FlupdoProxy;
 
 /**
- * Smalldb Backend which loads state machine definitions from a directory full 
+ * %Smalldb Backend which loads state machine definitions from a directory full 
  * of JSON files.
  *
  * TODO: Caching!

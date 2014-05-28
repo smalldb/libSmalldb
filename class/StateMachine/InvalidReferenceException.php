@@ -20,9 +20,11 @@ namespace Smalldb\StateMachine;
 
 /**
  * Invalid reference requested
+ *
+ * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class InvalidReferenceException extends \InvalidArgumentException
 {
-	// Just simple exception in Smalldb namespace, so it is clear who threw it.
+	// Empty.
 }
 

@@ -20,9 +20,11 @@ namespace Smalldb\StateMachine;
 
 /**
  * Wrong data passed to state machine.
+ *
+ * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class InvalidArgumentException extends \InvalidArgumentException
 {
-	// Just simple exception in Smalldb namespace, so it is clear who threw it.
+	// Empty.
 }
 

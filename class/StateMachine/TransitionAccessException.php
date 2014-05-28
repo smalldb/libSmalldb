@@ -20,9 +20,11 @@ namespace Smalldb\StateMachine;
 
 /**
  * Access denied to requested transition.
+ *
+ * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class TransitionAccessException extends TransitionException
 {
-	// Just simple exception in Smalldb namespace, so it is clear who threw it.
+	// Empty.
 }
 

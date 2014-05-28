@@ -64,8 +64,7 @@ class ActionBlock extends \Cascade\Core\Block
 	protected $output_values;
 
 	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb
-	 * Block Storage.
+	 * Setup block to act as expected. Configuration is done by BlockStorage.
 	 */
 	public function __construct($machine, $action, $action_desc)
 	{

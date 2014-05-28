@@ -21,7 +21,7 @@ namespace Smalldb\Cascade;
 use Smalldb\Machine\AbstractMachine;
 
 /**
- * Raw and ugly connector to access Smalldb interface from outter world.
+ * Raw and ugly connector to access %Smalldb interface from outter world.
  *
  * Deprecated! This connector will be replaced with something better soon.
  *

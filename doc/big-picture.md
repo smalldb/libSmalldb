@@ -1,7 +1,7 @@
 The Big Picture
 ===============
 
-Smalldb operates on possibly infinite space of state machines. Instead of
+%Smalldb operates on possibly infinite space of state machines. Instead of
 creating a machine instance, a transition from not-exists state is invoked;
 deletion is transition to not-exists state. Each machine instance is
 represented by a record in database. Missing record means the machine is in
@@ -11,8 +11,8 @@ Machines are always of some type. Particular machine is identified by global
 ID, which is usualy composed of machine type and primary key.
 
 
-Components of Smalldb
----------------------
+Components of %Smalldb
+----------------------
 
   * **Backend** maintains access to the space of machines by creating
     References, creates Machines when required and passes global context around
@@ -28,10 +28,10 @@ Components of Smalldb
     Reference is similar to active record pattern, but semantic is different.
 
 
-Smalldb State Machines
-----------------------
+%Smalldb State Machines
+-----------------------
 
-Smalldb state machine is nondeterministic finite automaton combined with Kripke
+%Smalldb state machine is nondeterministic finite automaton combined with Kripke
 structure. Each machine has finite set of states, finite set of transitions
 between these states and set of named properties (key-value pairs).
 
@@ -52,7 +52,7 @@ external and unknown variables.
 Initialization
 --------------
 
-Smalldb backend is initialized during application initialization. Database
+%Smalldb backend is initialized during application initialization. Database
 connections and similar resources are not created by the backend, but they are
 passed to backend's to constructor as properties (member variables) of context.
 
@@ -80,8 +80,8 @@ publish it on router's output.
 
 **Example:** Connect `core/router` to `postproc` output of
 `smalldb/router_factory` block and add following routing rule group. The
-`postprocessor` option tells router to use Smalldb router for mathing routes.
-See Smalldb::Cascade::RouterFactoryBlock documentation for example of its configuration.
+`postprocessor` option tells router to use %Smalldb router for mathing routes.
+See Smalldb\Cascade\RouterFactoryBlock documentation for example of its configuration.
 
 ~~~~~
         "smalldb": {

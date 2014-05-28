@@ -20,9 +20,11 @@ namespace Smalldb\StateMachine;
 
 /**
  * Something is wrong with current transition.
+ *
+ * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class TransitionException extends \DomainException
 {
-	// Just simple exception in Smalldb namespace, so it is clear who threw it.
+	// Empty.
 }
 

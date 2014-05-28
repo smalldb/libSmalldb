@@ -25,14 +25,13 @@ abstract class BackendBlock extends \Cascade\Core\Block
 {
 
 	/**
-	 * Smalldb backend obtained from block storage.
+	 * %Smalldb backend obtained from block storage.
 	 */
 	protected $smalldb;
 
 
 	/**
-	 * Setup block to act as expected. Configuration is done by Smalldb
-	 * Block Storage.
+	 * Setup block to act as expected. Configuration is done by BlockStorage.
 	 */
 	public function __construct($smalldb)
 	{

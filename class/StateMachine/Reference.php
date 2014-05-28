@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Reference to one or more state machines. Allows you to invoke transitions in
+ * %Reference to one or more state machines. Allows you to invoke transitions in
  * the easy way by calling methods on this reference object. This is syntactic
  * sugar only, nothing really happens here.
  *

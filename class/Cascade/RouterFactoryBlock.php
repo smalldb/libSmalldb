@@ -19,7 +19,7 @@
 namespace Smalldb\Cascade;
 
 /**
- * Raw and ugly connector to access Smalldb interface from outter world.
+ * Raw and ugly connector to access %Smalldb interface from outter world.
  *
  * Deprecated! This connector will be replaced with something better soon.
  *
@@ -34,11 +34,12 @@ namespace Smalldb\Cascade;
  *   - `{smalldb_action}`: Action (transition name)
  *   - `{smalldb_action_or_show}`: "show" is used when action is empty.
  *
- * If input is set to "{smalldb_ref}", then it is set to 
+ * @note If input is set to "{smalldb_ref}", then it is set to 
  * Smalldb\StateMachine\Reference object instead of string.
  *
- * Example: If input "block" is set to "{smalldb_type}/{smalldb_action_or_show}",
- * then output 'block' will be usable as input for block_loader.
+ * @par Example
+ * 	If input "block" is set to "{smalldb_type}/{smalldb_action_or_show}",
+ * 	then output 'block' will be usable as input for block_loader.
  */
 class RouterFactoryBlock extends BackendBlock
 {
@@ -76,7 +77,7 @@ class RouterFactoryBlock extends BackendBlock
 
 	/**
 	 * Route postprocessor to be registered in router. Route will call this 
-	 * method to check whether a Smalldb route is valid reference to some 
+	 * method to check whether a %Smalldb route is valid reference to some 
 	 * statemachine. If valid reference is found, the reference is 
 	 * published at router's output.
 	 */

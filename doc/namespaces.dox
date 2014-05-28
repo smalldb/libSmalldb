@@ -1,5 +1,12 @@
 /*!
-	@namespace Cascade
+	@namespace Smalldb
+
+State Machine Abstraction Layer
+
+*/
+
+/*!
+	@namespace Smalldb::Cascade
 
 Block storage and some useful blocks for the cascade.
 
@@ -7,16 +14,16 @@ Block storage and some useful blocks for the cascade.
 
 
 /*!
-	@namespace Flupdo
+	@namespace Smalldb::Flupdo
 
 PDO based SQL query builder.
 
 */
  
 /*!
-	@namespace StateMachine
+	@namespace Smalldb::StateMachine
 
-Implementation of Smalldb state machine, the nondeterministic parametric finite automaton.
+Implementation of %Smalldb state machine, the nondeterministic parametric finite automaton.
 
 */
 

@@ -22,7 +22,7 @@ use	\Smalldb\Flupdo\Flupdo,
 	\Smalldb\Flupdo\FlupdoProxy;
 
 /**
- * Smalldb Backend which provides database via Flupdo.
+ * %Smalldb Backend which provides database via Flupdo.
  *
  * TODO: Make this dumb and provide it from somewhere else.
  *
