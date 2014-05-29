@@ -93,9 +93,6 @@ class RouterFactoryBlock extends BackendBlock
 
 			// Get action
 			$action = @ $_GET['action'];
-			if ($action === null) {
-				$action = @ $_GET['action'];
-			}
 			$args['smalldb_action'] = $action;
 
 			// Default action to make life easier
