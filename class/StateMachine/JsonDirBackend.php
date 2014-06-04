@@ -23,9 +23,13 @@ use	\Smalldb\Flupdo\Flupdo,
 
 /**
  * %Smalldb Backend which loads state machine definitions from a directory full 
- * of JSON files.
+ * of JSON files and GraphML files.
  *
- * TODO: Caching!
+ * JsonDirBackend supports following file types:
+ *
+ *   - JSON: Raw structure loaded as is. Extensions: `.json`, `.json.php`
+ *   - GraphML: Graph created by yEd graph editor. See loadGraphMLFile(). Extensions: `.graphml`
+ *
  */
 class JsonDirBackend extends AbstractBackend
 {
@@ -64,19 +68,42 @@ class JsonDirBackend extends AbstractBackend
 		// Get base dir
 		$this->base_dir = filename_format($options['base_dir']);
 
-		// Scan base dir for machines
-		// TODO: Use APC cache!
-		$dh = opendir($this->base_dir);
-		if (!$dh) {
-			throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
+		// Load machine definitions from APC cache
+		$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
+		$cache_data = apc_fetch($cache_key, $cache_loaded);
+		if ($cache_loaded) {
+			list($this->machine_type_table, $cache_mtime) = $cache_data;
 		}
-		while (($file = readdir($dh)) !== false) {
-			if (preg_match('/^([^.].*)\.json\.php$/', $file, $m)) {
-				$type = $m[1];
-				$this->machine_type_table[$type] = parse_json_file($this->base_dir.$file);
+
+		if (!$cache_loaded					// failed to load cache
+			|| filemtime(__FILE__) > $cache_mtime 		// check loader
+			|| filemtime($this->base_dir) > $cache_mtime)	// check directory (new/removed files)
+		{
+			debug_msg('Machine type table cache miss. Reloading...');
+
+			// Scan base dir for machines
+			$dh = opendir($this->base_dir);
+			if (!$dh) {
+				throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
 			}
+			while (($file = readdir($dh)) !== false) {
+				@ list($machine_type, $ext) = explode('.', $file, 2);
+				switch ($ext) {
+				case 'json':
+				case 'json.php':
+					$this->machine_type_table[$machine_type] = parse_json_file($this->base_dir.$file);
+					break;
+
+				case 'graphml':
+					$this->machine_type_table[$machine_type] = $this->loadGraphMLFile($this->base_dir.$file);
+					break;
+				} 
+			}
+			closedir($dh);
+			ksort($this->machine_type_table);
+
+			apc_store($cache_key, array($this->machine_type_table, time()));
 		}
-		closedir($dh);
 	}
 
 
@@ -201,6 +228,163 @@ class JsonDirBackend extends AbstractBackend
 		}
 
 		return new $desc['class']($this, $type, $desc, $this->getContext());
+	}
+
+
+	/**
+	 * Load state machine definition from GraphML created by yEd graph editor.
+	 *
+	 * @see http://www.yworks.com/en/products_yed_about.html
+	 */
+	protected function loadGraphMLFile($graphml_filename)
+	{
+		// Graph
+		$keys = array();
+		$nodes = array();
+		$edges = array();
+
+		// Load GraphML into DOM
+		$dom = new \DOMDocument;
+		$dom->load($graphml_filename);
+
+		// Prepare XPath query engine
+		$xpath = new \DOMXpath($dom);
+		$xpath->registerNameSpace('g', 'http://graphml.graphdrawing.org/xmlns');
+
+		// Load keys
+		foreach($xpath->query('/g:graphml/g:key[@attr.name][@id]') as $el) {
+			$id = $el->attributes->getNamedItem('id')->value;
+			$name = $el->attributes->getNamedItem('attr.name')->value;
+			//debug_msg("tag> %s => %s", $id, $name);
+			$keys[$id] = $name;
+		}
+
+		// Load graph properties
+		$graph_props = array();
+		foreach($xpath->query('//g:graph/g:data[@key]') as $data_el) {
+			$k = $data_el->attributes->getNamedItem('key')->value;
+			if (isset($keys[$k])) {
+				if ($keys[$k] == 'Properties') {
+					// Special handling of machine properties
+					$properties = array();
+					foreach ($xpath->query('./property[@name]', $data_el) as $property_el) {
+						$property_name = $property_el->attributes->getNamedItem('name')->value;
+						foreach ($property_el->attributes as $property_attr_name => $property_attr) {
+							$properties[$property_name][$property_attr_name] = $property_attr->value;
+						}
+					}
+					$graph_props['properties'] = $properties;
+				} else {
+					$graph_props[$this->str2key($keys[$k])] = trim($data_el->textContent);
+				}
+			}
+		}
+		//debug_dump($graph_props, '$graph_props');
+
+		// Load nodes
+		foreach($xpath->query('//g:graph/g:node[@id]') as $el) {
+			$id = $el->attributes->getNamedItem('id')->value;
+			$node_props = array();
+			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
+				$k = $data_el->attributes->getNamedItem('key')->value;
+				if (isset($keys[$k])) {
+					$node_props[$this->str2key($keys[$k])] = $data_el->textContent;
+				}
+			}
+			$label = $xpath->query('.//y:NodeLabel', $el)->item(0)->textContent;
+			if ($label !== null) {
+				$node_props['label'] = trim($label);
+			}
+			$color = $xpath->query('.//y:Fill', $el)->item(0)->attributes->getNamedItem('color')->value;
+			if ($color !== null) {
+				$node_props['color'] = trim($color);
+			}
+			//debug_msg("node> %s: \"%s\"", $id, @ $node_props['state']);
+			//debug_dump($node_props, '$node_props');
+			$nodes[$id] = $node_props;
+		}
+
+		// Load edges
+		foreach($xpath->query('//g:graph/g:edge[@id][@source][@target]') as $el) {
+			$id = $el->attributes->getNamedItem('id')->value;
+			$source = $el->attributes->getNamedItem('source')->value;
+			$target = $el->attributes->getNamedItem('target')->value;
+			$edge_props = array();
+			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
+				$k = $data_el->attributes->getNamedItem('key')->value;
+				if (isset($keys[$k])) {
+					$edge_props[$this->str2key($keys[$k])] = $data_el->textContent;
+				}
+			}
+			$label = $xpath->query('.//y:EdgeLabel', $el)->item(0)->textContent;
+			if ($label !== null) {
+				$edge_props['label'] = trim($label);
+			}
+			//debug_msg("edge> %s: %s -> %s", $id, $source, $target);
+			//debug_dump($edge_props, '$edge_props');
+			$edges[$id] = array($source, $target, $edge_props);
+		}
+
+		// Build machine definition
+		$machine = array('_' => "<?php printf('_%c%c}%c',34,10,10);__halt_compiler();?>");
+
+		// Graph properties
+		foreach($graph_props as $k => $v) {
+			$machine[$k] = $v;
+		}
+
+		// Store states
+		foreach ($nodes as $n) {
+			$state = (string) @ $n['state'];
+			if ($state == '' && @ $n['label'] != '') {
+				throw new GraphMLException(sprintf('Missing "state" property at node "%s".', $n['label']));
+			}
+			if ($state == '') {
+				// skip 'nonexistent' state, it is present by default
+				continue;
+			}
+			unset($n['state']);
+			$machine['states'][$state] = $n;
+		}
+
+		// Store actions and transitions
+		foreach ($edges as $e) {
+			list($source_id, $target_id, $props) = $e;
+			$source = (string) @ $nodes[$source_id]['state'];
+			$target = (string) @ $nodes[$target_id]['state'];
+			if (@ $props['action'] != '') {
+				$action = $props['action'];
+			} else if (@ $props['label'] != '') {
+				$action = $props['label'];
+			} else {
+				throw new GraphMLException(sprintf('Missing label at edge "%s" -> "%s".',
+					$nodes[$source]['label'] ? : @ $nodes[$source]['state'],
+					$nodes[$target]['label'] ? : @ $nodes[$target]['state']));
+			}
+
+			$tr = & $machine['actions'][$action]['transitions'][$source];
+			foreach ($props as $k => $v) {
+				$tr[$k] = $v;
+			}
+			$tr['targets'][] = $target;
+			unset($tr);
+		}
+
+		// Sort stuff to keep them in order when file is modified
+		asort($machine['states']);
+		asort($machine['actions']);
+
+		//debug_dump($machine, '$machine');
+		return $machine;
+	}
+
+
+	/**
+	 * Convert some nice property name to key suitable for JSON file.
+	 */
+	private function str2key($str)
+	{
+		return strtr(mb_strtolower($str), ' ', '_');
 	}
 
 }
