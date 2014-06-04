@@ -38,6 +38,7 @@ class ArrayMachine extends AbstractMachine
 	{
 		$this->states  = $args['states'];
 		$this->actions = $args['actions'];
+		$this->properties = (array) @ $args['properties'];
 		$this->state_groups = (array) @ $args['state_groups'];
 	}
 
@@ -47,7 +48,7 @@ class ArrayMachine extends AbstractMachine
 	 */
 	public function describeId()
 	{
-		return array('id' => 'string');
+		return array('id');
 	}
 
 
