@@ -19,6 +19,7 @@
 namespace Smalldb\Cascade;
 
 /**
+ * todo: DOC!
  * Raw and ugly connector to access %Smalldb interface from outter world.
  *
  * Deprecated! This connector will be replaced with something better soon.
@@ -80,19 +81,34 @@ class RouterFactoryBlock extends BackendBlock
 	 * method to check whether a %Smalldb route is valid reference to some 
 	 * statemachine. If valid reference is found, the reference is 
 	 * published at router's output.
+	 *
+	 * Postprocessor uses '!' to denote action. Action is part of path 
+	 * after the last '!'. Action never contains slash and it must be at 
+	 * the end of the path.
 	 */
 	public function postprocessor($route)
 	{
 		try {
 			$args = $route;
 
+			// extract ID and action
+			$id = $route['path_tail'];
+			if (empty($id)) {
+				return false;
+			}
+			$id_tail = array_pop($id); 
+			@ list($id_tail, $action, ) = explode('!', $id_tail, 3); // drop extra '!'
+			if ($id_tail != '') {
+				$id[] = $id_tail;
+			}
+			if ($action === '') {
+				$action = null;
+			}
+
 			// Create reference to state machine
-			$ref = $this->smalldb->ref($route['path_tail']);
+			$ref = $this->smalldb->ref($id);
 			$args['smalldb_ref'] = $ref;
 			$args['smalldb_type'] = $ref->machineType;
-
-			// Get action
-			$action = @ $_GET['action'];
 			$args['smalldb_action'] = $action;
 
 			// Default action to make life easier
@@ -104,7 +120,7 @@ class RouterFactoryBlock extends BackendBlock
 
 			// Copy inputs to outputs
 			foreach ($this->inAll() as $in => $val) {
-				if ($val == '{smalldb_ref}') {
+				if ($val === '{smalldb_ref}') {
 					$route[$in] = $ref;
 				} else {
 					$route[$in] = filename_format($val, $args);

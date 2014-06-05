@@ -49,7 +49,7 @@ invoking a transition (action).
 To specify which action should be performed a query parameter "action" is used.
 For example, the URL for invoking an "edit" action looks like this:
 
-    http://example.org/entity-type/primary-key?action=edit
+    http://example.org/entity-type/primary-key!edit
 
 When HTTP POST is performed on this URL, the "edit" transition in specified
 state machine is invoked.
@@ -74,11 +74,11 @@ example JSON, instead of HTML pages with forms.
 	- Response: HTML page displaying the state and properties of state
 	  machine.
 
-`GET %http://example.org/entity-type/primary-key?action=edit`
+`GET %http://example.org/entity-type/primary-key!edit`
 	- Retrieve HTML form which will be used to edit the state machine.
 	- Response: HTML page with requested HTML form.
 
-`POST %http://example.org/entity-type/primary-key?action=edit`
+`POST %http://example.org/entity-type/primary-key!edit`
 	- Edit given entity by invoking "edit" transition on given state
 	  machine.
 	- Response on success: HTTP 303 redirect (redirect after post) to the
