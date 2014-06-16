@@ -94,6 +94,17 @@ class Reference implements \ArrayAccess, \Iterator
 
 
 	/**
+	 * Returns true if reference points only to machine type. Such 
+	 * reference may not be used to modify any machine, however, it can be 
+	 * used to invoke 'create'-like transitions.
+	 */
+	public function isNullRef()
+	{
+		return $this->id === null;
+	}
+
+
+	/**
 	 * Drop all cached data.
 	 */
 	protected function clearCache()

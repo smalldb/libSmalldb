@@ -34,7 +34,7 @@ class LoadRefBlock extends BackendBlock
 	);
 
 	/**
-	 * Block inputs
+	 * Block outputs
 	 */
 	protected $outputs = array(
 		'ref' => true,
@@ -55,18 +55,26 @@ class LoadRefBlock extends BackendBlock
 	 */
 	public function main()
 	{
-		$this->ref = $this->in('ref');
+		try {
+			$this->ref = $this->in('ref');
 
-		if ($this->ref === null) {
-			return;
-		}
+			if ($this->ref === null) {
+				return;
+			}
 
-		$this->out('ref', $this->ref);
-		if ($this->in('preload')) {
-			$this->out('properties', $this->ref->properties);
-			$this->out('state', $this->ref->state);
+			$this->out('ref', $this->ref);
+			if ($this->in('preload')) {
+				$this->out('properties', $this->ref->properties);
+				$this->out('state', $this->ref->state);
+			}
+
+			$this->out('done', $this->ref->state != '');
 		}
-		$this->out('done', $this->ref->state != '');
+		catch(\Smalldb\Statemachine\RuntimeException $ex) {
+			error_msg('Failed to unref reference: %s', $ex->getMessage());
+			$this->ref = null;
+			$this->out('done', false);
+		}
 	}
 
 

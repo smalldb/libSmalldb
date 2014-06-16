@@ -33,7 +33,7 @@ namespace Smalldb\Cascade;
  *
  *   - `{smalldb_type}`: State machine type
  *   - `{smalldb_action}`: Action (transition name)
- *   - `{smalldb_action_or_show}`: "show" is used when action is empty.
+ *   - `{smalldb_action_or_show}`: "show" or "listing" (for null refs) is used when action is empty.
  *
  * @note If input is set to "{smalldb_ref}", then it is set to 
  * Smalldb\StateMachine\Reference object instead of string.
@@ -113,7 +113,13 @@ class RouterFactoryBlock extends BackendBlock
 
 			// Default action to make life easier
 			if ($action === null) {
-				$args['smalldb_action_or_show'] = 'show';
+				// Check whether ref is null
+				if ($ref->isNullRef()) {
+					// Null ref means we want listing
+					$args['smalldb_action_or_show'] = 'listing';
+				} else {
+					$args['smalldb_action_or_show'] = 'show';
+				}
 			} else {
 				$args['smalldb_action_or_show'] = $action;
 			}
