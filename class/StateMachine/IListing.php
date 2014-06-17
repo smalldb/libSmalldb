@@ -24,14 +24,20 @@ namespace Smalldb\StateMachine;
  * Listing is created by AbstractBackend::createListing method, it should not 
  * be created directly.
  */
-interface IListing extends \Traversable
+interface IListing
 {
 
 	/**
 	 * Execute SQL query or do whatever is required to get this listing 
 	 * populated.
 	 */
-	function execute();
+	function query();
+
+
+	/**
+	 * Get description of all properties (columns) in the listing.
+	 */
+	function describeProperties();
 
 
 	/**

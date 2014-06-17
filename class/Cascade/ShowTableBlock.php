@@ -21,27 +21,27 @@ namespace Smalldb\Cascade;
 use Smalldb\Machine\AbstractMachine;
 
 /**
- * List all state machine instances matching given filters.
+ * Show listing in simple table.
  *
- * @see Smalldb::StateMachine::AbstractBackend::createListing()
+ * @see ListingBlock.
  */
-class ListingBlock extends BackendBlock
+class ShowTableBlock extends BackendBlock
 {
 
 	/**
 	 * Block inputs
 	 */
 	protected $inputs = array(
-		'filters' => null,
-		'*' => null,		// Filters
+		'list' => null,
+		'properties' => null,
+		'slot' => 'default',
+		'slot_weight' => 50,
 	);
 
 	/**
 	 * Block outputs
 	 */
 	protected $outputs = array(
-		'list' => true,
-		'properties' => true,
 		'done' => true,
 	);
 
@@ -56,17 +56,39 @@ class ListingBlock extends BackendBlock
 	 */
 	public function main()
 	{
-		$filters = (array) $this->in('filters');
-		foreach ($this->inputNames() as $input) {
-			if ($input != 'filters') {
-				$filters[$input] = $this->in($input);
+		$list = $this->in('list');
+		$properties = $this->in('properties');
+
+		$table = new \Cascade\Core\TableView();
+
+		//debug_dump($properties);
+
+		// TODO: Add action buttons
+
+		if ($properties !== null) {
+			foreach ($properties as $property => $p) {
+				$col_opts = array(
+					'title'  => $p['label'],
+					'key'    => $property,
+				);
+				if (!empty($p['is_pk'])) {
+					$col_opts['link'] = '#';	// FIXME
+				}
+				$table->addColumn('text', array_merge($p, $col_opts));
+			}
+		} else if (!empty($list)) {
+			foreach (reset($list) as $k => $v) {
+				$table->addColumn('text', array(
+						'title'  => $k,
+						'key'    => $k,
+					));
 			}
 		}
 
-		$listing = $this->smalldb->createListing($filters);
+		$table->setData($list);
+	
+		$this->templateAdd(null, 'core/table', $table);
 
-		$this->out('list', $listing->fetchAll());
-		$this->out('properties', $listing->describeProperties());
 		$this->out('done', true);
 	}
 }

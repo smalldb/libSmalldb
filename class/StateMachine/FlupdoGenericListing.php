@@ -21,11 +21,70 @@ namespace Smalldb\StateMachine;
 /**
  * A very generic listing based on Flupdo::SelectBuilder
  */
-class FlupdoGenericListing
-	extends \Smalldb\Flupdo\SelectBuilder
-	//implements IListing
+class FlupdoGenericListing implements IListing
 {
-	// TODO
+
+	protected $machine;	///< Parent state machine, which created this listing.
+	protected $query;	///< SQL query to execute.
+	protected $result;	///< PDOStatement, result of the query.
+
+
+	/**
+	 * Prepare query builder
+	 */
+	public function __construct($machine, $flupdo)
+	{
+		$this->machine = $machine;
+		$this->query = new \Smalldb\Flupdo\SelectBuilder($flupdo);
+	}
+
+
+	/**
+	 * Get raw query builder. It may be useful to configure query outside 
+	 * of this listing, but it is ugly. It is also specific to 
+	 * FlupdoGenericListing only.
+	 */
+	public function getQueryBuilder()
+	{
+		return $this->query;
+	}
+
+
+	/**
+	 * Execute SQL query or do whatever is required to get this listing 
+	 * populated.
+	 */
+	public function query()
+	{
+		if ($this->result === null) {
+			$this->result = $this->query->query();
+		} else {
+			throw new RuntimeException('Query already performed.');
+		}
+	}
+
+
+	/**
+	 * Get description of all properties (columns) in the listing.
+	 */
+	public function describeProperties()
+	{
+		return $this->machine->describeAllMachineProperties();
+	}
+
+
+	/**
+	 * Returns an array of all items in the listing.
+	 */
+	function fetchAll()
+	{
+		if ($this->result === null) {
+			$this->query();
+		}
+		return $this->result->fetchAll(\PDO::FETCH_ASSOC);
+	}
+
+
 }
 
 

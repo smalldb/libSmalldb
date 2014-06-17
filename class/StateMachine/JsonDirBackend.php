@@ -109,23 +109,13 @@ class JsonDirBackend extends AbstractBackend
 
 	/**
 	 * Creates a listing using given filters.
+	 *
+	 * TODO: Support complex filtering over multiple machine types.
 	 */
 	public function createListing($filters)
 	{
 		$type = $filters['type'];
 		return $this->getMachine($type)->createListing($filters);
-	}
-
-
-
-	/**
-	 * Create qury builder.
-	 *
-	 * FIXME: This should be machine listing, not general query builder.
-	 */
-	public function createQueryBuilder($type)
-	{
-		return $this->getMachine($type)->createQueryBuilder();
 	}
 
 

@@ -105,34 +105,20 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
-	 * Low level API for querying underlaying database. It is 
-	 * implementation specific and should not be used. However, itis better 
-	 * to have one specified shortcut than many ugly hacks.
-	 */
-	public function createQueryBuilder()
-	{
-		// FIXME: This should not be here. There should be generic 
-		// listing API and separate listing class.
-
-		$q = $this->flupdo->select();
-		$this->queryAddFrom($q);
-		return $q;
-	}
-
-
-	/**
 	 * Create generic listing on this machine type
 	 *
-	 * TODO: Fix this.
+	 * TODO: Apply filters
 	 */
 	public function createListing($filters)
 	{
-		$listing = new \Smalldb\StateMachine\FlupdoGenericListing($this->flupdo);
-		$this->queryAddFrom($listing);
-		$this->queryAddStateSelect($listing);
-		$this->queryAddPropertiesSelect($listing);
-		$this->addPermissionsCondition($listing);
-		$listing->debugDump();
+		$listing = new \Smalldb\StateMachine\FlupdoGenericListing($this, $this->flupdo);
+		$query = $listing->getQueryBuilder();
+		$this->queryAddFrom($query);
+		$this->queryAddStateSelect($query);
+		$this->queryAddPropertiesSelect($query);
+		$this->addPermissionsCondition($query);
+		$query->limit(100);
+		$query->debugDump();
 		return $listing;
 	}
 

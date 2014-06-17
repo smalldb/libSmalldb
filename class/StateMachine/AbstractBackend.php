@@ -225,18 +225,6 @@ abstract class AbstractBackend
 	abstract public function createListing($query_filters);
 
 
-	/**
-	 * Create query builder (like FlupdoBuilder) which shall be used to create
-	 * and execute database query to retrieve list of state machine instances
-	 * and their properties, but don't use this unless you really need to.
-	 *
-	 * This query builder bypasses all state machine infrastructure, so you 
-	 * better be careful and use it wisely.
-	 * 
-	 * Usualy it is way better to use createListing() instead.
-	 */
-	abstract public function createQueryBuilder($type);
-
 
 	/******************************************************************//**
 	 *

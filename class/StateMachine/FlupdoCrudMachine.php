@@ -47,6 +47,12 @@ class FlupdoCrudMachine extends FlupdoMachine
 		if (!empty($config['properties'])) {
 			// if properties are difined manualy, use them
 			$this->properties = $config['properties'];
+			$this->pk_columns = array();
+			foreach ($this->properties as $property => $p) {
+				if (!empty($p['is_pk'])) {
+					$this->pk_columns[] = $property;
+				}
+			}
 		} else {
 			// otherwise fetch properties from database
 			$r = $this->flupdo->select('*')

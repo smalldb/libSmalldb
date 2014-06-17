@@ -43,6 +43,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 		'router_factory' => 'RouterFactoryBlock',
 		'listing' => 'ListingBlock',
 		'show_diagram' => 'ShowDiagramBlock',
+		'show_table' => 'ShowTableBlock',
 		'raw_api' => 'RawApiBlock',
 		'load_ref' => 'LoadRefBlock',
 	);
