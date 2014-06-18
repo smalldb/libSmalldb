@@ -310,6 +310,10 @@ class JsonDirBackend extends AbstractBackend
 			if ($label !== null) {
 				$edge_props['label'] = trim($label);
 			}
+			$color = $xpath->query('.//y:LineStyle', $el)->item(0)->attributes->getNamedItem('color')->value;
+			if ($color !== null) {
+				$edge_props['color'] = trim($color);
+			}
 			//debug_msg("edge> %s: %s -> %s", $id, $source, $target);
 			//debug_dump($edge_props, '$edge_props');
 			$edges[$id] = array($source, $target, $edge_props);
