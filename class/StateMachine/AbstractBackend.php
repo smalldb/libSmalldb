@@ -39,20 +39,14 @@ abstract class AbstractBackend
 	 * Options should contain all required backend-specific data for
 	 * backend initialization.
 	 *
-	 * $context is accessible to AbstractMachine.
+	 * @param $options are used by derived classes to configure everything.
+	 * @param $context is accessible to AbstractMachine.
+	 * @param $alias is used to identify instances in log.
 	 */
 	public function __construct($options, $context, $alias)
 	{
 		$this->alias = $alias;
 		$this->context = $context;
-
-		// Resolve resources
-		if ($context) {
-			foreach ((array) @ $options['resources'] as $option => $resource_name) {
-				$options[$option] = $context->$resource_name;
-			}
-			unset($options['resources']);
-		}
 	}
 
 

@@ -54,9 +54,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	public function __construct($storage_opts, $context, $alias)
 	{
 		$this->alias = $alias;
-
-		$backend_resource = $storage_opts['backend_resource'];
-		$this->backend = $context->$backend_resource;
+		$this->backend = $storage_opts['backend'];
 	}
 
 
