@@ -117,6 +117,9 @@ class Reference implements \ArrayAccess, \Iterator
 
 	/**
 	 * Function call is transition invocation. Just forward it to backend.
+	 *
+	 * When transition returns new ID, the reference is updated to keep 
+	 * it pointing to the same state machine.
 	 */
 	public function __call($name, $arguments)
 	{
@@ -125,9 +128,12 @@ class Reference implements \ArrayAccess, \Iterator
 
 		switch ($returns) {
 			case AbstractMachine::RETURNS_VALUE:
+				// Returned value is simply passed to caller.
 				return $r;
 			case AbstractMachine::RETURNS_NEW_ID:
-				return new self($this->machine, $r);
+				// When state machine ID changes, reference must be updated to point to the same machine.
+				$this->id = $r;
+				return $this;
 			default:
 				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
 		}
