@@ -54,7 +54,7 @@ class Auth implements \Cascade\Core\IAuth
 		}
 
 		// Get session token
-		$session_token = @ $_COOKIES[$this->cookie_name];
+		$session_token = @ $_COOKIE[$this->cookie_name];
 
 		// Refresh cookie with token
 		setcookie($this->cookie_name, $session_token, time() + $this->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
@@ -71,6 +71,15 @@ class Auth implements \Cascade\Core\IAuth
 		//debug_dump($this->session_machine->state, 'Session state');
 
 		// Everything else is up to the state machine
+	}
+
+
+	/**
+	 * Get session machine which manages all stuff around login and session.
+	 */
+	public function getSessionMachine()
+	{
+		return $this->session_machine;
 	}
 
 
