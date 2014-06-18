@@ -62,14 +62,71 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function initializeMachine($config)
 	{
+		// Get flupdo resource
 		$flupdo_resource_name = @ $config['flupdo_resource'];
 		if ($flupdo_resource_name == null) {
 			$flupdo_resource_name = 'database';
 		}
 		$this->flupdo = $this->context->$flupdo_resource_name;
-
 		if (!($this->flupdo instanceof \Smalldb\Flupdo\Flupdo)) {
 			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+		}
+
+		// Use config if not specified otherwise
+		if ($this->states === null) {
+			$this->states = $config['states'];
+		}
+		if ($this->actions === null) {
+			$this->actions = $config['actions'];
+		}
+		if ($this->pk_columns === null) {
+			$this->pk_columns = (array) @ $config['pk_columns'];
+		}
+		if ($this->properties === null) {
+			$this->properties = (array) @ $config['properties'];
+		}
+		if ($this->state_groups === null) {
+			$this->state_groups = (array) @ $config['state_groups'];
+		}
+
+		// Scan database for properties if not specified
+		if (empty($this->properties)) {
+			$this->scanTableColumns();
+		} else if ($this->pk_columns === null) {
+			// Collect primary keys if not specified
+			$this->pk_columns = array();
+			foreach ($this->properties as $property => $p) {
+				if (!empty($p['is_pk'])) {
+					$this->pk_columns[] = $property;
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Scan table in database and populate properties and pk_columns arrays.
+	 */
+	protected function scanTableColumns()
+	{
+		$r = $this->flupdo->select('*')
+			->from($this->flupdo->quoteIdent($this->table))
+			->where('FALSE')->limit(0)
+			->query();
+		$col_cnt = $r->columnCount();
+
+		// build properties description
+		$this->properties = array();
+		$this->pk_columns = array();
+		for ($i = 0; $i < $col_cnt; $i++) {
+			$cm = $r->getColumnMeta($i);
+			$this->properties[$cm['name']] = array(
+				'name' => $cm['name'],
+				'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
+			);
+			if (in_array('primary_key', $cm['flags'])) {
+				$this->pk_columns[] = $cm['name'];
+			}
 		}
 	}
 

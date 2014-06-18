@@ -54,26 +54,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 				}
 			}
 		} else {
-			// otherwise fetch properties from database
-			$r = $this->flupdo->select('*')
-				->from($this->flupdo->quoteIdent($this->table))
-				->where('FALSE')->limit(0)
-				->query();
-			$col_cnt = $r->columnCount();
-
-			// build properties description
-			$this->properties = array();
-			$this->pk_columns = array();
-			for ($i = 0; $i < $col_cnt; $i++) {
-				$cm = $r->getColumnMeta($i);
-				$this->properties[$cm['name']] = array(
-					'name' => $cm['name'],
-					'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
-				);
-				if (in_array('primary_key', $cm['flags'])) {
-					$this->pk_columns[] = $cm['name'];
-				}
-			}
+			$this->scanTableColumns();
 		}
 
 		// Exists state only
