@@ -65,10 +65,10 @@ class ShowTableBlock extends BackendBlock
 
 		// TODO: Add action buttons
 
-		if ($properties !== null) {
+		if (!empty($properties)) {
 			foreach ($properties as $property => $p) {
 				$col_opts = array(
-					'title'  => $p['label'],
+					'title'  => $p['name'],
 					'key'    => $property,
 				);
 				if (!empty($p['is_pk'])) {
@@ -83,6 +83,9 @@ class ShowTableBlock extends BackendBlock
 						'key'    => $k,
 					));
 			}
+		} else {
+			// no columns, no rows
+			return;
 		}
 
 		$table->setData($list);
