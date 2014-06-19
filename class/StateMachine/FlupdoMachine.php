@@ -73,20 +73,20 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 
 		// Use config if not specified otherwise
-		if ($this->states === null) {
+		if ($this->states === null && isset($config['states'])) {
 			$this->states = $config['states'];
 		}
-		if ($this->actions === null) {
+		if ($this->actions === null && isset($config['actions'])) {
 			$this->actions = $config['actions'];
 		}
-		if ($this->pk_columns === null) {
-			$this->pk_columns = (array) @ $config['pk_columns'];
+		if ($this->pk_columns === null && isset($config['pk_columns'])) {
+			$this->pk_columns = $config['pk_columns'];
 		}
-		if ($this->properties === null) {
-			$this->properties = (array) @ $config['properties'];
+		if ($this->properties === null && isset($config['properties'])) {
+			$this->properties = $config['properties'];
 		}
-		if ($this->state_groups === null) {
-			$this->state_groups = (array) @ $config['state_groups'];
+		if ($this->state_groups === null && isset($config['state_groups'])) {
+			$this->state_groups = $config['state_groups'];
 		}
 
 		// Scan database for properties if not specified
