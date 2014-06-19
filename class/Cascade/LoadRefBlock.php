@@ -71,7 +71,7 @@ class LoadRefBlock extends BackendBlock
 			$this->out('done', $this->ref->state != '');
 		}
 		catch(\Smalldb\Statemachine\RuntimeException $ex) {
-			error_msg('Failed to unref reference: %s', $ex->getMessage());
+			//error_msg('Failed to unref reference: %s', $ex->getMessage());
 			$this->ref = null;
 			$this->out('done', false);
 		}
