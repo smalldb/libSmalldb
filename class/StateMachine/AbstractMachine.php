@@ -25,6 +25,7 @@ namespace Smalldb\StateMachine;
  * State machine always work with ID, never with Reference. References are
  * decoded within backend.
  *
+ * Transition method should return FALSE when it has failed.
  */
 abstract class AbstractMachine
 {
@@ -697,7 +698,7 @@ abstract class AbstractMachine
 					}
 					foreach ($transition['targets'] as $dst) {
 						if ($dst === null || $dst === '') {
-							$s_dst = 'END';
+							$s_dst = $src == '' ? 'BEGIN':'END';
 							$have_final_state = true;
 						} else {
 							$s_dst = 's_'.$this->escapeDotIdentifier($dst);
