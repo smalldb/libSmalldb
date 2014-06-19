@@ -18,6 +18,7 @@
 
 namespace Smalldb\Cascade;
 
+use Smalldb\StateMachine\AbstractMachine;
 
 /**
  * %Smalldb block storage generates blocks for each action of each state machine 
@@ -116,8 +117,43 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 		$action_desc = $machine->describeMachineAction($action);
 
 		// Create block if action exists
-		if ($action_desc !== null && isset($action_desc['block'])) {
-			$block_class = @ $action_desc['block']['class'];
+		if ($action_desc !== null) {
+			$block_desc = @ $action_desc['block'];
+			if ($block_desc === null) {
+				// Generate some reasonable default block configuration
+				$block_desc['inputs'] = array(
+					'ref' => null,
+				);
+				$block_desc['outputs'] = array(
+					'ref' => 'ref',
+				);
+				try {
+					// FIXME: This should not be here
+					$action_method_reflection = new \ReflectionMethod($machine, $action);
+					foreach ($action_method_reflection->getParameters() as $i => $param) {
+						if ($i > 0) {	// first argument is primary key
+							$block_desc['inputs'][$param->name] = null;
+						}
+					}
+				}
+				catch (\ReflectionException $ex) {
+					// It will hurt, but it can hurt later.
+				}
+				switch (@ $action_desc['returns']) {
+					case AbstractMachine::RETURNS_VALUE:
+						$block_desc['outputs']['result'] = 'return_value';
+						break;
+					case AbstractMachine::RETURNS_NEW_ID:
+						break;
+					default:
+						throw new RuntimeException('Unknown semantics of the return value: '.var_export($action_desc['returns'], true));
+				}
+				$action_desc['block'] = $block_desc;
+				//debug_dump($block_desc, $action);
+			}
+
+			// Create block
+			$block_class = @ $block_config['class'];
 			if ($block_class !== null) {
 				return new $block_class($machine, $action, $action_desc);
 			} else {
@@ -193,7 +229,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 		// State machine related blocks
 		foreach ($this->backend->getKnownTypes() as $type) {
 			$machine = $this->backend->getMachine($type);
-			$actions = $machine->getAllMachineActions('block');
+			$actions = $machine->getAllMachineActions();
 			foreach ($actions as $a) {
 				$blocks[$this->alias][] = $type.'/'.$a;
 			}

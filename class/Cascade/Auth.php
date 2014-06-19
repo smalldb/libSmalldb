@@ -56,9 +56,6 @@ class Auth implements \Cascade\Core\IAuth
 		// Get session token
 		$session_token = @ $_COOKIE[$this->cookie_name];
 
-		// Refresh cookie with token
-		setcookie($this->cookie_name, $session_token, time() + $this->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
-
 		// Get reference to session state machine
 		if ($session_token) {
 			$session_id = $config['machine_ref_prefix'];
@@ -67,6 +64,20 @@ class Auth implements \Cascade\Core\IAuth
 		} else {
 			$this->session_machine = $this->smalldb->ref($config['machine_null_ref']);
 		}
+
+		// Refresh cookie with token
+		if ($session_token != null) {
+			setcookie($this->cookie_name, $session_token, time() + $this->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
+		}
+
+		// Update cookie when token changes
+		$t = $this;
+		$this->session_machine->pk_changed_cb[] = function($ref, $new_pk) use ($t) {
+			if (is_array($new_pk)) {
+				$new_pk = $new_pk[0];
+			}
+			setcookie($t->cookie_name, $new_pk, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
+		};
 
 		//debug_dump($this->session_machine->state, 'Session state');
 

@@ -24,6 +24,8 @@ use Smalldb\Machine\AbstractMachine;
  * Universal implemntation of state machine action invocation. Inputs are
  * passed as arguments to the transition, returned value is set on one or more
  * outputs.
+ *
+ * Output 'done' is set to true if return value of transition is not FALSE.
  */
 class ActionBlock extends \Cascade\Core\Block
 {
@@ -72,6 +74,9 @@ class ActionBlock extends \Cascade\Core\Block
 		$this->action = $action;
 
 		// get block description (block is not created unless this is defined)
+		if (!isset($action_desc['block'])) {
+			throw new \RuntimeException('Missing block configuration.');
+		}
 		$block_desc = $action_desc['block'];
 
 		// define inputs
@@ -127,7 +132,7 @@ class ActionBlock extends \Cascade\Core\Block
 			}
 		}
 
-		$this->out('done', true);
+		$this->out('done', $result !== FALSE);
 	}
 
 }
