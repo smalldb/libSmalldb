@@ -73,6 +73,46 @@ class Reference implements \ArrayAccess, \Iterator
 	protected $persistent_view_cache = array();
 
 
+	/************************************************************************//**
+	 * @name	Callbacks
+	 * @{
+	 *
+	 * Callbacks are lists of callables. Reference calls them when 
+	 * something interesting happens.
+	 *
+	 * To register a callable simply add it to the list.
+	 */
+
+	/**
+	 * List of callbacks called when reference primary key changes.
+	 *
+	 * Just append callable to this array:
+	 *
+	 * `$ref->on_pk_change[] = function($ref, $new_pk) { };`
+	 */
+	public $pk_changed_cb = array();
+
+	/**
+	 * List of callbacks called before transition is invoked.
+	 *
+	 * Just append callable to this array:
+	 *
+	 * `$ref->on_pk_change[] = function($ref, $transition_name, $arguments) { };`
+	 */
+	public $before_transition_cb = array();
+
+	/**
+	 * List of callbacks called after transition is invoked.
+	 *
+	 * Just append callable to this array:
+	 *
+	 * `$ref->on_pk_change[] = function($ref, $transition_name, $arguments, $return_value, $returns) { };`
+	 */
+	public $after_transition_cb = array();
+
+	/// @}
+
+
 	/**
 	 * Create reference and initialize it with given ID. To copy
 	 * a reference use clone keyword.
@@ -89,6 +129,24 @@ class Reference implements \ArrayAccess, \Iterator
 			$this->id = $args;
 		} else {
 			$this->id = $id;
+		}
+	}
+
+
+	/**
+	 * Call all registered callbacks when event happens.
+	 */
+	protected function emit($callback_list)
+	{
+		if (empty($callback_list)) {
+			return;
+		}
+
+		$args = func_get_args();
+		$args[0] = $this;
+
+		foreach ($callback_list as $cb) {
+			call_user_func_array($cb, $args);
 		}
 	}
 
@@ -123,8 +181,12 @@ class Reference implements \ArrayAccess, \Iterator
 	 */
 	public function __call($name, $arguments)
 	{
+		$this->emit($this->before_transition_cb, $name, $arguments);
+
 		$this->clearCache();
 		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
+
+		$this->emit($this->after_transition_cb, $name, $arguments, $r, $returns);
 
 		switch ($returns) {
 			case AbstractMachine::RETURNS_VALUE:
@@ -132,6 +194,7 @@ class Reference implements \ArrayAccess, \Iterator
 				return $r;
 			case AbstractMachine::RETURNS_NEW_ID:
 				// When state machine ID changes, reference must be updated to point to the same machine.
+				$this->emit($this->pk_changed_cb, $r);
 				$this->id = $r;
 				return $this;
 			default:
