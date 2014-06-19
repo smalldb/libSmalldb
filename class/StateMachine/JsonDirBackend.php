@@ -86,21 +86,36 @@ class JsonDirBackend extends AbstractBackend
 			if (!$dh) {
 				throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
 			}
+			$graphml = array();
 			while (($file = readdir($dh)) !== false) {
 				@ list($machine_type, $ext) = explode('.', $file, 2);
 				switch ($ext) {
-				case 'json':
-				case 'json.php':
-					$this->machine_type_table[$machine_type] = parse_json_file($this->base_dir.$file);
-					break;
-
-				case 'graphml':
-					$this->machine_type_table[$machine_type] = $this->loadGraphMLFile($this->base_dir.$file);
-					break;
+					case 'json':
+					case 'json.php':
+						$this->machine_type_table[$machine_type] = parse_json_file($this->base_dir.$file);
+						break;
 				} 
 			}
 			closedir($dh);
 			ksort($this->machine_type_table);
+
+			foreach ($this->machine_type_table as $machine_type => $json_config) {
+				$machine_def = & $this->machine_type_table[$machine_type];
+				foreach ((array) @ $json_config['include'] as $include_file) {
+					if ($include_file[0] != '/') {
+						$include_file = $this->base_dir.$include_file;
+					}
+					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
+						$machine_def = array_merge_recursive(parse_json_file($include_file), $machine_def);
+					} else if (preg_match('/\.graphml$/i', $include_file)) {
+						$machine_def = array_merge_recursive($this->loadGraphMLFile($include_file), $machine_def);
+					} else {
+						throw new RuntimeException('Unknown file format: '.$include_file);
+					}
+				}
+				unset($machine_def);
+				$this->machine_type[$machine_type] = array_merge_recursive($graphml_spec, $this->machine_type[$machine_type]);
+			}
 
 			apc_store($cache_key, array($this->machine_type_table, time()));
 		}
