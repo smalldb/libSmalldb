@@ -31,8 +31,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 	{
 		parent::initializeMachine($config);
 
-		$this->table = (string) $config['table'];
-
 		// Name of inputs and outputs with properties
 		$io_name = (string) $config['io_name'];
 		if ($io_name == '') {

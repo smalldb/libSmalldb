@@ -24,22 +24,47 @@ class B_smalldb__session_machine extends \Cascade\Core\Block
 
 	protected $outputs = array(
 		'ref' => true,
+		'state' => true,
+		'properties' => true,
 		'done' => true,
 	);
 
 	const force_exec = true;
+
+	private $ref;
 
 
 	public function main()
 	{
 		$auth = $this->auth();
 		if ($auth instanceof \Smalldb\Cascade\Auth) {
-			$sm = $auth->getSessionMachine();
-			$this->out('ref', $sm);
-			$this->out('done', !!$sm);
+			$this->ref = $auth->getSessionMachine();
+			if ($this->ref === null) {
+				return;
+			}
+
+			try {
+				$this->out('ref', $this->ref);
+				$this->out('properties', $this->ref->properties);
+				$this->out('state', $this->ref->state);
+				$this->out('done', !!$this->ref);
+			}
+			catch(\Smalldb\Statemachine\RuntimeException $ex) {
+				//error_msg('Failed to unref reference: %s', $ex->getMessage());
+				$this->ref = null;
+				$this->out('done', false);
+			}
 		}
 	}
 
+
+	/**
+	 * Reference properties are mapped to block outputs.
+	 */
+	public function getOutput($name)
+	{
+		return $this->ref ? $this->ref->$name : null;
+	}
 }
 
 

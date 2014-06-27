@@ -39,6 +39,9 @@ class Auth implements \Cascade\Core\IAuth
 	protected $session_ttl = 315569260;	///< Session duration [seconds]
 
 
+	/**
+	 * Constructor.
+	 */
 	public function __construct($config)
 	{
 		$this->smalldb = $config['smalldb'];
@@ -79,6 +82,12 @@ class Auth implements \Cascade\Core\IAuth
 			setcookie($t->cookie_name, $new_pk, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
 		};
 
+		$this->session_machine->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
+			if ($transition_name == 'logout') {
+				setcookie($t->cookie_name, null, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
+			}
+		};
+
 		//debug_dump($this->session_machine->state, 'Session state');
 
 		// Everything else is up to the state machine
@@ -94,6 +103,11 @@ class Auth implements \Cascade\Core\IAuth
 	}
 
 
+	/**
+	 * First level of authorization.
+	 *
+	 * @return Returns true if user is allowed to use the block.
+	 */
 	public function isBlockAllowed($block_name, & $details = null)
 	{
 		return true;

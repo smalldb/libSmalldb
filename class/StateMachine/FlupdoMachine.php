@@ -73,6 +73,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 
 		// Use config if not specified otherwise
+		if ($this->table === null && isset($config['table'])) {
+			$this->table = (string) $config['table'];
+		}
 		if ($this->states === null && isset($config['states'])) {
 			$this->states = $config['states'];
 		}
@@ -174,7 +177,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		$this->queryAddStateSelect($query);
 		$this->queryAddPropertiesSelect($query);
 		$this->addPermissionsCondition($query);
-		$query->limit(100);
+		$query->limit(10);
 		$query->debugDump();
 		return $listing;
 	}

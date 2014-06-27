@@ -130,7 +130,11 @@ class JsonDirBackend extends AbstractBackend
 	public function createListing($filters)
 	{
 		$type = $filters['type'];
-		return $this->getMachine($type)->createListing($filters);
+		$machine = $this->getMachine($type);
+		if ($machine === null) {
+			throw new InvalidArgumentException('Machine type "'.$type.'" not found.');
+		}
+		return $machine->createListing($filters);
 	}
 
 
