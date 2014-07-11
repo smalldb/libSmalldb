@@ -193,6 +193,32 @@ abstract class FlupdoBuilder
 
 
 	/**
+	 * Get compiled SQL query, use only for debugging.
+	 */
+	public function getSqlQuery()
+	{
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+
+		return $this->query_sql;
+	}
+
+
+	/**
+	 * Get parameters for compiled SQL query, use only for debugging.
+	 */
+	public function getSqlParams()
+	{
+		if ($this->query_sql === null) {
+			$this->compile();
+		}
+
+		return $this->query_params;
+	}
+
+
+	/**
 	 * Quotes a string for use in a query.
 	 *
 	 * Proxy to PDO::quote().

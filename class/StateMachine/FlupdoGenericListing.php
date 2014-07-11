@@ -61,6 +61,7 @@ class FlupdoGenericListing implements IListing
 		} else {
 			throw new RuntimeException('Query already performed.');
 		}
+		return $this->result;
 	}
 
 

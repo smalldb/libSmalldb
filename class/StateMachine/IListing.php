@@ -30,6 +30,8 @@ interface IListing
 	/**
 	 * Execute SQL query or do whatever is required to get this listing 
 	 * populated.
+	 *
+	 * @return Traversable
 	 */
 	function query();
 

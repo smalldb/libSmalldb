@@ -91,6 +91,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->state_groups === null && isset($config['state_groups'])) {
 			$this->state_groups = $config['state_groups'];
 		}
+		if ($this->filters === null && isset($config['filters'])) {
+			$this->filters = $config['filters'];
+		}
 
 		// Scan database for properties if not specified
 		if (empty($this->properties)) {
@@ -165,20 +168,160 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
-	 * Create generic listing on this machine type
+	 * Create generic listing on this machine type.
 	 *
-	 * TODO: Apply filters
+	 * ### Filter syntax
+	 *
+	 * Syntax is designed for use in query part of URL. First, filter name
+	 * is looked up in statemachine filters. If not found, filter name is
+	 * considered a property name and if matches, equality condition is
+	 * added. Otherwise if operator is detected at the end of property
+	 * name, given condition is added.
+	 *
+	 * Please keep in mind that there is '=' character in URL between
+	 * filter name and value. For example '<' filter looks like
+	 * `...?property<=value`.
+	 *
+	 * Conditions:
+	 *
+	 *   - `!=` means "not equal".
+	 *   - `<` means "lesser or equal".
+	 *   - `<<`  means "less than".
+	 *   - `>`  means "greater or equal".
+	 *   - `>>`  means "greater than".
+	 *   - `:` is range check. The value must be in format `min..max` or
+	 *     `min...max`. Two dots means min <= x < max. Three or more dots
+	 *     include max (min <= x <= max; using BETWEEN operator). The value
+	 *     may be also an array of two elements or with 'min' and 'max'
+	 *     keys.
+	 *   - `~` is REGEXP operator.
+	 *   - `%` is LIKE operator.
+	 *   - `!:`, `!~` and `!%` are negated variants of previous three
+	 *     operators.
 	 */
 	public function createListing($filters)
 	{
 		$listing = new \Smalldb\StateMachine\FlupdoGenericListing($this, $this->flupdo);
+
+		// Prepare common select
 		$query = $listing->getQueryBuilder();
 		$this->queryAddFrom($query);
 		$this->queryAddStateSelect($query);
 		$this->queryAddPropertiesSelect($query);
 		$this->addPermissionsCondition($query);
-		$query->limit(10);
-		$query->debugDump();
+
+		// Limit & offset
+		if (isset($filters['limit']) && !isset($this->filters['limit'])) {
+			$query->limit((int) $filters['limit']);
+		}
+		if (isset($filters['offset']) && !isset($this->filters['offset'])) {
+			$query->offset(max(0, (int) $filters['offset']));
+		}
+
+		// Ordering -- it is first, so it overrides other filters
+		if (isset($filters['order-by']) && !isset($this->filters['order-by'])) {
+			$query->orderBy($query->quoteIdent($filters['order-by'])
+				.(isset($filters['order-asc']) && !$filters['order-asc'] ? ' DESC' : ' ASC'));
+		}
+
+		// Add filters
+		foreach($filters as $property => $value) {
+			if (isset($this->filters[$property])) {
+				foreach ($this->filters[$property] as $f) {
+					$args = array($f['sql']);
+					foreach ($f['params'] as $p) {
+						$args[] = $filters[$p];
+					}	
+					call_user_func_array(array($query, $f['stmt']), $args);
+				}
+			} else {
+				$property = str_replace('-', '_', $property);
+
+				if (isset($this->properties[$property])) {
+					// Filter name matches property name => is value equal ?
+					$query->where($query->quoteIdent($property).' = ?', $value);
+				} else {
+					// Check if operator is the last character of filter name
+					$operator = substr($property, -1);
+					if (!preg_match('/^([^><!%~:]+)([><!%~:]+)$/', $property, $m)) {
+						continue;
+					}
+					list(, $property, $operator) = $m;
+					if (!isset($this->properties[$property])) {
+						continue;
+					}
+
+					// Do not forget there is '=' after the operator in URL.
+					$p = $query->quoteIdent($property);
+					switch ($operator) {
+						case '>':
+							$query->where("$p >= ?", $value);
+							break;
+						case '>>':
+							$query->where("$p > ?", $value);
+							break;
+						case '<':
+							$query->where("$p <= ?", $value);
+							break;
+						case '<<':
+							$query->where("$p < ?", $value);
+							break;
+						case '!':
+							$query->where("$p != ?", $value);
+							break;
+						case ':':
+							if (is_array($value)) {
+								if (isset($value['min']) && isset($value['max'])) {
+									$query->where("? <= $p AND $p < ?", $value['min'], $value['max']);
+								} else {
+									$query->where("? <= $p AND $p < ?", $value[0], $value[1]);
+								}
+							} else if (preg_match('/^(.+?)(\.\.\.*)(.+)$/', $value, $m)) {
+								list(, $min, $op, $max) = $m;
+								if ($op == '..') {
+									$query->where("? <= $p AND $p < ?", $min, $max);
+								} else {
+									$query->where("$p BETWEEN ? AND ?", $min, $max);
+								}
+							}
+							break;
+						case '!:':
+							if (is_array($value)) {
+								if (isset($value['min']) && isset($value['max'])) {
+									$query->where("$p < ? OR ? <= $p", $value['min'], $value['max']);
+								} else {
+									$query->where("$p < ? OR ? <= $p", $value[0], $value[1]);
+								}
+							} else if (preg_match('/^(.+?)(\.\.\.*)(.+)$/', $value, $m)) {
+								list(, $min, $op, $max) = $m;
+								if ($op == '..') {
+									$query->where("$p < ? OR ? <= $p", $min, $max);
+								} else {
+									$query->where("$p NOT BETWEEN ? AND ?", $min, $max);
+								}
+							}
+							break;
+						case '~':
+							$query->where($query->quoteIdent($property).' REGEXP ?', $value);
+							break;
+						case '!~':
+							$query->where($query->quoteIdent($property).' NOT REGEXP ?', $value);
+							break;
+						case '%':
+							$query->where($query->quoteIdent($property).' LIKE ?', $value);
+							break;
+						case '!%':
+							$query->where($query->quoteIdent($property).' NOT LIKE ?', $value);
+							break;
+					}
+				}
+			}
+		}
+
+		// Query is ready
+		//debug_dump($filters, 'Filters');
+		//debug_dump("\n".$query->getSqlQuery(), 'Query');
+		//debug_dump($query->getSqlParams(), 'Params');
 		return $listing;
 	}
 
