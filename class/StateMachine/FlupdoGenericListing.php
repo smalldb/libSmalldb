@@ -71,6 +71,9 @@ class FlupdoGenericListing implements IListing
 		// Limit & offset
 		if (isset($query_filters['limit']) && !isset($machine_filters['limit'])) {
 			$this->query->limit((int) $query_filters['limit']);
+		} else {
+			// Fail-safe
+			$this->query->limit(100);
 		}
 		if (isset($query_filters['offset']) && !isset($machine_filters['offset'])) {
 			$this->query->offset(max(0, (int) $query_filters['offset']));
