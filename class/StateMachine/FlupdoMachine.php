@@ -175,6 +175,8 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	/**
 	 * Create generic listing on this machine type.
+	 *
+	 * @see FlupdoGenericListing
 	 */
 	public function createListing($filters)
 	{

@@ -21,7 +21,9 @@ namespace Smalldb\StateMachine;
 /**
  * A very generic listing based on Flupdo::SelectBuilder
  *
- * ### Filter syntax
+ *
+ * Default Filter Syntax
+ * ---------------------
  *
  * Syntax is designed for use in query part of URL. First, filter name
  * is looked up in statemachine filters. If not found, filter name is
@@ -29,13 +31,17 @@ namespace Smalldb\StateMachine;
  * added. Otherwise if operator is detected at the end of property
  * name, given condition is added.
  *
- * Please keep in mind that there is '=' character in URL between
- * filter name and value. For example '<' filter looks like
- * `...?property<=value`.
+ * @note Please keep in mind that there is '=' character in URL between
+ * 	filter name and value. For example '<' filter looks like
+ * 	`...?property<=value`.
  *
- * Conditions:
+ * @warning Filters are in fact simple key-value structure. Conditions
+ * 	described below are only an ilusion. All this only means that for each
+ * 	state machine property a group of filters is generated (on demand).
  *
- *   - `!=` means "not equal".
+ * ### Conditions:
+ *
+ *   - `!` means "not equal".
  *   - `<` means "lesser or equal".
  *   - `<<`  means "less than".
  *   - `>`  means "greater or equal".
@@ -49,6 +55,99 @@ namespace Smalldb\StateMachine;
  *   - `%` is LIKE operator.
  *   - `!:`, `!~` and `!%` are negated variants of previous three
  *     operators.
+ *
+ * ### Predefined filters:
+ *
+ *   - `limit` (int; default = 100)
+ *   - `offset` (int; default = undefined)
+ *   - `order-by` (property/column name; default = undefined)
+ *   - `order-asc` (bool; default = true; applied only when order-by is set)
+ *
+ * ### Example:
+ *
+ * Select all items, where `foo` is greater or equal to 5, and `bar` is between
+ * 10 and 20 (excluding 20), and `category` is 'fruit'.
+ *
+ *     http://example.com/items?foo>=5&bar:=10..20&category=fruit
+ *
+ *     $filter = array(
+ *         'foo>' => 5,
+ *         'bar:' => array(10, 20),
+ *         'category' => 'fruit',
+ *     )
+ *
+ *
+ * Custom filters
+ * --------------
+ *
+ * FlupdoMachine machine can have filters option set. This option defines
+ * custom filters. Custom filters will override predefined filters of the same
+ * name.
+ *
+ * Each filter is list of statements added to Flupdo\SelectBuilder. Each filter
+ * must have these properties defined:
+ *
+ *   - `stmt`: Name of SelectBuilder method which adds the statement.
+ *   - `sql`: Raw SQL code with positional parameters (question marks).
+ *   - `params`: Filter names wich values will be passed as query parameters.
+ *     These must be in the same order as in `sql`.
+ *
+ * @note Operators of default filters have nothing to do with custom filters.
+ *
+ * Filter can be defined as a simple filter using `query` property, or as
+ * value-dependent filter using `query_map` property. The `query_map` will
+ * select one of specified filters by filter value. The `query` is used when
+ * `query_map` is missing or no value is matched.
+ *
+ * ### Example
+ *    
+ *     "filters": {
+ *         "path": {
+ *             "query": [
+ *                 {
+ *                     "stmt": "where",
+ *                     "sql": "`path_mask` = ? OR `path_mask` = \"*\" OR ? REGEXP CONCAT(\"^\", REPLACE(`path_mask`, \"*\", \"[^/]+\"), \"$\")",
+ *                     "params": [ "path", "path" ]
+ *                 }
+ *             ]
+ *         },
+ *         "date": {
+ *             "query_map": {
+ *                 "past": [
+ *                     {
+ *                         "stmt": "where",
+ *                         "sql": "mtime < NOW()",
+ *                         "params": [ ]
+ *                     }
+ *                 ],
+ *                 "future": [
+ *                     {
+ *                         "stmt": "where",
+ *                         "sql": "mtime >= NOW()",
+ *                         "params": [ ]
+ *                     }
+ *                 ]
+ *             },
+ *             "query": [
+ *                {
+ *                    "stmt": "where",
+ *                    "sql": "mtime BETWEEN NOW() - INTEVAL ? DAY AND NOW + INTERVAL ? DAY",
+ *                    "params": [ "date", "date" ]
+ *                }
+ *             ]
+ *         }
+ *     }
+ *
+ * Possible use:
+ *
+ *   - `http://example.com/item?date=past&path=/foo/bar` -- select items
+ *     modified in past and matching given path.
+ *   - `http://example.com/item?date=2` -- select items modified within
+ *     +/- 2 days from now.
+ *
+ * @note Additional properties may be added to filter definition. It is
+ * 	expected that GUI will be generated from this definition as well.
+ *
  */
 class FlupdoGenericListing implements IListing
 {
@@ -86,9 +185,22 @@ class FlupdoGenericListing implements IListing
 		}
 
 		// Add filters
-		foreach($query_filters as $property => $value) {
-			if (isset($machine_filters[$property])) {
-				foreach ($machine_filters[$property] as $f) {
+		foreach($query_filters as $filter_name => $value) {
+			if (isset($machine_filters[$filter_name])) {
+				// Custom filter
+				if (isset($machine_filters[$filter_name]['query_map'][$value])) {
+					// Check query_map for the value
+					$filters = $machine_filters[$filter_name]['query_map'][$value];
+				} else if (isset($machine_filters[$filter_name]['query'])) {
+					// Fallback if query_map does not contain value or does not exist at all
+					$filters = $machine_filters[$filter_name]['query'];
+				} else {
+					// No filter here.
+					continue;
+				}
+
+				// Add filter to query builder
+				foreach ($filters as $f) {
 					$args = array($f['sql']);
 					foreach ($f['params'] as $p) {
 						$args[] = $query_filters[$p];
@@ -96,7 +208,8 @@ class FlupdoGenericListing implements IListing
 					call_user_func_array(array($this->query, $f['stmt']), $args);
 				}
 			} else {
-				$property = str_replace('-', '_', $property);
+				// Use default property filter
+				$property = str_replace('-', '_', $filter_name);
 
 				if (isset($machine_properties[$property])) {
 					// Filter name matches property name => is value equal ?
