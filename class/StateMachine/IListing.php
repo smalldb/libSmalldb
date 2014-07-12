@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine;
 /**
  * A prefered way to retrieve list of existing state machine instances.
  * 
- * Listing is created by AbstractBackend::createListing method, it should not 
+ * Listing is created by AbstractMachine::createListing method, it should not 
  * be created directly.
  */
 interface IListing
