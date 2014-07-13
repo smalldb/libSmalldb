@@ -66,7 +66,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 		// Actions
 		$this->actions = array(
 			'create' => array(
-				'label' => _('Add'),
+				'label' => _('Create'),
 				'description' => _('Create a new item'),
 				'transitions' => array(
 					'' => array(
@@ -106,7 +106,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 			),
 			'delete' => array(
 				'label' => _('Delete'),
-				'description' => _('Destroy item'),
+				'description' => _('Delete item'),
 				'transitions' => array(
 					'exists' => array(
 						'targets' => array(''),
