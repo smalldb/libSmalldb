@@ -77,14 +77,21 @@ class Flupdo extends \PDO
 	public static function createInstanceFromConfig($config)
 	{
 		if (isset($config['dsn'])) {
-			return new self($config['dsn'], $config['username'], $config['password']);
+			return new self($config['dsn'], $config['username'], $config['password'], array(
+					self::ATTR_ERRMODE => self::ERRMODE_EXCEPTION,
+				));
 		} else if ($config['driver'] == 'mysql') {
 			return new self('mysql:dbname='.$config['database'].';host='.$config['host'].';charset=UTF8',
 				$config['username'], $config['password'],
-				array(self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';'));
+				array(
+					self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
+					self::ATTR_ERRMODE => self::ERRMODE_EXCEPTION,
+				));
 		} else {
 			return new self($config['driver'].':dbname='.$config['database'].';host='.$config['host'].';charset=UTF8',
-				$config['username'], $config['password']);
+				$config['username'], $config['password'], array(
+					self::ATTR_ERRMODE => self::ERRMODE_EXCEPTION,
+				));
 		}
 
 		throw new \Exception('Not implemented.');
