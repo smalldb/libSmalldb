@@ -107,7 +107,8 @@ class ActionBlock extends \Cascade\Core\Block
 			$ref = $args['ref'];
 			unset($args['ref']);
 		} else {
-			$ref = null;
+			// FIXME: Should machine be able to create null ref?
+			$ref = $this->machine->getBackend()->nullRef($this->machine->getMachineType());
 		}
 
 		// invoke transition
