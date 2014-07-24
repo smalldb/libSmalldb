@@ -294,7 +294,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		$props = $r->fetch(\PDO::FETCH_ASSOC);
 		$r->closeCursor();
 
-		if ($props === null) {
+		if ($props === false) {
 			throw new RuntimeException('State machine instance not found.');
 		}
 
