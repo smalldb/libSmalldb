@@ -114,7 +114,6 @@ class JsonDirBackend extends AbstractBackend
 					}
 				}
 				unset($machine_def);
-				$this->machine_type[$machine_type] = array_merge_recursive($graphml_spec, $this->machine_type[$machine_type]);
 			}
 
 			apc_store($cache_key, array($this->machine_type_table, time()));
