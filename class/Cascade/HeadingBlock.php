@@ -87,7 +87,7 @@ class HeadingBlock extends BackendBlock
 		// Link to item (cancel action)
 		if ($action != 'listing' && $action != 'show' && $ref->id) {
 			$links[] = array(
-				'label' => _('Zobrazit'),
+				'label' => _('Show'),
 				'link' => $ref->url,
 			);
 		}
