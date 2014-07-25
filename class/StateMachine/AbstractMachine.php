@@ -223,7 +223,12 @@ abstract class AbstractMachine
 	 */
 	public function getView($id, $view, $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
-		throw new InvalidArgumentException('Unknown view: '.$view);
+		switch ($view) {
+			case 'url':
+				return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
+			default:
+				throw new InvalidArgumentException('Unknown view: '.$view);
+		}
 	}
 
 

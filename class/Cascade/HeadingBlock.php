@@ -72,13 +72,31 @@ class HeadingBlock extends BackendBlock
 			$heading = $ref->machine_type;
 		}
 
-		$this->templateAdd(null, 'core/header', array(
+		// Prepare few links for basic navigation
+		// TODO: This should be configurable
+		$links = array();
+
+		// Link to listing
+		if ($action != 'listing') {
+			$links[] = array(
+				'label' => _('Back to listing'),
+				"link" => '/'.$ref->machine_type,
+			);
+		}
+
+		// Link to item (cancel action)
+		if ($action != 'listing' && $action != 'show' && $ref->id) {
+			$links[] = array(
+				'label' => _('Zobrazit'),
+				'link' => $ref->url,
+			);
+		}
+
+		$this->templateAdd(null, 'smalldb/heading', array(
 				'text'    => $heading,
-				'img_src' => null,
-				'link'    => null,
 				'anchor'  => $this->in('anchor'),
 				'level'   => $this->in('level'),
-				'option'  => null,
+				'links'   => $links,
 			));
 	}
 }
