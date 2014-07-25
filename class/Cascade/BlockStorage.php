@@ -43,6 +43,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	protected $backend_blocks = array(
 		'router_factory' => 'RouterFactoryBlock',
 		'listing' => 'ListingBlock',
+		'heading' => 'HeadingBlock',
 		'show_diagram' => 'ShowDiagramBlock',
 		'show_table' => 'ShowTableBlock',
 		'raw_api' => 'RawApiBlock',

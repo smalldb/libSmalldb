@@ -124,6 +124,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 				),
 			),
 		);
+
+		// Merge with config
+		if (isset($config['actions'])) {
+			$this->actions = array_merge_recursive($config['actions'], $this->actions);
+		}
 	}
 
 

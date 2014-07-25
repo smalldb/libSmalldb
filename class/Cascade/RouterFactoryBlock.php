@@ -109,7 +109,7 @@ class RouterFactoryBlock extends BackendBlock
 			$ref = $this->smalldb->ref($id);
 			$args['smalldb_ref'] = $ref;
 			$args['smalldb_type'] = $ref->machineType;
-			$args['smalldb_action'] = $action;
+			$args['smalldb_action'] = $action === null ? '' : $action;
 
 			// Default action to make life easier
 			if ($action === null) {
