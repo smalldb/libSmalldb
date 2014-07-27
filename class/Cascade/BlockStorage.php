@@ -48,6 +48,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 		'show_table' => 'ShowTableBlock',
 		'raw_api' => 'RawApiBlock',
 		'load_ref' => 'LoadRefBlock',
+		'entity_menu' => 'EntityMenuBlock',
 	);
 
 	/**
