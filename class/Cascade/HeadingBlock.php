@@ -76,20 +76,24 @@ class HeadingBlock extends BackendBlock
 		// TODO: This should be configurable
 		$links = array();
 
-		// Link to listing
-		if ($action != 'listing') {
-			$links[] = array(
-				'label' => _('Back to listing'),
-				"link" => '/'.$ref->machine_type,
-			);
-		}
+		if (empty($action_def['heading_without_links'])) {
 
-		// Link to item (cancel action)
-		if ($action != 'listing' && $action != 'show' && $ref->id) {
-			$links[] = array(
-				'label' => _('Show'),
-				'link' => $ref->url,
-			);
+			// Link to listing
+			if ($action != 'listing') {
+				$links[] = array(
+					'label' => _('Back to listing'),
+					"link" => '/'.$ref->machine_type,
+				);
+			}
+
+			// Link to item (cancel action)
+			if ($action != 'listing' && $action != 'show' && $ref->id) {
+				$links[] = array(
+					'label' => _('Show'),
+					'link' => $ref->url,
+				);
+			}
+
 		}
 
 		$this->templateAdd(null, 'smalldb/heading', array(
