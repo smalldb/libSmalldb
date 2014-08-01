@@ -99,6 +99,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->filters === null && isset($config['filters'])) {
 			$this->filters = $config['filters'];
 		}
+		if ($this->references === null && isset($config['references'])) {
+			$this->references = $config['references'];
+		}
 
 		// Scan database for properties if not specified
 		if (empty($this->properties)) {
@@ -219,10 +222,43 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	/**
 	 * Add properties to select.
+	 *
+	 * TODO: Skip some properties in lisings.
 	 */
 	protected function queryAddPropertiesSelect($query)
 	{
-		$query->select($query->quoteIdent($this->table).'.*');
+		$table = $query->quoteIdent($this->table);
+		$query->select("$table.*");
+
+		// Import foreign properties using references
+		foreach ($this->references as $r => $ref) {
+			$ref_machine = $this->backend->getMachine($ref['machine_type']);
+
+			$ref_alias = $query->quoteIdent('ref_'.$r);
+			$ref_table = $query->quoteIdent($ref_machine->table);
+
+			$ref_that_id = $ref_machine->describeId();
+			$ref_this_id = $ref['machine_id'];
+
+			$id_len = count($ref_that_id);
+			if ($id_len != count($ref_this_id)) {
+				throw new \InvalidArgumentException('Reference ID has incorrect length ('.$r.').');
+			}
+
+			// Join refered table
+			$on = array();
+			for ($i = 0; $i < $id_len; $i++) {
+				$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+			}
+			$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
+
+			// Import properties
+			foreach ($ref['properties'] as $p => $ref_p) {
+				$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+			}
+		}
+
+		//debug_dump("\n".$query->getSqlQuery(), 'Query', true);
 	}
 
 
@@ -240,7 +276,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			throw new InvalidArgumentException('Malformed ID.');
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
-			$query->where($query->quoteIdent($col).' = ?', $val);
+			$query->where($query->quoteIdent($this->table).'.'.$query->quoteIdent($col).' = ?', $val);
 		}
 		return $query;
 	}

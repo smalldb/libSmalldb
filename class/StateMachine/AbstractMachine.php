@@ -137,12 +137,34 @@ abstract class AbstractMachine
 	 * view on the machine and its properties. There is no explicit 
 	 * definition of structure of the view -- it can be single value, 
 	 * subset of properties, or something completely different.
+	 *
+	 * View names must not collide with reference names, since references
+	 * are special cases of views.
 	 */
 	protected $views; /* = array(
 		'view_name' => array(
 			'label' => _('Human readable name (short)'),
 			'description' => _('Human readable description (sentence or two).'),
 			'properties' => array('property_name', ...), // Names of included properties, if the view is subset of properties.
+		),
+	); */
+
+
+	/**
+	 * Description of machine references.
+	 *
+	 * Often it is useful to reference one state machine from another, just
+	 * like foreign keys in SQL.
+	 *
+	 * Smalldb is limited to reference using primary keys only.
+	 *
+	 * References are added to views.
+	 */
+	protected $references; /* = array(
+		'reference_name' => array(
+			'machine_type' => 'Type of referenced machine',
+			'machine_id' => [ 'referring_properties', ... ],
+			'properties' => array('fake_property_name' => 'referred_property', ...), // Names of imported properties in listings.
 		),
 	); */
 
@@ -206,7 +228,7 @@ abstract class AbstractMachine
 	 * properties. These views are useful when some properties require 
 	 * heavy calculations.
 	 *
-	 * Keep in ming, that view name must not interfere with Reference 
+	 * Keep in mind, that view name must not interfere with Reference 
 	 * properties, otherwise the view is inaccessible directly.
 	 *
 	 * Array $properties_cache is supplied by Reference class to make some 
@@ -220,14 +242,46 @@ abstract class AbstractMachine
 	 * Array $persistent_view_cache is kept untouched for entire Reference 
 	 * lifetime. If cache is empty, but available, an empty array is 
 	 * supplied.
+	 *
+	 * FIXME: Override or call handlers?
 	 */
-	public function getView($id, $view, $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	public function getView($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
+		// Check cache
+		if (isset($view_cache[$view])) {
+			return $view_cache[$view];
+		}
+
 		switch ($view) {
 			case 'url':
 				return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
 			default:
-				throw new InvalidArgumentException('Unknown view: '.$view);
+				// Check references
+				if (isset($this->references[$view])) {
+					// Populate properties cache if empty
+					if ($properties_cache === null) {
+						$properties_cache = $this->getProperties($id);
+					}
+
+					// Get reference configuration
+					$r = $this->references[$view];
+
+					// Get referenced machine id
+					$ref_machine_id = array();
+					foreach ($r['machine_id'] as $mid_prop) {
+						$ref_machine_id[] = $properties_cache[$mid_prop];
+					}
+
+					// Get referenced machine
+					$ref_machine = $this->backend->getMachine($r['machine_type']);
+
+					// Create reference & cache it
+					$ref = new Reference($ref_machine, $ref_machine_id);
+					$view_cache[$view] = $ref;
+					return $ref;
+				} else {
+					throw new InvalidArgumentException('Unknown view: '.$view);
+				}
 		}
 	}
 
@@ -606,6 +660,53 @@ abstract class AbstractMachine
 			return (array) @ $this->views;
 		} else {
 			return array_filter((array) @ $this->views,
+				function($a) use ($having_section) { return !empty($a[$having_section]); });
+		}
+	}
+
+
+	/**
+	 * Reflection: Get all references
+	 *
+	 * List of can be filtered by section, just like getAllMachineActions 
+	 * method does.
+	 */
+	public function getAllMachineReferences($having_section = null)
+	{
+		if ($having_section === null) {
+			return array_keys((array) @ $this->references);
+		} else {
+			return array_keys(array_filter((array) @ $this->references,
+				function($a) use ($having_section) { return !empty($a[$having_section]); }));
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe given reference
+	 *
+	 * Returns reference description in array or null. If field is 
+	 * specified, only given field is returned.
+	 */
+	public function describeMachineReference($reference, $field = null)
+	{
+		if ($field === null) {
+			return @ $this->references[$reference];
+		} else {
+			return @ $this->references[$reference][$field];
+		}
+	}
+
+
+	/**
+	 * Reflection: Describe all references
+	 */
+	public function describeAllMachineReferences($having_section = null)
+	{
+		if ($having_section === null) {
+			return (array) @ $this->references;
+		} else {
+			return array_filter((array) @ $this->references,
 				function($a) use ($having_section) { return !empty($a[$having_section]); });
 		}
 	}
