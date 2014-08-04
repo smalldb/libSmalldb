@@ -231,30 +231,32 @@ abstract class FlupdoMachine extends AbstractMachine
 		$query->select("$table.*");
 
 		// Import foreign properties using references
-		foreach ($this->references as $r => $ref) {
-			$ref_machine = $this->backend->getMachine($ref['machine_type']);
+		if (!empty($this->references)) {
+			foreach ($this->references as $r => $ref) {
+				$ref_machine = $this->backend->getMachine($ref['machine_type']);
 
-			$ref_alias = $query->quoteIdent('ref_'.$r);
-			$ref_table = $query->quoteIdent($ref_machine->table);
+				$ref_alias = $query->quoteIdent('ref_'.$r);
+				$ref_table = $query->quoteIdent($ref_machine->table);
 
-			$ref_that_id = $ref_machine->describeId();
-			$ref_this_id = $ref['machine_id'];
+				$ref_that_id = $ref_machine->describeId();
+				$ref_this_id = $ref['machine_id'];
 
-			$id_len = count($ref_that_id);
-			if ($id_len != count($ref_this_id)) {
-				throw new \InvalidArgumentException('Reference ID has incorrect length ('.$r.').');
-			}
+				$id_len = count($ref_that_id);
+				if ($id_len != count($ref_this_id)) {
+					throw new \InvalidArgumentException('Reference ID has incorrect length ('.$r.').');
+				}
 
-			// Join refered table
-			$on = array();
-			for ($i = 0; $i < $id_len; $i++) {
-				$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
-			}
-			$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
+				// Join refered table
+				$on = array();
+				for ($i = 0; $i < $id_len; $i++) {
+					$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+				}
+				$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
 
-			// Import properties
-			foreach ($ref['properties'] as $p => $ref_p) {
-				$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+				// Import properties
+				foreach ($ref['properties'] as $p => $ref_p) {
+					$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+				}
 			}
 		}
 
