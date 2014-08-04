@@ -159,6 +159,12 @@ class FlupdoGenericListing implements IListing
 
 	/**
 	 * Prepare query builder
+	 *
+	 * @param $machine State machine implementation to inspect.
+	 * @param $query_builder Query builder where filters will be added.
+	 * @param $query_filters Requested filters to add to $query_builder.
+	 * @param $machine_filters Custom filter definitions (how things should be filtered, not filtering itself).
+	 * @param $machine_properties State machine properties definitions.
 	 */
 	public function __construct(AbstractMachine $machine, \Smalldb\Flupdo\SelectBuilder $query_builder, $query_filters, $machine_filters, $machine_properties)
 	{
@@ -169,7 +175,9 @@ class FlupdoGenericListing implements IListing
 
 		// Limit & offset
 		if (isset($query_filters['limit']) && !isset($machine_filters['limit'])) {
-			$this->query->limit((int) $query_filters['limit']);
+			if ($query_filters['limit'] !== false) {	// false == infinity
+				$this->query->limit((int) $query_filters['limit']);
+			}
 		} else {
 			// Fail-safe
 			$this->query->limit(100);
