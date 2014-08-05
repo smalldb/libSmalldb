@@ -262,6 +262,7 @@ abstract class FlupdoBuilder
 		if ($this->query_sql === null) {
 			$this->compile();
 		}
+		debug_msg("SQL Query:\n%s", $this->query_sql);
 		if (empty($this->query_params)) {
 			$r = $this->pdo->exec($this->query_sql);
 			if ($r === FALSE) {
@@ -288,6 +289,7 @@ abstract class FlupdoBuilder
 			$this->compile();
 		}
 
+		debug_msg("SQL Query:\n%s", $this->query_sql);
 		if (empty($this->query_params)) {
 			$result = $this->pdo->query($this->query_sql);
 			if (!$result) {
