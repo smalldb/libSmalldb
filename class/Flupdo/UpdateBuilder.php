@@ -64,9 +64,9 @@ class UpdateBuilder extends FlupdoBuilder
 
 
 	/**
-	 * @copydoc FlupdoBuilder\compile()
+	 * @copydoc FlupdoBuilder\compileQuery()
 	 */
-	public function compile()
+	protected function compileQuery()
 	{
 		$this->sqlStart();
 

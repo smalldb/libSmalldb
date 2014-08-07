@@ -103,9 +103,9 @@ class SelectBuilder extends FlupdoBuilder
 
 
 	/**
-	 * @copydoc FlupdoBuilder\compile()
+	 * @copydoc FlupdoBuilder\compileQuery()
 	 */
-	public function compile()
+	protected function compileQuery()
 	{
 		if (empty($this->buffers['SELECT'])) {
 			$this->select('*');

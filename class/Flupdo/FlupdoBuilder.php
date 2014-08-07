@@ -171,14 +171,32 @@ abstract class FlupdoBuilder
 	/**
 	 * Process all buffers and build SQL query. Side product is array of
 	 * parameters (stored in $this->args) to bind with query.
+	 *
+	 * This function is called by FlupdoBuilder, do not call it directly.
+	 *
+	 * Example:
+	 *
+	 *     $this->sqlStart();
+	 *     // ...
+	 *     return $this->sqlFinish();
+	 *
 	 */
-	public function compile()
+	abstract protected function compileQuery();
+
+
+	/**
+	 * Call compile function in a safe way.
+	 */
+	public final function compile()
 	{
-		$this->sqlStart();
-
-		echo 'SELECT NULL -- ('.__CLASS__.') --';
-
-		return $this->sqlFinish();
+		try {
+			return $this->compileQuery();
+		}
+		catch (\Exception $ex) {
+			// Make sure unfinished query will not make it to the output.
+			ob_end_clean();
+			throw $ex;
+		}
 	}
 
 
@@ -382,8 +400,16 @@ abstract class FlupdoBuilder
 	 */
 	public function __toString()
 	{
-		if ($this->query_sql === null) {
-			$this->compile();
+		try {
+			if ($this->query_sql === null) {
+				$this->compile();
+			}
+		}
+		catch (\Exception $ex) {
+			// __toString() cannot throw an exception, so we will
+			// log it and die, fatal error would be triggered anyway.
+			error_log(__METHOD__.': '.$ex);
+			die();
 		}
 		return $this->query_sql;
 	}

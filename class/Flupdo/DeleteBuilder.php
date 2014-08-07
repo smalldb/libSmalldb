@@ -72,9 +72,9 @@ class DeleteBuilder extends FlupdoBuilder
 
 
 	/**
-	 * Compose SQL query from registered fragments.
+	 * @copydoc FlupdoBuilder\compileQuery()
 	 */
-	public function compile()
+	protected function compileQuery()
 	{
 		$this->sqlStart();
 
