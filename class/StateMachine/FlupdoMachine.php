@@ -61,6 +61,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected $filters = null;
 
+	/**
+	 * Select expression for selecting machine state
+	 */
+	protected $state_select = null;
+
 
 	/**
 	 * Define state machine used by all instances of this type.
@@ -83,6 +88,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 		if ($this->states === null && isset($config['states'])) {
 			$this->states = $config['states'];
+		}
+		if ($this->state_select === null && isset($config['state_select'])) {
+			$this->state_select = $config['state_select'];
 		}
 		if ($this->actions === null && isset($config['actions'])) {
 			$this->actions = $config['actions'];
@@ -217,7 +225,14 @@ abstract class FlupdoMachine extends AbstractMachine
 	 *
 	 * Must add only one column.
 	 */
-	abstract protected function queryAddStateSelect($query);
+	protected function queryAddStateSelect($query)
+	{
+		if (isset($this->state_select)) {
+			$query->select("({$this->state_select}) AS `state`");
+		} else {
+			throw new \RuntimeException('State select not defined and '.__METHOD__.' not overriden.');
+		}
+	}
 
 
 	/**
