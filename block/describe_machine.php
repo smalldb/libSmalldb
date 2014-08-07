@@ -34,7 +34,7 @@ class B_smalldb__describe_machine extends \Cascade\Core\Block
 
 	public function main()
 	{
-		$type = $this->in('type');
+		$type = str_replace('-', '_', $this->in('type'));
 
 		$block_storages = $this->getCascadeController()->getBlockStorages();
 
