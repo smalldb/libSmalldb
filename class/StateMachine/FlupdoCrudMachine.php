@@ -173,11 +173,26 @@ class FlupdoCrudMachine extends FlupdoMachine
 			->debugDump()
 			->exec();
 
-		if ($n) {
-			return $id === null ? $this->flupdo->lastInsertId() : $id;
-		} else {
+		if (!$n) {
+			// Insert failed
 			return false;
 		}
+
+		// Return ID of inserted row
+		if ($id === null) {
+			$id_keys = $this->describeId();
+			$id = array();
+			foreach ($id_keys as $k) {
+				if (isset($properties[$k])) {
+					$id[] = $properties[$k];
+				} else {
+					// If part of ID is missing, it must be autoincremented
+					// column, otherwise the insert would have failed.
+					$id[] = $this->flupdo->lastInsertId();
+				}
+			}
+		}
+		return $id;
 	}
 
 
