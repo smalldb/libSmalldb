@@ -290,7 +290,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($id === null || $id === array() || $id === false || $id === '') {
 			throw new InvalidArgumentException('Empty ID.');
 		} else if (count($id) != count($this->describeId())) {
-			throw new InvalidArgumentException('Malformed ID.');
+			throw new InvalidArgumentException(sprintf('Malformed ID: got %d pieces of %d.', count($id), count($this->describeId())));
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
 			$query->where($query->quoteIdent($this->table).'.'.$query->quoteIdent($col).' = ?', $val);
