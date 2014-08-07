@@ -729,8 +729,8 @@ abstract class AbstractMachine
 			"	rankdir = TB;\n",
 			"	margin = 0;\n",
 			"	bgcolor = transparent;\n",
-			"	edge [ arrowtail=none, arrowhead=normal, arrowsize=0.6, fontsize=8 ];\n",
-			"	node [ shape=box, fontsize=9, style=\"rounded,filled\", fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
+			"	edge [ arrowtail=none, arrowhead=normal, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
+			"	node [ shape=box, style=\"rounded,filled\", fontsize=9, fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
 			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
 			"\n";
 
@@ -775,6 +775,9 @@ abstract class AbstractMachine
 		$used_actions = array();
 		if (!empty($this->actions)) {
 			foreach ($this->actions as $a => $action) {
+				if (empty($action['transitions'])) {
+					continue;
+				}
 				$a_a = 'a_'.$this->escapeDotIdentifier($a);
 				foreach ($action['transitions'] as $src => $transition) {
 					$transition = array_merge($action, $transition);
