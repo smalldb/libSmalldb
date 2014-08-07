@@ -61,7 +61,7 @@ class B_smalldb__show_properties extends \Cascade\Core\Block
 			));
 		$table->addColumn('number', array(
 				'title' => _('Size'),
-				'value' => function($row) { return $row['size'] > 0 ? $row['size'] : null; },
+				'value' => function($row) { return isset($row['size']) && $row['size'] > 0 ? $row['size'] : null; },
 				'width' => '1%',
 			));
 		$table->addColumn('text', array(
@@ -70,10 +70,18 @@ class B_smalldb__show_properties extends \Cascade\Core\Block
 			));
 		$table->addColumn('text', array(
 				'title' => _('Optional'),
-				'value' => function($row) { return $row['optional'] === null ? '' : ($row['optional'] ? _('Yes') : _('No')); },
+				'value' => function($row) { return isset($row['optional']) ? ($row['optional'] ? _('Yes') : _('No')) : ''; },
 			));
 
-		$table->setData($desc['properties']);
+		// Fill in property names since array keys are not passed to table row
+		$properties = $desc['properties'];
+		foreach ($properties as $pi => & $p) {
+			if (!isset($p['name'])) {
+				$p['name'] = $pi;
+			}
+		}
+
+		$table->setData($properties);
                 $this->templateAdd(null, 'core/table', $table);
                 $this->out('done', true);		
 	}
