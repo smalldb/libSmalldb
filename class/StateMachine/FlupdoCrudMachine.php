@@ -213,7 +213,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		$n = $q->debugDump()->exec();
 
-		if ($n) {
+		if ($n !== FALSE) {
 			return true;
 		} else {
 			return false;
