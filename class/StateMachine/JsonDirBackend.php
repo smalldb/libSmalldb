@@ -202,7 +202,7 @@ class JsonDirBackend extends AbstractBackend
 			return false;
 		}
 
-		$type = array_shift($aref);
+		$type = str_replace('-', '_', array_shift($aref));
 
 		if (!isset($this->machine_type_table[$type])) {
 			return false;
