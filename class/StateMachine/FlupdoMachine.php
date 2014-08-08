@@ -275,6 +275,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if (!empty($this->references)) {
 			foreach ($this->references as $r => $ref) {
 				$ref_machine = $this->backend->getMachine($ref['machine_type']);
+				if (!$ref_machine) {
+					throw new \InvalidArgumentException(sprintf('Unknown machine type "%s" for reference "%s".', $ref['machine_type'], $r));
+				}
 
 				$ref_alias = $query->quoteIdent('ref_'.$r);
 				$ref_table = $query->quoteIdent($ref_machine->table);
