@@ -62,6 +62,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $filters = null;
 
 	/**
+	 * Default filters for listing
+	 */
+	protected $default_filters = null;
+
+	/**
 	 * Select expression for selecting machine state
 	 */
 	protected $state_select = null;
@@ -106,6 +111,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 		if ($this->filters === null && isset($config['filters'])) {
 			$this->filters = $config['filters'];
+		}
+		if ($this->default_filters === null && isset($config['default_filters'])) {
+			$this->default_filters = $config['default_filters'];
 		}
 		if ($this->references === null && isset($config['references'])) {
 			$this->references = $config['references'];
@@ -194,6 +202,10 @@ abstract class FlupdoMachine extends AbstractMachine
 		$q = $this->createQueryBuilder();
 		$this->queryAddStateSelect($q);
 		$this->queryAddPropertiesSelect($q);
+
+		if (isset($this->default_filters)) {
+			$filters = array_replace($this->default_filters, $filters);
+		}
 
 		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $filters, $this->filters, $this->properties);
 	}
