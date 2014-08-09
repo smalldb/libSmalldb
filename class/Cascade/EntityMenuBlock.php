@@ -62,6 +62,10 @@ class EntityMenuBlock extends BackendBlock
 			}
 		}
 
+		uasort($menu, function($a, $b) {
+			return strcoll($a['label'], $b['label']);
+		});
+
 		$this->templateAdd(null, 'smalldb/entity_menu', array(
 			'menu' => $menu,
 			'expanded' => false,
