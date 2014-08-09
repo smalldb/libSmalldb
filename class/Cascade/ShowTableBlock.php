@@ -68,7 +68,7 @@ class ShowTableBlock extends BackendBlock
 		if (!empty($properties)) {
 			foreach ($properties as $property => $p) {
 				$col_opts = array(
-					'title'  => $p['name'],
+					'title'  => isset($p['name']) ? $p['name'] : $p['label'],
 					'key'    => $property,
 				);
 				if (!empty($p['is_pk'])) {
