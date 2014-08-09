@@ -91,18 +91,22 @@ class RouterFactoryBlock extends BackendBlock
 		try {
 			$args = $route;
 
-			// extract ID and action
-			$id = $route['path_tail'];
+			// Get action
+			$action = isset($route['path_action']) ? $route['path_action'] : null;
+
+			// Try numeric keys in route
+			$id = array();
+			for ($i = 0; isset($route[$i]); $i++) {
+				$id[] = $route[$i];
+			}
+
+			// If it failed, try path_tail
 			if (empty($id)) {
-				return false;
-			}
-			$id_tail = array_pop($id); 
-			@ list($id_tail, $action, ) = explode('!', $id_tail, 3); // drop extra '!'
-			if ($id_tail != '') {
-				$id[] = $id_tail;
-			}
-			if ($action === '') {
-				$action = null;
+				$path = $route['path_tail'];
+				if (empty($path)) {
+					return false;
+				}
+				$id = $this->convertPathToMachineId($path);
 			}
 
 			// Create reference to state machine
@@ -140,5 +144,16 @@ class RouterFactoryBlock extends BackendBlock
 			return false;
 		}
 	}
+
+
+	private function convertPathToMachineId($path)
+	{
+		if ($path[0] == 'firma' && $path[2] == 'produkt') {
+			return array('market_item', $path[1], $path[3]);
+		}
+
+		return $path;
+	}
+
 }
 
