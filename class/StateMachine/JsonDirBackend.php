@@ -133,6 +133,10 @@ class JsonDirBackend extends AbstractBackend
 		if ($machine === null) {
 			throw new InvalidArgumentException('Machine type "'.$type.'" not found.');
 		}
+
+		// Do not confuse machine-specific filtering
+		unset($filters['type']);
+
 		return $machine->createListing($filters);
 	}
 
