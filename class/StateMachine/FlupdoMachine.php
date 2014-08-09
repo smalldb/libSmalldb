@@ -207,7 +207,8 @@ abstract class FlupdoMachine extends AbstractMachine
 			$filters = array_replace($this->default_filters, $filters);
 		}
 
-		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $filters, $this->filters, $this->properties);
+		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $filters,
+			$this->table, $this->filters, $this->properties, $this->references);
 	}
 
 

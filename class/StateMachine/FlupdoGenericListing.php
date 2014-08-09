@@ -165,13 +165,16 @@ class FlupdoGenericListing implements IListing
 	 * @param $query_filters Requested filters to add to $query_builder.
 	 * @param $machine_filters Custom filter definitions (how things should be filtered, not filtering itself).
 	 * @param $machine_properties State machine properties definitions.
+	 * @param $machine_references State machine references to other state machines.
 	 */
-	public function __construct(AbstractMachine $machine, \Smalldb\Flupdo\SelectBuilder $query_builder, $query_filters, $machine_filters, $machine_properties)
+	public function __construct(AbstractMachine $machine, \Smalldb\Flupdo\SelectBuilder $query_builder, $query_filters,
+		$machine_table, $machine_filters, $machine_properties, $machine_references)
 	{
 		$this->machine = $machine;
 
 		// Prepare query builder
 		$this->query = $query_builder;
+		$machine_table = $this->query->quoteIdent($machine_table);
 
 		// Limit & offset
 		if (isset($query_filters['limit']) && !isset($machine_filters['limit'])) {
@@ -221,7 +224,23 @@ class FlupdoGenericListing implements IListing
 
 				if (isset($machine_properties[$property])) {
 					// Filter name matches property name => is value equal ?
-					$this->query->where($this->query->quoteIdent($property).' = ?', $value);
+					$this->query->where($machine_table.'.'.$this->query->quoteIdent($property).' = ?', $value);
+				} else if (isset($machine_references[$property])) {
+					// Filter by reference
+					if ($value->id === null) {
+						throw new \InvalidArgumentException('Cannot filter by null ref.');
+					}
+					if ($value->machine_type != $machine_references[$property]['machine_type']) {
+						throw new \InvalidArgumentException('Referenced machine type does not match reference machine type.');
+					}
+
+					// Add where clause for each ID fragment
+					$id_properties = $machine_references[$property]['machine_id'];
+					$id_values = (array) $value->id;
+					$id_parts = count($id_properties);
+					for ($i = 0; $i < $id_parts; $i++) {
+						$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' = ?', $id_values[$i]);
+					}
 				} else {
 					// Check if operator is the last character of filter name
 					$operator = substr($property, -1);
@@ -234,7 +253,7 @@ class FlupdoGenericListing implements IListing
 					}
 
 					// Do not forget there is '=' after the operator in URL.
-					$p = $this->query->quoteIdent($property);
+					$p = $machine_table.'.'.$this->query->quoteIdent($property);
 					switch ($operator) {
 						case '>':
 							$this->query->where("$p >= ?", $value);
