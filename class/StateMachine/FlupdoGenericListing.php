@@ -350,6 +350,7 @@ class FlupdoGenericListing implements IListing
 		if ($this->result === null) {
 			try {
 				$this->result = $this->query->query();
+				$this->result->setFetchMode(\PDO::FETCH_ASSOC);
 			}
 			catch (\Smalldb\Flupdo\FlupdoSqlException $ex) {
 				error_log("Failed SQL query:\n".$this->query->getSqlQuery());
