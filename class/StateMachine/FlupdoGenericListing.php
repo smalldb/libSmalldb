@@ -190,13 +190,17 @@ class FlupdoGenericListing implements IListing
 		}
 
 		// Ordering -- it is first, so it overrides other filters
-		if (isset($query_filters['order-by']) && !isset($machine_filters['order-by'])) {
+		if (isset($query_filters['order_by']) && !isset($machine_filters['order_by'])) {
+			$this->query->orderBy($this->query->quoteIdent($query_filters['order_by'])
+				.(isset($query_filters['order_asc']) && !$query_filters['order_asc'] ? ' DESC' : ' ASC'));
+		} else if (isset($query_filters['order-by']) && !isset($machine_filters['order-by'])) {
 			$this->query->orderBy($this->query->quoteIdent($query_filters['order-by'])
 				.(isset($query_filters['order-asc']) && !$query_filters['order-asc'] ? ' DESC' : ' ASC'));
 		}
 
 		// Add filters
 		foreach($query_filters as $filter_name => $value) {
+			$filter_name = str_replace('-', '_', $filter_name);
 			if (isset($machine_filters[$filter_name])) {
 				// Custom filter
 				if (isset($machine_filters[$filter_name]['query_map'][$value])) {
