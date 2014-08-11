@@ -61,7 +61,7 @@ class HeadingBlock extends BackendBlock
 		$action_def = $ref->machine->describeMachineAction($action);
 
 		if (isset($action_def['heading']) || (($action_def = $ref->machine->describeMachineAction('show')) && isset($action_def['heading']))) {
-			$heading = template_format($action_def['heading'], $ref);
+			$heading = filename_format($action_def['heading'], $ref);
 		} else if (!empty($action) && $action != 'listing') {
 			if ($ref->id) {
 				$heading = sprintf(_('%s: %s – %s'), $ref->machine_type, is_array($ref->id) ? join(' / ', $ref->id) : $ref->id, $action);
