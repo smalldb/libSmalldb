@@ -91,6 +91,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->table === null && isset($config['table'])) {
 			$this->table = (string) $config['table'];
 		}
+		if ($this->url_fmt === null && isset($config['url'])) {
+			$this->url_fmt = (string) $config['url'];
+		}
 		if ($this->states === null && isset($config['states'])) {
 			$this->states = $config['states'];
 		}

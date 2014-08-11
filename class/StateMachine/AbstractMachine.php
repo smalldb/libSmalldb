@@ -55,6 +55,20 @@ abstract class AbstractMachine
 	protected $machine_type;
 
 	/**
+	 * URL format string where is machine located, usualy only the path
+	 * part, e.g. "/machine-type/{id}".
+	 *
+	 * To make reverse routes work, only entire path fragment can be
+	 * replaced by symbol:
+	 *
+	 *   - Good: /machine-type/foo/{id}/bar
+	 *   - Bad:  /machine-type/foo-{id}/bar
+	 *
+	 * This is limitation of default router, not this class.
+	 */
+	protected $url_fmt;
+
+	/**
 	 * Descriptions of all known states -- key is state id, value is * description
 	 *
 	 * Fill these data in self::initializeMachine().
@@ -254,7 +268,19 @@ abstract class AbstractMachine
 
 		switch ($view) {
 			case 'url':
-				return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
+				// Get URL of this state machine
+				if (isset($this->url_fmt)) {
+					if ($properties_cache === null) {
+						// URL contains ID only, so there is no need to load properties.
+						return filename_format($this->url_fmt, array_combine($this->describeId(), (array) $id));
+					} else {
+						// However, if properties are in cache, it is better to use them.
+						return filename_format($this->url_fmt, $properties_cache);
+					}
+				} else {
+					// Default fallback to something reasonable. It might not work, but meh.
+					return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
+				}
 			default:
 				// Check references
 				if (isset($this->references[$view])) {
@@ -452,6 +478,17 @@ abstract class AbstractMachine
 	 * Order of the parts may be mandatory.
 	 */
 	abstract public function describeId();
+
+
+	/**
+	 * Get URL format.
+	 *
+	 * Format string for filename_format().
+	 */
+	public function getUrlFormat()
+	{
+		return $this->url_fmt;
+	}
 
 
 	/**
