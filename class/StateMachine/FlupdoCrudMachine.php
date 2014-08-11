@@ -127,7 +127,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Merge with config
 		if (isset($config['actions'])) {
-			$this->actions = array_merge_recursive($config['actions'], $this->actions);
+			$this->actions = array_replace_recursive($this->actions, $config['actions']);
 		}
 
 		// Simple 'exists' state if not state select is not defined
