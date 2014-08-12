@@ -140,7 +140,7 @@ abstract class FlupdoMachine extends AbstractMachine
 				if (!empty($p['is_pk'])) {
 					$this->pk_columns[] = $property;
 				}
-				if (isset($p['column_format']) && $p['column_format'] == 'json') {
+				if (isset($p['column_encoding']) && $p['column_encoding'] == 'json') {
 					$this->json_columns[] = $property;
 				}
 			}
