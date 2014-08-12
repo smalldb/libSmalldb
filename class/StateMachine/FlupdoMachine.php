@@ -39,6 +39,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $pk_columns = null;
 
 	/**
+	 * List of columns which are serialized as JSON in database.
+	 */
+	protected $json_columns = array();
+
+	/**
 	 * Column containing entity owner.
 	 */
 	protected $user_id_table_column = null;
@@ -109,6 +114,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->properties === null && isset($config['properties'])) {
 			$this->properties = $config['properties'];
 		}
+		if ($this->json_columns === null && isset($config['json_columns'])) {
+			$this->json_columns = $config['json_columns'];
+		}
 		if ($this->state_groups === null && isset($config['state_groups'])) {
 			$this->state_groups = $config['state_groups'];
 		}
@@ -131,6 +139,9 @@ abstract class FlupdoMachine extends AbstractMachine
 			foreach ($this->properties as $property => $p) {
 				if (!empty($p['is_pk'])) {
 					$this->pk_columns[] = $property;
+				}
+				if (isset($p['column_format']) && $p['column_format'] == 'json') {
+					$this->json_columns[] = $property;
 				}
 			}
 		}
@@ -388,8 +399,44 @@ abstract class FlupdoMachine extends AbstractMachine
 			$state_cache = array_pop($props);
 		}
 
-		return $props;
+		return $this->decodeProperties($props);
 	}
+
+
+	/**
+	 * Encode properties to database representation.
+	 *
+	 * NULL values are preserved.
+	 */
+	protected function encodeProperties($properties)
+	{
+		// Decode JSON columns
+		foreach ($this->json_columns as $column_name) {
+			if (isset($properties[$column_name])) {
+				$properties[$column_name] = json_encode($properties[$column_name],
+					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+			}
+		}
+		return $properties;
+	}
+
+
+	/**
+	 * Decode properties from database representation
+	 *
+	 * NULL values are preserved.
+	 */
+	protected function decodeProperties($properties)
+	{
+		// Decode JSON columns
+		foreach ($this->json_columns as $column_name) {
+			if (isset($properties[$column_name])) {
+				$properties[$column_name] = json_decode($properties[$column_name], TRUE, 512, JSON_BIGINT_AS_STRING);
+			}
+		}
+		return $properties;
+	}
+
 
 
 	/**
