@@ -23,6 +23,12 @@ namespace Smalldb\StateMachine;
  */
 class FlupdoCrudMachine extends FlupdoMachine
 {
+	/// Relation defining shich machine owns this machine
+	protected $owner_relation = null;
+
+	/// Transition of owner to check when creating this machine
+	protected $owner_create_transition = null;
+
 
 	/**
 	 * @copydoc FlupdoMachine::initializeMachine()
@@ -38,8 +44,20 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// user_id table column & auth property
-		$this->user_id_table_column = @ $config['user_id_table_column'];
-		$this->user_id_auth_method  = @ $config['user_id_auth_method'];
+		if (isset($config['user_id_table_column'])) {
+			$this->user_id_table_column = $config['user_id_table_column'];
+		}
+		if (isset($config['user_id_auth_method'])) {
+			$this->user_id_auth_method = $config['user_id_auth_method'];
+		}
+
+		// owner relation
+		if (isset($config['owner_relation'])) {
+			$this->owner_relation = $config['owner_relation'];
+		}
+		if (isset($config['owner_create_transition'])) {
+			$this->owner_create_transition = $config['owner_create_transition'];
+		}
 
 		// properties
 		if (!empty($config['properties'])) {
@@ -164,6 +182,17 @@ class FlupdoCrudMachine extends FlupdoMachine
 		// Set owner
 		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
 			$properties[$this->user_id_table_column] = $this->backend->getAuth()->$a();
+		}
+
+		// Check permission of owning machine
+		if ($this->owner_relation && $this->owner_create_transition) {
+			$this->resolveMachineReference($this->owner_relation, $properties, $ref_machine_type, $ref_machine_id);
+			if (!$this->backend->getMachine($ref_machine_type)->isTransitionAllowed($ref_machine_id, $this->owner_create_transition)) {
+				throw new \RuntimeException(sprintf(
+					'Permission denied to create machine %s because transition %s of %s is not allowed.',
+					$this->machine_type, $this->owner_create_transition, $ref_machine_type
+				));
+			}
 		}
 
 		// insert
