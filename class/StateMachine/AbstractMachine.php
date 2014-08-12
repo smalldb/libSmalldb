@@ -65,6 +65,8 @@ abstract class AbstractMachine
 	 *   - Bad:  /machine-type/foo-{id}/bar
 	 *
 	 * This is limitation of default router, not this class.
+	 *
+	 * If URL does not start with slash, router will ignore it.
 	 */
 	protected $url_fmt;
 

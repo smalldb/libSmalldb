@@ -146,13 +146,37 @@ class RouterFactoryBlock extends BackendBlock
 	}
 
 
+	/**
+	 * Convert path to global machine ID.
+	 *
+	 * FIXME: This is wrong. It depends on particular backend and the
+	 * current implementation of inferMachineType().
+	 *
+	 * TODO: Caching!
+	 */
 	private function convertPathToMachineId($path)
 	{
-		if ($path[0] == 'firma' && $path[2] == 'produkt') {
-			return array('market_item', $path[1], $path[3]);
-		}
+		$routes = array();
 
-		return $path;
+		foreach ($this->smalldb->getKnownTypes() as $entity) {
+			$m = $this->smalldb->getMachine($entity);
+			$url = $m->getUrlFormat();
+			if (empty($url) || $url[0] != '/') {
+				continue;
+			}
+			$id = $m->describeId();
+			array_unshift($id, $entity);
+			$id = array_map(function($a) { return "\$$a"; }, array_flip($id));
+			$routes[filename_format($url, $id)] = array(
+				0 => $entity,
+			);
+		}
+		//debug_dump($routes);
+		//debug_dump($path);
+
+		$machine_id = \B_core__router::findMatchingRoute($routes, $path);
+
+		return $machine_id !== false ? $machine_id : $path;
 	}
 
 }
