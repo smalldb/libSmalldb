@@ -65,6 +65,7 @@ class ListingBlock extends BackendBlock
 
 		$listing = $this->smalldb->createListing($filters);
 
+		// TODO: return iterator, no need to fetch all at once
 		$this->out('list', $listing->fetchAll());
 		$this->out('properties', $listing->describeProperties());
 		$this->out('done', true);
