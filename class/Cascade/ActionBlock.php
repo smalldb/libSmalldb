@@ -113,27 +113,32 @@ class ActionBlock extends \Cascade\Core\Block
 
 		// invoke transition
 		// TODO: Handle exceptions
-		$result = call_user_func_array(array($ref, $this->action), $args);
+		try {
+			$result = call_user_func_array(array($ref, $this->action), $args);
 
-		// set outputs
-		foreach ($this->output_values as $output => $out_value) {
-			switch ($out_value) {
-				case 'ref':
-					$this->out($output, $ref);
-					break;
-				case 'return_value':
-					$this->out($output, $result);
-					break;
-				case 'properties':
-					$this->out($output, $ref->properties);
-					break;
-				case 'state':
-					$this->out($output, $ref->state);
-					break;
+			// set outputs
+			foreach ($this->output_values as $output => $out_value) {
+				switch ($out_value) {
+					case 'ref':
+						$this->out($output, $ref);
+						break;
+					case 'return_value':
+						$this->out($output, $result);
+						break;
+					case 'properties':
+						$this->out($output, $ref->properties);
+						break;
+					case 'state':
+						$this->out($output, $ref->state);
+						break;
+				}
 			}
-		}
 
-		$this->out('done', $result !== FALSE);
+			$this->out('done', $result !== FALSE);
+		}
+		catch (\PDOException $ex) {
+			error_msg('Action %s on machine %s failed: %s', $this->action, $this->machine->getMachineType(), $ex);
+		}
 	}
 
 }
