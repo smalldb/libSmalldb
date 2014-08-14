@@ -99,6 +99,12 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->url_fmt === null && isset($config['url'])) {
 			$this->url_fmt = (string) $config['url'];
 		}
+		if ($this->parent_url_fmt === null && isset($config['parent_url'])) {
+			$this->parent_url_fmt = (string) $config['parent_url'];
+		}
+		if ($this->post_action_url_fmt === null && isset($config['post_action_url'])) {
+			$this->post_action_url_fmt = (string) $config['post_action_url'];
+		}
 		if ($this->states === null && isset($config['states'])) {
 			$this->states = $config['states'];
 		}

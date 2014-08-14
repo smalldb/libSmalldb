@@ -55,7 +55,7 @@ abstract class AbstractMachine
 	protected $machine_type;
 
 	/**
-	 * URL format string where is machine located, usualy only the path
+	 * URL format string where machine is located, usualy only the path
 	 * part, e.g. "/machine-type/{id}".
 	 *
 	 * To make reverse routes work, only entire path fragment can be
@@ -69,6 +69,24 @@ abstract class AbstractMachine
 	 * If URL does not start with slash, router will ignore it.
 	 */
 	protected $url_fmt;
+
+
+	/**
+	 * URL format string where parent of this machine is located, usualy only the path
+	 * part, e.g. "/parent-type/{id}/machine-type".
+	 *
+	 * @see $url_fmt
+	 */
+	protected $parent_url_fmt;
+
+	/**
+	 * URL format string for redirect-after-post. When machine is part of
+	 * another entity, it may be reasonable to redirect to such entity
+	 * instead of showing this machine alone. If not set, url_fmt is used.
+	 *
+	 * @see $url_fmt
+	 */
+	protected $post_action_url_fmt;
 
 	/**
 	 * Descriptions of all known states -- key is state id, value is * description
@@ -271,18 +289,13 @@ abstract class AbstractMachine
 		switch ($view) {
 			case 'url':
 				// Get URL of this state machine
-				if (isset($this->url_fmt)) {
-					if ($properties_cache === null) {
-						// URL contains ID only, so there is no need to load properties.
-						return filename_format($this->url_fmt, array_combine($this->describeId(), (array) $id));
-					} else {
-						// However, if properties are in cache, it is better to use them.
-						return filename_format($this->url_fmt, $properties_cache);
-					}
-				} else {
-					// Default fallback to something reasonable. It might not work, but meh.
-					return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
-				}
+				return $this->urlFormat($id, $this->url_fmt, $properties_cache);
+			case 'parent_url':
+				// Get URL of parent state machine or collection or whatever it is
+				return $this->urlFormat($id, $this->parent_url_fmt !== null ? $this->parent_url_fmt : dirname($this->url_fmt), $properties_cache);
+			case 'post_action_url':
+				// Get URL of redirect-after-post
+				return $this->urlFormat($id, $this->post_action_url_fmt !== null ? $this->post_action_url_fmt : $this->url_fmt, $properties_cache);
 			default:
 				// Check references
 				if (isset($this->references[$view])) {
@@ -299,6 +312,26 @@ abstract class AbstractMachine
 				} else {
 					throw new InvalidArgumentException('Unknown view: '.$view);
 				}
+		}
+	}
+
+
+	/**
+	 * Create URL using properties and given format.
+	 */
+	private function urlFormat($id, $url_fmt, $properties_cache)
+	{
+		if (isset($url_fmt)) {
+			if ($properties_cache === null) {
+				// URL contains ID only, so there is no need to load properties.
+				return filename_format($url_fmt, array_combine($this->describeId(), (array) $id));
+			} else {
+				// However, if properties are in cache, it is better to use them.
+				return filename_format($url_fmt, $properties_cache);
+			}
+		} else {
+			// Default fallback to something reasonable. It might not work, but meh.
+			return '/'.$this->machine_type.'/'.(is_array($id) ? join('/', $id) : $id);
 		}
 	}
 
@@ -507,6 +540,29 @@ abstract class AbstractMachine
 	public function getUrlFormat()
 	{
 		return $this->url_fmt;
+	}
+
+
+	/**
+	 * Get prent URL format. Parent URL is URL of collection or something
+	 * of which is this machine part of.
+	 *
+	 * Format string for filename_format().
+	 */
+	public function getParentUrlFormat()
+	{
+		return $this->parent_url_fmt;
+	}
+
+
+	/**
+	 * Get URL for redirect-after-post.
+	 *
+	 * Format string for filename_format().
+	 */
+	public function getPostActionUrlFormat()
+	{
+		return $this->post_action_url_fmt;
 	}
 
 

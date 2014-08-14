@@ -177,7 +177,9 @@ class RouterFactoryBlock extends BackendBlock
 		$machine_id = \B_core__router::findMatchingRoute($routes, $path);
 
 		// Sometimes ID is in wrong order, with correct indexes, but numeric keys are wierd
-		ksort($machine_id);
+		if (is_array($machine_id)) {
+			ksort($machine_id);
+		}
 
 		return $machine_id !== false ? $machine_id : $path;
 	}
