@@ -375,13 +375,15 @@ class FlupdoGenericListing implements IListing
 
 	/**
 	 * Returns an array of all items in the listing.
+	 *
+	 * This decodes properties.
 	 */
 	public function fetchAll()
 	{
 		if ($this->result === null) {
 			$this->query();
 		}
-		return $this->result->fetchAll(\PDO::FETCH_ASSOC);
+		return array_map(array($this->machine, 'decodeProperties'), $this->result->fetchAll(\PDO::FETCH_ASSOC));
 	}
 
 

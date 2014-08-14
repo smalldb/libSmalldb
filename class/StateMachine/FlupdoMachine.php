@@ -407,9 +407,24 @@ abstract class FlupdoMachine extends AbstractMachine
 	 * Encode properties to database representation.
 	 *
 	 * NULL values are preserved.
+	 *
+	 * You should not need to call this, it is called automaticaly at the right time.
 	 */
-	protected function encodeProperties($properties)
+	public function encodeProperties($properties)
 	{
+		// Replace empty values with null, if value is not required
+		foreach ($properties as $k => & $v) {
+			if (isset($this->properties[$k])) {
+				$prop = $this->properties[$k];
+				if (empty($prop['required']) && ($v === array() || ctype_space($v))) {
+					$v = null;
+				}
+			} else {
+				// Value is not valid property, throw it away
+				unset($properties[$k]);
+			}
+		}
+
 		// Decode JSON columns
 		foreach ($this->json_columns as $column_name) {
 			if (isset($properties[$column_name])) {
@@ -417,6 +432,7 @@ abstract class FlupdoMachine extends AbstractMachine
 					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
 			}
 		}
+
 		return $properties;
 	}
 
@@ -425,8 +441,10 @@ abstract class FlupdoMachine extends AbstractMachine
 	 * Decode properties from database representation
 	 *
 	 * NULL values are preserved.
+	 *
+	 * You should not need to call this, it is called automaticaly at the right time.
 	 */
-	protected function decodeProperties($properties)
+	public function decodeProperties($properties)
 	{
 		// Decode JSON columns
 		foreach ($this->json_columns as $column_name) {
