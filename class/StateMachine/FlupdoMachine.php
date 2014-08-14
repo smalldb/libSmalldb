@@ -373,7 +373,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	public function getProperties($id, & $state_cache = null)
 	{
 		if ($id === null || $id === array()) {
-			throw new RuntimeException('State machine instance does not exist.');
+			throw new RuntimeException('State machine instance does not exist (null ID).');
 		}
 
 		$q = $this->createQueryBuilder()
@@ -392,7 +392,8 @@ abstract class FlupdoMachine extends AbstractMachine
 		$r->closeCursor();
 
 		if ($props === false) {
-			throw new RuntimeException('State machine instance not found.');
+			throw new RuntimeException('State machine instance not found: '
+				.json_encode($id, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE| JSON_NUMERIC_CHECK));
 		}
 
 		if ($this->load_state_with_properties) {
