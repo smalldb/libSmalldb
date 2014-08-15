@@ -43,6 +43,8 @@ class HeadingBlock extends BackendBlock
 	 * Block outputs
 	 */
 	protected $outputs = array(
+		'title' => true,
+		'done' => true,
 	);
 
 	/**
@@ -94,7 +96,9 @@ class HeadingBlock extends BackendBlock
 			}
 		}
 
-		$this->templateSetPageTitle($heading);
+		$this->out('title', $heading);
+		$this->out('done', true);
+
 		$this->templateAdd(null, 'smalldb/heading', array(
 				'text'    => $heading,
 				'anchor'  => $this->in('anchor'),
