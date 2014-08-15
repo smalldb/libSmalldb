@@ -41,7 +41,8 @@ function TPL_html5__smalldb__heading($t, $id, $d, $so)
 			} else {
 				echo "| ";
 			}
-			echo "<a href=\"", htmlspecialchars($link['link']), "\">", htmlspecialchars($link['label']), "</a>\n";
+			echo "<a href=\"", htmlspecialchars($link['link']), "\" class=\"", htmlspecialchars($link['class']), "\">",
+				htmlspecialchars($link['label']), "</a>\n";
 		}
 		echo "</div>\n";
 	}

@@ -292,7 +292,11 @@ abstract class AbstractMachine
 				return $this->urlFormat($id, $this->url_fmt, $properties_cache);
 			case 'parent_url':
 				// Get URL of parent state machine or collection or whatever it is
-				return $this->urlFormat($id, $this->parent_url_fmt !== null ? $this->parent_url_fmt : dirname($this->url_fmt), $properties_cache);
+				if ($this->parent_url_fmt !== null) {
+					return $this->urlFormat($id, $this->parent_url_fmt, $properties_cache);
+				} else {
+					return null;
+				}
 			case 'post_action_url':
 				// Get URL of redirect-after-post
 				return $this->urlFormat($id, $this->post_action_url_fmt !== null ? $this->post_action_url_fmt : $this->url_fmt, $properties_cache);
