@@ -130,6 +130,9 @@ class RouterFactoryBlock extends BackendBlock
 
 			// Copy inputs to outputs
 			foreach ($this->inAll() as $in => $val) {
+				if (isset($route[$in])) {
+					continue;
+				}
 				if ($val === '{smalldb_ref}') {
 					$route[$in] = $ref;
 				} else {
