@@ -105,35 +105,20 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->post_action_url_fmt === null && isset($config['post_action_url'])) {
 			$this->post_action_url_fmt = (string) $config['post_action_url'];
 		}
-		if ($this->states === null && isset($config['states'])) {
-			$this->states = $config['states'];
-		}
-		if ($this->state_select === null && isset($config['state_select'])) {
-			$this->state_select = $config['state_select'];
-		}
-		if ($this->actions === null && isset($config['actions'])) {
-			$this->actions = $config['actions'];
-		}
-		if ($this->pk_columns === null && isset($config['pk_columns'])) {
-			$this->pk_columns = $config['pk_columns'];
-		}
-		if ($this->properties === null && isset($config['properties'])) {
-			$this->properties = $config['properties'];
-		}
-		if ($this->json_columns === null && isset($config['json_columns'])) {
-			$this->json_columns = $config['json_columns'];
-		}
-		if ($this->state_groups === null && isset($config['state_groups'])) {
-			$this->state_groups = $config['state_groups'];
-		}
-		if ($this->filters === null && isset($config['filters'])) {
-			$this->filters = $config['filters'];
-		}
-		if ($this->default_filters === null && isset($config['default_filters'])) {
-			$this->default_filters = $config['default_filters'];
-		}
-		if ($this->references === null && isset($config['references'])) {
-			$this->references = $config['references'];
+		foreach($this as $k => $v) {
+			switch ($k) {
+				case 'flupdo':
+				case 'table':
+				case 'url_fmt':
+				case 'parent_url_fmt':
+				case 'post_action_url_fmt':
+					break;
+				default:
+					if ($this->$k === null && isset($config[$k])) {
+						$this->$k = $config[$k];
+					}
+					break;
+			}
 		}
 
 		// Scan database for properties if not specified
