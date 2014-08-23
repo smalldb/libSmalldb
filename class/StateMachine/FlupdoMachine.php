@@ -20,6 +20,9 @@ namespace Smalldb\StateMachine;
 
 /**
  * Base class for state machines accessed via Flupdo.
+ *
+ * Most of its protected member properties can be set via config options
+ * injected during initialization.
  */
 abstract class FlupdoMachine extends AbstractMachine
 {
@@ -75,6 +78,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	 * Select expression for selecting machine state
 	 */
 	protected $state_select = null;
+
+	/**
+	 * Default access policy.
+	 */
+	protected $default_access_policy = null;
 
 
 	/**
@@ -167,33 +175,30 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
-	 * Returns true if user has required permissions.
+	 * Returns true if user has required access_policy.
 	 */
-	protected function checkPermissions($permissions, $id)
+	protected function checkAccessPolicy($required_permissions, $id)
 	{
-		// Check owner
-		if (@ $permissions['owner'] && $this->user_id_table_column && ($a = $this->user_id_auth_method)) {
-			$properties = $this->getProperties();
-			if ($properties[$this->user_id_table_column] == $this->backend->getAuth()->$a()) {
-				return true;
-			} else {
-				return false;
-			}
+		if (empty($required_permissions)) {
+			return true;
 		}
 
-		return true;
+		$auth = $this->backend->getContext()->auth;
+
+		// Caching ?
+
+		// TODO
+
+		return false;
 	}
 
 
 	/**
-	 * Adds conditions to enforce read permissions to query object.
+	 * Adds conditions to enforce read access_policy to query object.
 	 */
-	protected function addPermissionsCondition($query)
+	protected function addAccessPolicyCondition($query)
 	{
-		// FIXME: Needs review!
-		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
-			$query->where('`'.$this->flupdo->quoteIdent($this->user_id_table_column).'` = ?', $this->backend->getAuth()->$a());
-		}
+		// TODO
 	}
 
 
@@ -224,7 +229,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	{
 		$q = $this->flupdo->select();
 		$this->queryAddFrom($q);
-		$this->addPermissionsCondition($q);
+		$this->addAccessPolicyCondition($q);
 		return $q;
 	}
 

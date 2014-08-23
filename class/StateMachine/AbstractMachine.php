@@ -225,16 +225,10 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Returns true if user has required permissions to invoke a 
-	 * transition, which requires given permissions.
+	 * Returns true if user has required access_policy to invoke a 
+	 * transition, which requires given access_policy.
 	 */
-	abstract protected function checkPermissions($permissions, $id);
-
-
-	/**
-	 * Adds conditions to enforce read permissions to query object.
-	 */
-	abstract protected function addPermissionsCondition($query);
+	abstract protected function checkAccessPolicy($access_policy, $id);
 
 
 	/**
@@ -378,11 +372,11 @@ abstract class AbstractMachine
 		}
 
 		$tr = @ $this->actions[$transition_name]['transitions'][$state];
-		if (!isset($tr)) {
+		if (!isset($tr)) { 
 			return false;
 		}
 
-		return (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id));
+		return !isset($tr['access_policy']) || $this->checkAccessPolicy($tr['access_policy'], $id);
 	}
 
 
@@ -400,7 +394,7 @@ abstract class AbstractMachine
 		foreach ($this->actions as $a => $action) {
 			$tr = @ $action['transitions'][$state];
 			if ($tr !== null) {
-				if (!isset($tr['permissions']) || $this->checkPermissions($tr['permissions'], $id)) {
+				if (!isset($tr['access_policy']) || $this->checkAccessPolicy($tr['access_policy'], $id)) {
 					$tr = array_merge($action, $tr);
 					unset($tr['transitions']);
 					$available_transitions[] = $a;
@@ -433,9 +427,9 @@ abstract class AbstractMachine
 		}
 		$transition = array_merge($action, $transition);
 
-		// check permissions
-		$perms = @ $transition['permissions'];
-		if (!$this->checkPermissions($perms, $id)) {
+		// check access_policy
+		$perms = @ $transition['access_policy'];
+		if (!$this->checkAccessPolicy($perms, $id)) {
 			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
 		}
 

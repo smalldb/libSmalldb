@@ -107,9 +107,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 				'transitions' => array(
 					'exists' => array(
 						'targets' => array('exists'),
-						'permissions' => array(
-							'owner' => true
-						),
 					),
 				),
 				'block' => array(
@@ -128,9 +125,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 				'transitions' => array(
 					'exists' => array(
 						'targets' => array(''),
-						'permissions' => array(
-							'owner' => true
-						),
 					),
 				),
 				'block' => array(

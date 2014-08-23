@@ -29,14 +29,18 @@ namespace Smalldb\Cascade;
  *   - `cookie_name`: Name of the cookie for a token. (default: 'auth')
  *   - `cookie_ttl`: How long cookie is valid. (default: 10 years)
  *   - `session_ttl`: Duration of the session (should be greater or equal to `cookie_ttl`, default: 10 years).
+ *   - `user_id_property`: Name of the session machine property with user's ID.
+ *   - `user_role_property`: Name of the session machine property with user's role. You may want to have this property calculated.
  */
-class Auth implements \Cascade\Core\IAuth
+class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 {
-	protected $smalldb;			///< Smalldb backend
-	protected $session_machine;		///< Reference to session state machine
-	protected $cookie_name = 'AuthToken';	///< Cookie name
-	protected $cookie_ttl = 315569260;	///< Cookie duration [seconds]
-	protected $session_ttl = 315569260;	///< Session duration [seconds]
+	protected $smalldb;				///< Smalldb backend
+	protected $session_machine;			///< Reference to session state machine
+	protected $cookie_name = 'AuthToken';		///< Cookie name
+	protected $cookie_ttl = 315569260;		///< Cookie duration [seconds]
+	protected $session_ttl = 315569260;		///< Session duration [seconds]
+	protected $user_id_property = 'user_id';	///< Name of the session machine property with user's ID
+	protected $user_role_property = 'user_role';	///< Name of the session machine property with user's role
 
 
 	/**
@@ -54,6 +58,9 @@ class Auth implements \Cascade\Core\IAuth
 		}
 		if (isset($config['session_ttl'])) {
 			$this->session_ttl = $config['session_ttl'];
+		}
+		if (isset($config['user_id_property'])) {
+			$this->user_id_property = $config['user_id_property'];
 		}
 
 		// Get session token
@@ -100,6 +107,20 @@ class Auth implements \Cascade\Core\IAuth
 	public function getSessionMachine()
 	{
 		return $this->session_machine;
+	}
+
+
+	/// @copydoc Smalldb\StateMachine\IAuth::getUserId()
+	public function getUserId()
+	{
+		return $this->session_machine->state !== '' ? $this->session_machine[$this->user_id_property] : null;
+	}
+
+
+	/// @copydoc Smalldb\StateMachine\IAuth::getUserRole()
+	public function getUserRole()
+	{
+		return $this->session_machine->id !== null ? $this->session_machine[$this->user_role_property] : null;
 	}
 
 
