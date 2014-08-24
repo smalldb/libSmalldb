@@ -80,12 +80,6 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $state_select = null;
 
 	/**
-	 * Default access policy.
-	 */
-	protected $default_access_policy = null;
-
-
-	/**
 	 * Define state machine used by all instances of this type.
 	 */
 	protected function initializeMachine($config)
@@ -176,20 +170,55 @@ abstract class FlupdoMachine extends AbstractMachine
 
 	/**
 	 * Returns true if user has required access_policy.
+	 *
+	 * TODO: Caching ? Reference object has property cache. It would be
+	 * 	nice to pass it here.
 	 */
-	protected function checkAccessPolicy($required_permissions, $id)
+	protected function checkAccessPolicy($access_policy, $id)
 	{
-		if (empty($required_permissions)) {
+		// Allow by default
+		if (empty($access_policy)) {
 			return true;
 		}
 
 		$auth = $this->backend->getContext()->auth;
+		$policy_name = $access_policy['policy'];
 
-		// Caching ?
+		//debug_dump($access_policy, 'POLICY: '.$policy_name);
 
-		// TODO
+		switch ($policy_name) {
 
-		return false;
+			// owner: Owner must match current user
+			case 'owner':
+				$properties = $this->getProperties($id);
+				$user_id = $auth->getUserId();
+				$owner_property = $access_policy['owner_property'];
+				return $user_id !== null && $user_id == $properties[$owner_property];
+
+			// role: Current user must have specified role
+			case 'role':
+				$user_role = $auth->getUserRole();
+				$required_role = $access_policy['required_role'];
+				return $user_role == $required_role;
+
+			// relation: Given property must have given value -- this
+			// property is calculated from a SQL relation
+			case 'relation':
+				$properties = $this->getProperties($id);
+				$relation_property = $access_policy['relation_property'];
+				if (isset($access_policy['relation_value'])) {
+					return $access_policy['relation_value'] == $property[$relation_value];
+				} else {
+					return !empty($property[$relation_property]);
+				}
+
+			// unknown policies are considered unsafe
+			default:
+				return false;
+		}
+
+		// This should not happen.
+		throw new \RuntimeException('Policy '.$policy.' did not decide.');
 	}
 
 

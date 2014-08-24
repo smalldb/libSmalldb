@@ -140,6 +140,17 @@ abstract class AbstractMachine
 		)
 	); */
 
+	/**
+	 * Default access policy
+	 *
+	 * When transition nor action has policy specified, this one is used.
+	 *
+	 * Policy configuration is machine-specific.
+	 */
+	protected $default_access_policy; /* = array(
+		... policy specific options.
+	); */
+
 
 	/**
 	 * Description of machine properties -- key is property name.
@@ -364,6 +375,9 @@ abstract class AbstractMachine
 
 	/**
 	 * Returns true if transition can be invoked right now.
+	 *
+	 * TODO: Transition should not have full definition of the policy, only
+	 * 	its name. Definitions should be in common place.
 	 */
 	public function isTransitionAllowed($id, $transition_name, $state = null)
 	{
@@ -371,12 +385,23 @@ abstract class AbstractMachine
 			$state = $this->getState($id);
 		}
 
-		$tr = @ $this->actions[$transition_name]['transitions'][$state];
-		if (!isset($tr)) { 
+		if (isset($this->actions[$transition_name]['transitions'][$state])) {
+			$tr = $this->actions[$transition_name]['transitions'][$state];
+			if (isset($tr['access_policy'])) {
+				// Transition-specific policy
+				$access_policy = $tr['access_policy'];
+			} else if (isset($this->actions[$transition_name]['access_policy'])) {
+				// Action-specific policy (for all transitions of this name)
+				$access_policy = $this->actions[$transition_name]['access_policy'];
+			} else {
+				// No policy, use default
+				$access_policy = $this->default_access_policy;
+			}
+			return $this->checkAccessPolicy($access_policy, $id);
+		} else {
+			// Not a valid transition
 			return false;
 		}
-
-		return !isset($tr['access_policy']) || $this->checkAccessPolicy($tr['access_policy'], $id);
 	}
 
 
