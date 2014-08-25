@@ -111,6 +111,13 @@ class RouterFactoryBlock extends BackendBlock
 
 			// Create reference to state machine
 			$ref = $this->smalldb->ref($id);
+
+			// Check access to requested transition ($action may be empty, then it is read access)
+			if (!$ref->machine->isTransitionAllowed($ref->id, $action)) {
+				return false;
+			}
+
+			// Collect route data
 			$args['smalldb_ref'] = $ref;
 			$args['smalldb_type'] = $ref->machineType;
 			$args['smalldb_action'] = $action === null ? '' : $action;

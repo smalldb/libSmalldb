@@ -145,9 +145,18 @@ abstract class AbstractMachine
 	 *
 	 * When transition nor action has policy specified, this one is used.
 	 *
-	 * Policy configuration is machine-specific.
+	 * @note This does not affect read_access_policy.
 	 */
 	protected $default_access_policy = null;
+
+	/**
+	 * Read access policy
+	 *
+	 * Policy applied when reading machine state.
+	 *
+	 * @note Not affected by default_access_policy.
+	 */
+	protected $read_access_policy = null;
 
 	/**
 	 * Access policies
@@ -254,6 +263,8 @@ abstract class AbstractMachine
 
 	/**
 	 * Get current state of state machine.
+	 *
+	 * @note getState() does not check read access policy.
 	 */
 	abstract public function getState($id);
 
@@ -266,6 +277,8 @@ abstract class AbstractMachine
 	 *
 	 * Some implementations may store current state to $state_cache, so it 
 	 * does not have to be retireved in the second query.
+	 *
+	 * @note getProperties() does not check read access policy.
 	 */
 	abstract public function getProperties($id, & $state_cache = null);
 
@@ -395,7 +408,10 @@ abstract class AbstractMachine
 			$state = $this->getState($id);
 		}
 
-		if (isset($this->actions[$transition_name]['transitions'][$state])) {
+		if ($transition_name == '') {
+			// Read access
+			return $this->checkAccessPolicy($this->read_access_policy, $id);
+		} else if (isset($this->actions[$transition_name]['transitions'][$state])) {
 			$tr = $this->actions[$transition_name]['transitions'][$state];
 			if (isset($tr['access_policy'])) {
 				// Transition-specific policy
