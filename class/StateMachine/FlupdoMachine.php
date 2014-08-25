@@ -174,19 +174,23 @@ abstract class FlupdoMachine extends AbstractMachine
 	 * TODO: Caching ? Reference object has property cache. It would be
 	 * 	nice to pass it here.
 	 */
-	protected function checkAccessPolicy($access_policy, $id)
+	protected function checkAccessPolicy($access_policy_name, $id)
 	{
 		// Allow by default
-		if (empty($access_policy)) {
+		if (empty($access_policy_name)) {
 			return true;
 		}
 
 		$auth = $this->backend->getContext()->auth;
-		$policy_name = $access_policy['policy'];
 
-		//debug_dump($access_policy, 'POLICY: '.$policy_name.' @ '.get_class($this));
+		if (!isset($this->access_policies[$access_policy_name])) {
+			throw new \InvalidArgumentException('Unknown policy: '.$access_policy_name);
+		}
+		$access_policy = $this->access_policies[$access_policy_name];
 
-		switch ($policy_name) {
+		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
+
+		switch ($access_policy['type']) {
 
 			// owner: Owner must match current user
 			case 'owner':
@@ -199,18 +203,12 @@ abstract class FlupdoMachine extends AbstractMachine
 			case 'role':
 				$user_role = $auth->getUserRole();
 				$required_role = $access_policy['required_role'];
-				return $user_role == $required_role;
+				return is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role;
 
-			// reference: Given property must have given value -- this
-			// property is calculated from a SQL reference
-			case 'reference':
+			// These are done by SQL select.
+			case 'user_relation':
 				$properties = $this->getProperties($id);
-				$reference_property = $access_policy['reference_property'];
-				if (isset($access_policy['require_value'])) {
-					return $access_policy['require_value'] == $properties[$reference_property];
-				} else {
-					return !empty($properties[$reference_property]);
-				}
+				return !empty($properties['_access_policy_'.$access_policy_name]);
 
 			// unknown policies are considered unsafe
 			default:
@@ -340,6 +338,23 @@ abstract class FlupdoMachine extends AbstractMachine
 				// Import properties
 				foreach ($ref['properties'] as $p => $ref_p) {
 					$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+				}
+			}
+		}
+
+		// Add access policy columns
+		if (!empty($this->access_policies)) {
+			//debug_dump($this->access_policies);
+			$auth = $this->backend->getContext()->auth;
+			foreach ($this->access_policies as $policy_name => $policy) {
+				if ($policy['type'] == 'user_relation') {
+					$policy_alias = $query->quoteIdent('_access_policy_'.$policy_name);
+					$user_id = $auth->getUserId();
+					if (isset($policy['required_value'])) {
+						$query->select('('.$policy['sql_select'].') = ? AS '.$policy_alias, $user_id, $policy['required_value']);
+					} else {
+						$query->select('('.$policy['sql_select'].') IS NOT NULL AS '.$policy_alias, $user_id);
+					}
 				}
 			}
 		}

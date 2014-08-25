@@ -147,8 +147,18 @@ abstract class AbstractMachine
 	 *
 	 * Policy configuration is machine-specific.
 	 */
-	protected $default_access_policy; /* = array(
-		... policy specific options.
+	protected $default_access_policy = null;
+
+	/**
+	 * Access policies
+	 *
+	 * Description of all access policies available to this state machine
+	 * type.
+	 */
+	protected $access_policies; /* = array(
+		'policy_name' => array(
+			... policy specific options.
+		)
 	); */
 
 
@@ -417,13 +427,10 @@ abstract class AbstractMachine
 		$available_transitions = array();
 
 		foreach ($this->actions as $a => $action) {
-			$tr = @ $action['transitions'][$state];
-			if ($tr !== null) {
-				if (!isset($tr['access_policy']) || $this->checkAccessPolicy($tr['access_policy'], $id)) {
-					$tr = array_merge($action, $tr);
-					unset($tr['transitions']);
-					$available_transitions[] = $a;
-				}
+			if (!empty($action['transitions'][$state]) && $this->isTransitionAllowed($a, $id, $state)) {
+				$tr = array_merge($action, $tr);
+				unset($tr['transitions']);
+				$available_transitions[] = $a;
 			}
 		}
 
@@ -453,8 +460,7 @@ abstract class AbstractMachine
 		$transition = array_merge($action, $transition);
 
 		// check access_policy
-		$perms = @ $transition['access_policy'];
-		if (!$this->checkAccessPolicy($perms, $id)) {
+		if (!$this->isTransitionAllowed($id, $transition_name, $state)) {
 			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
 		}
 
