@@ -184,7 +184,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		$auth = $this->backend->getContext()->auth;
 		$policy_name = $access_policy['policy'];
 
-		//debug_dump($access_policy, 'POLICY: '.$policy_name);
+		//debug_dump($access_policy, 'POLICY: '.$policy_name.' @ '.get_class($this));
 
 		switch ($policy_name) {
 
@@ -201,15 +201,15 @@ abstract class FlupdoMachine extends AbstractMachine
 				$required_role = $access_policy['required_role'];
 				return $user_role == $required_role;
 
-			// relation: Given property must have given value -- this
-			// property is calculated from a SQL relation
-			case 'relation':
+			// reference: Given property must have given value -- this
+			// property is calculated from a SQL reference
+			case 'reference':
 				$properties = $this->getProperties($id);
-				$relation_property = $access_policy['relation_property'];
-				if (isset($access_policy['relation_value'])) {
-					return $access_policy['relation_value'] == $property[$relation_value];
+				$reference_property = $access_policy['reference_property'];
+				if (isset($access_policy['require_value'])) {
+					return $access_policy['require_value'] == $properties[$reference_property];
 				} else {
-					return !empty($property[$relation_property]);
+					return !empty($properties[$reference_property]);
 				}
 
 			// unknown policies are considered unsafe
