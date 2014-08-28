@@ -194,12 +194,16 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// owner: Owner must match current user
 			case 'owner':
+				if ($id === null) {
+					// Everyone owns nothing :)
+					return true;
+				}
 				$properties = $this->getProperties($id);
 				$user_id = $auth->getUserId();
 				$owner_property = $access_policy['owner_property'];
 				return $user_id !== null && $user_id == $properties[$owner_property];
 
-			// role: Current user must have specified role
+			// role: Current user must have specified role ($id is ignored)
 			case 'role':
 				$user_role = $auth->getUserRole();
 				$required_role = $access_policy['required_role'];
@@ -207,6 +211,10 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// These are done by SQL select.
 			case 'user_relation':
+				if ($id === null) {
+					// No relation to nonexistent entity.
+					return false;
+				}
 				$properties = $this->getProperties($id);
 				return !empty($properties['_access_policy_'.$access_policy_name]);
 
