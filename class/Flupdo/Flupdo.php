@@ -71,6 +71,7 @@ class Flupdo extends \PDO
 	 *   - host
 	 *   - username
 	 *   - password
+	 *   - disable_cache (bool)
 	 *
 	 * See [PDO](http://www.php.net/manual/en/class.pdo.php) documentation for details.
 	 */
@@ -84,7 +85,8 @@ class Flupdo extends \PDO
 			return new self('mysql:dbname='.$config['database'].';host='.$config['host'].';charset=UTF8',
 				$config['username'], $config['password'],
 				array(
-					self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';',
+					self::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\'; SET time_zone = \''.date_default_timezone_get().'\';'
+						.(!empty($config['disable_cache']) ? 'SET SESSION query_cache_type = OFF;' : null),
 					self::ATTR_ERRMODE => self::ERRMODE_EXCEPTION,
 				));
 		} else {
