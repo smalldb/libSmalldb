@@ -26,6 +26,7 @@ class B_smalldb__session_machine extends \Cascade\Core\Block
 		'ref' => true,
 		'state' => true,
 		'properties' => true,
+		'*' => true,
 		'done' => true,
 	);
 
