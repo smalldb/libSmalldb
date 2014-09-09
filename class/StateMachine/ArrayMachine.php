@@ -53,9 +53,10 @@ class ArrayMachine extends AbstractMachine
 
 
 	/**
-	 * Returns true if user has required permissions.
+	 * Returns true if user has required access_policy to invoke a 
+	 * transition, which requires given access_policy.
 	 */
-	protected function checkPermissions($permissions, $id)
+	protected function checkAccessPolicy($access_policy, $id)
 	{
 		return true;
 	}
@@ -67,6 +68,8 @@ class ArrayMachine extends AbstractMachine
 	protected function addPermissionsCondition($query)
 	{
 	}
+
+
 
 
 	/**
