@@ -190,6 +190,11 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
+		if ($auth->getUserRole() == 'admin') {
+			// FIXME: Remove hardcoded role name
+			return true;
+		}
+
 		switch ($access_policy['type']) {
 
 			// owner: Owner must match current user
