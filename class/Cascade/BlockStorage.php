@@ -37,6 +37,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	 */
 	protected $alias;
 
+
 	/**
 	 * Backend-related blocks. All of these should inherit from BackendBlock class.
 	 */
@@ -54,7 +55,7 @@ class BlockStorage implements \Cascade\Core\IBlockStorage
 	/**
 	 * Constructor will get options from core.ini.php file.
 	 */
-	public function __construct($storage_opts, $context, $alias)
+	public function __construct($storage_opts, $context, $alias, $is_write_allowed)
 	{
 		$this->alias = $alias;
 		$this->backend = $storage_opts['backend'];
