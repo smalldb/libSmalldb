@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine;
 
-use	\Smalldb\Flupdo\Flupdo,
-	\Smalldb\Flupdo\FlupdoProxy;
+use	\Flupdo\Flupdo\Flupdo,
+	\Flupdo\Flupdo\FlupdoProxy;
 
 /**
  * %Smalldb Backend which provides database via Flupdo.

@@ -167,7 +167,7 @@ class FlupdoGenericListing implements IListing
 	 * @param $machine_properties State machine properties definitions.
 	 * @param $machine_references State machine references to other state machines.
 	 */
-	public function __construct(AbstractMachine $machine, \Smalldb\Flupdo\SelectBuilder $query_builder, $query_filters,
+	public function __construct(AbstractMachine $machine, \Flupdo\Flupdo\SelectBuilder $query_builder, $query_filters,
 		$machine_table, $machine_filters, $machine_properties, $machine_references)
 	{
 		$this->machine = $machine;
@@ -352,7 +352,7 @@ class FlupdoGenericListing implements IListing
 				$this->result = $this->query->query();
 				$this->result->setFetchMode(\PDO::FETCH_ASSOC);
 			}
-			catch (\Smalldb\Flupdo\FlupdoSqlException $ex) {
+			catch (\Flupdo\Flupdo\FlupdoSqlException $ex) {
 				error_log("Failed SQL query:\n".$this->query->getSqlQuery());
 				error_log("Parameters of failed SQL query:\n".$this->query->getSqlParams());
 				throw $ex;

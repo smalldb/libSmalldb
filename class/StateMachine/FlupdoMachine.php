@@ -90,7 +90,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			$flupdo_resource_name = 'database';
 		}
 		$this->flupdo = $this->context->$flupdo_resource_name;
-		if (!($this->flupdo instanceof \Smalldb\Flupdo\Flupdo)) {
+		if (!($this->flupdo instanceof \Flupdo\Flupdo\Flupdo)) {
 			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
 		}
 
