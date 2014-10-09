@@ -71,6 +71,10 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 			$session_id = $config['machine_ref_prefix'];
 			$session_id[] = $session_token;
 			$this->session_machine = $this->smalldb->ref($session_id);
+			if ($this->session_machine->state == '') {
+				// Invalid token
+				$this->session_machine = $this->smalldb->ref($config['machine_null_ref']);
+			}
 		} else {
 			$this->session_machine = $this->smalldb->ref($config['machine_null_ref']);
 		}
@@ -89,6 +93,7 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 			setcookie($t->cookie_name, $new_pk, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
 		};
 
+		// Remove token when user logs out
 		$this->session_machine->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
 			if ($transition_name == 'logout') {
 				setcookie($t->cookie_name, null, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
