@@ -39,12 +39,12 @@ class B_smalldb__session_machine extends \Cascade\Core\Block
 	{
 		$auth = $this->auth();
 		if ($auth instanceof \Smalldb\Cascade\Auth) {
-			$this->ref = $auth->getSessionMachine();
-			if ($this->ref === null) {
-				return;
-			}
-
 			try {
+				$this->ref = $auth->getSessionMachine();
+				if ($this->ref === null) {
+					return;
+				}
+
 				$this->out('ref', $this->ref);
 				$this->out('properties', $this->ref->properties);
 				$this->out('state', $this->ref->state);
