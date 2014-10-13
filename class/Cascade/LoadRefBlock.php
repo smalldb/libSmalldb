@@ -83,7 +83,7 @@ class LoadRefBlock extends BackendBlock
 	 */
 	public function getOutput($name)
 	{
-		return $this->ref ? $this->ref->$name : null;
+		return $this->ref ? (array_key_exists($name, $this->ref->properties) ? $this->ref->properties[$name] : $this->ref->$name) : null;
 	}
 
 }
