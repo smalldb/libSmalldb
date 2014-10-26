@@ -118,12 +118,25 @@ class ActionBlock extends \Cascade\Core\Block
 
 			// set outputs
 			foreach ($this->output_values as $output => $out_value) {
-				switch ($out_value) {
+				if (is_array($out_value) && isset($out_value['source'])) {
+					$out_arg = $out_value;
+					$source = $out_value['source'];
+				} else {
+					$out_arg = null;
+					$source = $out_value;
+				}
+
+				switch ($source) {
 					case 'ref':
 						$this->out($output, $ref);
 						break;
 					case 'return_value':
-						$this->out($output, $result);
+						if ($out_arg !== null && isset($out_arg['key'])) {
+							$key = $out_arg['key'];
+							$this->out($output, isset($result[$key]) ? $result[$key] : null);
+						} else {
+							$this->out($output, $result);
+						}
 						break;
 					case 'properties':
 						$this->out($output, $ref->properties);
@@ -134,7 +147,9 @@ class ActionBlock extends \Cascade\Core\Block
 				}
 			}
 
-			$this->out('done', $result !== FALSE);
+			if (!isset($this->output_values['done'])) {
+				$this->out('done', $result !== FALSE);
+			}
 		}
 		catch (\PDOException $ex) {
 			error_msg('Action %s on machine %s failed: %s', $this->action, $this->machine->getMachineType(), $ex);
