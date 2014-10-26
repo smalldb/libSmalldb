@@ -479,7 +479,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			}
 		}
 
-		// Decode JSON columns
+		// Encode JSON columns
 		foreach ($this->json_columns as $column_name) {
 			if (isset($properties[$column_name])) {
 				$properties[$column_name] = json_encode($properties[$column_name],
