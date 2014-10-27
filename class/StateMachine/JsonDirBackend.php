@@ -65,8 +65,8 @@ class JsonDirBackend extends AbstractBackend
 	{
 		parent::__construct($options, $context, $alias);
 
-		// Get base dir
-		$this->base_dir = filename_format($options['base_dir']);
+		// Get base dir (constants are available)
+		$this->base_dir = filename_format($options['base_dir'], array());
 
 		// Load machine definitions from APC cache
 		$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
