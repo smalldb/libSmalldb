@@ -152,9 +152,10 @@ namespace Smalldb\StateMachine;
 class FlupdoGenericListing implements IListing
 {
 
-	protected $machine;	///< Parent state machine, which created this listing.
-	protected $query;	///< SQL query to execute.
-	protected $result;	///< PDOStatement, result of the query.
+	protected $machine;		///< Parent state machine, which created this listing.
+	protected $query;		///< SQL query to execute.
+	protected $result;		///< PDOStatement, result of the query.
+	protected $query_filters;	///< Actual filters.
 
 
 	/**
@@ -171,6 +172,7 @@ class FlupdoGenericListing implements IListing
 		$machine_table, $machine_filters, $machine_properties, $machine_references)
 	{
 		$this->machine = $machine;
+		$this->query_filters = $query_filters;
 
 		// Prepare query builder
 		$this->query = $query_builder;
@@ -386,6 +388,33 @@ class FlupdoGenericListing implements IListing
 		return array_map(array($this->machine, 'decodeProperties'), $this->result->fetchAll(\PDO::FETCH_ASSOC));
 	}
 
+
+	/**
+	 * Get filter configuration (processed and filled with pagination
+	 * data). This method should be called after query(), otherwise it will
+	 * not contain `total_count`.
+	 *
+	 * The `total_count` is calculated using second query, same as the
+	 * primary query, but with `COUNT(*)` in `SELECT` clause, and
+	 * limit & offset removed (everything else is preserved). This is a few
+	 * orders of magnitude faster than SQL_CALC_FOUND_ROWS.
+	 */
+	function getProcessedFilters()
+	{
+		if ($this->result !== null) {
+			$q = clone $this->query;	// make sure we do not modify original query
+			$q->uncompile();
+			$count = $q->select(null)->limit(null)->offset(null)
+				->select('COUNT(*)')
+				->query()
+				->fetchColumn();
+			$filters = $this->query_filters;
+			$filters['_total_count'] = $count;
+			return $filters;
+		} else {
+			return $this->query_filters;
+		}
+	}
 
 }
 

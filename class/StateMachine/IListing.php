@@ -47,5 +47,12 @@ interface IListing
 	 */
 	function fetchAll();
 
+
+	/**
+	 * Get filter configuration (processed and filled with pagination
+	 * data). This method should be called after query().
+	 */
+	function getProcessedFilters();
+
 }
 

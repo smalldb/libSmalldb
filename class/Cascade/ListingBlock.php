@@ -42,6 +42,7 @@ class ListingBlock extends BackendBlock
 	protected $outputs = array(
 		'list' => true,
 		'properties' => true,
+		'filters' => true,
 		'done' => true,
 	);
 
@@ -68,6 +69,7 @@ class ListingBlock extends BackendBlock
 		// TODO: return iterator, no need to fetch all at once
 		$this->out('list', $listing->fetchAll());
 		$this->out('properties', $listing->describeProperties());
+		$this->out('filters', $listing->getProcessedFilters());
 		$this->out('done', true);
 	}
 }
