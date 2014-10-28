@@ -409,7 +409,7 @@ class FlupdoGenericListing implements IListing
 				->query()
 				->fetchColumn();
 			$filters = $this->query_filters;
-			$filters['_total_count'] = $count;
+			$filters['_count'] = $count;
 			return $filters;
 		} else {
 			return $this->query_filters;
