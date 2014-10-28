@@ -52,11 +52,15 @@ class ListingBlock extends BackendBlock
 	const force_exec = true;
 
 
+	private $listing;
+
+
 	/**
 	 * Block body
 	 */
 	public function main()
 	{
+		// Build filters
 		$filters = (array) $this->in('filters');
 		foreach ($this->inputNames() as $input) {
 			if ($input != 'filters') {
@@ -64,13 +68,30 @@ class ListingBlock extends BackendBlock
 			}
 		}
 
-		$listing = $this->smalldb->createListing($filters);
-
-		// TODO: return iterator, no need to fetch all at once
-		$this->out('list', $listing->fetchAll());
-		$this->out('properties', $listing->describeProperties());
-		$this->out('filters', $listing->getProcessedFilters());
+		// Preapre listing
+		$this->listing = $this->smalldb->createListing($filters);
+		$this->listing->query();
 		$this->out('done', true);
 	}
+
+
+	/**
+	 * Use listing lazily
+	 */
+	public function getOutput($name)
+	{
+		switch ($name) {
+			case 'list':
+				// TODO: return iterator, no need to fetch all at once
+				return $this->listing->fetchAll();
+			case 'filters':
+				return $this->listing->getProcessedFilters();
+			case 'properties':
+				return $this->listing->describeProperties();
+			default:
+				return null;
+		}
+	}
+
 }
 

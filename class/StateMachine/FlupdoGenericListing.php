@@ -148,6 +148,8 @@ namespace Smalldb\StateMachine;
  * @note Additional properties may be added to filter definition. It is
  * 	expected that GUI will be generated from this definition as well.
  *
+ * @warning Do not use GROUP BY, it will break item count calculation. Use
+ * 	sub-selects instead.
  */
 class FlupdoGenericListing implements IListing
 {
@@ -404,8 +406,8 @@ class FlupdoGenericListing implements IListing
 		if ($this->result !== null) {
 			$q = clone $this->query;	// make sure we do not modify original query
 			$q->uncompile();
-			$count = $q->select(null)->limit(null)->offset(null)
-				->select('COUNT(*)')
+			$count = $q->select(null)->orderBy(null)->limit(null)->offset(null)
+				->select('COUNT(1)')
 				->query()
 				->fetchColumn();
 			$filters = $this->query_filters;
