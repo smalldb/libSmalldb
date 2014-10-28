@@ -252,7 +252,7 @@ class FlupdoGenericListing implements IListing
 				} else {
 					// Check if operator is the last character of filter name
 					$operator = substr($property, -1);
-					if (!preg_match('/^([^><!%~:]+)([><!%~:]+)$/', $property, $m)) {
+					if (!preg_match('/^([^><!%~:?]+)([><!%~:?]+)$/', $property, $m)) {
 						continue;
 					}
 					list(, $property, $operator) = $m;
@@ -277,6 +277,9 @@ class FlupdoGenericListing implements IListing
 							break;
 						case '!':
 							$this->query->where("$p != ?", $value);
+							break;
+						case '?':
+							$this->query->where($value ? "$p IS NOT NULL" : "$p IS NULL");
 							break;
 						case ':':
 							if (is_array($value)) {
