@@ -122,6 +122,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 			'delete' => array(
 				'label' => _('Delete'),
 				'description' => _('Delete item'),
+				'weight' => 80,
 				'transitions' => array(
 					'exists' => array(
 						'targets' => array(''),
