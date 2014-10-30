@@ -382,7 +382,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 *
 	 * Returns $query.
 	 */
-	protected function queryAddPrimaryKeyWhere($query, $id)
+	protected function queryAddPrimaryKeyWhere($query, $id, $clause = 'where')
 	{
 		if ($id === null || $id === array() || $id === false || $id === '') {
 			throw new InvalidArgumentException('Empty ID.');
@@ -390,7 +390,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			throw new InvalidArgumentException(sprintf('Malformed ID: got %d pieces of %d.', count($id), count($this->describeId())));
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
-			$query->where($query->quoteIdent($this->table).'.'.$query->quoteIdent($col).' = ?', $val);
+			$query->$clause($query->quoteIdent($this->table).'.'.$query->quoteIdent($col).' = ?', $val);
 		}
 		return $query;
 	}
