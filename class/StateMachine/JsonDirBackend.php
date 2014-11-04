@@ -106,9 +106,9 @@ class JsonDirBackend extends AbstractBackend
 						$include_file = $this->base_dir.$include_file;
 					}
 					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
-						$machine_def = array_merge_recursive(parse_json_file($include_file), $machine_def);
+						$machine_def = array_replace_recursive(parse_json_file($include_file), $machine_def);
 					} else if (preg_match('/\.graphml$/i', $include_file)) {
-						$machine_def = array_merge_recursive($this->loadGraphMLFile($include_file), $machine_def);
+						$machine_def = array_replace_recursive($this->loadGraphMLFile($include_file), $machine_def);
 					} else {
 						throw new RuntimeException('Unknown file format: '.$include_file);
 					}
@@ -239,6 +239,7 @@ class JsonDirBackend extends AbstractBackend
 			return null;
 		}
 
+		debug_msg('Creating machine from class: %s', $desc['class']);
 		return new $desc['class']($this, $type, $desc, $this->getContext());
 	}
 
