@@ -151,16 +151,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 
 	/**
-	 * Add state column into select clause of the $query.
-	 */
-	protected function queryAddStateSelect($query)
-	{
-		// If row is found, then state is 'exists'
-		$query->select('"exists" AS `state`');
-	}
-
-
-	/**
 	 * Create
 	 *
 	 * $id may be null, then auto increment is used.
