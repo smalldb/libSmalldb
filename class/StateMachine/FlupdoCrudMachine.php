@@ -37,12 +37,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 	{
 		parent::initializeMachine($config);
 
-		// Name of inputs and outputs with properties
-		$io_name = (string) $config['io_name'];
-		if ($io_name == '') {
-			$io_name = 'item';
-		}
-
 		// user_id table column & auth property
 		if (isset($config['user_id_table_column'])) {
 			$this->user_id_table_column = $config['user_id_table_column'];
@@ -71,6 +65,21 @@ class FlupdoCrudMachine extends FlupdoMachine
 			}
 		} else {
 			$this->scanTableColumns();
+		}
+
+		$this->setupDefaultMachine($config);
+	}
+
+
+	/**
+	 * Setup basic CRUD machine.
+	 */
+	protected function setupDefaultMachine($config)
+	{
+		// Name of inputs and outputs with properties
+		$io_name = (string) $config['io_name'];
+		if ($io_name == '') {
+			$io_name = 'item';
 		}
 
 		// Exists state only
