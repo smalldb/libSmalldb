@@ -310,15 +310,10 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
 			$pi_quoted = $query->quoteIdent($pi);
-			if (empty($p['calculated'])) {
-				$query->select("$table.$pi_quoted AS $pi_quoted");
+			if (!empty($p['calculated']) && isset($p['sql_select'])) {
+				$query->select("({$p['sql_select']}) AS $pi_quoted");
 			} else {
-				if (isset($p['sql_select'])) {
-					$sql = $p['sql_select'];
-				} else {
-					throw new \InvalidArgumentException('Missing "sql_select" option for calculated property "'.$pi.'".');
-				}
-				$query->select("($sql) AS $pi_quoted");
+				$query->select("$table.$pi_quoted AS $pi_quoted");
 			}
 		}
 
