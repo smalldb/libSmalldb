@@ -493,9 +493,13 @@ abstract class AbstractMachine
 		}
 
 		// get method
-		$method = empty($transition['method']) ? $transition_name : $transition['method'];
+		$method = isset($transition['method']) ? $transition['method'] : $transition_name;
+		$prefix_args = isset($transition['args']) ? $transition['args'] : array();
 
 		// invoke method -- the first argument is $id, rest are $args as passed to $ref->action($args...).
+		if (!empty($prefix_args)) {
+			array_splice($args, 0, 0, $prefix_args);
+		}
 		array_unshift($args, $id);
 		$ret = call_user_func_array(array($this, $method), $args);
 
