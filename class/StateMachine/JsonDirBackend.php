@@ -69,10 +69,18 @@ class JsonDirBackend extends AbstractBackend
 		$this->base_dir = filename_format($options['base_dir'], array());
 
 		// Load machine definitions from APC cache
-		$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
-		$cache_data = apc_fetch($cache_key, $cache_loaded);
-		if ($cache_loaded) {
-			list($this->machine_type_table, $cache_mtime) = $cache_data;
+		if (!empty($options['cache_disabled'])) {
+			$cache_loaded = false;
+			$cache_mtime = 0;
+			$cache_disabled = true;
+		} else {
+			$cache_disabled = false;
+			$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
+			$cache_data = apc_fetch($cache_key, $cache_loaded);
+			if ($cache_loaded) {
+				list($this->machine_type_table, $cache_mtime) = $cache_data;
+				//debug_dump($this->machine_type_table, 'Cached @ '.strftime('%F %T', $cache_mtime));
+			}
 		}
 
 		if (!$cache_loaded					// failed to load cache
@@ -80,6 +88,7 @@ class JsonDirBackend extends AbstractBackend
 			|| filemtime($this->base_dir) > $cache_mtime)	// check directory (new/removed files)
 		{
 			debug_msg('Machine type table cache miss. Reloading...');
+			$this->machine_type_table = array();
 
 			// Scan base dir for machines
 			$dh = opendir($this->base_dir);
@@ -116,7 +125,9 @@ class JsonDirBackend extends AbstractBackend
 				unset($machine_def);
 			}
 
-			apc_store($cache_key, array($this->machine_type_table, time()));
+			if (!$cache_disabled) {
+				apc_store($cache_key, array($this->machine_type_table, time()));
+			}
 		}
 	}
 
@@ -351,32 +362,35 @@ class JsonDirBackend extends AbstractBackend
 		}
 
 		// Store states
-		foreach ($nodes as $n) {
-			$state = (string) @ $n['state'];
-			if ($state == '' && @ $n['label'] != '') {
-				throw new GraphMLException(sprintf('Missing "state" property at node "%s".', $n['label']));
+		foreach ($nodes as & $n) {
+			if (empty($n['state'])) {
+				if (empty($n['label'])) {
+					// Skip 'nonexistent' state, it is present by default
+					$n['state'] = '';
+					continue;
+				} else {
+					// Use label as state name
+					$n['state'] = (string) $n['label'];
+				}
 			}
-			if ($state == '') {
-				// skip 'nonexistent' state, it is present by default
-				continue;
+			if (empty($n['label'])) {
+				$n['label'] = $n['state'];
 			}
-			unset($n['state']);
-			$machine['states'][$state] = $n;
+			$machine['states'][(string) $n['state']] = $n;
 		}
 
 		// Store actions and transitions
 		foreach ($edges as $e) {
 			list($source_id, $target_id, $props) = $e;
-			$source = (string) @ $nodes[$source_id]['state'];
-			$target = (string) @ $nodes[$target_id]['state'];
+			$source = $source_id != '' ? (string) $nodes[$source_id]['state'] : '';
+			$target = $target_id != '' ? (string) $nodes[$target_id]['state'] : '';
 			if (@ $props['action'] != '') {
 				$action = $props['action'];
 			} else if (@ $props['label'] != '') {
 				$action = $props['label'];
 			} else {
 				throw new GraphMLException(sprintf('Missing label at edge "%s" -> "%s".',
-					$nodes[$source]['label'] ? : @ $nodes[$source]['state'],
-					$nodes[$target]['label'] ? : @ $nodes[$target]['state']));
+					$nodes[$source]['label'], $nodes[$target]['label']));
 			}
 
 			$tr = & $machine['actions'][$action]['transitions'][$source];
@@ -390,6 +404,8 @@ class JsonDirBackend extends AbstractBackend
 		// Sort stuff to keep them in order when file is modified
 		asort($machine['states']);
 		asort($machine['actions']);
+		//debug_dump($machine['states'], 'States');
+		//debug_dump($machine['actions'], 'Actions');
 
 		//debug_dump($machine, '$machine');
 		return $machine;

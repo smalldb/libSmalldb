@@ -103,7 +103,7 @@ class ActionBlock extends \Cascade\Core\Block
 		$args = $this->inAll();
 
 		// get Reference if specified
-		if (array_key_exists('ref', $args)) {
+		if (isset($args['ref'])) {
 			$ref = $args['ref'];
 			unset($args['ref']);
 		} else {
@@ -114,6 +114,7 @@ class ActionBlock extends \Cascade\Core\Block
 		// invoke transition
 		// TODO: Handle exceptions
 		try {
+			debug_msg('Invoking action "%s" on %s', $this->action, var_export($ref->id, true));
 			$result = call_user_func_array(array($ref, $this->action), $args);
 
 			// set outputs
