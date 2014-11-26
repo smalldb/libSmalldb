@@ -197,6 +197,18 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		switch ($access_policy['type']) {
 
+			// anyone: Completely open for anyone
+			case 'anyone':
+				return true;
+
+			// anonymous: Only anonymous users allowed (not logged in)
+			case 'anonymous':
+				return $user_id === null;
+
+			// user: All logged-in users allowed
+			case 'user':
+				return $user_id !== null;
+
 			// owner: Owner must match current user
 			case 'owner':
 				if ($id === null) {
