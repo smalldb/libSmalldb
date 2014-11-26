@@ -97,6 +97,7 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 		$this->session_machine->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
 			if ($transition_name == 'logout') {
 				setcookie($t->cookie_name, null, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
+				session_unset();	// Do not destroy session, only clear all data, so logout message can be stored in session.
 			}
 		};
 
