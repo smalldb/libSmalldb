@@ -41,6 +41,7 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 	protected $session_ttl = 315569260;		///< Session duration [seconds]
 	protected $user_id_property = 'user_id';	///< Name of the session machine property with user's ID
 	protected $user_role_property = 'user_role';	///< Name of the session machine property with user's role
+	protected $logout_transition = 'logout';	///< Name of the logout transition
 
 
 	/**
@@ -61,6 +62,9 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 		}
 		if (isset($config['user_id_property'])) {
 			$this->user_id_property = $config['user_id_property'];
+		}
+		if (isset($config['logout_transition'])) {
+			$this->logout_transition = $config['logout_transition'];
 		}
 
 		// Get session token
@@ -95,7 +99,7 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 
 		// Remove token when user logs out
 		$this->session_machine->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
-			if ($transition_name == 'logout') {
+			if ($transition_name == $t->logout_transition) {
 				setcookie($t->cookie_name, null, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
 				session_unset();	// Do not destroy session, only clear all data, so logout message can be stored in session.
 			}
