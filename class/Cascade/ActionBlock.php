@@ -149,7 +149,7 @@ class ActionBlock extends \Cascade\Core\Block
 			}
 
 			if (!isset($this->output_values['done'])) {
-				$this->out('done', $result !== FALSE);
+				$this->out('done', $result instanceOf \Smalldb\StateMachine\Reference ? !$result->isNullRef() : (bool) $result);
 			}
 		}
 		catch (\PDOException $ex) {
