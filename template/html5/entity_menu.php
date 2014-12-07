@@ -24,7 +24,7 @@ function TPL_html5__smalldb__entity_menu($t, $id, $d, $so)
 		echo "<div class=\"entity_menu\" id=\"", htmlspecialchars($id), "\">\n";
 
 		// Trick
-		echo "<input type=\"checkbox\" id=\"", htmlspecialchars($id), "__check\"", $expanded ? ' checked' : '', ">";
+		echo "<input type=\"checkbox\" class=\"menu_opener\" id=\"", htmlspecialchars($id), "__check\"", $expanded ? ' checked' : '', ">";
 
 		// Menu button
 		echo "<label for=\"", htmlspecialchars($id), "__check\">", _('Entities'), "<i></i></label>\n";
