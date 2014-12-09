@@ -218,6 +218,11 @@ abstract class FlupdoMachine extends AbstractMachine
 				$properties = $this->getProperties($id);
 				$user_id = $auth->getUserId();
 				$owner_property = $access_policy['owner_property'];
+				if (isset($access_policy['session_state'])) {
+					if ($auth->getSessionMachine()->state != $access_policy['session_state']) {
+						return false;
+					}
+				}
 				return $user_id !== null && $user_id == $properties[$owner_property];
 
 			// role: Current user must have specified role ($id is ignored)
