@@ -40,6 +40,8 @@
  *
  * Where `database` is generated configuration and `custom_source` is the new
  * source. The same with indexes.
+ *
+ * TODO: Refector this to some nice class.
  */
 
 function fail($msg) {
