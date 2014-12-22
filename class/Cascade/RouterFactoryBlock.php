@@ -122,14 +122,17 @@ class RouterFactoryBlock extends BackendBlock
 			$args['smalldb_type'] = $ref->machineType;
 			$args['smalldb_action'] = $action === null ? '' : $action;
 
+
 			// Default action to make life easier
 			if ($action === null) {
 				// Check whether ref is null
 				if ($ref->isNullRef()) {
 					// Null ref means we want listing
 					$args['smalldb_action_or_show'] = 'listing';
-				} else {
+				} else if ($ref->state != '') {
 					$args['smalldb_action_or_show'] = 'show';
+				} else {
+					return false;
 				}
 			} else {
 				$args['smalldb_action_or_show'] = $action;
