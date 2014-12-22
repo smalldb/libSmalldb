@@ -82,8 +82,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 			$io_name = 'item';
 		}
 
+		// Create default transitions?
+		$no_default_transitions = !empty($config['crud_machine_no_default_transitions']);
+
 		// Exists state only
-		$this->states = array(
+		$this->states = $no_default_transitions ? array() : array(
 			'exists' => array(
 				'label' => _('Exists'),
 				'description' => '',
@@ -95,7 +98,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 			'create' => array(
 				'label' => _('Create'),
 				'description' => _('Create a new item'),
-				'transitions' => array(
+				'transitions' => $no_default_transitions ? array() : array(
 					'' => array(
 						'targets' => array('exists'),
 					),
@@ -113,7 +116,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 			'edit' => array(
 				'label' => _('Edit'),
 				'description' => _('Modify item'),
-				'transitions' => array(
+				'transitions' => $no_default_transitions ? array() : array(
 					'exists' => array(
 						'targets' => array('exists'),
 					),
@@ -132,7 +135,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 				'label' => _('Delete'),
 				'description' => _('Delete item'),
 				'weight' => 80,
-				'transitions' => array(
+				'transitions' => $no_default_transitions ? array() : array(
 					'exists' => array(
 						'targets' => array(''),
 					),
@@ -150,6 +153,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 		// Merge with config
 		if (isset($config['actions'])) {
 			$this->actions = array_replace_recursive($this->actions, $config['actions']);
+		}
+
+		// Merge with config
+		if (isset($config['states'])) {
+			$this->states = array_replace_recursive($this->states, $config['states']);
 		}
 
 		// Simple 'exists' state if not state select is not defined
