@@ -220,17 +220,16 @@ class Reference implements \ArrayAccess, \Iterator
 			case 'machine_type':
 				return $this->machine->getMachineType();
 			case 'state':
-				if ($this->state_cache !== null) {
-					return $this->state_cache;
-				} else {
-					return ($this->state_cache = $this->machine->getState($this->id));
+				if ($this->state_cache === null) {
+					$this->state_cache = $this->machine->getState($this->id);
 				}
+				return $this->state_cache;
 			case 'properties':
-				if ($this->properties_cache !== null) {
-					return $this->properties_cache;
-				} else {
-					return ($this->properties_cache = $this->machine->getProperties($this->id, $this->state_cache));
+				if ($this->properties_cache === null) {
+					$this->properties_cache = $this->machine->getProperties($this->id, $this->state_cache);
+					$this->properties_cache['state'] = $this->state_cache;
 				}
+				return $this->properties_cache;
 			case 'actions':
 				return $this->machine->getAvailableTransitions($this->id);
 			default:
