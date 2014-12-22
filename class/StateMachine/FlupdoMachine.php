@@ -253,9 +253,82 @@ abstract class FlupdoMachine extends AbstractMachine
 	/**
 	 * Adds conditions to enforce read access_policy to query object.
 	 */
-	protected function addAccessPolicyCondition($query)
+	protected function queryAddAccessPolicyCondition($access_policy_name, $query)
 	{
-		// TODO
+		// Allow by default
+		if (empty($access_policy_name)) {
+			return;
+		}
+
+		$auth = $this->backend->getContext()->auth;
+
+		if (!isset($this->access_policies[$access_policy_name])) {
+			throw new \InvalidArgumentException('Unknown policy: '.$access_policy_name);
+		}
+		$access_policy = $this->access_policies[$access_policy_name];
+
+		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
+
+		if ($auth->getUserRole() == 'admin') {
+			// FIXME: Remove hardcoded role name
+			return;
+		}
+
+		switch ($access_policy['type']) {
+
+			// anyone: Completely open for anyone
+			case 'anyone':
+				return;
+
+			// anonymous: Only anonymous users allowed (not logged in)
+			case 'anonymous':
+				$query->where($user_id === null ? 'TRUE' : 'FALSE');
+				return;
+
+			// user: All logged-in users allowed
+			case 'user':
+				$query->where($user_id !== null ? 'TRUE' : 'FALSE');
+				return;
+
+			// owner: Owner must match current user
+			case 'owner':
+				$user_id = $auth->getUserId();
+				$owner_property = $query->quoteIdent($access_policy['owner_property']);
+				$table = $query->quoteIdent($this->table);
+				if (isset($access_policy['session_state'])) {
+					if ($auth->getSessionMachine()->state != $access_policy['session_state']) {
+						$query->where('FALSE');
+						return;
+					}
+				}
+				if ($user_id === null) {
+					$query->where('FALSE');
+					return;
+				} else {
+					$query->where("$table.$owner_property = ?", $user_id);
+					return;
+				}
+
+			// role: Current user must have specified role ($id is ignored)
+			case 'role':
+				$user_role = $auth->getUserRole();
+				$required_role = $access_policy['required_role'];
+				$this->query(is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role ? 'TRUE' : 'FALSE');
+				return;
+
+			// These are done by SQL select.
+			case 'user_relation':
+				$this->queryAddUserRelationAccessPolicyCondition($access_policy_name, $access_policy, $query, 'where');
+				return;
+
+			// unknown policies are considered unsafe
+			default:
+				$query->where('FALSE');
+				return false;
+		}
+
+		// This should not happen.
+		throw new \RuntimeException('Policy '.$policy.' did not decide.');
 	}
 
 
@@ -286,7 +359,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	{
 		$q = $this->flupdo->select();
 		$this->queryAddFrom($q);
-		$this->addAccessPolicyCondition($q);
+		$this->queryAddAccessPolicyCondition($this->read_access_policy, $q);
 		return $q;
 	}
 
@@ -370,21 +443,30 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Add access policy columns
 		if (!empty($this->access_policies)) {
 			//debug_dump($this->access_policies);
-			$auth = $this->backend->getContext()->auth;
 			foreach ($this->access_policies as $policy_name => $policy) {
 				if ($policy['type'] == 'user_relation') {
-					$policy_alias = $query->quoteIdent('_access_policy_'.$policy_name);
-					$user_id = $auth->getUserId();
-					if (isset($policy['required_value'])) {
-						$query->select('('.$policy['sql_select'].') = ? AS '.$policy_alias, $user_id, $policy['required_value']);
-					} else {
-						$query->select('('.$policy['sql_select'].') IS NOT NULL AS '.$policy_alias, $user_id);
-					}
+					$this->queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query);
 				}
 			}
 		}
 
 		//debug_dump("\n".$query->getSqlQuery(), 'Query', true);
+	}
+
+
+	/**
+	 * Add user-relation policy condition to SQL query (select or where clause).
+	 */
+	private function queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query, $clause = 'select')
+	{
+		$auth = $this->backend->getContext()->auth;
+		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
+		$user_id = $auth->getUserId();
+		if (isset($policy['required_value'])) {
+			$query->$clause('('.$policy['sql_select'].') = ?'.$policy_alias, $user_id, $policy['required_value']);
+		} else {
+			$query->$clause('('.$policy['sql_select'].') IS NOT NULL'.$policy_alias, $user_id);
+		}
 	}
 
 
