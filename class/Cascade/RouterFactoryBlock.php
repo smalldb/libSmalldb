@@ -88,74 +88,89 @@ class RouterFactoryBlock extends BackendBlock
 	 */
 	public function postprocessor($route)
 	{
-		try {
-			$args = $route;
+		$args = $route;
+		$ref = null;
+		$action = null;
+		$smalldb = $this->smalldb;
 
+		$validation_callback = function($id, $route_mask) use ($route, $smalldb, & $action, & $ref)
+		{
 			// Get action
 			$action = isset($route['path_action']) ? $route['path_action'] : null;
 
-			// Try numeric keys in route
-			$id = array();
-			for ($i = 0; isset($route[$i]); $i++) {
-				$id[] = $route[$i];
-			}
-
-			// If it failed, try path_tail
-			if (empty($id)) {
-				$path = $route['path_tail'];
-				if (empty($path)) {
-					return false;
-				}
-				$id = $this->convertPathToMachineId($path);
+			// Sometimes ID is in wrong order, with correct indexes, but numeric keys are wierd
+			if (is_array($id)) {
+				ksort($id);
 			}
 
 			// Create reference to state machine
-			$ref = $this->smalldb->ref($id);
-
-			// Check access to requested transition ($action may be empty, then it is read access)
-			if (!$ref->machine->isTransitionAllowed($ref->id, $action)) {
+			try {
+				$ref = $smalldb->ref($id);
+			}
+			catch (\Smalldb\StateMachine\InvalidReferenceException $ex) {
+				// If reference cannot be created, route is not valid
 				return false;
 			}
 
-			// Collect route data
-			$args['smalldb_ref'] = $ref;
-			$args['smalldb_type'] = $ref->machineType;
-			$args['smalldb_action'] = $action === null ? '' : $action;
+			// Check access to requested transition ($action may be empty, then it is read access)
+			if (!$ref->machine->isTransitionAllowed($ref->id, $action)) {
+				debug_msg('Action %s of machine [ %s ] is not accessible.', $action, join(', ', $id));
+				return false;
+			}
 
+			return $id;
+		};
 
-			// Default action to make life easier
-			if ($action === null) {
-				// Check whether ref is null
-				if ($ref->isNullRef()) {
-					// Null ref means we want listing
-					$args['smalldb_action_or_show'] = 'listing';
-				} else if ($ref->state != '') {
-					$args['smalldb_action_or_show'] = 'show';
-				} else {
-					return false;
-				}
+		// Try numeric keys in route
+		$id = array();
+		for ($i = 0; isset($route[$i]); $i++) {
+			$id[] = $route[$i];
+		}
+
+		// If it failed, try path_tail and use routes built from machine URLs
+		if (empty($id)) {
+			$path = $route['path_tail'];
+			if (empty($path)) {
+				return false;
+			}
+			$id = $this->convertPathToMachineId($path, $validation_callback);
+		} else {
+			$id = $validation_callback($id, null);
+		}
+
+		// Collect route data
+		$args['smalldb_ref'] = $ref;
+		$args['smalldb_type'] = $ref->machineType;
+		$args['smalldb_action'] = $action === null ? '' : $action;
+
+		// Default action to make life easier
+		if ($action === null) {
+			// Check whether ref is null
+			if ($ref->isNullRef()) {
+				// Null ref means we want listing
+				$args['smalldb_action_or_show'] = 'listing';
+			} else if ($ref->state != '') {
+				$args['smalldb_action_or_show'] = 'show';
 			} else {
-				$args['smalldb_action_or_show'] = $action;
+				return false;
 			}
+		} else {
+			$args['smalldb_action_or_show'] = $action;
+		}
 
-			// Copy inputs to outputs
-			foreach ($this->inAll() as $in => $val) {
-				if (isset($route[$in])) {
-					continue;
-				}
-				if ($val === '{smalldb_ref}') {
-					$route[$in] = $ref;
-				} else {
-					$route[$in] = filename_format($val, $args);
-				}
+		// Copy inputs to outputs
+		foreach ($this->inAll() as $in => $val) {
+			if (isset($route[$in])) {
+				continue;
 			}
+			if ($val === '{smalldb_ref}') {
+				$route[$in] = $ref;
+			} else {
+				$route[$in] = filename_format($val, $args);
+			}
+		}
 
-			return $route;
-		}
-		catch (\Smalldb\StateMachine\InvalidReferenceException $ex) {
-			// Ref is not valid => route does not exist.
-			return false;
-		}
+		return $route;
 	}
 
 
@@ -167,9 +182,12 @@ class RouterFactoryBlock extends BackendBlock
 	 *
 	 * TODO: Caching!
 	 */
-	private function convertPathToMachineId($path)
+	private function convertPathToMachineId($path, $validation_callback)
 	{
 		$routes = array();
+
+		// Entity listings
+		$routes['/$0'] = array();
 
 		foreach ($this->smalldb->getKnownTypes() as $entity) {
 			$m = $this->smalldb->getMachine($entity);
@@ -184,17 +202,8 @@ class RouterFactoryBlock extends BackendBlock
 				0 => $entity,
 			);
 		}
-		//debug_dump($routes);
-		//debug_dump($path);
 
-		$machine_id = \B_core__router::findMatchingRoute($routes, $path);
-
-		// Sometimes ID is in wrong order, with correct indexes, but numeric keys are wierd
-		if (is_array($machine_id)) {
-			ksort($machine_id);
-		}
-
-		return $machine_id !== false ? $machine_id : $path;
+		return \B_core__router::findMatchingRoute($routes, $path, $mask, $validation_callback);
 	}
 
 }

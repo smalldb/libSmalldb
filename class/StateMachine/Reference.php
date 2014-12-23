@@ -158,7 +158,7 @@ class Reference implements \ArrayAccess, \Iterator
 	 */
 	public function isNullRef()
 	{
-		return $this->id === null;
+		return $this->id === null || $this->id === array();
 	}
 
 

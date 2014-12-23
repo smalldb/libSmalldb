@@ -250,7 +250,7 @@ class JsonDirBackend extends AbstractBackend
 			return null;
 		}
 
-		debug_msg('Creating machine from class: %s', $desc['class']);
+		debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
 		return new $desc['class']($this, $type, $desc, $this->getContext());
 	}
 
