@@ -138,6 +138,10 @@ class RouterFactoryBlock extends BackendBlock
 			$id = $validation_callback($id, null);
 		}
 
+		if ($id === false) {
+			return false;
+		}
+
 		// Collect route data
 		$args['smalldb_ref'] = $ref;
 		$args['smalldb_type'] = $ref->machineType;
