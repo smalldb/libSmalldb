@@ -170,15 +170,15 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/**
 	 * Create
 	 *
-	 * $id may be null, then auto increment is used.
+	 * $ref may be nullRef, then auto increment is used.
 	 */
-	protected function create($id, $properties)
+	protected function create(Reference $ref, $properties)
 	{
 		// filter out unknown keys
 		$properties = array_intersect_key($properties, $this->properties);
 
-		if ($id !== null) {
-			$properties = array_merge($properties, array_combine($this->describeId(), (array) $id));
+		if (!$ref->isNullRef()) {
+			$properties = array_merge($properties, array_combine($this->describeId(), (array) $ref->id));
 		}
 
 		// Set owner
@@ -210,7 +210,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// Return ID of inserted row
-		if ($id === null) {
+		if ($ref->isNullRef()) {
 			$id_keys = $this->describeId();
 			$id = array();
 			foreach ($id_keys as $k) {
@@ -230,14 +230,14 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/**
 	 * Edit
 	 */
-	protected function edit($id, $properties)
+	protected function edit(Reference $ref, $properties)
 	{
 		// filter out unknown keys
 		$properties = array_intersect_key($properties, $this->properties);
 
 		// build update query
 		$q = $this->flupdo->update($this->flupdo->quoteIdent($this->table));
-		$this->queryAddPrimaryKeyWhere($q, $id);
+		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 		foreach ($this->encodeProperties($properties) as $k => $v) {
 			$q->set($q->quoteIdent($k).' = ?', $v);
 		}
@@ -255,11 +255,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/**
 	 * Delete
 	 */
-	protected function delete($id)
+	protected function delete(Reference $ref)
 	{
 		// build update query
 		$q = $this->flupdo->delete()->from($this->flupdo->quoteIdent($this->table));
-		$this->queryAddPrimaryKeyWhere($q, $id);
+		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 
 		$n = $q->debugDump()->exec();
 

@@ -90,7 +90,7 @@ class Auth implements \Smalldb\StateMachine\IAuth, \Cascade\Core\IAuth
 
 		// Update cookie when token changes
 		$t = $this;
-		$this->session_machine->pk_changed_cb[] = function($ref, $new_pk) use ($t) {
+		$this->session_machine->pk_changed_cb[] = function($ref, $old_pk, $new_pk) use ($t) {
 			if (is_array($new_pk)) {
 				$new_pk = $new_pk[0];
 			}

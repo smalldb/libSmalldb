@@ -174,7 +174,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 * TODO: Caching ? Reference object has property cache. It would be
 	 * 	nice to pass it here.
 	 */
-	protected function checkAccessPolicy($access_policy_name, $id)
+	protected function checkAccessPolicy($access_policy_name, Reference $ref)
 	{
 		// Allow by default
 		if (empty($access_policy_name)) {
@@ -211,11 +211,11 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// owner: Owner must match current user
 			case 'owner':
-				if ($id === null) {
+				if ($ref->isNullRef()) {
 					// Everyone owns nothing :)
 					return true;
 				}
-				$properties = $this->getProperties($id);
+				$properties = $ref->properties;
 				$user_id = $auth->getUserId();
 				$owner_property = $access_policy['owner_property'];
 				if (isset($access_policy['session_state'])) {
@@ -225,7 +225,7 @@ abstract class FlupdoMachine extends AbstractMachine
 				}
 				return $user_id !== null && $user_id == $properties[$owner_property];
 
-			// role: Current user must have specified role ($id is ignored)
+			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
 				$user_role = $auth->getUserRole();
 				$required_role = $access_policy['required_role'];
@@ -233,11 +233,11 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// These are done by SQL select.
 			case 'user_relation':
-				if ($id === null) {
+				if ($ref->isNullRef()) {
 					// No relation to nonexistent entity.
 					return false;
 				}
-				$properties = $this->getProperties($id);
+				$properties = $ref->properties;
 				return !empty($properties['_access_policy_'.$access_policy_name]);
 
 			// unknown policies are considered unsafe
@@ -309,7 +309,7 @@ abstract class FlupdoMachine extends AbstractMachine
 					return;
 				}
 
-			// role: Current user must have specified role ($id is ignored)
+			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
 				$user_role = $auth->getUserRole();
 				$required_role = $access_policy['required_role'];

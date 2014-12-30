@@ -390,7 +390,10 @@ class FlupdoGenericListing implements IListing
 		if ($this->result === null) {
 			$this->query();
 		}
-		return array_map(array($this->machine, 'decodeProperties'), $this->result->fetchAll(\PDO::FETCH_ASSOC));
+		$machine = $this->machine;
+		return array_map(function($properties) use ($machine) {
+				return $machine->hotRef($machine->decodeProperties($properties));
+			}, $this->result->fetchAll(\PDO::FETCH_ASSOC));
 	}
 
 

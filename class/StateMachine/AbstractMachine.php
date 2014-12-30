@@ -270,7 +270,7 @@ abstract class AbstractMachine
 	 * Returns true if user has required access_policy to invoke a 
 	 * transition, which requires given access_policy.
 	 */
-	abstract protected function checkAccessPolicy($access_policy, $id);
+	abstract protected function checkAccessPolicy($access_policy, Reference $ref);
 
 
 	/**
@@ -414,15 +414,15 @@ abstract class AbstractMachine
 	 * TODO: Transition should not have full definition of the policy, only
 	 * 	its name. Definitions should be in common place.
 	 */
-	public function isTransitionAllowed($id, $transition_name, $state = null)
+	public function isTransitionAllowed(Reference $ref, $transition_name, $state = null)
 	{
 		if ($state === null) {
-			$state = $this->getState($id);
+			$state = $ref->state;
 		}
 
 		if ($transition_name == '') {
 			// Read access
-			return $this->checkAccessPolicy($this->read_access_policy, $id);
+			return $this->checkAccessPolicy($this->read_access_policy, $ref);
 		} else if (isset($this->actions[$transition_name]['transitions'][$state])) {
 			$tr = $this->actions[$transition_name]['transitions'][$state];
 			if (isset($tr['access_policy'])) {
@@ -435,7 +435,7 @@ abstract class AbstractMachine
 				// No policy, use default
 				$access_policy = $this->default_access_policy;
 			}
-			return $this->checkAccessPolicy($access_policy, $id);
+			return $this->checkAccessPolicy($access_policy, $ref);
 		} else {
 			// Not a valid transition
 			return false;
@@ -446,16 +446,16 @@ abstract class AbstractMachine
 	/**
 	 * Get list of all available actions for state machine instance identified by $id.
 	 */
-	public function getAvailableTransitions($id, $state = null)
+	public function getAvailableTransitions(Reference $ref, $state = null)
 	{
 		if ($state === null) {
-			$state = $this->getState($id);
+			$state = $ref->state;
 		}
 
 		$available_transitions = array();
 
 		foreach ($this->actions as $a => $action) {
-			if (!empty($action['transitions'][$state]) && $this->isTransitionAllowed($a, $id, $state)) {
+			if (!empty($action['transitions'][$state]) && $this->isTransitionAllowed($ref, $a, $state)) {
 				$tr = array_merge($action, $tr);
 				unset($tr['transitions']);
 				$available_transitions[] = $a;
@@ -470,9 +470,9 @@ abstract class AbstractMachine
 	 * Invoke state machine transition. State machine is not instance of
 	 * this class, but it is represented by record in database.
 	 */
-	public function invokeTransition($id, $transition_name, $args, & $returns)
+	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, $new_id_callback = null)
 	{
-		$state = $this->getState($id);
+		$state = $ref->state;
 
 		// get action
 		$action = @ $this->actions[$transition_name];
@@ -488,7 +488,7 @@ abstract class AbstractMachine
 		$transition = array_merge($action, $transition);
 
 		// check access_policy
-		if (!$this->isTransitionAllowed($id, $transition_name, $state)) {
+		if (!$this->isTransitionAllowed($ref, $transition_name, $state)) {
 			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
 		}
 
@@ -496,11 +496,11 @@ abstract class AbstractMachine
 		$method = isset($transition['method']) ? $transition['method'] : $transition_name;
 		$prefix_args = isset($transition['args']) ? $transition['args'] : array();
 
-		// invoke method -- the first argument is $id, rest are $args as passed to $ref->action($args...).
+		// invoke method -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
 		if (!empty($prefix_args)) {
 			array_splice($args, 0, 0, $prefix_args);
 		}
-		array_unshift($args, $id);
+		array_unshift($args, $ref);
 		$ret = call_user_func_array(array($this, $method), $args);
 
 		// interpret return value
@@ -510,14 +510,17 @@ abstract class AbstractMachine
 				// nop, just pass it back
 				break;
 			case self::RETURNS_NEW_ID:
-				$id = $ret;
+				$new_id_callback($ret);
 				break;
 			default:
 				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
 		}
 
+		// invalidate cached state and properties data in $ref
+		unset($ref->properties);
+
 		// check result using assertion function
-		$new_state = $this->getState($id);
+		$new_state = $ref->state;
 		$target_states = $transition['targets'];
 		if (!is_array($target_states)) {
 			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
@@ -530,7 +533,7 @@ abstract class AbstractMachine
 
 		// state changed notification
 		if ($state != $new_state) {
-			$this->onStateChanged($id, $state, $transition_name, $new_state);
+			$this->onStateChanged($ref, $state, $transition_name, $new_state);
 		}
 
 		return $ret;
@@ -549,7 +552,7 @@ abstract class AbstractMachine
 	/**
 	 * Called when state is changed, when transition invocation is completed.
 	 */
-	protected function onStateChanged($id, $old_state, $transition_name, $new_state)
+	protected function onStateChanged(Reference $ref, $old_state, $transition_name, $new_state)
 	{
 	}
 
@@ -571,6 +574,38 @@ abstract class AbstractMachine
 		return $this->backend;
 	}
 
+
+	/**
+	 * Helper to create Reference to this machine.
+	 *
+	 * @see AbstractBackend::ref
+	 */
+	public function ref($id)
+	{
+		return new Reference($this, $id);
+	}
+
+
+	/**
+	 * Helper to create null Reference to this machine.
+	 *
+	 * @see AbstractBackend::nullRef
+	 */
+	public function nullRef()
+	{
+		return new Reference($this, null);
+	}
+
+
+	/**
+	 * Create pre-heated reference using properties loaded from elsewhere.
+	 *
+	 * @warning This may break things a lot. Be careful.
+	 */
+	public function hotRef($properties)
+	{
+		return Reference::createPreheatedReference($this, $properties);
+	}
 
 
 	/******************************************************************//**

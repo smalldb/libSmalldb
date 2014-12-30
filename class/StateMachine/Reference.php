@@ -126,10 +126,51 @@ class Reference implements \ArrayAccess, \Iterator
 		if (count($args) > 2) {
 			// composite primary key as multiple arguments
 			array_shift($args);
-			$this->id = $args;
+			$raw_id = $args;
 		} else {
-			$this->id = $id;
+			$raw_id = $id;
 		}
+
+		if (is_array($raw_id)) {
+			switch (count($raw_id)) {
+				case 0:
+					throw new \InvalidArgumentException('Invalid ID - empty array makes no sense.');
+				case 1:
+					list($this->id) = $raw_id;
+					break;
+				default:
+					$this->id = $raw_id;
+					break;
+			}
+		} else {
+			$this->id = $raw_id;
+		}
+	}
+
+
+	/**
+	 * Create pre-heated reference.
+	 *
+	 * @warning This may break things a lot. Be careful.
+	 */
+	public static function createPreheatedReference($machine, $properties)
+	{
+		$ref = new self($machine, null);
+		$ref->properties_cache = $properties;
+		$ref->state_cache = $properties['state'];
+
+		$id_properties = $machine->describeId();
+		if (count($id_properties) == 1) {
+			$ref->id = $properties[$id_properties[0]];
+		} else {
+			$id = array();
+			foreach ($id_properties as $k) {
+				$id[] = $properties[$k];
+			}
+			$ref->id = $id;
+		}
+
+		return $ref;
 	}
 
 
@@ -182,9 +223,17 @@ class Reference implements \ArrayAccess, \Iterator
 	public function __call($name, $arguments)
 	{
 		$this->emit($this->before_transition_cb, $name, $arguments);
+		$old_id = $this->id;
 
 		$this->clearCache();
-		$r = $this->machine->invokeTransition($this->id, $name, $arguments, $returns);
+		$t = $this;
+		$r = $this->machine->invokeTransition($this, $name, $arguments, $returns, function($new_id) use ($t) {
+			if (is_array($new_id) && count($new_id) == 1) {
+				list($t->id) = $new_id;
+			} else {
+				$t->id = $new_id;
+			}
+		});
 
 		$this->emit($this->after_transition_cb, $name, $arguments, $r, $returns);
 
@@ -194,8 +243,7 @@ class Reference implements \ArrayAccess, \Iterator
 				return $r;
 			case AbstractMachine::RETURNS_NEW_ID:
 				// When state machine ID changes, reference must be updated to point to the same machine.
-				$this->emit($this->pk_changed_cb, $r);
-				$this->id = $r;
+				$this->emit($this->pk_changed_cb, $old_id, $this->id);
 				return $this;
 			default:
 				throw new RuntimeException('Unknown semantics of the return value: '.$returns);

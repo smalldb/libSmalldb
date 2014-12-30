@@ -113,7 +113,7 @@ class RouterFactoryBlock extends BackendBlock
 			}
 
 			// Check access to requested transition ($action may be empty, then it is read access)
-			if (!$ref->machine->isTransitionAllowed($ref->id, $action)) {
+			if (!$ref->machine->isTransitionAllowed($ref, $action)) {
 				debug_msg('Action %s of machine [ %s ] is not accessible.', $action, join(', ', $id));
 				return false;
 			}
