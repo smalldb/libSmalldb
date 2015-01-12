@@ -221,8 +221,10 @@ class FlupdoGenericListing implements IListing
 				// Add filter to query builder
 				foreach ($filters as $f) {
 					$args = array($f['sql']);
-					foreach ($f['params'] as $p) {
-						$args[] = $query_filters[$p];
+					if (isset($f['params'])) {
+						foreach ($f['params'] as $p) {
+							$args[] = $query_filters[$p];
+						}
 					}
 					call_user_func_array(array($this->query, $f['stmt']), $args);
 				}

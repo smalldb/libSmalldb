@@ -116,6 +116,8 @@ class Reference implements \ArrayAccess, \Iterator
 	/**
 	 * Create reference and initialize it with given ID. To copy
 	 * a reference use clone keyword.
+	 *
+	 * TODO: Check $id to be made of scalar values only.
 	 */
 	public function __construct(AbstractMachine $machine, $id = null)
 	{
