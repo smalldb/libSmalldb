@@ -222,6 +222,8 @@ class FlupdoCrudMachine extends FlupdoMachine
 					$id[] = $this->flupdo->lastInsertId();
 				}
 			}
+		} else {
+			$id = $ref->id;
 		}
 		return $id;
 	}
