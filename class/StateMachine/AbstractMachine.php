@@ -349,10 +349,7 @@ abstract class AbstractMachine
 					}
 
 					// Create reference & cache it
-					$this->resolveMachineReference($view, $properties_cache, $ref_machine_type, $ref_machine_id);
-					$ref = new Reference($this->backend->getMachine($ref_machine_type), $ref_machine_id);
-					$view_cache[$view] = $ref;
-					return $ref;
+					return ($view_cache[$view] = $this->resolveMachineReference($view, $properties_cache));
 				} else {
 					throw new InvalidArgumentException('Unknown view: '.$view);
 				}
@@ -383,12 +380,11 @@ abstract class AbstractMachine
 	/**
 	 * Helper function to resolve reference to another machine.
 	 *
-	 * @param[in]  $reference_name    Name of the reference in AbstractMachine::references.
-	 * @param[in]  $properties_cache  Properties of referencing machine.
-	 * @param[out] $ref_machine_type  Resolved machine type (string).
-	 * @param[out] $ref_machine_id    Resolved machine ID.
+	 * @param $reference_name    Name of the reference in AbstractMachine::references.
+	 * @param $properties_cache  Properties of referencing machine.
+	 * @return Reference to referred machine.
 	 */
-	protected function resolveMachineReference($reference_name, $properties_cache, & $ref_machine_type, & $ref_machine_id)
+	protected function resolveMachineReference($reference_name, $properties_cache)
 	{
 		if (!isset($this->references[$reference_name])) {
 			throw new \InvalidArgumentException('Unknown reference: '.$reference_name);
@@ -405,6 +401,8 @@ abstract class AbstractMachine
 
 		// Get referenced machine type
 		$ref_machine_type = $r['machine_type'];
+
+		return new Reference($this->backend->getMachine($ref_machine_type), $ref_machine_id);
 	}
 
 

@@ -203,10 +203,12 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// anonymous: Only anonymous users allowed (not logged in)
 			case 'anonymous':
+				$user_id = $auth->getUserId();
 				return $user_id === null;
 
 			// user: All logged-in users allowed
 			case 'user':
+				$user_id = $auth->getUserId();
 				return $user_id !== null;
 
 			// owner: Owner must match current user

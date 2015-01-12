@@ -188,11 +188,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Check permission of owning machine
 		if ($this->owner_relation && $this->owner_create_transition) {
-			$this->resolveMachineReference($this->owner_relation, $properties, $ref_machine_type, $ref_machine_id);
-			if (!$this->backend->getMachine($ref_machine_type)->isTransitionAllowed($ref_machine_id, $this->owner_create_transition)) {
+			$ref_ref = $this->resolveMachineReference($this->owner_relation, $properties);
+			if (!$ref_ref->machine->isTransitionAllowed($ref_ref, $this->owner_create_transition)) {
 				throw new \RuntimeException(sprintf(
 					'Permission denied to create machine %s because transition %s of %s is not allowed.',
-					$this->machine_type, $this->owner_create_transition, $ref_machine_type
+					$this->machine_type, $this->owner_create_transition, $ref->machine_type
 				));
 			}
 		}
