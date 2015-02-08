@@ -316,16 +316,16 @@ class FlupdoGenericListing implements IListing
 							}
 							break;
 						case '~':
-							$this->query->where($this->query->quoteIdent($property).' REGEXP ?', $value);
+							$this->query->where("$p REGEXP ?", $value);
 							break;
 						case '!~':
-							$this->query->where($this->query->quoteIdent($property).' NOT REGEXP ?', $value);
+							$this->query->where("$p NOT REGEXP ?", $value);
 							break;
 						case '%':
-							$this->query->where($this->query->quoteIdent($property).' LIKE ?', $value);
+							$this->query->where("$p LIKE ?", $value);
 							break;
 						case '!%':
-							$this->query->where($this->query->quoteIdent($property).' NOT LIKE ?', $value);
+							$this->query->where("$p NOT LIKE ?", $value);
 							break;
 					}
 				}
