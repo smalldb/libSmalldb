@@ -1,6 +1,5 @@
 {
-    "name": "cascade/smalldb",
-    "type": "cascade-plugin",
+    "name": "cascade/libsmalldb",
     "description": "Smalldb: State machine abstraction layer",
     "license": "Apache-2.0",
     "authors": [
@@ -9,16 +8,11 @@
             "email": "jk@frozen-doe.net"
         }
     ],
-    "extra": {
-        "plugin": "smalldb"
-    },
     "autoload": {
-        "psr-4": { "Smalldb\\": "class/" }
+        "psr-4": { "Smalldb\\StateMachine\\": "class/" }
     },
     "require": {
-        "php": ">=5.4",
-        "cascade/composer-plugin": ">=1.1",
-		"cascade/core": ">=0.12"
+        "php": ">=5.4"
     },
     "suggest": {
         "flupdo/flupdo": "SQL database support"
