@@ -87,7 +87,7 @@ class JsonDirBackend extends AbstractBackend
 			|| filemtime(__FILE__) > $cache_mtime 		// check loader
 			|| filemtime($this->base_dir) > $cache_mtime)	// check directory (new/removed files)
 		{
-			debug_msg('Machine type table cache miss. Reloading...');
+			//debug_msg('Machine type table cache miss. Reloading...');
 			$this->machine_type_table = array();
 
 			// Scan base dir for machines
@@ -250,7 +250,7 @@ class JsonDirBackend extends AbstractBackend
 			return null;
 		}
 
-		debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
+		//debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
 		return new $desc['class']($this, $type, $desc, $this->getContext());
 	}
 

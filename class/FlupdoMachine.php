@@ -32,6 +32,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $flupdo;
 
 	/**
+	 * Authenticator (gets user id and role)
+	 */
+	protected $auth;
+
+	/**
 	 * Name of SQL table, where machine properties are stored.
 	 */
 	protected $table;
@@ -85,13 +90,17 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected function initializeMachine($config)
 	{
 		// Get flupdo resource
-		$flupdo_resource_name = @ $config['flupdo_resource'];
-		if ($flupdo_resource_name == null) {
-			$flupdo_resource_name = 'database';
-		}
-		$this->flupdo = $this->context->$flupdo_resource_name;
+		$flupdo_resource_name = isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database';
+		$this->flupdo = is_array($this->context) ? $this->context[$flupdo_resource_name] : $this->context->$flupdo_resource_name;
 		if (!($this->flupdo instanceof \Flupdo\Flupdo\Flupdo)) {
 			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+		}
+
+		// Get authenticator
+		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
+		$this->auth = is_array($this->context) ? $this->context[$auth_resource_name] : $this->context->$auth_resource_name;
+		if ($this->auth !== null && !($this->auth instanceof IAuth)) {
+			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\IAuth.');
 		}
 
 		// Use config if not specified otherwise
@@ -181,8 +190,6 @@ abstract class FlupdoMachine extends AbstractMachine
 			return true;
 		}
 
-		$auth = $this->backend->getContext()->auth;
-
 		if (!isset($this->access_policies[$access_policy_name])) {
 			throw new \InvalidArgumentException('Unknown policy: '.$access_policy_name);
 		}
@@ -190,7 +197,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($auth->getUserRole() == 'admin') {
+		if ($this->auth->getUserRole() == 'admin') {
 			// FIXME: Remove hardcoded role name
 			return true;
 		}
@@ -203,12 +210,12 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// anonymous: Only anonymous users allowed (not logged in)
 			case 'anonymous':
-				$user_id = $auth->getUserId();
+				$user_id = $this->auth->getUserId();
 				return $user_id === null;
 
 			// user: All logged-in users allowed
 			case 'user':
-				$user_id = $auth->getUserId();
+				$user_id = $this->auth->getUserId();
 				return $user_id !== null;
 
 			// owner: Owner must match current user
@@ -218,10 +225,10 @@ abstract class FlupdoMachine extends AbstractMachine
 					return true;
 				}
 				$properties = $ref->properties;
-				$user_id = $auth->getUserId();
+				$user_id = $this->auth->getUserId();
 				$owner_property = $access_policy['owner_property'];
 				if (isset($access_policy['session_state'])) {
-					if ($auth->getSessionMachine()->state != $access_policy['session_state']) {
+					if ($this->auth->getSessionMachine()->state != $access_policy['session_state']) {
 						return false;
 					}
 				}
@@ -229,7 +236,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
-				$user_role = $auth->getUserRole();
+				$user_role = $this->auth->getUserRole();
 				$required_role = $access_policy['required_role'];
 				return is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role;
 
@@ -262,8 +269,6 @@ abstract class FlupdoMachine extends AbstractMachine
 			return;
 		}
 
-		$auth = $this->backend->getContext()->auth;
-
 		if (!isset($this->access_policies[$access_policy_name])) {
 			throw new \InvalidArgumentException('Unknown policy: '.$access_policy_name);
 		}
@@ -271,7 +276,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($auth->getUserRole() == 'admin') {
+		if ($this->auth->getUserRole() == 'admin') {
 			// FIXME: Remove hardcoded role name
 			return;
 		}
@@ -294,11 +299,11 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// owner: Owner must match current user
 			case 'owner':
-				$user_id = $auth->getUserId();
+				$user_id = $this->auth->getUserId();
 				$owner_property = $query->quoteIdent($access_policy['owner_property']);
 				$table = $query->quoteIdent($this->table);
 				if (isset($access_policy['session_state'])) {
-					if ($auth->getSessionMachine()->state != $access_policy['session_state']) {
+					if ($this->auth->getSessionMachine()->state != $access_policy['session_state']) {
 						$query->where('FALSE');
 						return;
 					}
@@ -313,7 +318,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
-				$user_role = $auth->getUserRole();
+				$user_role = $this->auth->getUserRole();
 				$required_role = $access_policy['required_role'];
 				$this->query(is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role ? 'TRUE' : 'FALSE');
 				return;
@@ -461,9 +466,8 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	private function queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query, $clause = 'select')
 	{
-		$auth = $this->backend->getContext()->auth;
 		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
-		$user_id = $auth->getUserId();
+		$user_id = $this->auth->getUserId();
 		if (isset($policy['required_value'])) {
 			$query->$clause('('.$policy['sql_select'].') = ?'.$policy_alias, $user_id, $policy['required_value']);
 		} else {

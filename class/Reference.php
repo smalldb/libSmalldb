@@ -281,7 +281,7 @@ class Reference implements \ArrayAccess, \Iterator
 				}
 				return $this->properties_cache;
 			case 'actions':
-				return $this->machine->getAvailableTransitions($this->id);
+				return $this->machine->getAvailableTransitions($this);
 			default:
 				return $this->machine->getView($this->id, $key, $this->properties_cache, $this->view_cache, $this->persistent_view_cache);
 		}
