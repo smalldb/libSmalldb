@@ -39,18 +39,20 @@ interface IAuth
 
 
 	/**
-	 * Get user's role.
+	 * Check whether user has given role(s).
 	 *
 	 * Smalldb does not understand user roles, it can only check whether
 	 * user's role is one of required values. User's role is global and it
 	 * is not related to any instance of anything.
 	 *
-	 * User is expected to have exactly one role.
+	 * User may have any number of roles.
 	 *
-	 * @return User's role, or NULL when nobody is logged in or there are
-	 * 	no roles.
+	 * @param $roles Name of required role (string), or array of required
+	 * 	roles (array of strings).
+	 * @return TRUE when user has at least one of requested roles, or FALSE
+	 * 	otherwise.
 	 */
-	public function getUserRole();
+	public function hasUserRoles($roles);
 
 }
 

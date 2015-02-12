@@ -197,7 +197,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($this->auth->getUserRole() == 'admin') {
+		if ($this->auth->hasUserRoles('admin')) {
 			// FIXME: Remove hardcoded role name
 			return true;
 		}
@@ -236,9 +236,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
-				$user_role = $this->auth->getUserRole();
-				$required_role = $access_policy['required_role'];
-				return is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role;
+				return $this->auth->hasUserRoles($access_policy['required_role']);
 
 			// These are done by SQL select.
 			case 'user_relation':
@@ -276,7 +274,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($this->auth->getUserRole() == 'admin') {
+		if ($this->auth->hasUserRoles('admin')) {
 			// FIXME: Remove hardcoded role name
 			return;
 		}
@@ -318,9 +316,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
-				$user_role = $this->auth->getUserRole();
-				$required_role = $access_policy['required_role'];
-				$this->query(is_array($required_role) ? in_array($user_role, $required_role) : $user_role == $required_role ? 'TRUE' : 'FALSE');
+				$query->where($this->auth->hasUserRoles($access_policy['required_role']) ? 'TRUE' : 'FALSE');
 				return;
 
 			// These are done by SQL select.
