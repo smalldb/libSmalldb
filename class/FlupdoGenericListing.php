@@ -237,19 +237,23 @@ class FlupdoGenericListing implements IListing
 					$this->query->where($machine_table.'.'.$this->query->quoteIdent($property).' = ?', $value);
 				} else if (isset($machine_references[$property])) {
 					// Filter by reference
-					if ($value->id === null) {
-						throw new \InvalidArgumentException('Cannot filter by null ref.');
-					}
-					if ($value->machine_type != $machine_references[$property]['machine_type']) {
+					if ($value !== null && $value->machine_type != $machine_references[$property]['machine_type']) {
 						throw new \InvalidArgumentException('Referenced machine type does not match reference machine type.');
 					}
-
 					// Add where clause for each ID fragment
 					$id_properties = $machine_references[$property]['machine_id'];
-					$id_values = (array) $value->id;
 					$id_parts = count($id_properties);
-					for ($i = 0; $i < $id_parts; $i++) {
-						$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' = ?', $id_values[$i]);
+					if ($value === null || $value->id === null) {
+						// Null ref
+						for ($i = 0; $i < $id_parts; $i++) {
+							$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' IS NULL');
+						}
+					} else {
+						// Non-null ref
+						$id_values = (array) $value->id;
+						for ($i = 0; $i < $id_parts; $i++) {
+							$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' = ?', $id_values[$i]);
+						}
 					}
 				} else {
 					// Check if operator is the last character of filter name
