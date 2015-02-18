@@ -42,6 +42,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $table;
 
 	/**
+	 * Alias of the $table. Default is to not use it.
+	 */
+	protected $table_alias = null;
+
+	/**
 	 * List of columns which are used as primary key.
 	 */
 	protected $pk_columns = null;
@@ -107,6 +112,9 @@ abstract class FlupdoMachine extends AbstractMachine
 		if ($this->table === null && isset($config['table'])) {
 			$this->table = (string) $config['table'];
 		}
+		if ($this->table_alias === null && isset($config['table_alias'])) {
+			$this->table_alias = (string) $config['table_alias'];
+		}
 		if ($this->url_fmt === null && isset($config['url'])) {
 			$this->url_fmt = (string) $config['url'];
 		}
@@ -120,6 +128,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			switch ($k) {
 				case 'flupdo':
 				case 'table':
+				case 'table_alias':
 				case 'url_fmt':
 				case 'parent_url_fmt':
 				case 'post_action_url_fmt':
@@ -232,7 +241,7 @@ abstract class FlupdoMachine extends AbstractMachine
 						return false;
 					}
 				}
-				return $user_id !== null && $user_id == $properties[$owner_property];
+				return $user_id !== null ? $user_id == $properties[$owner_property] : $properties[$owner_property] === null;
 
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
@@ -312,7 +321,7 @@ abstract class FlupdoMachine extends AbstractMachine
 					}
 				}
 				if ($user_id === null) {
-					$query->where('FALSE');
+					$query->where("$table.$owner_property IS NULL");
 					return;
 				} else {
 					$query->where("$table.$owner_property = ?", $user_id);
@@ -382,7 +391,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddFrom($query)
 	{
-		$query->from($query->quoteIdent($this->table));
+		if ($this->table_alias) {
+			$query->from($query->quoteIdent($this->table).' AS '.$query->quoteIdent($this->table_alias));
+		} else {
+			$query->from($query->quoteIdent($this->table));
+		}
 	}
 
 
@@ -408,7 +421,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddPropertiesSelect($query)
 	{
-		$table = $query->quoteIdent($this->table);
+		$table = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
 
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
@@ -505,13 +518,15 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddPrimaryKeyWhere($query, $id, $clause = 'where')
 	{
+		$table = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
+
 		if ($id === null || $id === array() || $id === false || $id === '') {
 			throw new InvalidArgumentException('Empty ID.');
 		} else if (count($id) != count($this->describeId())) {
 			throw new InvalidArgumentException(sprintf('Malformed ID: got %d pieces of %d.', count($id), count($this->describeId())));
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
-			$query->$clause($query->quoteIdent($this->table).'.'.$query->quoteIdent($col).' = ?', $val);
+			$query->$clause($query->quoteIdent($table).'.'.$query->quoteIdent($col).' = ?', $val);
 		}
 		return $query;
 	}
