@@ -239,6 +239,11 @@ abstract class FlupdoMachine extends AbstractMachine
 				return $this->auth->hasUserRoles($access_policy['required_role']);
 
 			// These are done by SQL select.
+			case 'condition':
+				$properties = $ref->properties;
+				return !empty($properties['_access_policy_'.$access_policy_name]);
+
+			// These are done by SQL select.
 			case 'user_relation':
 				if ($ref->isNullRef()) {
 					// No relation to nonexistent entity.
@@ -317,6 +322,11 @@ abstract class FlupdoMachine extends AbstractMachine
 			// role: Current user must have specified role ($ref is ignored)
 			case 'role':
 				$query->where($this->auth->hasUserRoles($access_policy['required_role']) ? 'TRUE' : 'FALSE');
+				return;
+
+			// These are done by SQL select.
+			case 'condition':
+				$this->queryAddSimpleAccessPolicyCondition($access_policy_name, $access_policy, $query, 'where');
 				return;
 
 			// These are done by SQL select.
@@ -447,8 +457,13 @@ abstract class FlupdoMachine extends AbstractMachine
 		if (!empty($this->access_policies)) {
 			//debug_dump($this->access_policies);
 			foreach ($this->access_policies as $policy_name => $policy) {
-				if ($policy['type'] == 'user_relation') {
-					$this->queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query);
+				switch ($policy['type']) {
+					case 'condition':
+						$this->queryAddSimpleAccessPolicyCondition($policy_name, $policy, $query, 'select');
+						break;
+					case 'user_relation':
+						$this->queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query, 'select');
+						break;
 				}
 			}
 		}
@@ -458,9 +473,19 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Add simple policy condition to SQL query (select or where clause).
+	 */
+	private function queryAddSimpleAccessPolicyCondition($policy_name, $policy, $query, $clause)
+	{
+		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
+			$query->$clause('('.$policy['sql_select'].')'.$policy_alias);
+	}
+
+
+	/**
 	 * Add user-relation policy condition to SQL query (select or where clause).
 	 */
-	private function queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query, $clause = 'select')
+	private function queryAddUserRelationAccessPolicyCondition($policy_name, $policy, $query, $clause)
 	{
 		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
 		$user_id = $this->auth->getUserId();
