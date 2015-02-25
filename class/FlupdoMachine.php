@@ -249,6 +249,11 @@ abstract class FlupdoMachine extends AbstractMachine
 
 			// These are done by SQL select.
 			case 'condition':
+				if ($ref->isNullRef()) {
+					// Nonexistent entity has nulls everywhere
+					// FIXME: Are we sure?
+					return false;
+				}
 				$properties = $ref->properties;
 				return !empty($properties['_access_policy_'.$access_policy_name]);
 
