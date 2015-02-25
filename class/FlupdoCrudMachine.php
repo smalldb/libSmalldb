@@ -77,10 +77,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 	protected function setupDefaultMachine($config)
 	{
 		// Name of inputs and outputs with properties
-		$io_name = (string) $config['io_name'];
-		if ($io_name == '') {
-			$io_name = 'item';
-		}
+		$io_name = isset($config['io_name']) ? (string) $config['io_name'] : 'item';
 
 		// Create default transitions?
 		$no_default_transitions = !empty($config['crud_machine_no_default_transitions']);
