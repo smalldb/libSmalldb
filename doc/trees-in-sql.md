@@ -80,9 +80,32 @@ The whole tree is rebuilt on every update, to ensure consistency. This approach
 is not suitable for very large trees, however, it is very simple and reliable.
 
 
-Usage
------
+Usage - Selects
+---------------
 
-To recalculate tree simply call `FlupdoCrudMachine::recalculateTree()` at the
-end of your transition handling method. That's all.
+To select a subtree, you need to know `tree_left` and `tree_right` of the
+parent, then you can recursively select all its children using simple select:
+
+    SELECT *
+    FROM tree_node
+    WHERE tree_left BETWEEN :parent_left AND :parent_right
+    ORDER BY tree_left
+
+Or if you have only `parent_id`, you can use simple and fast subselect:
+
+    SELECT *
+    FROM tree_node
+    WHERE tree_left
+        BETWEEN (SELECT tree_left  FROM tree_node WHERE id = :parent_id)
+        AND     (SELECT tree_right FROM tree_node WHERE id = :parent_id)
+    ORDER BY tree_left
+
+
+Usage - Updates
+---------------
+
+To recalculate whole tree (no partial updates supported) simply call
+`FlupdoCrudMachine::recalculateTree()` at the end of your transition handling
+method. That's all.
+
 
