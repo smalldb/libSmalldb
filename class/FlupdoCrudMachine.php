@@ -29,6 +29,21 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/// Transition of owner to check when creating this machine
 	protected $owner_create_transition = null;
 
+	/// Nested-sets configuration
+	protected $nested_sets_table_columns = array(
+		'id' => 'id',
+		'parent_id' => 'parent_id',
+		'left' => 'tree_left',
+		'right' => 'tree_right',
+		'depth' => 'tree_depth',
+	);
+
+	/// Enable nested-sets tree?
+	protected $nested_sets_enabled = false;
+
+	/// Order by this column
+	protected $nested_sets_order_by = 'id';
+
 
 	/**
 	 * @copydoc FlupdoMachine::initializeMachine()
@@ -51,6 +66,20 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 		if (isset($config['owner_create_transition'])) {
 			$this->owner_create_transition = $config['owner_create_transition'];
+		}
+
+		// nested-sets configuration
+		if (isset($config['nested_sets'])) {
+			$ns = $config['nested_sets'];
+			if (isset($ns['table_columns'])) {
+				$this->nested_sets_table_columns = $ns['table_columns'];
+			}
+			if (isset($ns['order_by'])) {
+				$this->nested_sets_order_by = $ns['order_by'];
+			}
+			if (isset($ns['enabled'])) {
+				$this->nested_sets_enabled = $ns['enabled'];
+			}
 		}
 
 		// properties
@@ -226,6 +255,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 		} else {
 			$id = $ref->id;
 		}
+
+		if ($this->nested_sets_enabled) {
+			$this->recalculateTree();
+		}
+
 		return $id;
 	}
 
@@ -252,6 +286,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 		$n = $q->debugDump()->exec();
 
 		if ($n !== FALSE) {
+			if ($this->nested_sets_enabled) {
+				$this->recalculateTree();
+			}
 			return true;
 		} else {
 			return false;
@@ -275,6 +312,78 @@ class FlupdoCrudMachine extends FlupdoMachine
 		} else {
 			return false;
 		}
+	}
+
+
+	/**
+	 * Recalculate nested-sets tree indices
+	 *
+	 * To use this feature a parent, left, right and depth columns must be specified.
+	 *
+	 * Composed primary keys are not supported yet.
+	 *
+	 * Three extra columns are required: tree_left, tree_right, tree_depth
+	 * (ints, all nullable). This function will update them according to id
+	 * and parent_id columns.
+	 */
+	protected function recalculateTree()
+	{
+		if (!$this->nested_sets_enabled) {
+			throw new \RuntimeException('Nested sets are disabled for this entity.');
+		}
+
+		$q_table     = $this->flupdo->quoteIdent($this->table);
+		$cols        = $this->nested_sets_table_columns;
+		$c_order_by  = $this->nested_sets_order_by;
+		$c_id        = $this->flupdo->quoteIdent($cols['id']);
+		$c_parent_id = $this->flupdo->quoteIdent($cols['parent_id']);
+		$c_left      = $this->flupdo->quoteIdent($cols['left']);
+		$c_right     = $this->flupdo->quoteIdent($cols['right']);
+		$c_depth     = $this->flupdo->quoteIdent($cols['depth']);
+
+		$set = $this->flupdo->select($c_id)
+			->from($q_table)
+			->where("$c_parent_id IS NULL")
+			->orderBy($c_order_by)
+			->query();
+
+		$this->recalculateSubTree($set, 1, 0, $q_table, $c_order_by, $c_id, $c_parent_id, $c_left, $c_right, $c_depth);
+	}
+
+
+	/**
+	 * Recalculate given subtree.
+	 *
+	 * @see recalculateTree()
+	 */
+	private function recalculateSubTree($set, $left, $depth, $q_table, $c_order_by, $c_id, $c_parent_id, $c_left, $c_right, $c_depth)
+	{
+		foreach($set as $row) {
+			$id = $row['id'];
+			
+			$this->flupdo->update($q_table)
+				->set("$c_left = ?", $left)
+				->set("$c_depth = ?", $depth)
+				->where("$c_id = ?", $id)
+				->exec();
+
+			$sub_set = $this->flupdo->select($c_id)
+				->from($q_table)
+				->where("$c_parent_id = ?", $id)
+				->orderBy($c_order_by)
+				->query();
+
+			$left = $this->recalculateSubTree($sub_set, $left + 1, $depth + 1,
+					$q_table, $c_order_by, $c_id, $c_parent_id, $c_left, $c_right, $c_depth);
+			
+			$this->flupdo->update($q_table)
+				->set("$c_right = ?", $left)
+				->where("$c_id = ?", $id)
+				->exec();
+
+			$left++;
+		}
+		return $left;
 	}
 
 }
