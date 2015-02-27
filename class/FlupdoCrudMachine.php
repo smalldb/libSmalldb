@@ -199,8 +199,8 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// insert
-		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($properties))));
-		$n	->into($this->queryGetThisTable($n))
+		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($properties))))
+			->into($this->flupdo->quoteIdent($this->table))
 			->values(array($this->encodeProperties($properties)))
 			->debugDump()
 			->exec();
