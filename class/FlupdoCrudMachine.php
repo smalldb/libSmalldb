@@ -199,8 +199,8 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// insert
-		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($properties))))
-			->into($this->flupdo->quoteIdent($this->table))
+		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($properties))));
+		$n	->into($this->queryGetThisTable($n))
 			->values(array($this->encodeProperties($properties)))
 			->debugDump()
 			->exec();
@@ -243,7 +243,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// build update query
-		$q = $this->flupdo->update($this->flupdo->quoteIdent($this->table));
+		$q = $this->flupdo->update($this->queryGetThisTable($this->flupdo));
 		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 		foreach ($this->encodeProperties($properties) as $k => $v) {
 			$q->set($q->quoteIdent($k).' = ?', $v);

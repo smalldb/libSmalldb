@@ -396,10 +396,22 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected function queryAddFrom($query)
 	{
+		$query->from($this->queryGetThisTable($query));
+	}
+
+
+	/**
+	 * Get table name with alias
+	 *
+	 * @param $query is used for quoting. It can be Flupdo or FlupdoBuilder
+	 * @return quoted SQL fragment containing table name, i.e. "`table` AS `this`".
+	 */
+	protected function queryGetThisTable($query)
+	{
 		if ($this->table_alias) {
-			$query->from($query->quoteIdent($this->table).' AS '.$query->quoteIdent($this->table_alias));
+			return $query->quoteIdent($this->table).' AS '.$query->quoteIdent($this->table_alias);
 		} else {
-			$query->from($query->quoteIdent($this->table));
+			return $query->quoteIdent($this->table);
 		}
 	}
 
