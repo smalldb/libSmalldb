@@ -178,6 +178,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 			$properties = array_merge($properties, array_combine($this->describeId(), (array) $ref->id));
 		}
 
+		if (empty($properties)) {
+			throw new \InvalidArgumentException('No valid properties provided.');
+		}
+
 		// Set owner
 		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
 			$properties[$this->user_id_table_column] = $this->backend->getAuth()->$a();
@@ -233,6 +237,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 	{
 		// filter out unknown keys
 		$properties = array_intersect_key($properties, $this->properties);
+
+		if (empty($properties)) {
+			throw new \InvalidArgumentException('No valid properties provided.');
+		}
 
 		// build update query
 		$q = $this->flupdo->update($this->flupdo->quoteIdent($this->table));
