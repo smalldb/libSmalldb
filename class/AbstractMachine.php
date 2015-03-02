@@ -360,7 +360,7 @@ abstract class AbstractMachine
 	/**
 	 * Create URL using properties and given format.
 	 */
-	private function urlFormat($id, $url_fmt, $properties_cache)
+	protected function urlFormat($id, $url_fmt, $properties_cache)
 	{
 		if (isset($url_fmt)) {
 			if ($properties_cache === null) {
