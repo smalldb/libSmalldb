@@ -56,7 +56,7 @@ class ArrayMachine extends AbstractMachine
 	 * Returns true if user has required access_policy to invoke a 
 	 * transition, which requires given access_policy.
 	 */
-	protected function checkAccessPolicy($access_policy, $id)
+	protected function checkAccessPolicy($access_policy, Reference $ref)
 	{
 		return true;
 	}
