@@ -154,10 +154,14 @@ namespace Smalldb\StateMachine;
 class FlupdoGenericListing implements IListing
 {
 
-	protected $machine;		///< Parent state machine, which created this listing.
-	protected $query;		///< SQL query to execute.
-	protected $result;		///< PDOStatement, result of the query.
-	protected $query_filters;	///< Actual filters.
+	protected $machine;			///< Parent state machine, which created this listing.
+	protected $query;			///< SQL query to execute.
+	protected $result;			///< PDOStatement, result of the query.
+	protected $query_filters;		///< Actual filters.
+
+	private   $before_called = false;	///< True, when before_query was called.
+	protected $before_query = array();	///< List of callables to be called just before the query is executed.
+	protected $after_query = array();	///< List of callables to be called in destructor, only if the query has been executed.
 
 
 	/**
@@ -165,12 +169,17 @@ class FlupdoGenericListing implements IListing
 	 *
 	 * @param $machine State machine implementation to inspect.
 	 * @param $query_builder Query builder where filters will be added.
+	 * @param $sphinx Flupdo instance connected to Sphinx index (optional)
 	 * @param $query_filters Requested filters to add to $query_builder.
 	 * @param $machine_filters Custom filter definitions (how things should be filtered, not filtering itself).
 	 * @param $machine_properties State machine properties definitions.
 	 * @param $machine_references State machine references to other state machines.
 	 */
-	public function __construct(AbstractMachine $machine, \Flupdo\Flupdo\SelectBuilder $query_builder, $query_filters,
+	public function __construct(
+		AbstractMachine $machine,
+		\Flupdo\Flupdo\SelectBuilder $query_builder,
+		\Flupdo\Flupdo\Flupdo $sphinx = null,
+		$query_filters,
 		$machine_table, $machine_filters, $machine_properties, $machine_references)
 	{
 		$this->machine = $machine;
@@ -178,6 +187,7 @@ class FlupdoGenericListing implements IListing
 
 		// Prepare query builder
 		$this->query = $query_builder;
+		$this->sphinx = $sphinx;
 		$machine_table = $this->query->quoteIdent($machine_table);
 
 		// Limit & offset
@@ -213,6 +223,10 @@ class FlupdoGenericListing implements IListing
 				} else if (isset($machine_filters[$filter_name]['query'])) {
 					// Fallback if query_map does not contain value or does not exist at all
 					$filters = $machine_filters[$filter_name]['query'];
+				} else if (isset($machine_filters[$filter_name]['sphinx_fulltext'])) {
+					// Sphinx connector
+					$this->setupSphinxSearch($filter_name, $value, $machine_filters[$filter_name]);
+					continue;
 				} else {
 					// No filter here.
 					continue;
@@ -361,9 +375,14 @@ class FlupdoGenericListing implements IListing
 	public function query()
 	{
 		if ($this->result === null) {
+			$this->before_called = true;
+			foreach ($this->before_query as $callable) {
+				$callable();
+			}
 			try {
 				$this->result = $this->query->query();
 				$this->result->setFetchMode(\PDO::FETCH_ASSOC);
+
 			}
 			catch (\Flupdo\Flupdo\FlupdoSqlException $ex) {
 				error_log("Failed SQL query:\n".$this->query->getSqlQuery());
@@ -374,6 +393,16 @@ class FlupdoGenericListing implements IListing
 			throw new RuntimeException('Query already performed.');
 		}
 		return $this->result;
+	}
+
+
+	public function __destruct()
+	{
+		if ($this->before_called) {
+			foreach ($this->after_query as $callable) {
+				$callable();
+			}
+		}
 	}
 
 
@@ -428,6 +457,30 @@ class FlupdoGenericListing implements IListing
 		} else {
 			return $this->query_filters;
 		}
+	}
+
+
+	protected function setupSphinxSearch($filter_name, $value, $machine_filter)
+	{
+		$sphinx_key_column = $this->query->quoteIdent($machine_filter['sphinx_key_column']);
+		$temp_table = $this->query->quoteIdent('_sphinx_temp_'.$filter_name);
+		$index_name = $this->query->quoteIdent($machine_filter['index_name']);
+
+		$this->query->where("$sphinx_key_column IN (SELECT $temp_table.id FROM $temp_table)");
+
+		$this->before_query[] = function() use ($temp_table, $index_name, $value) {
+			$this->query->pdo->query("CREATE TEMPORARY TABLE $temp_table (`id` INT(11) NOT NULL)");
+
+			$sr = $this->sphinx->select('*')->from($index_name)->where('MATCH(?)', $value)->query();
+			$ins = $this->query->pdo->prepare("INSERT INTO $temp_table (id) VALUES (:id)");
+			foreach ($sr as $row) {
+				$ins->exec(array('id' => $row['id']));
+			}
+		};
+
+		$this->after_query[] = function() use ($temp_table) {
+			$this->query->pdo->query("DROP TEMPORARY TABLE $temp_table");
+		};
 	}
 
 }

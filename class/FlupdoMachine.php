@@ -32,6 +32,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $flupdo;
 
 	/**
+	 * Sphinx indexer connection.
+	 */
+	protected $sphinx;
+
+	/**
 	 * Authenticator (gets user id and role)
 	 */
 	protected $auth;
@@ -99,6 +104,17 @@ abstract class FlupdoMachine extends AbstractMachine
 		$this->flupdo = is_array($this->context) ? $this->context[$flupdo_resource_name] : $this->context->$flupdo_resource_name;
 		if (!($this->flupdo instanceof \Flupdo\Flupdo\Flupdo)) {
 			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+		}
+
+		// Get sphinx resource (optional)
+		$sphinx_resource_name = isset($config['sphinx_resource']) ? $config['sphinx_resource'] : null;
+		if ($sphinx_resource_name) {
+			$this->sphinx = is_array($this->context) ? $this->context[$sphinx_resource_name] : $this->context->$sphinx_resource_name;
+			if (!($this->sphinx instanceof \Flupdo\Flupdo\Flupdo)) {
+				throw new InvalidArgumentException('Sphinx resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+			}
+		} else {
+			$this->sphinx = null;
 		}
 
 		// Get authenticator
@@ -374,7 +390,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			$filters = array_replace($this->default_filters, $filters);
 		}
 
-		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $filters,
+		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $this->sphinx, $filters,
 			$this->table, $this->filters, $this->properties, $this->references);
 	}
 
