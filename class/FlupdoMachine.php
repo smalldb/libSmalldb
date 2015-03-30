@@ -206,7 +206,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($this->auth->hasUserRoles(array('admin', 'root'))) {
+		if ($this->auth->isAllMighty()) {
 			// FIXME: Remove hardcoded role name
 			return true;
 		}
@@ -293,7 +293,7 @@ abstract class FlupdoMachine extends AbstractMachine
 
 		//debug_dump($access_policy, 'POLICY: '.$access_policy_name.' @ '.get_class($this));
 
-		if ($this->auth->hasUserRoles('admin')) {
+		if ($this->auth->isAllMighty()) {
 			// FIXME: Remove hardcoded role name
 			return;
 		}
@@ -508,7 +508,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	private function queryAddSimpleAccessPolicyCondition($policy_name, $policy, $query, $clause)
 	{
 		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
+		if ($this->auth->isAllMighty()) {
+			$query->$clause('TRUE'.$policy_alias);
+		} else {
 			$query->$clause('('.$policy['sql_select'].')'.$policy_alias);
+		}
 	}
 
 
@@ -519,7 +523,9 @@ abstract class FlupdoMachine extends AbstractMachine
 	{
 		$policy_alias = $clause == 'select' ? ' AS '.$query->quoteIdent('_access_policy_'.$policy_name) : '';
 		$user_id = $this->auth->getUserId();
-		if (isset($policy['required_value'])) {
+		if ($this->auth->isAllMighty()) {
+			$query->$clause('TRUE'.$policy_alias);
+		} else if (isset($policy['required_value'])) {
 			$query->$clause('('.$policy['sql_select'].') = ?'.$policy_alias, $user_id, $policy['required_value']);
 		} else {
 			$query->$clause('('.$policy['sql_select'].') IS NOT NULL'.$policy_alias, $user_id);

@@ -54,5 +54,13 @@ interface IAuth
 	 */
 	public function hasUserRoles($roles);
 
+
+	/**
+	 * Is user all mighty? (Admin or something like that.)
+	 *
+	 * When this function returns true, access control will be disabled.
+	 */
+	public function isAllMighty();
+
 }
 
