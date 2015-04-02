@@ -94,6 +94,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	protected $state_select = null;
 
+
 	/**
 	 * Define state machine used by all instances of this type.
 	 */
@@ -102,16 +103,16 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Get flupdo resource
 		$flupdo_resource_name = isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database';
 		$this->flupdo = is_array($this->context) ? $this->context[$flupdo_resource_name] : $this->context->$flupdo_resource_name;
-		if (!($this->flupdo instanceof \Flupdo\Flupdo\Flupdo)) {
-			throw new InvalidArgumentException('Flupdo resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+		if (!($this->flupdo instanceof \Flupdo\Flupdo\IFlupdo)) {
+			throw new InvalidArgumentException('Flupdo resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
 		}
 
 		// Get sphinx resource (optional)
 		$sphinx_resource_name = isset($config['sphinx_resource']) ? $config['sphinx_resource'] : null;
 		if ($sphinx_resource_name) {
 			$this->sphinx = is_array($this->context) ? $this->context[$sphinx_resource_name] : $this->context->$sphinx_resource_name;
-			if (!($this->sphinx instanceof \Flupdo\Flupdo\Flupdo)) {
-				throw new InvalidArgumentException('Sphinx resource is not an instance of \\Smalldb\\Flupdo\\Flupdo.');
+			if (!($this->sphinx instanceof \Flupdo\Flupdo\IFlupdo)) {
+				throw new InvalidArgumentException('Sphinx resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
 			}
 		} else {
 			$this->sphinx = null;
