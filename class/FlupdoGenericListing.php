@@ -178,7 +178,7 @@ class FlupdoGenericListing implements IListing
 	public function __construct(
 		AbstractMachine $machine,
 		\Flupdo\Flupdo\SelectBuilder $query_builder,
-		\Flupdo\Flupdo\Flupdo $sphinx = null,
+		\Flupdo\Flupdo\IFlupdo $sphinx = null,
 		$query_filters,
 		$machine_table, $machine_filters, $machine_properties, $machine_references)
 	{
@@ -474,7 +474,7 @@ class FlupdoGenericListing implements IListing
 			$sr = $this->sphinx->select('*')->from($index_name)->where('MATCH(?)', $value)->query();
 			$ins = $this->query->pdo->prepare("INSERT INTO $temp_table (id) VALUES (:id)");
 			foreach ($sr as $row) {
-				$ins->exec(array('id' => $row['id']));
+				$ins->execute(array('id' => $row['id']));
 			}
 		};
 
