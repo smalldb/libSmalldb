@@ -151,6 +151,14 @@ class Reference implements \ArrayAccess, \Iterator
 
 
 	/**
+	 * Show relevant data when using var_dump().
+	 */
+	public function __debugInfo() {
+		return $this->properties;
+	}
+
+
+	/**
 	 * Create pre-heated reference.
 	 *
 	 * @warning This may break things a lot. Be careful.
