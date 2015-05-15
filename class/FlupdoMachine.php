@@ -90,6 +90,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $default_filters = null;
 
 	/**
+	 * Additional filters data definition for listing
+	 */
+	protected $additional_filters_data = null;
+
+	/**
 	 * Select expression for selecting machine state
 	 */
 	protected $state_select = null;
@@ -392,7 +397,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 
 		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $this->sphinx, $filters,
-			$this->table, $this->filters, $this->properties, $this->references);
+			$this->table, $this->filters, $this->properties, $this->references, $this->additional_filters_data);
 	}
 
 

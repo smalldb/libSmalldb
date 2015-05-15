@@ -158,6 +158,7 @@ class FlupdoGenericListing implements IListing
 	protected $query;			///< SQL query to execute.
 	protected $result;			///< PDOStatement, result of the query.
 	protected $query_filters;		///< Actual filters.
+	protected $additional_filters_data;	///< Additional filter data source definition (these are evaluated and added to processed filters).
 
 	private   $before_called = false;	///< True, when before_query was called.
 	protected $before_query = array();	///< List of callables to be called just before the query is executed.
@@ -180,10 +181,11 @@ class FlupdoGenericListing implements IListing
 		\Flupdo\Flupdo\SelectBuilder $query_builder,
 		\Flupdo\Flupdo\IFlupdo $sphinx = null,
 		$query_filters,
-		$machine_table, $machine_filters, $machine_properties, $machine_references)
+		$machine_table, $machine_filters, $machine_properties, $machine_references, $additional_filters_data)
 	{
 		$this->machine = $machine;
 		$this->query_filters = $query_filters;
+		$this->additional_filters_data = $additional_filters_data;
 
 		// Prepare query builder
 		$this->query = $query_builder;
@@ -442,7 +444,7 @@ class FlupdoGenericListing implements IListing
 	 * limit & offset removed (everything else is preserved). This is a few
 	 * orders of magnitude faster than SQL_CALC_FOUND_ROWS.
 	 */
-	function getProcessedFilters()
+	public function getProcessedFilters()
 	{
 		if ($this->result !== null) {
 			$q = clone $this->query;	// make sure we do not modify original query
@@ -453,9 +455,26 @@ class FlupdoGenericListing implements IListing
 				->fetchColumn();
 			$filters = $this->query_filters;
 			$filters['_count'] = $count;
+			$this->calculateAdditionalFiltersData($filters);
 			return $filters;
 		} else {
 			return $this->query_filters;
+		}
+	}
+
+
+	/**
+	 * Calculate additional filter data.
+	 *
+	 * @param $filters Filters to populate with additional data.
+	 * @return Nothing.
+	 */
+	protected function calculateAdditionalFiltersData(& $filters)
+	{
+		foreach ($this->additional_filters_data as $f => $src) {
+			if (isset($src['query'])) {
+				$filters[$f] = $this->query->pdo->query($src['query'])->fetchColumn();
+			}
 		}
 	}
 
