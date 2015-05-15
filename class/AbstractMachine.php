@@ -473,14 +473,16 @@ abstract class AbstractMachine
 		$state = $ref->state;
 
 		// get action
-		$action = @ $this->actions[$transition_name];
-		if ($action === null) {
+		if (isset($this->actions[$transition_name])) {
+			$action = $this->actions[$transition_name];
+		} else {
 			throw new TransitionException('Unknown transition requested: '.$transition_name);
 		}
 
 		// get transition (instance of action)
-		$transition = @ $action['transitions'][$state];
-		if ($transition === null) {
+		if (isset($action['transitions'][$state])) {
+			$transition = $action['transitions'][$state];
+		} else {
 			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
 		}
 		$transition = array_merge($action, $transition);
@@ -490,15 +492,26 @@ abstract class AbstractMachine
 			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
 		}
 
+		// invoke pre-transition checks
+		if (isset($transition['pre_check_methods'])) {
+			foreach ($transition['pre_check_methods'] as $m) {
+				if (call_user_func(array($this, $m), $ref, $transition_name, $args) === false) {
+					throw new TransitionPreCheckException('Transition "'.$transition_name.'" aborted by method "'.$m.'".');
+				}
+			}
+		}
+
 		// get method
 		$method = isset($transition['method']) ? $transition['method'] : $transition_name;
 		$prefix_args = isset($transition['args']) ? $transition['args'] : array();
 
-		// invoke method -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
+		// prepare arguments -- the first argument is $ref, rest are $args as passed to $ref->action($args...).
 		if (!empty($prefix_args)) {
 			array_splice($args, 0, 0, $prefix_args);
 		}
 		array_unshift($args, $ref);
+
+		// invoke method
 		$ret = call_user_func_array(array($this, $method), $args);
 
 		// interpret return value
@@ -528,6 +541,14 @@ abstract class AbstractMachine
 				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
 				.'Expected states: '.join(', ', $target_states).'.');
 		}
+
+		// invoke post-transition callbacks
+		if (isset($transition['post_transition_methods'])) {
+			foreach ($transition['post_transition_methods'] as $m) {
+				call_user_func(array($this, $m), $ref, $transition_name, $args, $ret);
+			}
+		}
+
 
 		// state changed notification
 		if ($state != $new_state) {

@@ -7,7 +7,7 @@ machine:
 
   1. PHP Class inherited from Smalldb\StateMachine\AbstractMachine.
   2. JSON file
-  3. JSON file + GraphML file
+  3. JSON file + GraphML file (obsolete)
 
 Since transition implementations require some PHP code anyway, there is no way
 to remove assigned PHP class completely (at least not for now). However, in
@@ -24,4 +24,61 @@ imperfections of used editor.
 
 @see Examples of state machine definitions are in the
      `doc/examples/statemachine/` directory.
+
+
+State Machine Options
+---------------------
+
+...
+
+
+State Options
+-------------
+
+`label`
+:	Human readable name of the state.
+
+`color`
+:	Color of the state in diagrams.
+
+`group`
+:	Group to which state belongs. Used only in diagrams.
+
+
+Action and Transition Options
+-----------------------------
+
+`label`
+:	Human readable name of the transition.
+
+`color`
+:	Color of the arrow and its label in diagrams.
+
+`weight`
+:	Weight of arrow in diagrams. Heavier arrows should be shorter.
+
+`pre_check_methods`
+:	List of method names executed just before transition invocation. If
+:	exception is thrown or `false` returned, the transition will not be
+:	invoked. Arguments: ref, transition name, args.
+
+`post_transition_methods`
+:	List of method names invoked after successful transition.
+:	Arguments: ref, transition name, args, return value.
+
+
+Properties Options
+------------------
+
+Properties options are passed with no processing to DUF and other related
+libraries which uses such metadata. State machine itself does not use most of
+the properties.
+
+`is_pk`
+:	These properties are used as primary key (FlupdoMachine).
+
+
+`column_encoding`
+:	Property is encoded/decoded to/from specified format before it is
+:	stored in/loaded from database (FlupdoMachine).
 
