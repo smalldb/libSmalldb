@@ -471,9 +471,11 @@ class FlupdoGenericListing implements IListing
 	 */
 	protected function calculateAdditionalFiltersData(& $filters)
 	{
-		foreach ($this->additional_filters_data as $f => $src) {
-			if (isset($src['query'])) {
-				$filters[$f] = $this->query->pdo->query($src['query'])->fetchColumn();
+		if (!empty($this->additional_filters_data)) {
+			foreach ($this->additional_filters_data as $f => $src) {
+				if (isset($src['query'])) {
+					$filters[$f] = $this->query->pdo->query($src['query'])->fetchColumn();
+				}
 			}
 		}
 	}
