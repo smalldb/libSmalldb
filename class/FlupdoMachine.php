@@ -498,8 +498,10 @@ abstract class FlupdoMachine extends AbstractMachine
 				$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
 
 				// Import properties
-				foreach ($ref['properties'] as $p => $ref_p) {
-					$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+				if (!empty($ref['properties'])) {
+					foreach ($ref['properties'] as $p => $ref_p) {
+						$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+					}
 				}
 			}
 		}
