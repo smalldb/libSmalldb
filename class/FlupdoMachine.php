@@ -479,6 +479,7 @@ abstract class FlupdoMachine extends AbstractMachine
 					throw new \InvalidArgumentException(sprintf('Unknown machine type "%s" for reference "%s".', $ref['machine_type'], $r));
 				}
 
+				// Generate reference join
 				$ref_alias = $query->quoteIdent('ref_'.$r);
 				$ref_table = $query->quoteIdent($ref_machine->table);
 
@@ -490,12 +491,25 @@ abstract class FlupdoMachine extends AbstractMachine
 					throw new \InvalidArgumentException('Reference ID has incorrect length ('.$r.').');
 				}
 
-				// Join refered table
-				$on = array();
-				for ($i = 0; $i < $id_len; $i++) {
-					$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+				if (isset($ref['query'])) {
+					// TODO: Refactor query building syntax to be used everywhere; see $filters in FlupdoGenericListing
+					foreach ($ref['query'] as $f) {
+						$args = array($f['sql']);
+						if (isset($f['params'])) {
+							foreach ($f['params'] as $p) {
+								$args[] = $query_filters[$p];
+							}
+						}
+						call_user_func_array(array($this->query, $f['stmt']), $args);
+					}
+				} else {
+					// Join refered table
+					$on = array();
+					for ($i = 0; $i < $id_len; $i++) {
+						$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+					}
+					$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
 				}
-				$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
 
 				// Import properties
 				if (!empty($ref['properties'])) {
