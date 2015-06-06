@@ -351,7 +351,7 @@ abstract class AbstractMachine
 					// Create reference & cache it
 					return ($view_cache[$view] = $this->resolveMachineReference($view, $properties_cache));
 				} else {
-					throw new InvalidArgumentException('Unknown view: '.$view);
+					throw new InvalidArgumentException('Unknown view "'.$view.'" requested on machine "'.$this->machine_type.'".');
 				}
 		}
 	}
