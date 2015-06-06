@@ -1,5 +1,5 @@
-Smalldb
-=======
+libSmalldb
+==========
 
 @todo Write README
 
