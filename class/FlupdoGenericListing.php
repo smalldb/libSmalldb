@@ -216,6 +216,9 @@ class FlupdoGenericListing implements IListing
 
 		// Add filters
 		foreach($query_filters as $filter_name => $value) {
+			if ($value === null || $value === '') {
+				continue;
+			}
 			$filter_name = str_replace('-', '_', $filter_name);
 			if (isset($machine_filters[$filter_name])) {
 				// Custom filter
