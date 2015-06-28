@@ -489,10 +489,15 @@ class FlupdoGenericListing implements IListing
 
 		$this->query->where("$sphinx_key_column IN (SELECT $temp_table.id FROM $temp_table)");
 
-		$this->before_query[] = function() use ($temp_table, $index_name, $value) {
+		$this->before_query[] = function() use ($temp_table, $index_name, $value, $machine_filter) {
 			$this->query->pdo->query("CREATE TEMPORARY TABLE $temp_table (`id` INT(11) NOT NULL)");
 
-			$sr = $this->sphinx->select('*')->from($index_name)->where('MATCH(?)', $value)->query();
+			$sq = $this->sphinx->select('*')->from($index_name)->where('MATCH(?)', $value);
+			if (!empty($machine_filter['sphinx_option'])) {
+				$sq->option($machine_filter['sphinx_option']);
+			}
+			// TODO: Add param. conditions here
+			$sr = $sq->query();
 			$ins = $this->query->pdo->prepare("INSERT INTO $temp_table (id) VALUES (:id)");
 			foreach ($sr as $row) {
 				$ins->execute(array('id' => $row['id']));
