@@ -117,7 +117,7 @@ source {$base_name}
 
 	# index nothing, just suppress warning since this index is abstract
 	# 1st column is ID, 2nd column is state of the machine
-	sql_query = SELECT NULL AS sphinx_key, NULL AS state LIMIT 0
+	sql_query = SELECT 1 AS sphinx_key, '' AS state LIMIT 1
 	sql_attr_string = state
 }
 
@@ -126,8 +126,6 @@ index {$base_name}
 {
         source = {$base_name}
         path = /var/lib/sphinxsearch/data/{$base_name}
-        charset_type = utf-8
-        enable_star = 1
         min_infix_len = 2
         min_word_len = 2
         html_strip = 1
