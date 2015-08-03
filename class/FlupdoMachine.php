@@ -586,7 +586,7 @@ abstract class FlupdoMachine extends AbstractMachine
 			throw new InvalidArgumentException(sprintf('Malformed ID: got %d pieces of %d.', count($id), count($this->describeId())));
 		}
 		foreach (array_combine($this->describeId(), (array) $id) as $col => $val) {
-			$query->$clause($query->quoteIdent($table).'.'.$query->quoteIdent($col).' = ?', $val);
+			$query->$clause($table.'.'.$query->quoteIdent($col).' = ?', $val);
 		}
 		return $query;
 	}
