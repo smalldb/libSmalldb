@@ -44,6 +44,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/// Order by this column
 	protected $nested_sets_order_by = 'id';
 
+	/// Set this column to NOW() on create transition
+	protected $time_created_table_column = null;
+	/// Set this column to NOW() on edit transition. If MySQL is in use, it is better to use CURRENT_TIMESTAMP column feature.
+	protected $time_modified_table_column = null;
 
 	/**
 	 * @copydoc FlupdoMachine::initializeMachine()
@@ -66,6 +70,16 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 		if (isset($config['owner_create_transition'])) {
 			$this->owner_create_transition = $config['owner_create_transition'];
+		}
+
+		// create time column
+		if (isset($config['time_created_table_column'])) {
+			$this->time_created_table_column = $config['time_created_table_column'];
+		}
+
+		// modification time column
+		if (isset($config['time_modified_table_column'])) {
+			$this->time_modified_table_column = $config['time_modified_table_column'];
 		}
 
 		// nested-sets configuration
@@ -207,6 +221,15 @@ class FlupdoCrudMachine extends FlupdoMachine
 			$properties = array_merge($properties, array_combine($this->describeId(), (array) $ref->id));
 		}
 
+		// Set times
+		if ($this->time_created_table_column) {
+			$properties[$this->time_created_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
+		}
+		if ($this->time_modified_table_column) {
+			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
+		}
+
+
 		if (empty($properties)) {
 			throw new \InvalidArgumentException('No valid properties provided.');
 		}
@@ -274,6 +297,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		if (empty($properties)) {
 			throw new \InvalidArgumentException('No valid properties provided.');
+		}
+
+		// Set modification time
+		if ($this->time_modified_table_column) {
+			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
 		}
 
 		// build update query
