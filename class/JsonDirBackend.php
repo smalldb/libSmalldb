@@ -110,14 +110,21 @@ class JsonDirBackend extends AbstractBackend
 
 			foreach ($this->machine_type_table as $machine_type => $json_config) {
 				$machine_def = & $this->machine_type_table[$machine_type];
-				foreach ((array) @ $json_config['include'] as $include_file) {
+				foreach ((array) @ $json_config['include'] as $include) {
+					if (is_array($include)) {
+						$include_file = $include['file'];
+						$include_group = isset($include['group']) ? $include['group'] : null;
+					} else {
+						$include_file = $include['file'];
+						$include_group = null;
+					}
 					if ($include_file[0] != '/') {
 						$include_file = $this->base_dir.$include_file;
 					}
 					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
 						$machine_def = array_replace_recursive(parse_json_file($include_file), $machine_def);
 					} else if (preg_match('/\.graphml$/i', $include_file)) {
-						$machine_def = array_replace_recursive($this->loadGraphMLFile($include_file), $machine_def);
+						$machine_def = array_replace_recursive($this->loadGraphMLFile($include_file, $include_group), $machine_def);
 					} else {
 						throw new RuntimeException('Unknown file format: '.$include_file);
 					}
@@ -260,7 +267,7 @@ class JsonDirBackend extends AbstractBackend
 	 *
 	 * @see http://www.yworks.com/en/products_yed_about.html
 	 */
-	protected function loadGraphMLFile($graphml_filename)
+	protected function loadGraphMLFile($graphml_filename, $graphml_group_name = null)
 	{
 		// Graph
 		$keys = array();
@@ -275,8 +282,28 @@ class JsonDirBackend extends AbstractBackend
 		$xpath = new \DOMXpath($dom);
 		$xpath->registerNameSpace('g', 'http://graphml.graphdrawing.org/xmlns');
 
+		// Find group node
+		if ($graphml_group_name) {
+			$root_graph = null;
+			foreach($xpath->query('//g:graph') as $el) {
+				foreach($xpath->query('../g:data/*/*/y:GroupNode/y:NodeLabel', $el) as $label_el) {
+					$label = trim($label_el->textContent);
+
+					if ($label == $graphml_group_name) {
+						$root_graph = $el;
+						break 2;
+					}
+				}
+			}
+		} else {
+			$root_graph = $xpath->query('/g:graphml/g:graph')->item(0);
+		}
+		if ($root_graph == null) {
+			throw new GraphMLException('Graph node not found.');
+		}
+
 		// Load keys
-		foreach($xpath->query('/g:graphml/g:key[@attr.name][@id]') as $el) {
+		foreach($xpath->query('./g:key[@attr.name][@id]') as $el) {
 			$id = $el->attributes->getNamedItem('id')->value;
 			$name = $el->attributes->getNamedItem('attr.name')->value;
 			//debug_msg("tag> %s => %s", $id, $name);
@@ -285,7 +312,7 @@ class JsonDirBackend extends AbstractBackend
 
 		// Load graph properties
 		$graph_props = array();
-		foreach($xpath->query('//g:graph/g:data[@key]') as $data_el) {
+		foreach($xpath->query('./g:data[@key]', $root_graph) as $data_el) {
 			$k = $data_el->attributes->getNamedItem('key')->value;
 			if (isset($keys[$k])) {
 				if ($keys[$k] == 'Properties') {
@@ -306,7 +333,7 @@ class JsonDirBackend extends AbstractBackend
 		//debug_dump($graph_props, '$graph_props');
 
 		// Load nodes
-		foreach($xpath->query('//g:graph/g:node[@id]') as $el) {
+		foreach($xpath->query('.//g:node[@id]', $root_graph) as $el) {
 			$id = $el->attributes->getNamedItem('id')->value;
 			$node_props = array();
 			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
@@ -382,8 +409,12 @@ class JsonDirBackend extends AbstractBackend
 		// Store actions and transitions
 		foreach ($edges as $e) {
 			list($source_id, $target_id, $props) = $e;
-			$source = $source_id != '' ? (string) $nodes[$source_id]['state'] : '';
-			$target = $target_id != '' ? (string) $nodes[$target_id]['state'] : '';
+			$source = $source_id != '' ? (isset($nodes[$source_id]) ? (string) $nodes[$source_id]['state'] : null) : '';
+			$target = $target_id != '' ? (isset($nodes[$target_id]) ? (string) $nodes[$target_id]['state'] : null) : '';
+			if ($source === null || $target === null) {
+				// Ignore nonexistent nodes
+				continue;
+			}
 			if (@ $props['action'] != '') {
 				$action = $props['action'];
 			} else if (@ $props['label'] != '') {
