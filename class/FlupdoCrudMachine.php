@@ -251,9 +251,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// insert
-		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($properties))))
+		$data = $this->encodeProperties($properties);
+		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($data))))
 			->into($this->flupdo->quoteIdent($this->table))
-			->values(array($this->encodeProperties($properties)))
+			->values(array($data))
 			->debugDump()
 			->exec();
 

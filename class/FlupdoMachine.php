@@ -62,6 +62,11 @@ abstract class FlupdoMachine extends AbstractMachine
 	protected $json_columns = array();
 
 	/**
+	 * List of properties, which are composed of multiple columns
+	 */
+	protected $composed_properties = array();
+
+	/**
 	 * Column containing entity owner.
 	 */
 	protected $user_id_table_column = null;
@@ -176,6 +181,14 @@ abstract class FlupdoMachine extends AbstractMachine
 				if (isset($p['column_encoding']) && $p['column_encoding'] == 'json') {
 					$this->json_columns[] = $property;
 				}
+			}
+		}
+
+		// Prepare list of composed properties
+		$this->composed_properties = array();
+		foreach ($this->properties as $property => $p) {
+			if (!empty($p['components'])) {
+				$this->composed_properties[$property] = $p['components'];
 			}
 		}
 	}
@@ -464,7 +477,15 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
 			$pi_quoted = $query->quoteIdent($pi);
-			if (!empty($p['calculated']) && isset($p['sql_select'])) {
+			if (!empty($p['components'])) {
+				foreach ($p['components'] as $component => $column) {
+					if (!isset($this->properties[$column])) {
+						// make sure the components are selected, but only if they are not standalone properties
+						$column_quoted = $query->quoteIdent($column);
+						$query->select("$table.$column_quoted AS $column_quoted");
+					}
+				}
+			} else if (!empty($p['calculated']) && isset($p['sql_select'])) {
 				$query->select("({$p['sql_select']}) AS $pi_quoted");
 			} else {
 				$query->select("$table.$pi_quoted AS $pi_quoted");
@@ -675,6 +696,18 @@ abstract class FlupdoMachine extends AbstractMachine
 			}
 		}
 
+		// Split composed properties to individual columns
+		foreach ($this->composed_properties as $property => $components) {
+			foreach ($components as $component => $column) {
+				if (isset($properties[$property][$component])) {
+					$properties[$column] = $properties[$property][$component];
+				} else {
+					$properties[$column] = null;
+				}
+			}
+			unset($properties[$property]);
+		}
+
 		// Encode JSON columns
 		foreach ($this->json_columns as $column_name) {
 			if (isset($properties[$column_name])) {
@@ -696,6 +729,15 @@ abstract class FlupdoMachine extends AbstractMachine
 	 */
 	public function decodeProperties($properties)
 	{
+		// Compose components to objects
+		foreach ($this->composed_properties as $property => $components) {
+			$value = array();
+			foreach ($components as $component => $column) {
+				$value[$component] = isset($properties[$column]) ? $properties[$column] : null;
+			}
+			$properties[$property] = $value;
+		}
+
 		// Decode JSON columns
 		foreach ($this->json_columns as $column_name) {
 			if (isset($properties[$column_name])) {
