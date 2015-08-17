@@ -115,7 +115,7 @@ class JsonDirBackend extends AbstractBackend
 						$include_file = $include['file'];
 						$include_group = isset($include['group']) ? $include['group'] : null;
 					} else {
-						$include_file = $include['file'];
+						$include_file = $include;
 						$include_group = null;
 					}
 					if ($include_file[0] != '/') {
