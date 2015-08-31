@@ -276,7 +276,7 @@ class JsonDirBackend extends AbstractBackend
 
 		// Load GraphML into DOM
 		$dom = new \DOMDocument;
-		$dom->load($graphml_filename, LIBXML_NONET);
+		$dom->loadXml(file_get_contents($graphml_filename));
 
 		// Prepare XPath query engine
 		$xpath = new \DOMXpath($dom);
