@@ -431,9 +431,21 @@ class FlupdoGenericListing implements IListing
 			$this->query();
 		}
 		$machine = $this->machine;
-		return array_map(function($properties) use ($machine) {
-				return $machine->hotRef($machine->decodeProperties($properties));
-			}, $this->result->fetchAll(\PDO::FETCH_ASSOC));
+
+		$id_keys = $this->machine->describeId();
+
+		if (count($id_keys) == 1) {
+			$list = array();
+			while(($properties = $this->result->fetch(\PDO::FETCH_ASSOC))) {
+				$item = $machine->hotRef($machine->decodeProperties($properties));
+				$list[$item->id] = $item;
+			}
+			return $list;
+		} else {
+			return array_map(function($properties) use ($machine) {
+					return $machine->hotRef($machine->decodeProperties($properties));
+				}, $this->result->fetchAll(\PDO::FETCH_ASSOC));
+		}
 	}
 
 
