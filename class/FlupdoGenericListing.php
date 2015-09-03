@@ -206,12 +206,28 @@ class FlupdoGenericListing implements IListing
 		}
 
 		// Ordering -- it is first, so it overrides other filters
+		$orderKey = FALSE;
 		if (isset($query_filters['order_by']) && !isset($machine_filters['order_by'])) {
-			$this->query->orderBy($this->query->quoteIdent($query_filters['order_by'])
-				.(!isset($query_filters['order_asc']) || !$query_filters['order_asc'] ? ' DESC' : ' ASC'));
-		} else if (isset($query_filters['order-by']) && !isset($machine_filters['order-by'])) {
-			$this->query->orderBy($this->query->quoteIdent($query_filters['order-by'])
-				.(!isset($query_filters['order-asc']) || !$query_filters['order-asc'] ? ' DESC' : ' DESC'));
+			$orderKey = 'order_by';
+		}
+		else if (isset($query_filters['order-by']) && !isset($machine_filters['order-by'])) {
+			$orderKey = 'order-by';
+		}
+
+		if ($orderKey) {
+			if (strpos($query_filters[$orderKey], ',') !== FALSE) {
+				$order_by_array = explode(',', str_replace(', ', ',', $query_filters[$orderKey]));
+				foreach ($order_by_array as $order) {
+					$this->query->orderBy(
+							$this->query->quoteIdent($order)
+							. (!isset($query_filters['order_asc']) || !$query_filters['order_asc'] ? ' DESC' : ' ASC')
+					); //TODO add possibility change sort direction
+				}
+			}
+			else {
+				$this->query->orderBy($this->query->quoteIdent($query_filters[$orderKey])
+						. (!isset($query_filters['order_asc']) || !$query_filters['order_asc'] ? ' DESC' : ' ASC'));
+			}
 		}
 
 		// Add filters
