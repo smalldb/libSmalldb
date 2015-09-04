@@ -60,8 +60,12 @@ namespace Smalldb\StateMachine;
  *
  *   - `limit` (int; default = 100)
  *   - `offset` (int; default = undefined)
- *   - `order-by` (property/column name; default = undefined)
- *   - `order-asc` (bool; default = true; applied only when order-by is set)
+ *   - `order_by` (string; comma separated list of properties/column names;
+ *     property prefixed with minus is sorted in oposite order;
+ *     default = undefined) - `order_asc` (bool; default = true; applied only
+ *     when order_by is set)
+ *   - `order-by` (alias to `order_by`)
+ *   - `order-asc` (alias to `order_asc`, but only if `order-by` is used)
  *
  * ### Example:
  *
@@ -206,27 +210,25 @@ class FlupdoGenericListing implements IListing
 		}
 
 		// Ordering -- it is first, so it overrides other filters
-		$orderKey = FALSE;
 		if (isset($query_filters['order_by']) && !isset($machine_filters['order_by'])) {
-			$orderKey = 'order_by';
+			$order_by = $query_filters['order_by'];
+			$order_asc = (isset($query_filters['order_asc']) ? (bool) $query_filters['order_asc'] : true);
 		}
 		else if (isset($query_filters['order-by']) && !isset($machine_filters['order-by'])) {
-			$orderKey = 'order-by';
+			$order_by = $query_filters['order-by'];
+			$order_asc = (isset($query_filters['order-asc']) ? (bool) $query_filters['order-asc'] : true);
+		} else {
+			$order_by = null;
+			$order_asc = null;
 		}
 
-		if ($orderKey) {
-			if (strpos($query_filters[$orderKey], ',') !== FALSE) {
-				$order_by_array = explode(',', str_replace(', ', ',', $query_filters[$orderKey]));
-				foreach ($order_by_array as $order) {
-					$this->query->orderBy(
-							$this->query->quoteIdent($order)
-							. (!isset($query_filters['order_asc']) || !$query_filters['order_asc'] ? ' DESC' : ' ASC')
-					); //TODO add possibility change sort direction
+		if ($order_by !== null) {
+			foreach (preg_split("/\s*,\s*/", $order_by) as $o) {
+				if ($o[0] == '-') {
+					$this->query->orderBy($this->query->quoteIdent(substr($o, 1)) . ($order_asc ? ' DESC' : ' ASC'));
+				} else {
+					$this->query->orderBy($this->query->quoteIdent($o). ($order_asc ? ' ASC' : ' DESC'));
 				}
-			}
-			else {
-				$this->query->orderBy($this->query->quoteIdent($query_filters[$orderKey])
-						. (!isset($query_filters['order_asc']) || !$query_filters['order_asc'] ? ' DESC' : ' ASC'));
 			}
 		}
 
