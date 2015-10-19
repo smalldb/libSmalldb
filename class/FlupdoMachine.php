@@ -687,7 +687,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		foreach ($properties as $k => & $v) {
 			if (isset($this->properties[$k])) {
 				$prop = $this->properties[$k];
-				if (empty($prop['required']) && ($v === array() || ctype_space($v))) {
+				if (empty($prop['required']) && ($v === array() || (is_string($v) && ctype_space($v)))) {
 					$v = null;
 				}
 			} else {
