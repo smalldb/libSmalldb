@@ -304,12 +304,18 @@ class FlupdoCrudMachine extends FlupdoMachine
 		if ($this->time_modified_table_column) {
 			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
 		}
-
 		// build update query
 		$q = $this->flupdo->update($this->queryGetThisTable($this->flupdo));
 		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 		foreach ($this->encodeProperties($properties) as $k => $v) {
 			$q->set($q->quoteIdent($k).' = ?', $v);
+		}
+
+		// Add calculated properties
+		foreach ($this->properties as $pi => $p) {
+			if (!empty($p['calculated']) && isset($p['sql_update'])) {
+				$q->set($q->quoteIdent($pi).' = '.$p['sql_update']);
+			}
 		}
 
 		$n = $q->debugDump()->exec();
