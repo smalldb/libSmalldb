@@ -250,14 +250,17 @@ class FlupdoCrudMachine extends FlupdoMachine
 			}
 		}
 
-		// insert
+		// Insert
 		$data = $this->encodeProperties($properties);
-		$n = $this->flupdo->insert(join(', ', $this->flupdo->quoteIdent(array_keys($data))))
-			->into($this->flupdo->quoteIdent($this->table))
-			->values(array($data))
-			->debugDump()
-			->exec();
-
+		$q = $this->flupdo->insert()->into($this->flupdo->quoteIdent($this->table));
+		foreach ($data as $k => $v) {
+			if ($v instanceof \Flupdo\Flupdo\FlupdoRawSql || $v instanceof \Flupdo\Flupdo\FlupdoBuilder) {
+				$q->set(array($this->flupdo->quoteIdent($k).' = ', $v));
+			} else {
+				$q->set($this->flupdo->quoteIdent($k).' = ?', $v);
+			}
+		}
+		$n = $q->debugDump()->exec();
 		if (!$n) {
 			// Insert failed
 			return false;
@@ -304,11 +307,15 @@ class FlupdoCrudMachine extends FlupdoMachine
 		if ($this->time_modified_table_column) {
 			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
 		}
-		// build update query
+		// Build update query
 		$q = $this->flupdo->update($this->queryGetThisTable($this->flupdo));
 		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 		foreach ($this->encodeProperties($properties) as $k => $v) {
-			$q->set($q->quoteIdent($k).' = ?', $v);
+			if ($v instanceof \Flupdo\Flupdo\FlupdoRawSql || $v instanceof \Flupdo\Flupdo\FlupdoBuilder) {
+				$q->set(array($this->flupdo->quoteIdent($k).' = ', $v));
+			} else {
+				$q->set($q->quoteIdent($k).' = ?', $v);
+			}
 		}
 
 		// Add calculated properties
