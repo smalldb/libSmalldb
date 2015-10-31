@@ -360,6 +360,9 @@ class JsonDirBackend extends AbstractBackend
 			$id = $el->attributes->getNamedItem('id')->value;
 			$source = $el->attributes->getNamedItem('source')->value;
 			$target = $el->attributes->getNamedItem('target')->value;
+			if (!isset($nodes[$source]) || !isset($nodes[$target])) {
+				continue;
+			}
 			$edge_props = array();
 			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
 				$k = $data_el->attributes->getNamedItem('key')->value;
@@ -367,13 +370,22 @@ class JsonDirBackend extends AbstractBackend
 					$edge_props[$this->str2key($keys[$k])] = $data_el->textContent;
 				}
 			}
-			$label = $xpath->query('.//y:EdgeLabel', $el)->item(0)->textContent;
+			$label_query_result = $xpath->query('.//y:EdgeLabel', $el)->item(0);
+			if (!$label_query_result) {
+				throw new GraphMLException(sprintf('Missing edge label. Edge: %s -> %s',
+					isset($nodes[$source]['label']) ? $nodes[$source]['label'] : $source,
+					isset($nodes[$target]['label']) ? $nodes[$target]['label'] : $target));
+			}
+			$label = $label_query_result->textContent;
 			if ($label !== null) {
 				$edge_props['label'] = trim($label);
 			}
-			$color = $xpath->query('.//y:LineStyle', $el)->item(0)->attributes->getNamedItem('color')->value;
-			if ($color !== null) {
-				$edge_props['color'] = trim($color);
+			$color_query_result = $xpath->query('.//y:LineStyle', $el)->item(0);
+			if ($color_query_result) {
+				$color = $color_query_result->attributes->getNamedItem('color')->value;
+				if ($color !== null) {
+					$edge_props['color'] = trim($color);
+				}
 			}
 			//debug_msg("edge> %s: %s -> %s", $id, $source, $target);
 			//debug_dump($edge_props, '$edge_props');
