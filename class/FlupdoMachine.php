@@ -711,8 +711,23 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Encode JSON columns
 		foreach ($this->json_columns as $column_name) {
 			if (isset($properties[$column_name])) {
-				$properties[$column_name] = json_encode($properties[$column_name],
-					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+				$json_data = json_encode($properties[$column_name], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
+				if ($json_data === FALSE) {
+					switch (json_last_error()) {
+						case JSON_ERROR_NONE: $json_error = 'No error has occurred'; break;
+						case JSON_ERROR_DEPTH: $json_error = 'The maximum stack depth has been exceeded'; break;
+						case JSON_ERROR_STATE_MISMATCH: $json_error = 'Invalid or malformed JSON'; break;
+						case JSON_ERROR_CTRL_CHAR: $json_error = 'Control character error, possibly incorrectly encoded'; break;
+						case JSON_ERROR_SYNTAX: $json_error = 'Syntax error'; break;
+						case JSON_ERROR_UTF8: $json_error = 'Malformed UTF-8 characters, possibly incorrectly encoded'; break;
+						case JSON_ERROR_RECURSION: $json_error = 'One or more recursive references in the value to be encoded'; break;
+						case JSON_ERROR_INF_OR_NAN: $json_error = 'One or more NAN or INF values in the value to be encoded'; break;
+						case JSON_ERROR_UNSUPPORTED_TYPE: $json_error = 'A value of a type that cannot be encoded was given'; break;
+						default: $json_error = 'Error '.json_last_error(); break;
+					}
+					throw new \InvalidArgumentException('Failed to serialize invoice data to JSON: '.$json_error);
+				}
+				$properties[$column_name] = $json_data;
 			}
 		}
 
