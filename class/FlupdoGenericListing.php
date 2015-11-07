@@ -380,8 +380,14 @@ class FlupdoGenericListing implements IListing
 						case '%':
 							$this->query->where("$p LIKE ?", $value);
 							break;
+						case '%%':
+							$this->query->where("$p LIKE CONCAT('%', ?, '%')", $value);
+							break;
 						case '!%':
 							$this->query->where("$p NOT LIKE ?", $value);
+							break;
+						case '%%':
+							$this->query->where("$p NOT LIKE CONCAT('%', ?, '%')", $value);
 							break;
 					}
 				}
