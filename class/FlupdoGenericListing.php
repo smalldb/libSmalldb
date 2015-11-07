@@ -235,6 +235,7 @@ class FlupdoGenericListing implements IListing
 		// Add filters
 		foreach($query_filters as $filter_name => $value) {
 			if ($value === null || $value === '') {
+				unset($this->query_filters[$filter_name]);	// Drop not applied filters
 				continue;
 			}
 			$filter_name = str_replace('-', '_', $filter_name);
@@ -274,20 +275,34 @@ class FlupdoGenericListing implements IListing
 					$this->query->where($machine_table.'.'.$this->query->quoteIdent($property).' = ?', $value);
 				} else if (isset($machine_references[$property])) {
 					// Filter by reference
-					if ($value !== null && $value->machine_type != $machine_references[$property]['machine_type']) {
-						throw new \InvalidArgumentException('Referenced machine type does not match reference machine type.');
-					}
-					// Add where clause for each ID fragment
 					$id_properties = $machine_references[$property]['machine_id'];
 					$id_parts = count($id_properties);
-					if ($value === null || $value->id === null) {
+
+					// Detect ID
+					if (is_object($value)) {
+						if (!($value instanceof Reference)) {
+							throw new \InvalidArgumentException('Filter value is not an instance of Reference.');
+						} else if ($value->machine_type != $machine_references[$property]['machine_type']) {
+							throw new \InvalidArgumentException('Referenced machine type does not match reference machine type.');
+						} else {
+							$id_values = (array) $value->id;
+						}
+					} else if ($value === null) {
+						$id_values = null;
+					} else if (count($id_parts) == 1) {
+						$id_values = (array) $value;
+					} else {
+						throw new \InvalidArgumentException('Cannot filter by composed reference using single value.');
+					}
+
+					// Add where clause for each ID fragment
+					if ($id_values === null) {
 						// Null ref
 						for ($i = 0; $i < $id_parts; $i++) {
 							$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' IS NULL');
 						}
 					} else {
 						// Non-null ref
-						$id_values = (array) $value->id;
 						for ($i = 0; $i < $id_parts; $i++) {
 							$this->query->where($machine_table.'.'.$this->query->quoteIdent($id_properties[$i]).' = ?', $id_values[$i]);
 						}
