@@ -216,7 +216,7 @@ abstract class AbstractBackend
 	 *
 	 * Returns instance of IListing.
 	 */
-	abstract public function createListing($query_filters);
+	abstract public function createListing($query_filters, $filtering_flags = 0);
 
 
 

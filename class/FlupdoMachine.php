@@ -398,7 +398,7 @@ abstract class FlupdoMachine extends AbstractMachine
 	 *
 	 * @see FlupdoGenericListing
 	 */
-	public function createListing($filters)
+	public function createListing($filters, $filtering_flags = 0)
 	{
 		$q = $this->createQueryBuilder();
 		$this->queryAddStateSelect($q);
@@ -409,7 +409,7 @@ abstract class FlupdoMachine extends AbstractMachine
 		}
 
 		return new \Smalldb\StateMachine\FlupdoGenericListing($this, $q, $this->sphinx, $filters,
-			$this->table, $this->filters, $this->properties, $this->references, $this->additional_filters_data);
+			$this->table, $this->filters, $this->properties, $this->references, $this->additional_filters_data, $filtering_flags);
 	}
 
 

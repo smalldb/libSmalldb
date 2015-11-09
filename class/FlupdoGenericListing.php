@@ -167,6 +167,7 @@ class FlupdoGenericListing implements IListing
 	private   $before_called = false;	///< True, when before_query was called.
 	protected $before_query = array();	///< List of callables to be called just before the query is executed.
 	protected $after_query = array();	///< List of callables to be called in destructor, only if the query has been executed.
+	protected $unknown_filters = array();	///< Unknown filters - subset of $query_filters.
 
 
 	/**
@@ -185,11 +186,13 @@ class FlupdoGenericListing implements IListing
 		\Flupdo\Flupdo\SelectBuilder $query_builder,
 		\Flupdo\Flupdo\IFlupdo $sphinx = null,
 		$query_filters,
-		$machine_table, $machine_filters, $machine_properties, $machine_references, $additional_filters_data)
+		$machine_table, $machine_filters, $machine_properties, $machine_references, $additional_filters_data, $filtering_flags = 0)
 	{
 		$this->machine = $machine;
 		$this->query_filters = $query_filters;
 		$this->additional_filters_data = $additional_filters_data;
+
+		$ignore_unknown_filters = ($filtering_flags & self::IGNORE_UNKNOWN_FILTERS);
 
 		// Prepare query builder
 		$this->query = $query_builder;
@@ -239,7 +242,10 @@ class FlupdoGenericListing implements IListing
 				continue;
 			}
 			$filter_name = str_replace('-', '_', $filter_name);
-			if (isset($machine_filters[$filter_name])) {
+			if ($filter_name == 'limit' || $filter_name == 'offset' || $filter_name == 'order_by' || $filter_name == 'order_asc') {
+				// Filters handled above
+				continue;
+			} else if (isset($machine_filters[$filter_name])) {
 				// Custom filter
 				if (isset($machine_filters[$filter_name]['query_map'][$value])) {
 					// Check query_map for the value
@@ -311,11 +317,11 @@ class FlupdoGenericListing implements IListing
 					// Check if operator is the last character of filter name
 					$operator = substr($property, -1);
 					if (!preg_match('/^([^><!%~:?]+)([><!%~:?]+)$/', $property, $m)) {
-						continue;
+						goto unknown_filter;
 					}
 					list(, $property, $operator) = $m;
 					if (!isset($machine_properties[$property])) {
-						continue;
+						goto unknown_filter;
 					}
 
 					// Do not forget there is '=' after the operator in URL.
@@ -389,9 +395,23 @@ class FlupdoGenericListing implements IListing
 						case '%%':
 							$this->query->where("$p NOT LIKE CONCAT('%', ?, '%')", $value);
 							break;
+						default:
+							goto unknown_filter;
 					}
 				}
 			}
+			continue;
+
+			// If filter is not known, we should warn programmer before continuing to a next one.
+			unknown_filter: {
+				unset($this->query_filters[$filter_name]);
+				$this->unknown_filters[$filter_name] = $value;
+				continue;
+			}
+		}
+
+		if (!$ignore_unknown_filters && !empty($this->unknown_filters)) {
+			throw new UnknownFiltersException('Unknown filters: ' . join(', ', array_keys($this->unknown_filters)));
 		}
 
 		// Query is ready
@@ -514,6 +534,15 @@ class FlupdoGenericListing implements IListing
 		} else {
 			return $this->query_filters;
 		}
+	}
+
+
+	/**
+	 * Return unknown filters, subset of $query_filters.
+	 */
+	public function getUnknownFilters()
+	{
+		return $this->unknown_filters;
 	}
 
 
