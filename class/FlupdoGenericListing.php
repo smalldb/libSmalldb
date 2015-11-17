@@ -475,7 +475,7 @@ class FlupdoGenericListing implements IListing
 	 */
 	public function describeProperties()
 	{
-		return $this->machine->describeAllMachineProperties();
+		return array_merge($this->machine->describeAllMachineProperties(), $this->machine->describeAllMachineReferences());
 	}
 
 
