@@ -483,20 +483,20 @@ abstract class AbstractMachine
 		if (isset($action['transitions'][$state])) {
 			$transition = $action['transitions'][$state];
 		} else {
-			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'".');
+			throw new TransitionException('Transition "'.$transition_name.'" not found in state "'.$state.'" of machine "'.$this->machine_type.'".');
 		}
 		$transition = array_merge($action, $transition);
 
 		// check access_policy
 		if (!$this->isTransitionAllowed($ref, $transition_name, $state)) {
-			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'".');
+			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'" of machine "'.$this->machine_type.'".');
 		}
 
 		// invoke pre-transition checks
 		if (isset($transition['pre_check_methods'])) {
 			foreach ($transition['pre_check_methods'] as $m) {
 				if (call_user_func(array($this, $m), $ref, $transition_name, $args) === false) {
-					throw new TransitionPreCheckException('Transition "'.$transition_name.'" aborted by method "'.$m.'".');
+					throw new TransitionPreCheckException('Transition "'.$transition_name.'" aborted by method "'.$m.'" of machine "'.$this->machine_type.'".');
 				}
 			}
 		}
@@ -534,11 +534,11 @@ abstract class AbstractMachine
 		$new_state = $ref->state;
 		$target_states = $transition['targets'];
 		if (!is_array($target_states)) {
-			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'".');
+			throw new TransitionException('Target state is not defined for transition "'.$transition_name.'" from state "'.$state.'" of machine "'.$this->machine_type.'".');
 		}
 		if (!in_array($new_state, $target_states)) {
 			throw new RuntimeException('State machine ended in unexpected state "'.$new_state
-				.'" after transition "'.$transition_name.'" from state "'.$state.'". '
+				.'" after transition "'.$transition_name.'" from state "'.$state.'" of machine "'.$this->machine_type.'". '
 				.'Expected states: '.join(', ', $target_states).'.');
 		}
 
