@@ -394,6 +394,29 @@ abstract class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Invoke state machine transition. State machine is not instance of
+	 * this class, but it is represented by record in database.
+	 *
+	 * If transition creates a transaction and throws an exception, the
+	 * transaction will be rolled back automatically before re-throwing
+	 * the exception.
+	 */
+	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, $new_id_callback = null)
+	{
+		$transaction_before_transition = $this->flupdo->inTransaction();
+		try {
+			return parent::invokeTransition($ref, $transition_name, $args, $returns, $new_id_callback);
+		}
+		catch (\Exception $ex) {
+			if (!$transaction_before_transition && $this->flupdo->inTransaction()) {
+				$this->flupdo->rollback();
+			}
+			throw $ex;
+		}
+	}
+
+
+	/**
 	 * Create generic listing on this machine type.
 	 *
 	 * @see FlupdoGenericListing
