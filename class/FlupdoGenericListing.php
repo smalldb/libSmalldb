@@ -163,6 +163,7 @@ class FlupdoGenericListing implements IListing
 	protected $result;			///< PDOStatement, result of the query.
 	protected $query_filters;		///< Actual filters.
 	protected $additional_filters_data;	///< Additional filter data source definition (these are evaluated and added to processed filters).
+	protected $state_select;		///< SQL expression to select machine state
 
 	private   $before_called = false;	///< True, when before_query was called.
 	protected $before_query = array();	///< List of callables to be called just before the query is executed.
@@ -186,11 +187,13 @@ class FlupdoGenericListing implements IListing
 		\Flupdo\Flupdo\SelectBuilder $query_builder,
 		\Flupdo\Flupdo\IFlupdo $sphinx = null,
 		$query_filters,
-		$machine_table, $machine_filters, $machine_properties, $machine_references, $additional_filters_data, $filtering_flags = 0)
+		$machine_table, $machine_filters, $machine_properties, $machine_references,
+		$additional_filters_data, $state_select, $filtering_flags = 0)
 	{
 		$this->machine = $machine;
 		$this->query_filters = $query_filters;
 		$this->additional_filters_data = $additional_filters_data;
+		$this->state_select = $state_select;
 
 		$ignore_unknown_filters = ($filtering_flags & self::IGNORE_UNKNOWN_FILTERS);
 
@@ -272,6 +275,10 @@ class FlupdoGenericListing implements IListing
 					}
 					call_user_func_array(array($this->query, $f['stmt']), $args);
 				}
+			} else if ($filter_name == 'state') {
+				$this->query->where('('.$this->state_select.') = ?', $value);
+			} else if ($filter_name == 'state!') {
+				$this->query->where('('.$this->state_select.') != ?', $value);
 			} else {
 				// Use default property filter
 				$property = str_replace('-', '_', $filter_name);
