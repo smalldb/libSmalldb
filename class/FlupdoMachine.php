@@ -500,7 +500,10 @@ abstract class FlupdoMachine extends AbstractMachine
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
 			$pi_quoted = $query->quoteIdent($pi);
-			if (!empty($p['components'])) {
+			if ($pi == 'state') {
+				// State is not accepted as property and 'state' is reserved name.
+				continue;
+			} else if (!empty($p['components'])) {
 				foreach ($p['components'] as $component => $column) {
 					if (!isset($this->properties[$column])) {
 						// make sure the components are selected, but only if they are not standalone properties
