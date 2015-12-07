@@ -151,6 +151,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 					'outputs' => array(
 						'ref' => 'return_value'
 					),
+					'accepted_exceptions' => array(
+						'PDOException' => true,
+					),
 				),
 			),
 			'edit' => array(
@@ -169,6 +172,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 					'outputs' => array(
 						'ref' => 'ref'
 					),
+					'accepted_exceptions' => array(
+						'PDOException' => true,
+					),
 				),
 			),
 			'delete' => array(
@@ -185,6 +191,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 						'ref' => array(),
 					),
 					'outputs' => array(
+					),
+					'accepted_exceptions' => array(
+						'PDOException' => true,
 					),
 				),
 			),
