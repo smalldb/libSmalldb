@@ -427,6 +427,10 @@ abstract class FlupdoMachine extends AbstractMachine
 		$this->queryAddStateSelect($q);
 		$this->queryAddPropertiesSelect($q);
 
+		if (isset($this->listing_access_policy)) {
+			$this->queryAddAccessPolicyCondition($this->listing_access_policy, $q);
+		}
+
 		if (isset($this->default_filters)) {
 			$filters = array_replace($this->default_filters, $filters);
 		}

@@ -159,6 +159,15 @@ abstract class AbstractMachine
 	protected $read_access_policy = null;
 
 	/**
+	 * Listing access policy
+	 *
+	 * Policy applied when creating machine listing (read_access_policy is also applied).
+	 *
+	 * @note Not affected by default_access_policy.
+	 */
+	protected $listing_access_policy = null;
+
+	/**
 	 * Access policies
 	 *
 	 * Description of all access policies available to this state machine
