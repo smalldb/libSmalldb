@@ -354,10 +354,12 @@ class FlupdoGenericListing implements IListing
 							break;
 						case ':':
 							if (is_array($value)) {
-								if (isset($value['min']) && isset($value['max'])) {
+								if (!empty($value['min']) && !empty($value['max'])) {
 									$this->query->where("? <= $p AND $p < ?", $value['min'], $value['max']);
-								} else {
-									$this->query->where("? <= $p AND $p < ?", $value[0], $value[1]);
+								} else if (!empty($value['min'])) {
+									$this->query->where("? <= $p", $value['min']);
+								} else if (!empty($value['max'])) {
+									$this->query->where("$p < ?", $value['max']);
 								}
 							} else if (preg_match('/^(.+?)(\.\.\.*)(.+)$/', $value, $m)) {
 								list(, $min, $op, $max) = $m;
@@ -372,8 +374,10 @@ class FlupdoGenericListing implements IListing
 							if (is_array($value)) {
 								if (isset($value['min']) && isset($value['max'])) {
 									$this->query->where("$p < ? OR ? <= $p", $value['min'], $value['max']);
-								} else {
-									$this->query->where("$p < ? OR ? <= $p", $value[0], $value[1]);
+								} else if (!empty($value['min'])) {
+									$this->query->where("$p < ?", $value['min']);
+								} else if (!empty($value['max'])) {
+									$this->query->where("? <= $p", $value['max']);
 								}
 							} else if (preg_match('/^(.+?)(\.\.\.*)(.+)$/', $value, $m)) {
 								list(, $min, $op, $max) = $m;
