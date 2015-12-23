@@ -83,20 +83,30 @@ class JsonDirBackend extends AbstractBackend
 			}
 		}
 
-		if (!$cache_loaded					// failed to load cache
-			|| filemtime(__FILE__) > $cache_mtime 		// check loader
-			|| filemtime($this->base_dir) > $cache_mtime)	// check directory (new/removed files)
-		{
+		// Scan base dir for machines and find youngest file
+		$dh = opendir($this->base_dir);
+		if (!$dh) {
+			throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
+		}
+		$youngest_mtime = filemtime(__FILE__);		// Make sure cache gets regenerated when this file is changed
+		while (($file = readdir($dh)) !== false) {
+			if ($file[0] != '.') {
+				$file_list[] = $file;
+			}
+			$mtime = filemtime($this->base_dir.$file);
+			if ($youngest_mtime < $mtime) {
+				$youngest_mtime = $mtime;
+			}
+		}
+		closedir($dh);
+
+		// Load data if cache is obsolete
+		if (!$cache_loaded || $youngest_mtime >= $cache_mtime) {
 			//debug_msg('Machine type table cache miss. Reloading...');
 			$this->machine_type_table = array();
 
-			// Scan base dir for machines
-			$dh = opendir($this->base_dir);
-			if (!$dh) {
-				throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
-			}
 			$graphml = array();
-			while (($file = readdir($dh)) !== false) {
+			foreach ($file_list as $file) {
 				@ list($machine_type, $ext) = explode('.', $file, 2);
 				switch ($ext) {
 					case 'json':
@@ -105,7 +115,6 @@ class JsonDirBackend extends AbstractBackend
 						break;
 				} 
 			}
-			closedir($dh);
 			ksort($this->machine_type_table);
 
 			foreach ($this->machine_type_table as $machine_type => $json_config) {
