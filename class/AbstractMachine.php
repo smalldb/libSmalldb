@@ -374,10 +374,10 @@ abstract class AbstractMachine
 		if (isset($url_fmt)) {
 			if ($properties_cache === null) {
 				// URL contains ID only, so there is no need to load properties.
-				return filename_format($url_fmt, array_combine($this->describeId(), (array) $id));
+				return Utils::filename_format($url_fmt, array_combine($this->describeId(), (array) $id));
 			} else {
 				// However, if properties are in cache, it is better to use them.
-				return filename_format($url_fmt, $properties_cache);
+				return Utils::filename_format($url_fmt, $properties_cache);
 			}
 		} else {
 			// Default fallback to something reasonable. It might not work, but meh.
@@ -463,8 +463,6 @@ abstract class AbstractMachine
 
 		foreach ($this->actions as $a => $action) {
 			if (!empty($action['transitions'][$state]) && $this->isTransitionAllowed($ref, $a, $state)) {
-				$tr = array_merge($action, $tr);
-				unset($tr['transitions']);
 				$available_transitions[] = $a;
 			}
 		}
@@ -659,7 +657,7 @@ abstract class AbstractMachine
 	/**
 	 * Get URL format.
 	 *
-	 * Format string for filename_format().
+	 * Format string for Utils::filename_format().
 	 */
 	public function getUrlFormat()
 	{
@@ -671,7 +669,7 @@ abstract class AbstractMachine
 	 * Get prent URL format. Parent URL is URL of collection or something
 	 * of which is this machine part of.
 	 *
-	 * Format string for filename_format().
+	 * Format string for Utils::filename_format().
 	 */
 	public function getParentUrlFormat()
 	{
@@ -682,7 +680,7 @@ abstract class AbstractMachine
 	/**
 	 * Get URL for redirect-after-post.
 	 *
-	 * Format string for filename_format().
+	 * Format string for Utils::filename_format().
 	 */
 	public function getPostActionUrlFormat()
 	{
