@@ -66,7 +66,7 @@ class JsonDirBackend extends AbstractBackend
 		parent::__construct($options, $context, $alias);
 
 		// Get base dir (constants are available)
-		$this->base_dir = filename_format($options['base_dir'], array());
+		$this->base_dir = rtrim(Utils::filename_format($options['base_dir'], array()), '/').'/';
 
 		// Load machine definitions from APC cache
 		if (!empty($options['cache_disabled'])) {
@@ -112,7 +112,7 @@ class JsonDirBackend extends AbstractBackend
 				switch ($ext) {
 					case 'json':
 					case 'json.php':
-						$this->machine_type_table[$machine_type] = parse_json_file($this->base_dir.$file);
+						$this->machine_type_table[$machine_type] = Utils::parse_json_file($this->base_dir.$file);
 						break;
 				} 
 			}
@@ -132,7 +132,7 @@ class JsonDirBackend extends AbstractBackend
 						$include_file = $this->base_dir.$include_file;
 					}
 					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
-						$machine_def = array_replace_recursive(parse_json_file($include_file), $machine_def);
+						$machine_def = array_replace_recursive(Utils::parse_json_file($include_file), $machine_def);
 					} else if (preg_match('/\.graphml$/i', $include_file)) {
 						$machine_def = array_replace_recursive($this->loadGraphMLFile($include_file, $include_group), $machine_def);
 					} else {
