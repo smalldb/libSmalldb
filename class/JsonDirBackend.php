@@ -89,6 +89,7 @@ class JsonDirBackend extends AbstractBackend
 			throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
 		}
 		$youngest_mtime = filemtime(__FILE__);		// Make sure cache gets regenerated when this file is changed
+		$file_list = array();
 		while (($file = readdir($dh)) !== false) {
 			if ($file[0] != '.') {
 				$file_list[] = $file;
