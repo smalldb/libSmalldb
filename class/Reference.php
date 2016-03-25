@@ -40,7 +40,7 @@ namespace Smalldb\StateMachine;
  *   unset($ref->properties);
  *
  */
-class Reference implements \ArrayAccess, \Iterator
+class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 {
 	/**
 	 * State machine.
@@ -154,6 +154,15 @@ class Reference implements \ArrayAccess, \Iterator
 	 * Show relevant data when using var_dump().
 	 */
 	public function __debugInfo() {
+		return $this->properties;
+	}
+
+
+	/**
+	 * Support for json_encode() - implementation of JsonSerializable interface
+	 */
+	public function jsonSerialize()
+	{
 		return $this->properties;
 	}
 
