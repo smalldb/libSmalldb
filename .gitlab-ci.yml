@@ -26,5 +26,6 @@ deploy_doc:
         script:
                 - 'echo "Destination: $DOC_INSTALL_DESTINATION/"'
                 - 'test -n "$DOC_INSTALL_DESTINATION"'
+                - '[ -d "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/" ] || mkdir -pv "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/"'
                 - 'rsync -r --stats "./doc/doxygen/html/" "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/"'
 
