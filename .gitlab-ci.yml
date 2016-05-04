@@ -10,5 +10,6 @@ doc:
                 - master
         script:
                 - echo "Target directory: $DOC_INSTALL_PATH"
+                - git describe --always
                 - make doc
 
