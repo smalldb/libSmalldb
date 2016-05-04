@@ -9,7 +9,7 @@ doc:
         only:
                 - master
         script:
-                - echo "Target directory: $DOC_INSTALL_PATH"
-                - git describe --always
-                - make doc
+                - 'echo "Target directory: $DOC_INSTALL_PATH"'
+                - 'git describe --always'
+                - 'make doc'
 
