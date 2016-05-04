@@ -8,6 +8,7 @@ stages:
 build_doc:
         stage: build
         only:
+                - tags
                 - master
         script:
                 - 'make doc'
@@ -18,6 +19,7 @@ build_doc:
 deploy_doc:
         stage: deploy
         only:
+                - tags
                 - master
         dependencies:
                 - build_doc
