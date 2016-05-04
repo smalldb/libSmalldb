@@ -267,14 +267,14 @@ class Utils
 		$json_str = file_get_contents($filename);
 		if ($json_str === FALSE) {
 			// FIXME: Use different exception ?
-			throw new \Cascade\Core\JsonException("Failed to read file: ".$filename);
+			throw new JsonException("Failed to read file: ".$filename);
 		}
 
 		$data = json_decode($json_str, TRUE, 512, JSON_BIGINT_AS_STRING);
 		$error = json_last_error();
 
 		if ($error !== JSON_ERROR_NONE) {
-			throw new \Cascade\Core\JsonException(json_last_error_msg().' ('.$filename.')', $error);
+			throw new JsonException(json_last_error_msg().' ('.$filename.')', $error);
 		}
 
 		return $data;
