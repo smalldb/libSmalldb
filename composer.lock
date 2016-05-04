@@ -14,7 +14,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.frozen-doe.net:cascade/doc-tools.git",
-                "reference": "0386a9512f347dfacc8eef0fe2c9431f69a61088"
+                "reference": "e8e20ca5de8b3bc54360aafd7c240a4daae3aec8"
             },
             "type": "library",
             "license": [
@@ -27,7 +27,7 @@
                 }
             ],
             "description": "Cascade documentation tools",
-            "time": "2016-05-04 10:24:44"
+            "time": "2016-05-04 11:08:48"
         }
     ],
     "aliases": [],
