@@ -22,5 +22,7 @@ deploy_doc:
         dependencies:
                 - build_doc
         script:
-                - '[ -n "$DOC_INSTALL_DESTINATION" ] && rsync "./doc/doxygen/html/" "$DOC_INSTALL_DESTINATION/"'
+                - 'echo "Destination: $DOC_INSTALL_DESTINATION/"'
+                - 'test -n "$DOC_INSTALL_DESTINATION"'
+                - 'rsync -r --stats "./doc/doxygen/html/" "$DOC_INSTALL_DESTINATION/CI_BUILD_REF_NAME/"'
 
