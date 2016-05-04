@@ -11,6 +11,9 @@ build_doc:
                 - master
         script:
                 - 'make doc'
+        artifacts:
+                paths: 
+                        - doc/doxygen/
 
 deploy_doc:
         stage: deploy
