@@ -1,0 +1,44 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
+    ],
+    "hash": "4a7a4ed121609806a8572adbb05fa824",
+    "content-hash": "3b55da687c1d0dc0f9bd2caf0d40c340",
+    "packages": [],
+    "packages-dev": [
+        {
+            "name": "cascade/doc-tools",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@git.frozen-doe.net:cascade/doc-tools.git",
+                "reference": "0386a9512f347dfacc8eef0fe2c9431f69a61088"
+            },
+            "type": "library",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Josef Kufner",
+                    "email": "josef@kufner.cz"
+                }
+            ],
+            "description": "Cascade documentation tools",
+            "time": "2016-05-04 10:24:44"
+        }
+    ],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "cascade/doc-tools": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=5.4"
+    },
+    "platform-dev": []
+}

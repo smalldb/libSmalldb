@@ -1,15 +1,23 @@
 before_script:
-        - composer install
+        - composer install --dev
 
 stages:
         - build
+        - deploy
 
-doc:
+build_doc:
         stage: build
         only:
                 - master
         script:
-                - 'echo "Target directory: $DOC_INSTALL_PATH"'
-                - 'git describe --always'
                 - 'make doc'
+
+deploy_doc:
+        stage: deploy
+        only:
+                - master
+        dependencies:
+                - build_doc
+        script:
+                - '[ -n "$DOC_INSTALL_DESTINATION" ] && rsync "./doc/doxygen/html/" "$DOC_INSTALL_DESTINATION/"'
 

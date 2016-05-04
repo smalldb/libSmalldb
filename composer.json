@@ -5,14 +5,20 @@
     "authors": [
         {
             "name": "Josef Kufner",
-            "email": "jk@frozen-doe.net"
+            "email": "josef@kufner.cz"
         }
     ],
     "autoload": {
         "psr-4": { "Smalldb\\StateMachine\\": "class/" }
     },
+    "repositories": [
+        { "type": "composer", "url": "https://akvarko.frozen-doe.net/composer/" }
+    ],
     "require": {
         "php": ">=5.4"
+    },
+    "require-dev": {
+        "cascade/doc-tools": "dev-master"
     },
     "suggest": {
         "flupdo/flupdo": "SQL database support"
