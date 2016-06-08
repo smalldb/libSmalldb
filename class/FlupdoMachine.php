@@ -24,7 +24,7 @@ namespace Smalldb\StateMachine;
  * Most of its protected member properties can be set via config options
  * injected during initialization.
  */
-abstract class FlupdoMachine extends AbstractMachine
+class FlupdoMachine extends AbstractMachine
 {
 	/**
 	 * Database connection.
