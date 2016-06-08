@@ -184,8 +184,8 @@ class FlupdoGenericListing implements IListing
 	 */
 	public function __construct(
 		AbstractMachine $machine,
-		\Flupdo\Flupdo\SelectBuilder $query_builder,
-		\Flupdo\Flupdo\IFlupdo $sphinx = null,
+		\Smalldb\Flupdo\SelectBuilder $query_builder,
+		\Smalldb\Flupdo\IFlupdo $sphinx = null,
 		$query_filters,
 		$machine_table, $machine_filters, $machine_properties, $machine_references,
 		$additional_filters_data, $state_select, $filtering_flags = 0)
@@ -459,7 +459,7 @@ class FlupdoGenericListing implements IListing
 				$this->result->setFetchMode(\PDO::FETCH_ASSOC);
 
 			}
-			catch (\Flupdo\Flupdo\FlupdoSqlException $ex) {
+			catch (\Smalldb\Flupdo\FlupdoSqlException $ex) {
 				error_log("Failed SQL query:\n".$this->query->getSqlQuery());
 				error_log("Parameters of failed SQL query:\n".$this->query->getSqlParams());
 				throw $ex;

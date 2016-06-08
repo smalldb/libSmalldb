@@ -4,17 +4,17 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4a7a4ed121609806a8572adbb05fa824",
-    "content-hash": "3b55da687c1d0dc0f9bd2caf0d40c340",
+    "hash": "117a09da8450d7dd28a4bba00e71570a",
+    "content-hash": "1f550155646f040e1d7d4b7b291bca14",
     "packages": [],
     "packages-dev": [
         {
-            "name": "cascade/doc-tools",
+            "name": "smalldb/doc-tools",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.frozen-doe.net:cascade/doc-tools.git",
-                "reference": "e8e20ca5de8b3bc54360aafd7c240a4daae3aec8"
+                "url": "git@git.frozen-doe.net:smalldb/doc-tools.git",
+                "reference": "56976ef74d04d8d564d2e37965483c452ab4fb09"
             },
             "type": "library",
             "license": [
@@ -26,14 +26,14 @@
                     "email": "josef@kufner.cz"
                 }
             ],
-            "description": "Cascade documentation tools",
-            "time": "2016-05-04 11:08:48"
+            "description": "Smalldb documentation tools",
+            "time": "2016-06-08 11:46:34"
         }
     ],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "cascade/doc-tools": 20
+        "smalldb/doc-tools": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

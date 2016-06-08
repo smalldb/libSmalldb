@@ -1,5 +1,5 @@
 {
-    "name": "cascade/libsmalldb",
+    "name": "smalldb/libsmalldb",
     "description": "Smalldb: State machine abstraction layer",
     "license": "Apache-2.0",
     "authors": [
@@ -18,10 +18,10 @@
         "php": ">=5.4"
     },
     "require-dev": {
-        "cascade/doc-tools": "dev-master"
+        "smalldb/doc-tools": "dev-master"
     },
     "suggest": {
-        "flupdo/flupdo": "SQL database support"
+        "smalldb/flupdo": "SQL database support"
     }
 }
 
