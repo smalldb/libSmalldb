@@ -7,7 +7,7 @@ mirror:
                 - tags
                 - master
         script:
-                - 'git status ; for url in $MIRROR_GIT_URLS ; do echo ; echo "$url" ; git push -f --tags "$url" master; done'
+                - 'git status ; for url in $MIRROR_GIT_URLS ; do echo ; echo "$url" ; git push -f "$url" --tags origin/master:master; done'
 
 doc:
         stage: deploy
