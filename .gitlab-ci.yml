@@ -1,8 +1,10 @@
-before_script:
-        - composer install --dev
-
 stages:
         - deploy
+
+mirror:
+        stage: deploy
+        script:
+                - 'for url in $MIRROR_GIT_URLS ; do echo ; echo "$url" ; git push --mirror "$url" ; done'
 
 doc:
         stage: deploy
@@ -10,6 +12,7 @@ doc:
                 - tags
                 - master
         script:
+                - 'composer install --dev'
                 - 'echo "Destination: $DOC_INSTALL_DESTINATION/"'
                 - 'test -n "$DOC_INSTALL_DESTINATION"'
                 - '[ -d "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/" ] || mkdir -pv "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/"'
