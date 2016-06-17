@@ -3,8 +3,11 @@ stages:
 
 mirror:
         stage: deploy
+        only:
+                - tags
+                - master
         script:
-                - 'for url in $MIRROR_GIT_URLS ; do echo ; echo "$url" ; git push --mirror "$url" ; done'
+                - 'for url in $MIRROR_GIT_URLS ; do echo ; echo "$url" ; git push -f --tags "$url" master; done'
 
 doc:
         stage: deploy
