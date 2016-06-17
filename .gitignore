@@ -1,3 +1,4 @@
+composer.lock
 run-tests.log
 test/*.diff
 test/*.exp
