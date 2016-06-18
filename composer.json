@@ -2,6 +2,7 @@
     "name": "smalldb/libsmalldb",
     "description": "Smalldb: State machine abstraction layer",
     "license": "Apache-2.0",
+    "homepage": "https://smalldb.org/",
     "authors": [
         {
             "name": "Josef Kufner",
