@@ -25,8 +25,8 @@ namespace Smalldb\StateMachine;
  *
  * Options:
  *
- * 	- `group`: ID of the subdiagram to use. If null, the whole diagram is
- * 	  used.
+ *   - `group`: ID of the subdiagram to use. If null, the whole diagram is
+ *     used.
  *
  * @see http://www.yworks.com/en/products_yed_about.html
  */

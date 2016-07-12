@@ -32,8 +32,8 @@ namespace Smalldb\StateMachine;
  *
  * Options:
  * 
- * 	- `process_id`: ID of BPMN process to use from the file (string). If
- * 	  null, the first process is used.
+ *   - `process_id`: ID of BPMN process to use from the file (string). If
+ *     null, the first process is used.
  *
  * @see https://camunda.org/bpmn/tool/
  */
