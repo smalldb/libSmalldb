@@ -30,7 +30,7 @@ namespace Smalldb\StateMachine;
 abstract class AbstractBackend
 {
 	private $alias;
-	private $context;
+	private $context = null;
 	private $machine_type_cache = array();
 
 
@@ -40,13 +40,17 @@ abstract class AbstractBackend
 	 * backend initialization.
 	 *
 	 * @param $options are used by derived classes to configure everything.
-	 * @param $context is accessible to AbstractMachine.
+	 * @param $context is accessible to AbstractMachine, but it may not be
+	 * 	available in constructor - see setContext().
 	 * @param $alias is used to identify instances in log.
 	 */
-	public function __construct($options, $context, $alias)
+	public function __construct($options, $context = null, $alias)
 	{
 		$this->alias = $alias;
-		$this->context = $context;
+
+		if ($context !== null) {
+			$this->setContext($context);
+		}
 	}
 
 
@@ -56,6 +60,21 @@ abstract class AbstractBackend
 	public function getAlias()
 	{
 		return $this->alias;
+	}
+
+
+	/**
+	 * Set context if not set yet.
+	 *
+	 * Context cannot be changed later, but to 
+	 */
+	public function setContext($context)
+	{
+		if ($this->context !== null) {
+			throw new RuntimeException('Context is already set.');
+		}
+
+		$this->context = $context;
 	}
 
 

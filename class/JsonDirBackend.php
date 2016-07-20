@@ -62,7 +62,7 @@ class JsonDirBackend extends AbstractBackend
 	/**
 	 * Constructor compatible with cascade resource factory.
 	 */
-	public function __construct($options, $context, $alias)
+	public function __construct($options, $context = null, $alias)
 	{
 		parent::__construct($options, $context, $alias);
 
