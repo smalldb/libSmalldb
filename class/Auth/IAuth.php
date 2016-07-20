@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2014, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2014-2016, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Auth;
 
 /**
  * Authenticator interface
@@ -42,8 +42,8 @@ interface IAuth
 	 * Check whether user has given role(s).
 	 *
 	 * Smalldb does not understand user roles, it can only check whether
-	 * user's role is one of required values. User's role is global and it
-	 * is not related to any instance of anything.
+	 * user's roles contain one of required values. User's roles are global
+	 * and they are not related to any instance of anything.
 	 *
 	 * User may have any number of roles.
 	 *

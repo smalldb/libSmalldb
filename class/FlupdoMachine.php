@@ -131,8 +131,11 @@ class FlupdoMachine extends AbstractMachine
 		// Get authenticator
 		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
 		$this->auth = is_array($this->context) ? $this->context[$auth_resource_name] : $this->context->$auth_resource_name;
-		if ($this->auth !== null && !($this->auth instanceof IAuth)) {
-			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\IAuth.');
+		if (!$this->auth) {
+			throw new InvalidArgumentException('Authenticator is missing.');
+		}
+		if (!($this->auth instanceof \Smalldb\StateMachine\Auth\IAuth)) {
+			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\Auth\\IAuth.');
 		}
 
 		// Use config if not specified otherwise
