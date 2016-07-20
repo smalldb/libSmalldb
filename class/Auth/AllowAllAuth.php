@@ -24,6 +24,13 @@ namespace Smalldb\StateMachine\Auth;
 class AllowAllAuth implements IAuth
 {
 
+	/// @copydoc Smalldb\StateMachine\IAuth::checkSession()
+	public function checkSession()
+	{
+		// nop
+	}
+
+
 	/// @copydoc Smalldb\StateMachine\IAuth::getUserId()
 	public function getUserId()
 	{

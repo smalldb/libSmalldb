@@ -29,6 +29,15 @@ interface IAuth
 {
 
 	/**
+	 * Check session and setup whatever is neccessary (cookies and so).
+	 *
+	 * This shall be called when context is ready, but before application
+	 * does anything.
+	 */
+	public function checkSession();
+
+
+	/**
 	 * Get user's ID.
 	 *
 	 * User's ID is limited to single scalar value (any integer or string).
