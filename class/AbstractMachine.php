@@ -367,6 +367,26 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Get context object (whatever it is).
+	 *
+	 * @param $resource_name Resource of the context to return.
+	 * @return Return whole context if `$resource` is null, otherwise returns
+	 * 	requested resource from the context.
+	 * @see AbstractBackend::getContext()
+	 */
+	protected function getContext($resource_name = null)
+	{
+		if ($resource_name === null) {
+			return $this->context;
+		} else {
+			return is_array($this->context)
+				? $this->context[$resource_name]
+				: $this->context->$resource_name;
+		}
+	}
+
+
+	/**
 	 * Create URL using properties and given format.
 	 */
 	protected function urlFormat($id, $url_fmt, $properties_cache)

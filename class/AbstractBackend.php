@@ -80,10 +80,21 @@ abstract class AbstractBackend
 
 	/**
 	 * Get context object (whatever it is).
+	 *
+	 * @param $resource_name Resource of the context to return.
+	 * @return Return whole context if `$resource` is null, otherwise returns
+	 * 	requested resource from the context.
+	 * @see AbstractMachine::getContext()
 	 */
-	public function getContext()
+	public function getContext($resource_name = null)
 	{
-		return $this->context;
+		if ($resource_name === null) {
+			return $this->context;
+		} else {
+			return is_array($this->context)
+				? $this->context[$resource_name]
+				: $this->context->$resource_name;
+		}
 	}
 
 
