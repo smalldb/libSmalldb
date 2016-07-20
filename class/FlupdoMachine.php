@@ -202,24 +202,46 @@ class FlupdoMachine extends AbstractMachine
 	 */
 	protected function scanTableColumns()
 	{
-		$r = $this->flupdo->select('*')
-			->from($this->flupdo->quoteIdent($this->table))
-			->where('FALSE')->limit(0)
-			->query();
-		$col_cnt = $r->columnCount();
+		$driver = $this->flupdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
-		// build properties description
-		$this->properties = array();
-		$this->pk_columns = array();
-		for ($i = 0; $i < $col_cnt; $i++) {
-			$cm = $r->getColumnMeta($i);
-			$this->properties[$cm['name']] = array(
-				'name' => $cm['name'],
-				'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
-			);
-			if (in_array('primary_key', $cm['flags'])) {
-				$this->pk_columns[] = $cm['name'];
-			}
+		switch ($driver) {
+			case 'sqlite':
+				$r = $this->flupdo->query('PRAGMA table_info('.$this->flupdo->quoteIdent($this->table).');');
+
+				// build properties description
+				$this->properties = array();
+				$this->pk_columns = array();
+				foreach($r as $cm) {
+					$this->properties[$cm['name']] = array(
+						'name' => $cm['name'],
+						'type' => $cm['type'],
+					);
+					if ($cm['pk']) {
+						$this->pk_columns[] = $cm['name'];
+					}
+				}
+				break;
+			default:
+				$r = $this->flupdo->select('*')
+					->from($this->flupdo->quoteIdent($this->table))
+					->where('NULL')->limit(0)
+					->query();
+				$col_cnt = $r->columnCount();
+
+				// build properties description
+				$this->properties = array();
+				$this->pk_columns = array();
+				for ($i = 0; $i < $col_cnt; $i++) {
+					$cm = $r->getColumnMeta($i);
+					$this->properties[$cm['name']] = array(
+						'name' => $cm['name'],
+						'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
+					);
+					if (in_array('primary_key', $cm['flags'])) {
+						$this->pk_columns[] = $cm['name'];
+					}
+				}
+				break;
 		}
 	}
 
