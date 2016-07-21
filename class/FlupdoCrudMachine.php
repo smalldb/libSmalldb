@@ -110,7 +110,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 			$this->scanTableColumns();
 		}
 
-		$this->setupDefaultMachine($config);
+		// Create default transitions?
+		if (empty($config['no_default_machine'])) {
+			$this->setupDefaultMachine($config);
+		}
 	}
 
 
@@ -123,7 +126,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 		$io_name = isset($config['io_name']) ? (string) $config['io_name'] : 'item';
 
 		// Create default transitions?
-		$no_default_transitions = !empty($config['crud_machine_no_default_transitions']);
+		$no_default_transitions = !empty($config['crud_machine_no_default_transitions']);	/// @deprecated
 
 		// Exists state only
 		$this->states = $no_default_transitions ? array() : array(
@@ -132,6 +135,11 @@ class FlupdoCrudMachine extends FlupdoMachine
 				'description' => '',
 			),
 		);
+
+		// Simple 'exists' state if not state select is not defined
+		if ($this->state_select === null) {
+			$this->state_select = '"exists"';
+		}
 
 		// Actions
 		$this->actions = array(
@@ -207,11 +215,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 		// Merge with config
 		if (isset($config['states'])) {
 			$this->states = array_replace_recursive($this->states, $config['states']);
-		}
-
-		// Simple 'exists' state if not state select is not defined
-		if ($this->state_select === null) {
-			$this->state_select = '"exists"';
 		}
 	}
 
