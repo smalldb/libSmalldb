@@ -983,7 +983,7 @@ abstract class AbstractMachine
 			"	rankdir = TB;\n",
 			"	margin = 0;\n",
 			"	bgcolor = transparent;\n",
-			"	edge [ arrowtail=none, arrowhead=normal, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
+			"	edge [ arrowtail=none, arrowhead=normal, dir=both, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
 			"	node [ shape=box, style=\"rounded,filled\", fontsize=9, fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
 			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
 			"\n";
@@ -1004,8 +1004,9 @@ abstract class AbstractMachine
 		$group_content = array();
 		if (!empty($this->states)) {
 			foreach ($this->states as $s => $state) {
-				echo "\t", "s_", $this->escapeDotIdentifier($s),
-					" [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
+				echo "\t", "s_", $this->escapeDotIdentifier($s);
+				//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
+				echo " [ label=\"", addcslashes($s, '"'), "\"";
 				if (!empty($state['color'])) {
 					echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
 				}
@@ -1016,6 +1017,7 @@ abstract class AbstractMachine
 				}
 			}
 		}
+		echo "\n";
 
 		// State groups
 		if (!empty($this->state_groups)) {
@@ -1054,7 +1056,8 @@ abstract class AbstractMachine
 							}
 						}
 						echo "\t", $s_src, " -> ", $s_dst, " [ ";
-						echo "label=\" ", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "  \"";
+						//echo "label=\" ", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "  \"";
+						echo "label=\" ", addcslashes($a, '"'), "  \"";
 						if (!empty($transition['color'])) {
 							echo ", color=\"", addcslashes($transition['color'], '"'), "\"";
 							echo ", fontcolor=\"", addcslashes($transition['color'], '"'), "\"";
@@ -1062,11 +1065,14 @@ abstract class AbstractMachine
 						if (isset($transition['weight'])) {
 							echo ", weight=", (int) $transition['weight'];
 						}
+						if (isset($transition['access_policy']) && isset($this->access_policies[$transition['access_policy']]['arrow_tail'])) {
+							$arrow_tail = $this->access_policies[$transition['access_policy']]['arrow_tail'];
+							echo ", arrowtail=\"", addcslashes($arrow_tail, '"'), "\"";
+						}
 						echo " ];\n";
 					}
 				}
 			}
-			echo "\n";
 		}
 
 		// Missing states
@@ -1076,17 +1082,16 @@ abstract class AbstractMachine
 
 		// Final state
 		if ($have_final_state) {
-			echo "\t", "END [\n",
-				"label = \"\",",
-				"shape = doublecircle,",
-				"color = black,",
-				"fillcolor = black,",
-				"penwidth = 1.8,",
-				"width = 0.20,",
-				"style = filled",
-				"];\n\n";
+			echo "\n\t", "END [",
+				" label = \"\",",
+				" shape = doublecircle,",
+				" color = black,",
+				" fillcolor = black,",
+				" penwidth = 1.8,",
+				" width = 0.20,",
+				" style = filled",
+				" ];\n";
 		}
-
 
 		// DOT Footer
 		echo "}\n";
