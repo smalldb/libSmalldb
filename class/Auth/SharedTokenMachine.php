@@ -25,6 +25,46 @@ namespace Smalldb\StateMachine\Auth;
 class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 {
 	/**
+	 * Map of table columns
+	 */
+	protected $table_columns = [
+		'session_id' => 'id',		// primary key
+		'session_token' => 'token',	// not null
+		'user_id' => 'user_id',		// foreign key to user table
+	];
+
+	/**
+	 * User login listing
+	 */
+	protected $user_login_filters = [
+		'type' => 'user',
+	];
+	protected $user_login_property = 'email';
+	protected $user_password_property = 'password';
+
+	/**
+	 * @copydoc \Smalldb\StateMachine\FlupdoMachine::initializeMachine()
+	 */
+	protected function initializeMachine($config)
+	{
+		parent::initializeMachine($config);
+
+		if (isset($config['table_columns'])) {
+			$this->table_columns = array_replace_recursive($this->table_columns, $config['table_columns']);
+		}
+		if (isset($config['user_login_filters'])) {
+			$this->user_login_filters = $config['user_login_filters'];
+		}
+		if (isset($config['user_login_property'])) {
+			$this->user_login_property = $config['user_login_property'];
+		}
+		if (isset($config['user_password_property'])) {
+			$this->user_password_property = $config['user_password_property'];
+		}
+	}
+
+
+	/**
 	 * Setup session machine
 	 */
 	protected function setupDefaultMachine($config)
@@ -162,7 +202,9 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	protected function login($ref, $user, $password)
 	{
 		// Get user
-		$user_list = $this->backend->createListing(['type' => 'user', 'email' => $user])->fetchAll();
+		$user_filters = $this->user_login_filters;
+		$user_filters[$this->user_login_property] = $user;
+		$user_list = $this->backend->createListing($user_filters)->fetchAll();
 		if (empty($user_list)) {
 			$user_ref = null;
 		} else {
@@ -171,7 +213,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 
 		// Check password
 		$dummy_hash = password_hash((string) time(), PASSWORD_DEFAULT); // prevent timing attack to $user
-		$passwd_hash = $user_ref ? $user_ref['password'] : $dummy_hash;
+		$passwd_hash = $user_ref ? $user_ref[$this->user_password_property] : $dummy_hash;
 		$passwd_valid = $user_ref && password_verify($password, $passwd_hash);
 
 		if (!$passwd_valid) {
@@ -186,7 +228,9 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 
 		// Store session token
 		$n = $this->flupdo->insert()->into($this->flupdo->quoteIdent($this->table))
-			->insert('id, token, user_id')
+			->insert($this->flupdo->quoteIdent($this->table_columns['session_id']))
+			->insert($this->flupdo->quoteIdent($this->table_columns['session_token']))
+			->insert($this->flupdo->quoteIdent($this->table_columns['user_id']))
 			->values([[$session_id, password_hash($session_token, PASSWORD_DEFAULT), $user_ref->id]])
 			->exec();
 
