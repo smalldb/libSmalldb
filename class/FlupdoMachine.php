@@ -275,6 +275,10 @@ class FlupdoMachine extends AbstractMachine
 			case 'anyone':
 				return true;
 
+			// nobody: Nobody is allowed, except all mighty users.
+			case 'nobody':
+				return false;
+
 			// anonymous: Only anonymous users allowed (not logged in)
 			case 'anonymous':
 				$user_id = $this->auth->getUserId();
