@@ -170,17 +170,30 @@ class FlupdoMachine extends AbstractMachine
 			}
 		}
 
-		// Scan database for properties if not specified
-		if (empty($this->properties)) {
-			$this->scanTableColumns();
-		} else if ($this->pk_columns === null) {
-			// Collect primary keys if not specified
-			$this->pk_columns = array();
-			foreach ($this->properties as $property => $p) {
-				if (!empty($p['is_pk'])) {
-					$this->pk_columns[] = $property;
+		// Properties
+		if ($this->properties === null) {
+			if (empty($config['properties'])) {
+				// Scan database for properties if not specified
+				$this->scanTableColumns();
+			} else {
+				// If properties are difined manualy, use them
+				$this->properties = $config['properties'];
+
+				// Collect primary key from properties
+				if ($this->pk_columns === null) {
+					$this->pk_columns = array();
+					foreach ($this->properties as $property => $p) {
+						if (!empty($p['is_pk'])) {
+							$this->pk_columns[] = $property;
+						}
+					}
 				}
 			}
+		}
+
+		// Check for primary key
+		if (empty($this->pk_columns)) {
+			throw new InvalidArgumentException('Primary key is missing - please define primary key.');
 		}
 
 		// Prepare list of composed properties and encoded columns
@@ -834,19 +847,6 @@ class FlupdoMachine extends AbstractMachine
 	 */
 	public function describeId()
 	{
-		if ($this->pk_columns !== null) {
-			return $this->pk_columns;
-		}
-
-		$this->pk_columns = array();
-
-		// FIXME: MySQL specific code
-		$r = $this->flupdo->query('SHOW KEYS FROM '.$this->flupdo->quoteIdent($this->table).' WHERE Key_name = "PRIMARY"');
-
-		while (($row = $r->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
-			$this->pk_columns[] = $row['Column_name'];
-		}
-
 		return $this->pk_columns;
 	}
 

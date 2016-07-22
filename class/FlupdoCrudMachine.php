@@ -96,20 +96,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 			}
 		}
 
-		// properties
-		if (!empty($config['properties'])) {
-			// if properties are difined manualy, use them
-			$this->properties = $config['properties'];
-			$this->pk_columns = array();
-			foreach ($this->properties as $property => $p) {
-				if (!empty($p['is_pk'])) {
-					$this->pk_columns[] = $property;
-				}
-			}
-		} else {
-			$this->scanTableColumns();
-		}
-
 		// Create default transitions?
 		if (empty($config['no_default_machine'])) {
 			$this->setupDefaultMachine($config);
