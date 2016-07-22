@@ -180,17 +180,18 @@ class FlupdoMachine extends AbstractMachine
 				if (!empty($p['is_pk'])) {
 					$this->pk_columns[] = $property;
 				}
-				if (isset($p['column_encoding']) && $p['column_encoding'] == 'json') {
-					$this->json_columns[] = $property;
-				}
 			}
 		}
 
-		// Prepare list of composed properties
+		// Prepare list of composed properties and encoded columns
 		$this->composed_properties = array();
+		$this->json_columns = array();
 		foreach ($this->properties as $property => $p) {
 			if (!empty($p['components'])) {
 				$this->composed_properties[$property] = $p['components'];
+			}
+			if (isset($p['column_encoding']) && $p['column_encoding'] == 'json') {
+				$this->json_columns[] = $property;
 			}
 		}
 	}
@@ -676,7 +677,7 @@ class FlupdoMachine extends AbstractMachine
 	 */
 	public function getState($id)
 	{
-		if ($id === null || $id === array()) {
+		if ($id === null || $id === array() || $id === false || $id === '') {
 			return '';
 		}
 
@@ -839,6 +840,7 @@ class FlupdoMachine extends AbstractMachine
 
 		$this->pk_columns = array();
 
+		// FIXME: MySQL specific code
 		$r = $this->flupdo->query('SHOW KEYS FROM '.$this->flupdo->quoteIdent($this->table).' WHERE Key_name = "PRIMARY"');
 
 		while (($row = $r->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
