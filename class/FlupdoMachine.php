@@ -178,22 +178,22 @@ class FlupdoMachine extends AbstractMachine
 			} else {
 				// If properties are difined manualy, use them
 				$this->properties = $config['properties'];
+			}
+		}
 
-				// Collect primary key from properties
-				if ($this->pk_columns === null) {
-					$this->pk_columns = array();
-					foreach ($this->properties as $property => $p) {
-						if (!empty($p['is_pk'])) {
-							$this->pk_columns[] = $property;
-						}
-					}
+		// Collect primary key from properties
+		if ($this->pk_columns === null) {
+			$this->pk_columns = array();
+			foreach ($this->properties as $property => $p) {
+				if (!empty($p['is_pk'])) {
+					$this->pk_columns[] = $property;
 				}
 			}
 		}
 
 		// Check for primary key
 		if (empty($this->pk_columns)) {
-			throw new InvalidArgumentException('Primary key is missing - please define primary key.');
+			throw new InvalidArgumentException('Primary key is missing in table '.var_export($this->table, true));
 		}
 
 		// Prepare list of composed properties and encoded columns
@@ -211,7 +211,7 @@ class FlupdoMachine extends AbstractMachine
 
 
 	/**
-	 * Scan table in database and populate properties and pk_columns arrays.
+	 * Scan table in database and populate properties.
 	 */
 	protected function scanTableColumns()
 	{
@@ -219,19 +219,16 @@ class FlupdoMachine extends AbstractMachine
 
 		switch ($driver) {
 			case 'sqlite':
-				$r = $this->flupdo->query('PRAGMA table_info('.$this->flupdo->quoteIdent($this->table).');');
+				$r = $this->flupdo->query('PRAGMA table_info('.$this->flupdo->quoteIdent($this->table).')');
 
 				// build properties description
 				$this->properties = array();
-				$this->pk_columns = array();
 				foreach($r as $cm) {
 					$this->properties[$cm['name']] = array(
 						'name' => $cm['name'],
 						'type' => $cm['type'],
+						'is_pk' => (bool) $cm['pk'],
 					);
-					if ($cm['pk']) {
-						$this->pk_columns[] = $cm['name'];
-					}
 				}
 				break;
 			default:
@@ -243,16 +240,13 @@ class FlupdoMachine extends AbstractMachine
 
 				// build properties description
 				$this->properties = array();
-				$this->pk_columns = array();
 				for ($i = 0; $i < $col_cnt; $i++) {
 					$cm = $r->getColumnMeta($i);
 					$this->properties[$cm['name']] = array(
 						'name' => $cm['name'],
 						'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
+						'is_pk' => in_array('primary_key', $cm['flags']),
 					);
-					if (in_array('primary_key', $cm['flags'])) {
-						$this->pk_columns[] = $cm['name'];
-					}
 				}
 				break;
 		}
