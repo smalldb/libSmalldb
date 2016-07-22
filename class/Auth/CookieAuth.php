@@ -36,7 +36,6 @@ use Smalldb\StateMachine;
  *   - `machine_null_ref`: State machine type for null ref.
  *   - `cookie_name`: Name of the cookie for a token. (default: 'auth')
  *   - `cookie_ttl`: How long cookie is valid. (default: 10 years)
- *   - `session_ttl`: Duration of the session (should be greater or equal to `cookie_ttl`, default: 10 years).
  *   - `user_id_property`: Name of the session machine property with user's ID.
  *   - `user_role_property`: Name of the session machine property with user's role. You may want to have this property calculated.
  */
@@ -48,7 +47,6 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 	// Configuration
 	protected $cookie_name = 'AuthToken';			///< Cookie name
 	protected $cookie_ttl = 2592000;			///< Cookie duration [seconds] (default: 30 days)
-	protected $session_ttl = 2592000;			///< Session duration [seconds] (default: 30 days)
 	protected $user_id_property = 'user_id';		///< Name of the session machine property with user's ID
 	protected $user_roles_property = 'user_roles';		///< Name of the session machine property with user's role
 	protected $all_mighty_user_role = null;			///< Name of all mighty user role (admin)
@@ -65,8 +63,7 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 		$this->smalldb = $smalldb;
 
 		// Load configuration
-		foreach (array('cookie_name', 'cookie_ttl', 'session_ttl',
-			'user_id_property', 'all_mighty_user_role', 'all_mighty_cli',
+		foreach (array('cookie_name', 'cookie_ttl', 'user_id_property', 'all_mighty_user_role', 'all_mighty_cli',
 			'session_machine_null_ref', 'session_machine_ref_prefix') as $p)
 		{
 			if (isset($config[$p])) {
@@ -110,6 +107,10 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 				// Invalid token
 				$this->session_machine = $this->smalldb->ref($this->session_machine_null_ref);
 			} else {
+				// TODO: Validate token, not only session existence, and check whether session is in valid state (invoke a transition to check).
+
+				// TODO: Session should tell how long it will last so the cookie should have the same duration.
+
 				// Token is good - refresh cookie
 				setcookie($this->cookie_name, $session_token, time() + $this->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
 			}
