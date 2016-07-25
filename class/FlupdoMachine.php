@@ -443,7 +443,7 @@ class FlupdoMachine extends AbstractMachine
 	 * transaction will be rolled back automatically before re-throwing
 	 * the exception.
 	 */
-	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, $new_id_callback = null)
+	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, callable $new_id_callback = null)
 	{
 		$transaction_before_transition = $this->flupdo->inTransaction();
 		try {
