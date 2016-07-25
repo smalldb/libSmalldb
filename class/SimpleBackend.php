@@ -132,16 +132,5 @@ class SimpleBackend extends AbstractBackend
 		throw new \Exception('Not implemented.');
 	}
 
-
-	/**
-	 * @copydoc AbstractBackend::createQueryBuilder()
-	 */
-	public function createQueryBuilder($type)
-	{
-		throw new \Exception('Not implemented.');
-	}
-
 }
-
-
 

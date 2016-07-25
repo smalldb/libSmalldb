@@ -24,27 +24,27 @@ namespace Smalldb\StateMachine\Auth;
 class AllowAllAuth implements IAuth
 {
 
-	/// @copydoc Smalldb\StateMachine\IAuth::checkSession()
+	/// @copydoc Smalldb\StateMachine\Auth\IAuth::checkSession()
 	public function checkSession()
 	{
 		// nop
 	}
 
 
-	/// @copydoc Smalldb\StateMachine\IAuth::getUserId()
+	/// @copydoc Smalldb\StateMachine\Auth\IAuth::getUserId()
 	public function getUserId()
 	{
 		return null;
 	}
 
 
-	/// @copydoc Smalldb\StateMachine\IAuth::hasUserRoles()
+	/// @copydoc Smalldb\StateMachine\Auth\IAuth::hasUserRoles()
 	public function hasUserRoles($roles)
 	{
 		return true;
 	}
 
-	/// @copydoc Smalldb\StateMachine\IAuth::isAllMighty()
+	/// @copydoc Smalldb\StateMachine\Auth\IAuth::isAllMighty()
 	public function isAllMighty()
 	{
 		return true;

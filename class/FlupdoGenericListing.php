@@ -178,9 +178,13 @@ class FlupdoGenericListing implements IListing
 	 * @param $query_builder Query builder where filters will be added.
 	 * @param $sphinx Flupdo instance connected to Sphinx index (optional)
 	 * @param $query_filters Requested filters to add to $query_builder.
+	 * @param $machine_table The primary table to query.
 	 * @param $machine_filters Custom filter definitions (how things should be filtered, not filtering itself).
 	 * @param $machine_properties State machine properties definitions.
 	 * @param $machine_references State machine references to other state machines.
+	 * @param $additional_filters_data Additional filter data source definition (these are evaluated and added to processed filters).
+	 * @param $state_select SQL expression to get state column.
+	 * @param $filtering_flags Additional options how to handle filters.
 	 */
 	public function __construct(
 		AbstractMachine $machine,

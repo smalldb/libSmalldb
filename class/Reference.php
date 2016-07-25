@@ -38,7 +38,6 @@ namespace Smalldb\StateMachine;
  *
  * Flush property cache:
  *   unset($ref->properties);
- *
  */
 class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 {
