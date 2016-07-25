@@ -495,7 +495,7 @@ abstract class AbstractMachine
 	 * Invoke state machine transition. State machine is not instance of
 	 * this class, but it is represented by record in database.
 	 */
-	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, $new_id_callback = null)
+	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, callable $new_id_callback = null)
 	{
 		$state = $ref->state;
 
@@ -548,7 +548,9 @@ abstract class AbstractMachine
 				// nop, just pass it back
 				break;
 			case self::RETURNS_NEW_ID:
-				$new_id_callback($ret);
+				if ($new_id_callback !== null) {
+					$new_id_callback($ret);
+				}
 				break;
 			default:
 				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
