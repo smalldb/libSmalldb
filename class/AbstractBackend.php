@@ -244,7 +244,7 @@ abstract class AbstractBackend
 	 * determines which query should be done and returns appropriate 
 	 * listing object.
 	 *
-	 * Returns instance of IListing.
+	 * @return IListing.
 	 */
 	abstract public function createListing($query_filters, $filtering_flags = 0);
 

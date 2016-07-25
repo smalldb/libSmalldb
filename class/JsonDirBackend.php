@@ -184,7 +184,11 @@ class JsonDirBackend extends AbstractBackend
 	/**
 	 * Creates a listing using given filters.
 	 *
-	 * TODO: Support complex filtering over multiple machine types.
+	 * @TODO: Support complex filtering over multiple machine types and make
+	 * 	'type' filter optional.
+	 *
+	 * @see AbstractBackend::createListing()
+	 * @return IListing
 	 */
 	public function createListing($filters, $filtering_flags = 0)
 	{
