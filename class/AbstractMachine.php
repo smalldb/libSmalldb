@@ -658,6 +658,37 @@ abstract class AbstractMachine
 	}
 
 
+	/**
+	 * Perform self-check.
+	 *
+	 * TODO: Extend this method with more checks.
+	 *
+	 * @see AbstractBackend::performSelfCheck()
+	 */
+	public function performSelfCheck()
+	{
+		$results = [];
+
+		$results['id'] = $this->describeId();
+		$results['class'] = get_class($this);
+		$results['missing_methods'] = [];
+
+		foreach ($this->describeAllMachineActions() as $a => $action) {
+			foreach ($action['transitions'] as $t => $transition) {
+				$transition = array_merge($action, $transition);
+				$method = isset($transition['method']) ? $transition['method'] : $a;
+				if (!is_callable([$this, $method])) {
+					$results['missing_methods'][] = $method;
+				}
+			}
+			sort($results['missing_methods']);
+			$results['missing_methods'] = array_unique($results['missing_methods']);
+		}
+
+		return $results;
+	}
+
+
 	/******************************************************************//**
 	 *
 	 * \name	Reflection API

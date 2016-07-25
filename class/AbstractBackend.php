@@ -249,6 +249,25 @@ abstract class AbstractBackend
 	abstract public function createListing($query_filters, $filtering_flags = 0);
 
 
+	/**
+	 * Perform a quick self-check to detect most common errors (but not all of them).
+	 *
+	 * This will throw various exceptions on errors.
+	 *
+	 * @return Array with results (machine type -> per-machine results).
+	 */
+	public function performSelfCheck()
+	{
+		$results = [];
+
+		foreach($this->getKnownTypes() as $m) {
+			$machine = $this->getMachine($m);
+			$results[$m] = $machine->performSelfCheck();
+		}
+
+		return $results;
+	}
+
 
 	/******************************************************************//**
 	 *
