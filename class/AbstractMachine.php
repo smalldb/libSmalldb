@@ -41,6 +41,8 @@ abstract class AbstractMachine
 
 	/**
 	 * Backend, where all machines are stored.
+	 *
+	 * @var \Smalldb\StateMachine\AbstractBackend
 	 */
 	protected $backend;
 
