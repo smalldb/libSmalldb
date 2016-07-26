@@ -252,12 +252,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 		$data = $this->encodeProperties($properties);
 		$q = $this->flupdo->insert()->into($this->flupdo->quoteIdent($this->table));
 		foreach ($data as $k => $v) {
-			if ($v instanceof \Flupdo\Flupdo\FlupdoRawSql || $v instanceof \Flupdo\Flupdo\FlupdoBuilder) {
-				$q->set(array($this->flupdo->quoteIdent($k).' = ', $v));
-			} else {
-				$q->set($this->flupdo->quoteIdent($k).' = ?', $v);
-			}
+			$q->insert($this->flupdo->quoteIdent($k));
 		}
+		$q->values([$data]);
 		$n = $q->debugDump()->exec();
 		if (!$n) {
 			// Insert failed
