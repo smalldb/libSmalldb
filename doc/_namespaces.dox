@@ -1,0 +1,21 @@
+/*!
+	@namespace Smalldb
+
+State Machine Abstraction Layer
+
+*/
+
+/*!
+	@namespace Smalldb::StateMachine
+
+Implementation of %Smalldb state machine, the nondeterministic parametric finite automaton.
+
+*/
+
+/*!
+	@namespace Smalldb::StateMachine::Auth
+
+Authentication and authorization
+
+*/
+
