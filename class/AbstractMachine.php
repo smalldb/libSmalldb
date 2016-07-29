@@ -26,6 +26,10 @@ namespace Smalldb\StateMachine;
  * decoded within backend.
  *
  * Transition method should return FALSE when it has failed.
+ *
+ * ### Configuration Schema
+ * @htmlinclude doxygen/schema/AbstractMachine.schema.html
+ *
  */
 abstract class AbstractMachine
 {

@@ -1,0 +1,157 @@
+{
+    "title": "Smalldb State Machine",
+    "type": "object",
+    "required": [
+        "class"
+    ],
+    "properties": {
+        "_": {
+            "description": "Token to stop PHP from interpreting the rest of the file. Ignored by Smalldb.",
+            "type": "string",
+            "pattern": "^<\\?php printf\\('_%c%c}%c',34,10,10\\);__halt_compiler\\(\\);\\?>$"
+        },
+        "class": {
+            "description": "PHP class name of transitions implementation.",
+            "type": "string",
+            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*$"
+        },
+        "properties": {
+            "description": "State machine properties.",
+            "type": "object",
+            "properties": {
+            }
+        },
+        "states": {
+            "description": "State machine states",
+            "type": "object",
+            "additionalProperties": {
+                "description": "State of the state machine",
+                "type": "object",
+                "properties": {
+                    "color": {
+                        "description": "Color of the state in the state diagram (fillcolor). Visual effect only.",
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "group": {
+                        "description": "Name of a group (subgraph) in the state diagram to which the state belongs. Visual effect only. See state_groups.",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "state_groups": {
+            "description": "Groups of states in the state machine diagram. Visual effect only.",
+            "type": "object",
+            "additionalProperties": {
+                "description": "Group of states in the state machine diagram.",
+                "type": "object",
+                "required": [ "label" ],
+                "additionalProperties": false,
+                "properties": {
+                    "label": {
+                        "description": "Label of the group.",
+                        "type": "string"
+                    },
+                    "color": {
+                        "description": "Color of the group (border and label).",
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "state_groups": {
+                        "description": "Recursively nested state groups (same as parent state_groups).",
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "actions": {
+            "description": "State machine actions (groups of transitions of the same name).",
+            "type": "object",
+            "additionalProperties": {
+                "description": "State machine action.",
+                "type": "object",
+                "properties": {
+                    "transitions": {
+                        "description": "Transitions of the action",
+                        "type": "object",
+                        "additionalProperties": {
+                            "description": "Starting state of the transition.",
+                            "type": "object",
+                            "properties": {
+                                "targets": {
+                                    "description": "List of possible target states of the transition starting from this state.",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "additionalProperties": {
+                                "description": "All properties are merged with action's properties; transition's properties have precedence."
+                            }
+                        }
+                    },
+                    "method": {
+                        "description": "Name of PHP method which implements the transition.",
+                        "type": "string",
+                        "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*$"
+                    },
+                    "args": {
+                        "description": "Additional arguments prefixed to transition arguments when calling the method.",
+                        "type": "array"
+                    },
+                    "pre_check_methods": {
+                        "description": "Methods to call before the transition is invoked. All of these methods must not return false otherwise the transition is aborted.",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*$"
+                        }
+                    },
+                    "returns": {
+                        "description": "Semantics of return value of the method.",
+                        "type": [ "string", "null" ]
+                    },
+                    "post_transition_methods": {
+                        "description": "Methods to call after the transition is invoked.",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*$"
+                        }
+                    },
+                    "color": {
+                        "description": "Color of the arrow in the state diagram.",
+                        "type": "string",
+                        "pattern": "^#[0-9A-Fa-f]{6}$"
+                    },
+                    "weight": {
+                        "description": "Weight of the arrow in the state diagram (heavier arrows are rendered shorter).",
+                        "type": "number"
+                    },
+                    "access_policy": {
+                        "description": "Name of required access policy, see access_policies.",
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "access_policies": {
+            "description": "Access policies",
+            "type": "object",
+            "additionalProperties": {
+                "description": "Access policy",
+                "type": "object",
+                "properties": {
+                    "arrow_tail": {
+                        "description": "Shape of arrow tail in the state diagram. Visual effect only. See http://www.graphviz.org/content/arrow-shapes.",
+                        "type": "string",
+                        "pattern": "^((|l|r|o|ol|or)box|(|l|r)crow|(l|r|o|ol|or)diamond|(|o)dot|(|l|r|o|ol|or)inv|none|(|l|r|o|ol|or)normal|(|l|r)tee|(|l|e)vee|(|l|r|i|li|ri)curve){1,4}$"
+                    }
+                }
+            }
+        }
+    }
+}
+
