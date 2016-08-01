@@ -1,5 +1,5 @@
 {
-    "title": "Smalldb State Machine",
+    "title": "Smalldb Abstract State Machine",
     "type": "object",
     "required": [
         "class"

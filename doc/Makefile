@@ -11,6 +11,7 @@ figures:
 schema:
 	mkdir -p doxygen/schema
 	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/AbstractMachine.schema.json > doxygen/schema/AbstractMachine.schema.html
+	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/FlupdoMachine.schema.json > doxygen/schema/FlupdoMachine.schema.html
 
 
 clean:

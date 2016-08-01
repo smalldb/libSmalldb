@@ -1,0 +1,53 @@
+{
+    "title": "Smalldb Flupdo State Machine",
+    "extends_file": "AbstractMachine.schema.json",
+    "type": "object",
+    "required": [ "auth_resource", "table" ],
+    "properties": {
+        "flupdo_resource": {
+            "description": "Context property containing the Flupdo instance connected to database.",
+            "type": "string",
+            "default": "database"
+        },
+        "auth_resource": {
+            "description": "Context property containing the authenticator (IAuth)",
+            "type": "string",
+            "default": "auth"
+        },
+        "sphinx_resource": {
+            "description": "Context property containing the Flupdo resource connected to Sphinx search engine.",
+            "type": ["null", "string"],
+            "default": null
+        },
+        "table": {
+            "description": "Name of the SQL table where state machines of this type are stored.",
+            "type": "string"
+        },
+        "table_alias": {
+            "description": "",
+            "type": ["null", "string"],
+            "default": null
+        },
+        "": {
+            "description": "",
+            "type": "string"
+        },
+        "": {
+            "description": "",
+            "type": "string"
+        },
+        "": {
+            "description": "",
+            "type": "string"
+        },
+        "": {
+            "description": "",
+            "type": "string"
+        },
+        "": {
+            "description": "",
+            "type": "string"
+        }
+    }
+}
+

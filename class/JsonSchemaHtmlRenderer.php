@@ -40,9 +40,56 @@ class JsonSchemaHtmlRenderer
 	 */
 	public static function loadFile($filename)
 	{
-		return new self(\Smalldb\StateMachine\Utils::parse_json_file($filename));
+		return new self(static::parseFile($filename));
 	}
 
+
+	/**
+	 * Read and process file, read dependencies if exist.
+	 */
+	public static function parseFile($filename)
+	{
+		$schema = \Smalldb\StateMachine\Utils::parse_json_file($filename);
+		$extends_file = isset($schema['extends_file']) ? dirname($filename).'/'.$schema['extends_file'] : null;
+		while ($extends_file !== null) {
+			$part = \Smalldb\StateMachine\Utils::parse_json_file($extends_file);
+			$extends_file = isset($part['extends_file']) ? dirname($extends_file).'/'.$part['extends_file'] : null;
+			$schema = static::extendSchema($part, $schema);
+		}
+		if (isset($schema['extends_file'])) {
+			unset($schema['extends_file']);
+		}
+		return $schema;
+	}
+
+
+	/**
+	 * Recursively merge two schemas extending $orig with $ext.
+	 *
+	 * Like array_replace_recursive, but it concatenates lists instead of
+	 * overwriting numeric keys.
+	 *
+	 * @param $orig Parent config.
+	 * @param $ext Child config which extends the $parent.
+	 */
+	protected static function extendSchema($orig, $ext)
+	{
+		if (is_array($orig) && is_array($ext)) {
+			foreach ($ext as $ext_k => $ext_v) {
+				if (is_numeric($ext_k)) {
+					array_push($orig, $ext_v);
+				} else if (isset($orig[$ext_k])){
+					$orig[$ext_k] = static::extendSchema($orig[$ext_k], $ext_v);
+					$orig['_src'][$ext_k] = $ext_src;
+				} else {
+					$orig[$ext_k] = $ext_v;
+				}
+			}
+			return $orig;
+		} else {
+			return $ext;
+		}
+	}
 
 	/**
 	 * Render to string
@@ -85,6 +132,9 @@ class JsonSchemaHtmlRenderer
 		if ($node === false) {
 			echo '<span class="json_schema_node_type">[not allowed]</span>', "\n";
 		}
+		if (isset($node['title'])) {
+			echo "<em class=\"json_schema_node_description\">", htmlspecialchars($node['title']), "</em>\n";
+		}
 		if (isset($node['description'])) {
 			echo "<span class=\"json_schema_node_description\">", htmlspecialchars($node['description']), "</span>\n";
 		}
@@ -125,12 +175,8 @@ class JsonSchemaHtmlRenderer
 		}
 
 		if (in_array('object', $type)) {
-			if (isset($node['additionalProperties'])) {
-				echo "<ul>\n";
-				$this->renderNode('*', $node['additionalProperties'], $path, $depth + 1);
-				echo "</ul>\n";
-			}
 			if (isset($node['properties'])) {
+				ksort($node['properties']);
 				echo "<ul>\n";
 				foreach ($node['properties'] as $child_name => $child) {
 					$this->renderNode($child_name, $child, $node, $path != '' ? $path.'.'.$child_name : $child_name, $depth + 1);
@@ -138,10 +184,16 @@ class JsonSchemaHtmlRenderer
 				echo "</ul>\n";
 			}
 			if (isset($node['patternProperties'])) {
+				ksort($node['patternProperties']);
 				echo "<ul>\n";
 				foreach ($node['patternProperties'] as $child_name => $child) {
 					$this->renderNode($child_name, $child, $node, $path != '' ? $path.'.'.$child_name : $child_name, $depth + 1);
 				}
+				echo "</ul>\n";
+			}
+			if (isset($node['additionalProperties'])) {
+				echo "<ul>\n";
+				$this->renderNode('*', $node['additionalProperties'], $path, $depth + 1);
 				echo "</ul>\n";
 			}
 		}

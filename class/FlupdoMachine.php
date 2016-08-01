@@ -23,6 +23,13 @@ namespace Smalldb\StateMachine;
  *
  * Most of its protected member properties can be set via config options
  * injected during initialization.
+ *
+ * ### Configuration Schema
+ *
+ * The state machine is configured using JSON object passed to the constructor
+ * (the `$config` parameter). The object must match the following JSON schema:
+ *
+ * @htmlinclude doxygen/schema/FlupdoMachine.schema.html
  */
 class FlupdoMachine extends AbstractMachine
 {
@@ -122,6 +129,16 @@ class FlupdoMachine extends AbstractMachine
 			throw new InvalidArgumentException('Flupdo resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
 		}
 
+		// Get authenticator
+		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
+		$this->auth = $this->getContext($auth_resource_name);
+		if (!$this->auth) {
+			throw new InvalidArgumentException('Authenticator is missing.');
+		}
+		if (!($this->auth instanceof \Smalldb\StateMachine\Auth\IAuth)) {
+			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\Auth\\IAuth.');
+		}
+
 		// Get sphinx resource (optional)
 		$sphinx_resource_name = isset($config['sphinx_resource']) ? $config['sphinx_resource'] : null;
 		if ($sphinx_resource_name) {
@@ -131,16 +148,6 @@ class FlupdoMachine extends AbstractMachine
 			}
 		} else {
 			$this->sphinx = null;
-		}
-
-		// Get authenticator
-		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
-		$this->auth = $this->getContext($auth_resource_name);
-		if (!$this->auth) {
-			throw new InvalidArgumentException('Authenticator is missing.');
-		}
-		if (!($this->auth instanceof \Smalldb\StateMachine\Auth\IAuth)) {
-			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\Auth\\IAuth.');
 		}
 
 		// Use config if not specified otherwise
