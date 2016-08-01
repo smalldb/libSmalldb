@@ -18,9 +18,44 @@
 
 namespace Smalldb\StateMachine;
 
+/**
+ * Utilities.
+ *
+ * Small useful functions.
+ *
+ * TODO: Refactor this to standalone classes or libraries.
+ */
 class Utils
 {
 
+	/**
+	 * Format data using template string with placeholders.
+	 *
+	 * The placeholders to replace are in the following format: `{name}` or
+	 * `{name:function}` or `{name:function:format_string}`.
+	 *
+	 * The function is formatting function (like `sprintf`) and format
+	 * string is the first parameter of the formatting function.
+	 *
+	 * Available formatting functions:
+	 *
+	 *   - `sprintf`
+	 *   - `strftime`
+	 *   - `floor`
+	 *   - `ceil`
+	 *   - `frac`
+	 *   - `frac_str`
+	 *   - `intval`
+	 *   - `floatval`
+	 *
+	 * All except `strftime` accept same formatting string as `sprintf`.
+	 * The `strftime` accepts `strftime` format string.
+	 *
+	 * @par Example of the template:
+	 *
+	 *     Hello {user}, now is {time:strftime:%H} o'clock and the
+	 *     temperature is {temp:sprintf:%0.2f} degree Celsius.
+	 */
 	static function template_format($template, $values, $escaping_function = 'htmlspecialchars')
 	{
 		$available_functions = array(
@@ -183,6 +218,9 @@ class Utils
 	}
 
 
+	/**
+	 * Helper method to invoke template_format() without HTML escaping.
+	 */
 	static function filename_format($template, $values) {
 		static $constants = false;
 		if ($constants === false) {

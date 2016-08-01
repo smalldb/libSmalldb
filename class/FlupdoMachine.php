@@ -29,21 +29,21 @@ class FlupdoMachine extends AbstractMachine
 	/**
 	 * Database connection.
 	 *
-	 * @var \Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\Flupdo
 	 */
 	protected $flupdo;
 
 	/**
 	 * Sphinx indexer connection.
 	 *
-	 * @var \Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\Flupdo
 	 */
 	protected $sphinx;
 
 	/**
 	 * Authenticator (gets user id and role)
 	 *
-	 * @var \Smalldb\StateMachine\Auth\IAuth
+	 * @var Smalldb\StateMachine\Auth\IAuth
 	 */
 	protected $auth;
 

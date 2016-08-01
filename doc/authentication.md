@@ -8,7 +8,7 @@ Basic principles
 Authentication is a mechanism to securely identify a user, so a server knows
 who is on the other end of the HTTP connection. Authentication does not tell
 what the user is allowed to do -- that is matter of
-[authorization](access-control.md).
+[authorization](doc/access-control.md).
 
 Authentication on the modern web can be reduced to following three mechanisms:
 

@@ -579,6 +579,14 @@ class FlupdoGenericListing implements IListing
 	}
 
 
+	/**
+	 * Setup query for lookup in Sphinx search engine.
+	 *
+	 * Since Sphinx is accessed using standalone MySQL connection, this
+	 * will create temporary table and populate it with the fulltext search
+	 * result. Then the temporary table will be used to access and filter
+	 * the original query.
+	 */
 	protected function setupSphinxSearch($filter_name, $value, $machine_filter)
 	{
 		$sphinx_key_column = $this->query->quoteIdent($machine_filter['sphinx_key_column']);

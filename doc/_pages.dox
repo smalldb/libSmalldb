@@ -4,6 +4,8 @@
 \page md_doc_authentication Authentication
 \page md_doc_access-control Access control
 \page md_doc_state-machine-definitions State machine definitions
+\page md_doc_urls-for-state-machines URLs for State Machines and HTTP API
+\page md_doc_trees-in-sql Trees in SQL
 
 */
 

@@ -39,7 +39,15 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	protected $user_login_filters = [
 		'type' => 'user',
 	];
+
+	/**
+	 * State machine property containing the login
+	 */
 	protected $user_login_property = 'email';
+
+	/**
+	 * State machine property containing the password hash
+	 */
 	protected $user_password_property = 'password';
 
 	/**
