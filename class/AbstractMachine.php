@@ -595,15 +595,6 @@ abstract class AbstractMachine
 
 
 	/**
-	 * If machine properties are cached, flush all cached data.
-	 */
-	public function flushCache()
-	{
-		// No cache
-	}
-
-
-	/**
 	 * Called when state is changed, when transition invocation is completed.
 	 */
 	protected function onStateChanged(Reference $ref, $old_state, $transition_name, $new_state)

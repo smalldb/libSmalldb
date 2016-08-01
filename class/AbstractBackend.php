@@ -223,17 +223,6 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Flush caches of all machines
-	 */
-	public function flushCache()
-	{
-		foreach ($this->machine_type_cache as $t => $m) {
-			$m->flushCache();
-		}
-	}
-
-
-	/**
 	 * Creates a listing using given query filters.
 	 *
 	 * Listing class is inferred from the query filters, callers should not 
