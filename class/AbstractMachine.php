@@ -19,22 +19,26 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Implementation of the state machine. One instance of this class represents
- * all machines of this type.
+ * Implementation of the state machine transitions.
  *
- * State machine always work with ID, never with Reference. References are
- * decoded within backend.
- *
- * Transition method should return FALSE when it has failed.
+ * One instance of this class implements state machine transitions of all
+ * machines of this type. When a transition is invoked a Reference object is
+ * passed as the first parameter of the transition method (a protected method
+ * of the same name as transition). The Reference provides ID of the state
+ * machine instance and may contain cached state data.
  *
  * ### Configuration Schema
- * @htmlinclude doxygen/schema/AbstractMachine.schema.html
  *
+ * The state machine is configured using JSON object passed to the constructor
+ * (the `$config` parameter). The object must match the following JSON schema
+ * (classes extending the AbstractMachine may add more options):
+ *
+ * @htmlinclude doxygen/schema/AbstractMachine.schema.html
  */
 abstract class AbstractMachine
 {
-	/**
-	 * Return value of invoked transition is just some value.
+
+	/** Return value of invoked transition is just some value.
 	 */
 	const RETURNS_VALUE = null;
 
@@ -46,7 +50,7 @@ abstract class AbstractMachine
 	/**
 	 * Backend, where all machines are stored.
 	 *
-	 * @var \Smalldb\StateMachine\AbstractBackend
+	 * @var Smalldb\StateMachine\AbstractBackend
 	 */
 	protected $backend;
 
