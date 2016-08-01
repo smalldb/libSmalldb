@@ -49,10 +49,11 @@ class JsonSchemaHtmlRenderer
 	 */
 	public static function parseFile($filename)
 	{
-		$schema = \Smalldb\StateMachine\Utils::parse_json_file($filename);
+		$schema = static::annotateSchema(\Smalldb\StateMachine\Utils::parse_json_file($filename), false);
 		$extends_file = isset($schema['extends_file']) ? dirname($filename).'/'.$schema['extends_file'] : null;
 		while ($extends_file !== null) {
-			$part = \Smalldb\StateMachine\Utils::parse_json_file($extends_file);
+			$part = static::annotateSchema(\Smalldb\StateMachine\Utils::parse_json_file($extends_file),
+					str_replace('.schema.json', '', basename($extends_file)));
 			$extends_file = isset($part['extends_file']) ? dirname($extends_file).'/'.$part['extends_file'] : null;
 			$schema = static::extendSchema($part, $schema);
 		}
@@ -80,7 +81,6 @@ class JsonSchemaHtmlRenderer
 					array_push($orig, $ext_v);
 				} else if (isset($orig[$ext_k])){
 					$orig[$ext_k] = static::extendSchema($orig[$ext_k], $ext_v);
-					$orig['_src'][$ext_k] = $ext_src;
 				} else {
 					$orig[$ext_k] = $ext_v;
 				}
@@ -90,6 +90,33 @@ class JsonSchemaHtmlRenderer
 			return $ext;
 		}
 	}
+
+
+	/**
+	 * Annotate schema with an annotation.
+	 */
+	protected static function annotateSchema($schema, $annotation)
+	{
+		if (isset($schema['type'])) {
+			$schema['_annotation'] = $annotation;
+
+			foreach (['properties', 'patternProperties'] as $p) {
+				if (isset($schema[$p])) {
+					foreach($schema[$p] as $k => & $v) {
+						$v = static::annotateSchema($v, $annotation);
+					}
+				}
+			}
+
+			foreach (['items', 'additionalProperties'] as $p) {
+				if (isset($schema[$p])) {
+					$schema[$p] = static::annotateSchema($schema[$p], $annotation);
+				}
+			}
+		}
+		return $schema;
+	}
+
 
 	/**
 	 * Render to string
@@ -117,7 +144,8 @@ class JsonSchemaHtmlRenderer
 		$expandable = in_array('object', $type);
 		$is_required = ($parent !== null && isset($parent['required']) && in_array($node_name, $parent['required']));
 
-		echo "<li class=\"json_schema_node\" data-path=\"", htmlspecialchars($path), "\">\n";
+		echo "<li class=\"json_schema_node", !empty($node['_annotation']) ? ' json_schema_node_annotated':' json_schema_node_not_annotated', "\"",
+			" data-path=\"", htmlspecialchars($path), "\">\n";
 
 		/*
 		if ($expandable) {
@@ -145,6 +173,9 @@ class JsonSchemaHtmlRenderer
 		}
 		if ($is_required) {
 			echo '<span class="json_schema_node_is_required">[required]</span>', "\n";
+		}
+		if (!empty($node['_annotation'])) {
+			echo '<span class="json_schema_node_annotation">[', htmlspecialchars($node['_annotation']), ']</span>', "\n";
 		}
 		echo "</div>\n";
 
