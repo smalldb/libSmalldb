@@ -31,9 +31,10 @@ namespace Smalldb\StateMachine;
  *
  * The state machine is configured using JSON object passed to the constructor
  * (the `$config` parameter). The object must match the following JSON schema
- * (classes extending the AbstractMachine may add more options):
+ * (classes extending the AbstractMachine may add more options;
+ * [JSON format](AbstractMachine.schema.json)):
  *
- * @htmlinclude doxygen/schema/AbstractMachine.schema.html
+ * @htmlinclude doxygen/html/AbstractMachine.schema.html
  */
 abstract class AbstractMachine
 {

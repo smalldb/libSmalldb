@@ -9,9 +9,13 @@ figures:
 	make -C figures all
 
 schema:
-	mkdir -p doxygen/schema
-	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/AbstractMachine.schema.json > doxygen/schema/AbstractMachine.schema.html
-	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/FlupdoMachine.schema.json > doxygen/schema/FlupdoMachine.schema.html
+	mkdir -p doxygen/html
+	# AbstractMachine
+	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/AbstractMachine.schema.json > doxygen/html/AbstractMachine.schema.html
+	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaReader::loadFile($$argv[1]);' ../class/AbstractMachine.schema.json > doxygen/html/AbstractMachine.schema.json
+	# FlupdoMachine
+	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' ../class/FlupdoMachine.schema.json > doxygen/html/FlupdoMachine.schema.html
+	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaReader::loadFile($$argv[1]);' ../class/FlupdoMachine.schema.json > doxygen/html/FlupdoMachine.schema.json
 
 
 clean:
