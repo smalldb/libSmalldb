@@ -69,9 +69,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 		if (isset($config['user_id_table_column'])) {
 			$this->user_id_table_column = $config['user_id_table_column'];
 		}
-		if (isset($config['user_id_auth_method'])) {
-			$this->user_id_auth_method = $config['user_id_auth_method'];
-		}
 
 		// owner relation
 		if (isset($config['owner_relation'])) {
@@ -242,8 +239,8 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// Set owner
-		if ($this->user_id_table_column && ($a = $this->user_id_auth_method)) {
-			$properties[$this->user_id_table_column] = $this->backend->getAuth()->$a();
+		if ($this->user_id_table_column) {
+			$properties[$this->user_id_table_column] = $this->backend->getAuth()->getUserId();
 		}
 
 		// Check permission of owning machine
