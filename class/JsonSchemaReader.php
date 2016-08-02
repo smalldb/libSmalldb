@@ -107,25 +107,26 @@ class JsonSchemaReader
 	/**
 	 * Annotate schema with an annotation.
 	 */
-	protected static function annotateSchema($schema, $annotation)
+	protected static function annotateSchema($schema, $annotation, $path = '')
 	{
 		if (isset($schema['type'])) {
 			$schema['_annotation'] = $annotation;
+		}
 
-			foreach (['properties', 'patternProperties'] as $p) {
-				if (isset($schema[$p])) {
-					foreach($schema[$p] as $k => & $v) {
-						$v = static::annotateSchema($v, $annotation);
-					}
-				}
-			}
-
-			foreach (['items', 'additionalProperties'] as $p) {
-				if (isset($schema[$p])) {
-					$schema[$p] = static::annotateSchema($schema[$p], $annotation);
+		foreach (['properties', 'patternProperties'] as $p) {
+			if (isset($schema[$p])) {
+				foreach($schema[$p] as $k => & $v) {
+					$v = static::annotateSchema($v, $annotation, $path.'/'.$p.'/'.$k);
 				}
 			}
 		}
+
+		foreach (['items', 'additionalProperties'] as $p) {
+			if (isset($schema[$p])) {
+				$schema[$p] = static::annotateSchema($schema[$p], $annotation, $path.'/'.$p);
+			}
+		}
+
 		return $schema;
 	}
 

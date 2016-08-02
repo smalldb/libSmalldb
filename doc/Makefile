@@ -18,11 +18,11 @@ schema_html = $(patsubst ../class/%.schema.json,doxygen/html/%.schema.html,$(wil
 
 schema: $(schema_json) $(schema_html)
 
-doxygen/html/%.schema.json: ../class/%.schema.json Makefile
+doxygen/html/%.schema.json: ../class/%.schema.json Makefile ../class/JsonSchemaReader.php
 	mkdir -p doxygen/html
 	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaReader::loadFile($$argv[1]);' $< > $@
 
-doxygen/html%.schema.html: ../class/%.schema.json Makefile
+doxygen/html%.schema.html: ../class/%.schema.json Makefile ../class/JsonSchemaHtmlRenderer.php ../class/JsonSchemaReader.php
 	mkdir -p doxygen/html
 	php -r 'require "../vendor/autoload.php"; echo Smalldb\StateMachine\JsonSchemaHtmlRenderer::loadFile($$argv[1]);' $< > $@
 
