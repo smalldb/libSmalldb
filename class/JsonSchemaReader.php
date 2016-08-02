@@ -109,7 +109,7 @@ class JsonSchemaReader
 	 */
 	protected static function annotateSchema($schema, $annotation, $path = '')
 	{
-		if (isset($schema['type'])) {
+		if (isset($schema['type']) && !isset($schema['_annotation'])) {
 			$schema['_annotation'] = $annotation;
 		}
 

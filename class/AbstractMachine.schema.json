@@ -11,9 +11,31 @@
             "pattern": "^<\\?php printf\\('_%c%c}%c',34,10,10\\);__halt_compiler\\(\\);\\?>$"
         },
         "class": {
-            "description": "PHP class name of transitions implementation.",
+            "description": "Interpreted by JsonDirBackend. PHP class name of transitions implementation.",
             "type": "string",
-            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*$"
+            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*$",
+            "_annotation": "JsonDirBackend"
+        },
+        "include": {
+            "description": "Interpreted by JsonDirBackend only. List of files to include and merge with this JSON file.",
+            "type": "array",
+            "_annotation": "JsonDirBackend",
+            "items": {
+                "description": "File name of the file to include or object containing the filename and additional options.",
+                "type": [ "string", "object" ],
+                "properties": {
+                    "file": {
+                        "description": "File name of the file to include.",
+                        "type": "string",
+                        "_annotation": "JsonDirBackend"
+                    }
+                },
+                "additionalProperties": {
+                    "description": "Options passed to dedicated reader.",
+                    "_annotation": "JsonDirBackend"
+                },
+                "_annotation": "JsonDirBackend"
+            }
         },
         "properties": {
             "description": "State machine properties.",

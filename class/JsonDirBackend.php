@@ -22,14 +22,20 @@ use	\Flupdo\Flupdo\Flupdo,
 	\Flupdo\Flupdo\FlupdoProxy;
 
 /**
- * %Smalldb Backend which loads state machine definitions from a directory full 
- * of JSON files and GraphML files.
+ * Smalldb Backend which loads state machine definitions from a directory full 
+ * of JSON files and other files included by the JSON files; each JSON file
+ * defines a one state machine type.
  *
  * JsonDirBackend supports following file types:
  *
- *   - JSON: Raw structure loaded as is. Extensions: `.json`, `.json.php`
- *   - GraphML: Graph created by yEd graph editor. See loadGraphMLFile(). Extensions: `.graphml`
- *   - BPMN: Process diagrams in BPMN XML file. See loadBpmnFile(). Extensions: `.bpmn`
+ *   - JSON: Raw structure loaded as is. See configuration schema sections in
+ *     AbstractMachine and derived classes. Each of these files represents one
+ *     state machine type and can include other files.
+ *       - Extensions: `.json`, `.json.php`
+ *   - GraphML: Graph created by yEd graph editor. See GraphMLReader.
+ *       - Extensions: `.graphml`
+ *   - BPMN: Process diagrams in standard BPMN XML file. See BpmnReader.
+ *       - Extensions: `.bpmn`
  *
  */
 class JsonDirBackend extends AbstractBackend
