@@ -1,0 +1,47 @@
+{
+    "title": "Shared token state machine",
+    "extends_file": "../FlupdoCrudMachine.schema.json",
+    "type": "object",
+    "required": [ ],
+    "properties": {
+        "table_columns": {
+            "description": "Names of the special table columns",
+            "type": "object",
+            "properties": {
+                "session_id": {
+                    "description": "Session ID (primary key)",
+                    "type": "string",
+                    "default": "id"
+                },
+                "session_token": {
+                    "description": "Session token to verify when found by session_id",
+                    "type": "string",
+                    "default": "token"
+                },
+                "user_id": {
+                    "description": "User ID (foreign key to user table)",
+                    "type": "string",
+                    "default": "user_id"
+                }
+            }
+        },
+        "user_login_filters": {
+            "description": "IListing filters to find user who is trying to log in. Listing should return none or one item (only the first is used if more is found).",
+            "type": "object",
+            "default": {
+                "type": "user"
+            }
+        },
+        "user_login_property": {
+            "description": "Filter containing user's login (added to user_login_filters).",
+            "type": "string",
+            "default": "email"
+        },
+        "user_password_property": {
+            "description": "Property of the user state machine containing password hash (verified by PHP's function password_verify).",
+            "type": "string",
+            "default": "password"
+        }
+    }
+}
+

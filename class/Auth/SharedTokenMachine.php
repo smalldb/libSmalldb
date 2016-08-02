@@ -19,26 +19,56 @@
 namespace Smalldb\StateMachine\Auth;
 
 /**
- * Session management using a shared token. Works well with CookieAuth
- * authenticator.
+ * Session management using a shared token.
+ *
+ * Works well with CookieAuth authenticator. Implements secure login and
+ * logout; leaves a space for everything else.
+ *
+ * This state machine requires two tables in SQL database: session and user.
+ * The session table stores tokens, the user table is used to check login and
+ * password pair.
+ *
+ * @see http://smalldb.org/security/
+ *
+ *
+ * ### Usage example
+ *
+ * ```php
+ * $smalldb = new JsonDirBackend(...);
+ * $smalldb->setContext([ 'auth' => new CookieAuth([...], $smalldb), ... ]);
+ * $auth = $smalldb->getAuth();
+ *
+ * $auth->getSessionMachine()->login($_POST['login'], $_POST['password']);
+ *
+ * $auth->getSessionMachine()->logout();
+ * ```
+ *
+ *
+ * ### Configuration Schema
+ *
+ * The state machine is configured using JSON object passed to the constructor
+ * (the `$config` parameter). The object must match the following JSON schema
+ * (the grey items are inherited; [JSON format](Auth/SharedTokenMachine.schema.json)):
+ *
+ * @htmlinclude doxygen/html/Auth/SharedTokenMachine.schema.html
  */
 class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 {
 	/**
 	 * Map of table columns
 	 */
-	protected $table_columns = [
+	protected $table_columns = array(
 		'session_id' => 'id',		// primary key
 		'session_token' => 'token',	// not null
 		'user_id' => 'user_id',		// foreign key to user table
-	];
+	);
 
 	/**
 	 * User login listing
 	 */
-	protected $user_login_filters = [
+	protected $user_login_filters = array(
 		'type' => 'user',
-	];
+	);
 
 	/**
 	 * State machine property containing the login
@@ -51,7 +81,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	protected $user_password_property = 'password';
 
 	/**
-	 * @copydoc \Smalldb\StateMachine\FlupdoMachine::initializeMachine()
+	 * @copydoc FlupdoMachine::initializeMachine()
 	 */
 	protected function initializeMachine($config)
 	{

@@ -67,7 +67,8 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	protected $view_cache;
 
 	/**
-	 * Persisten view cache, which is not flushed automaticaly.
+	 * Persistent view cache, which is not flushed automaticaly after every
+	 * transition.
 	 */
 	protected $persistent_view_cache = array();
 
@@ -96,7 +97,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 *
 	 * Just append callable to this array:
 	 *
-	 * `$ref->on_pk_change[] = function($ref, $transition_name, $arguments) { };`
+	 * `$ref->before_transition_cb[] = function($ref, $transition_name, $arguments) { };`
 	 */
 	public $before_transition_cb = array();
 
@@ -105,7 +106,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 *
 	 * Just append callable to this array:
 	 *
-	 * `$ref->on_pk_change[] = function($ref, $transition_name, $arguments, $return_value, $returns) { };`
+	 * `$ref->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) { };`
 	 */
 	public $after_transition_cb = array();
 

@@ -20,31 +20,29 @@ namespace Smalldb\StateMachine\Auth;
 use Smalldb\StateMachine;
 
 /**
- * IAuth implementation using %Smalldb state machine and shared session token 
+ * IAuth implementation using Smalldb state machine and shared session token 
  * in a cookie to identify SharedTokenMachine instance.
  *
  * This class handles cookies only, it is up to session machine to maintain session.
  *
- * To log in, use Auth::getSessionMachine() and invoke proper transition.
+ * To log in, use getSessionMachine() and invoke a login transition. To log
+ * out, use a logout transition. The registered callback will take care of the
+ * cookies in both cases.
  *
- * To log out, use only the defined logout transition, otherwise token will not
- * get deleted.
+ * @warning Always use the same reference provided by getSessionMachine() to
+ * 	manipulate the current session, otherwise the cookies will not be
+ * 	updated, because other references does not have the
+ * 	Reference::$after_transition_cb callback registered.
  *
- * Configuration options:
- *   - `smalldb`: Instance of Smalldb\StateMachine\AbstractBackend (mandatory).
- *   - `machine_ref_prefix`: Prefix of machine ID (array; mandatory).
- *   - `machine_null_ref`: State machine type for null ref.
- *   - `cookie_name`: Name of the cookie for a token. (default: 'auth')
- *   - `cookie_ttl`: How long cookie is valid. (default: 10 years)
- *   - `user_id_property`: Name of the session machine property with user's ID.
- *   - `user_role_property`: Name of the session machine property with user's role. You may want to have this property calculated.
+ * @see http://smalldb.org/security/
  */
 class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 {
 	protected $smalldb;					///< Smalldb backend
 	protected $session_machine;				///< Reference to session state machine
 
-	// Configuration
+	/// @name Configuration
+	/// @{
 	protected $cookie_name = 'AuthToken';			///< Cookie name
 	protected $cookie_ttl = 2592000;			///< Cookie duration [seconds] (default: 30 days)
 	protected $user_id_property = 'user_id';		///< Name of the session machine property with user's ID
@@ -53,12 +51,16 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 	protected $all_mighty_cli = false;			///< Is command line all mighty?
 	protected $session_machine_null_ref = 'session';	///< Null reference to session machine (array; use session_machine_ref_prefix if not set)
 	protected $session_machine_ref_prefix = 'session';	///< Prefix of session machine reference (array; token ID will be appended)
+	/// @}
 
 
 	/**
 	 * Constructor.
+	 *
+	 * @param $config Configuration options - see Configuration section.
+	 * @param $smalldb Instance of %Smalldb backend (AbstractBackend).
 	 */
-	public function __construct($config, \Smalldb\StateMachine\AbstractBackend $smalldb)
+	public function __construct($config, AbstractBackend $smalldb)
 	{
 		$this->smalldb = $smalldb;
 
