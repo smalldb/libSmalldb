@@ -70,21 +70,16 @@ class JsonSchemaHtmlRenderer
 		$expandable = in_array('object', $type);
 		$is_required = ($parent !== null && isset($parent['required']) && in_array($node_name, $parent['required']));
 
-		echo "<li class=\"json_schema_node", !empty($node['_annotation']) ? ' json_schema_node_annotated':' json_schema_node_not_annotated', "\"",
+		echo "<li class=\"json_schema_node", $node === false ? '' : (!empty($node['_annotation']) ? ' json_schema_node_annotated':' json_schema_node_not_annotated'), "\"",
 			" data-path=\"", htmlspecialchars($path), "\">\n";
 
-		/*
-		if ($expandable) {
-			echo "<input type=\"checkbox\" class=\"json_schema_node_toggle\"", $depth > 2 ? ' checked' : '', ">\n";
-		}
-		// */
 
 		echo "<div class=\"json_schema_node_title\">\n";
 		if ($node_name != '') {
 			echo '<b class="json_schema_node_name">', htmlspecialchars($node_name), ":</b>\n";
 		}
 		if ($node === false) {
-			echo '<span class="json_schema_node_type">[not allowed]</span>', "\n";
+			echo '<span class="json_schema_node_type json_schema_node_not_allowed">[not allowed]</span>', "\n";
 		}
 		if (isset($node['title'])) {
 			echo "<em class=\"json_schema_node_description\">", htmlspecialchars($node['title']), "</em>\n";
@@ -128,6 +123,12 @@ class JsonSchemaHtmlRenderer
 		if (isset($node['enum'])) {
 			echo "<div class=\"json_schema_node_enum\">Enum: <code>",
 				htmlspecialchars(json_encode($node['enum'], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
+				"</code></div>\n";
+		}
+
+		if (isset($node['default'])) {
+			echo "<div class=\"json_schema_node_default\">Default: <code>",
+				htmlspecialchars(json_encode($node['default'], JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)),
 				"</code></div>\n";
 		}
 

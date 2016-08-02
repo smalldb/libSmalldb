@@ -18,7 +18,11 @@
         "properties": {
             "description": "State machine properties.",
             "type": "object",
-            "properties": {
+            "additionalProperties": {
+                "description": "State machine property definition",
+                "type": "object",
+                "properties": {
+                }
             }
         },
         "states": {
@@ -88,6 +92,7 @@
                                 }
                             },
                             "additionalProperties": {
+                                "type": "object",
                                 "description": "All properties are merged with action's properties; transition's properties have precedence."
                             }
                         }

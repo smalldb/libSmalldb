@@ -4,6 +4,48 @@
     "type": "object",
     "required": [ "auth_resource", "table" ],
     "properties": {
+        "access_policies": {
+            "additionalProperties": {
+                "required": [ "type" ],
+                "properties": {
+                    "type": {
+                        "description": "Type of the policy (algorithm).",
+                        "type": "string",
+                        "required": true,
+                        "enum": [
+                            "anyone",
+                            "nobody",
+                            "anonymous",
+                            "user",
+                            "owner",
+                            "role",
+                            "condition",
+                            "user_relation"
+                        ]
+                    },
+                    "owner_property": {
+                        "description": "State machine property (scalar ID) which defines owner of this state machine instance. Used by 'owner' policy type.",
+                        "type": "string"
+                    },
+                    "session_state": {
+                        "description": "Required state of the session machine (IAuth). Used by 'owner' policy type. If not set, the session state is not checked.",
+                        "type": "string"
+                    },
+                    "required_role": {
+                        "description": "Required user role. Used by 'role' policy type.",
+                        "type": "string"
+                    },
+                    "sql_select": {
+                        "description": "SQL expression to retrieve the checked value from the database. It will be mixed into the SQL select or where clause when reading state machine properties. Used by 'condition' and 'user_relation' policy types. The policy allows access when this expression is not null or when equal to 'required_role' (if set). When used with 'user_relation' policy type, it accepts one parameter (positional placeholder '?') which provides user's ID.",
+                        "type": "string"
+                    },
+                    "required_value": {
+                        "description": "Value required to be equal to the value of 'sql_select'. If not set, the 'sql_select' is check to not be null.",
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "flupdo_resource": {
             "description": "Context property containing the Flupdo instance connected to database.",
             "type": "string",
@@ -15,7 +57,7 @@
             "default": "auth"
         },
         "sphinx_resource": {
-            "description": "Context property containing the Flupdo resource connected to Sphinx search engine.",
+            "description": "Context property containing the Flupdo resource connected to a Sphinx search engine.",
             "type": ["null", "string"],
             "default": null
         },
@@ -28,25 +70,53 @@
             "type": ["null", "string"],
             "default": null
         },
-        "": {
-            "description": "",
-            "type": "string"
+        "url": {
+            "description": "Format string to generate machine URL",
+            "type": [ "string", "null" ]
         },
-        "": {
-            "description": "",
-            "type": "string"
+        "parent_url": {
+            "description": "Format string to generate URL of machine which is parent of this machine (for post-delete redirect)",
+            "type": [ "string", "null" ]
         },
-        "": {
-            "description": "",
-            "type": "string"
+        "post_action_url": {
+            "description": "Format string to generate URL where to redirect after action is invoked.",
+            "type": [ "string", "null" ]
         },
-        "": {
-            "description": "",
-            "type": "string"
-        },
-        "": {
-            "description": "",
-            "type": "string"
+        "properties": {
+            "description": "State machine properties. If not defined (or empty object), the properties are automatically detected from the database columns (including is_pk).",
+            "type": "object",
+            "additionalProperties": {
+                "properties": {
+                    "label": {
+                        "description": "Name of the property (human readable).",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Type of the property (not interpreted by the state machine; autodetection uses column types provided by the database).",
+                        "type": "string"
+                    },
+                    "is_pk": {
+                        "description": "Flag whether the property is a primary key. Compound primary keys must have properties defined in correct order.",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "components": {
+                        "description": "Property is composed from these database columns. Data are loaded into a key-value map (array); the components are the keys, the database columns are the values.",
+                        "type": [ "null", "object" ],
+                        "additionalProperties": {
+                            "description": "Name of the database column.",
+                            "type": "string"
+                        },
+                        "default": null
+                    },
+                    "column_encoding": {
+                        "description": "Data are encoded before storing in the database and decoded after loading from the database using this encoding. This allows storing complex data in a single text/blob column (as long as the database does not need to understand this column).",
+                        "type": [ "null", "string" ],
+                        "enum": [ null, "json" ],
+                        "default": null
+                    }
+                }
+            }
         }
     }
 }

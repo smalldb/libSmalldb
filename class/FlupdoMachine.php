@@ -177,6 +177,7 @@ class FlupdoMachine extends AbstractMachine
 				case 'post_action_url_fmt':
 					break;
 				default:
+					// FIXME: Is this a good idea?
 					if ($this->$k === null && isset($config[$k])) {
 						$this->$k = $config[$k];
 					}
@@ -258,7 +259,7 @@ class FlupdoMachine extends AbstractMachine
 					$cm = $r->getColumnMeta($i);
 					$this->properties[$cm['label']] = array(
 						'label' => $cm['label'],
-						'type' => $cm['native_type'], // FIXME: Do not include corrupted information, but at least something.
+						'type' => $cm['native_type'],
 						'is_pk' => in_array('primary_key', $cm['flags']),
 					);
 				}
