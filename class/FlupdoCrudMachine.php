@@ -20,6 +20,14 @@ namespace Smalldb\StateMachine;
 
 /**
  * Simple state machine for typical CRUD entities accessed via Flupdo.
+ *
+ * ### Configuration Schema
+ *
+ * The state machine is configured using JSON object passed to the constructor
+ * (the `$config` parameter). The object must match the following JSON schema
+ * (grey items are inherited; [JSON format](FlupdoCrudMachine.schema.json)):
+ *
+ * @htmlinclude doxygen/html/FlupdoCrudMachine.schema.html
  */
 class FlupdoCrudMachine extends FlupdoMachine
 {

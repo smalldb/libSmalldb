@@ -1,0 +1,9 @@
+{
+    "title": "Smalldb Flupdo CRUD State Machine",
+    "extends_file": "FlupdoMachine.schema.json",
+    "type": "object",
+    "required": [ ],
+    "properties": {
+    }
+}
+
