@@ -38,8 +38,8 @@ namespace Smalldb\StateMachine;
  */
 abstract class AbstractMachine
 {
-
-	/** Return value of invoked transition is just some value.
+	/**
+	 * Return value of invoked transition is just some value.
 	 */
 	const RETURNS_VALUE = null;
 
@@ -51,7 +51,7 @@ abstract class AbstractMachine
 	/**
 	 * Backend, where all machines are stored.
 	 *
-	 * @var Smalldb\StateMachine\AbstractBackend
+	 * @var AbstractBackend
 	 */
 	protected $backend;
 
