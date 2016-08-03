@@ -37,6 +37,14 @@
                 "_annotation": "JsonDirBackend"
             }
         },
+        "state_diagram_extras": {
+            "description": "List of additional fragments of state diagram.",
+            "type": "array",
+            "items": {
+                "description": "Dot source code to be added just before the end of the state diagram..",
+                "type": "string"
+            }
+        },
         "properties": {
             "description": "State machine properties.",
             "type": "object",

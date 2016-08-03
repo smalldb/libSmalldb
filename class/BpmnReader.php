@@ -230,7 +230,10 @@ class BpmnReader implements IMachineDefinitionReader
 		// Trivial strategy: Expect all states to be manually named and
 		// simply add them to state machines. Basically, swap arrows
 		// and tasks to get states and transitions.
-		foreach ($bpmn_fragments as $fragment) {
+		foreach ($bpmn_fragments as $fragment_file => $fragment) {
+			$prefix = "bpmn_".(0xffff & crc32($fragment_file)).'_';
+			$diagram = "\tsubgraph cluster_$prefix {\nlabel= \"BPMN: ".basename($fragment_file)."\"; color=\"#5373B4\";\n";
+
 			// Arrows are states
 			foreach ($fragment['arrows'] as $a_id => $a) {
 				// Register state
@@ -242,6 +245,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Tasks are actions
 			foreach ($fragment['nodes'] as $n_id => $n) {
+				$node = [];
 				if ($n['type'] == 'task') {
 					$action = trim($n['name']);
 					foreach ($n['incoming'] as $in) {
@@ -249,10 +253,26 @@ class BpmnReader implements IMachineDefinitionReader
 							$in_name = $fragment['arrows'][$in]['name'];
 							$out_name = $fragment['arrows'][$out]['name'];
 							$actions[$action]['transitions'][$in_name]['targets'][] = $out_name;
+
+							$in_id = AbstractMachine::exportDotIdentifier($in_name, $prefix);
+							$out_id = AbstractMachine::exportDotIdentifier($out_name, $prefix);
+
+							$node[$in_id] = $in_name;
+							$node[$out_id] = $out_name;
+
+							$diagram .= $in_id.' -> '.$out_id." [ label = \" ".addcslashes($action, '"')." \" ];\n";
 						}
 					}
 				}
+				foreach ($node as $id => $label) {
+					$diagram .= "$id [ label = \"".addcslashes($label, '"')."\"];\n";
+				}
 			}
+
+			$diagram .= "}";
+
+			// Add BPMN diagram to state diagram
+			$machine_def['state_diagram_extras'][] = $diagram;
 		}
 
 		// Update the definition

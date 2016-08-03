@@ -113,7 +113,7 @@ class JsonDirBackend extends AbstractBackend
 			//debug_msg('Machine type table cache miss. Reloading...');
 			$this->machine_type_table = array();
 
-			$graphml = array();
+			// Find all machine types
 			foreach ($file_list as $file) {
 				@ list($machine_type, $ext) = explode('.', $file, 2);
 				switch ($ext) {
@@ -125,6 +125,7 @@ class JsonDirBackend extends AbstractBackend
 			}
 			ksort($this->machine_type_table);
 
+			// Load all included files
 			foreach ($this->machine_type_table as $machine_type => $json_config) {
 				$graphml_reader_used = false;
 				$bpmn_reader_used = false;

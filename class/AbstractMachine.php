@@ -66,6 +66,13 @@ abstract class AbstractMachine
 	protected $machine_type;
 
 	/**
+	 * List of additional diagram parts in Dot language provided by backend (and its readers).
+	 *
+	 * @see BpmnReader, GraphMLReader
+	 */
+	protected $state_diagram_extras = [];
+
+	/**
 	 * URL format string where machine is located, usualy only the path
 	 * part, e.g. "/machine-type/{id}".
 	 *
@@ -265,6 +272,11 @@ abstract class AbstractMachine
 		$this->context = $context;
 		$this->machine_type = $type;
 		$this->initializeMachine($config);
+
+		// Store state diagram extras
+		if (isset($config['state_diagram_extras'])) {
+			$this->state_diagram_extras = $config['state_diagram_extras'];
+		}
 
 		// Sort actions, so they appear everywhere in defined order
 		uasort($this->actions, function($a, $b) {
@@ -1003,8 +1015,12 @@ abstract class AbstractMachine
 
 	/**
 	 * Export state machine to Graphviz source code.
+	 *
+	 * @param $debug_opts Machine-specific debugging options - passed to
+	 * 	exportDotRenderDebugData(). If empty/false, no debug data are
+	 * 	added to the diagram.
 	 */
-	public function exportDot()
+	public function exportDot($debug_opts = false)
 	{
 		ob_start();
 
@@ -1016,12 +1032,20 @@ abstract class AbstractMachine
 			"#\n",
 			"digraph structs {\n",
 			"	rankdir = TB;\n",
-			"	margin = 0;\n",
 			"	bgcolor = transparent;\n",
+			"	pad = 0;\n",
+			"	margin = 0;\n",
 			"	edge [ arrowtail=none, arrowhead=normal, dir=both, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
 			"	node [ shape=box, style=\"rounded,filled\", fontsize=9, fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
 			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
 			"\n";
+
+		// Wrap state diagram into subgraph if there are extras to avoid mixing of them together
+		if (!empty($this->state_diagram_extras)) {
+			echo "\tsubgraph cluster_main {\n",
+				"\tgraph [ margin = 10 ];\n",
+				"\tcolor = transparent;\n\n";
+		}
 
 		// Start state
 		echo "\t", "BEGIN [",
@@ -1039,7 +1063,7 @@ abstract class AbstractMachine
 		$group_content = array();
 		if (!empty($this->states)) {
 			foreach ($this->states as $s => $state) {
-				echo "\t", "s_", $this->escapeDotIdentifier($s);
+				echo "\t", $this->exportDotIdentifier($s);
 				//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
 				echo " [ label=\"", addcslashes($s, '"'), "\"";
 				if (!empty($state['color'])) {
@@ -1069,13 +1093,12 @@ abstract class AbstractMachine
 				if (empty($action['transitions'])) {
 					continue;
 				}
-				$a_a = 'a_'.$this->escapeDotIdentifier($a);
 				foreach ($action['transitions'] as $src => $transition) {
 					$transition = array_merge($action, $transition);
 					if ($src === null || $src === '') {
 						$s_src = 'BEGIN';
 					} else {
-						$s_src = 's_'.$this->escapeDotIdentifier($src);
+						$s_src = $this->exportDotIdentifier($src);
 						if (!array_key_exists($src, $this->states)) {
 							$missing_states[$src] = true;
 						}
@@ -1085,7 +1108,7 @@ abstract class AbstractMachine
 							$s_dst = $src == '' ? 'BEGIN':'END';
 							$have_final_state = true;
 						} else {
-							$s_dst = 's_'.$this->escapeDotIdentifier($dst);
+							$s_dst = $this->exportDotIdentifier($dst);
 							if (!array_key_exists($dst, $this->states)) {
 								$missing_states[$dst] = true;
 							}
@@ -1112,7 +1135,7 @@ abstract class AbstractMachine
 
 		// Missing states
 		foreach ($missing_states as $s => $state) {
-			echo "\t", "s_", $this->escapeDotIdentifier($s), " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
+			echo "\t", $this->exportDotIdentifier($s), " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
 		}
 
 		// Final state
@@ -1128,6 +1151,15 @@ abstract class AbstractMachine
 				" ];\n";
 		}
 
+		// Close state diagram subgraph
+		if (!empty($this->state_diagram_extras)) {
+			echo "}\n";
+		}
+
+		// Optionaly render machine-specific debug data
+		if ($debug_opts) {
+			$this->exportDotRenderExtras($debug_opts);
+		}
 		// DOT Footer
 		echo "}\n";
 
@@ -1136,11 +1168,13 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Escape string for use as dot identifier.
+	 * Convert state machine state name or group name to a safe dot identifier
+	 *
+	 * FIXME: Extract Graphviz library to keep graphs and parts of the graphs contained.
 	 */
-	private function escapeDotIdentifier($str)
+	public static function exportDotIdentifier($str, $prefix = 's_')
 	{
-		return preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
+		return $prefix.preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
 	}
 
 
@@ -1149,7 +1183,7 @@ abstract class AbstractMachine
 	 */
 	private function exportDotRenderGroups($groups, $group_content, $indent = "\t") {
 		foreach ($groups as $g => $group) {
-			echo $indent, "subgraph cluster_", $this->escapeDotIdentifier($g), " {\n";
+			echo $indent, "subgraph ", $this->exportDotIdentifier($g, 'cluster_'), " {\n";
 			if (isset($group['label'])) {
 				echo $indent, "\t", "label = \"", addcslashes($group['label'], '"'), "\";\n";
 			}
@@ -1162,12 +1196,36 @@ abstract class AbstractMachine
 				echo $indent, "\t", "fontcolor=\"#666666\";\n";
 			}
 			foreach ($group_content[$g] as $s) {
-				echo $indent, "\t", "s_", $this->escapeDotIdentifier($s), ";\n";
+				echo $indent, "\t", $this->exportDotIdentifier($s), ";\n";
 			}
 			if (isset($group['groups'])) {
 				$this->exportDotRenderGroups($group['groups'], $group_content, "\t".$indent);
 			}
 			echo $indent, "}\n";
+		}
+	}
+
+
+	/**
+	 * Render extra diagram features.
+	 *
+	 * Writes Graphviz dot syntax to stdout (echo), output is placed just
+	 * before digraph's closing bracket.
+	 *
+	 * @param $debug_opts Machine-specific Options to configure visible
+	 * 	debug data.
+	 */
+	protected function exportDotRenderExtras($debug_opts)
+	{
+		if (!empty($this->state_diagram_extras)) {
+			echo "\tsubgraph cluster_extras {\n",
+				"\t\tgraph [ margin = 10; ];\n",
+				"\t\tcolor=transparent;\n\n";
+			foreach($this->state_diagram_extras as $i => $e) {
+				echo "\n\t# Extras ", str_replace("\n", " ", $i), "\n";
+				echo $e, "\n";
+			}
+			echo "\t}\n";
 		}
 	}
 
