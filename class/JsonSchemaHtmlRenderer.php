@@ -84,8 +84,8 @@ class JsonSchemaHtmlRenderer
 		if (isset($node['title'])) {
 			echo "<em class=\"json_schema_node_description\">", htmlspecialchars($node['title']), "</em>\n";
 		}
-		if (isset($node['description'])) {
-			echo "<span class=\"json_schema_node_description\">", htmlspecialchars($node['description']), "</span>\n";
+		if (!empty($node['_annotation'])) {
+			echo '<span class="json_schema_node_annotation">[', htmlspecialchars($node['_annotation']), ']</span>', "\n";
 		}
 		if (isset($node['type'])) {
 			echo '<span class="json_schema_node_type">[', htmlspecialchars(join(', ', $type)), ']</span>', "\n";
@@ -95,8 +95,8 @@ class JsonSchemaHtmlRenderer
 		if ($is_required) {
 			echo '<span class="json_schema_node_is_required">[required]</span>', "\n";
 		}
-		if (!empty($node['_annotation'])) {
-			echo '<span class="json_schema_node_annotation">[', htmlspecialchars($node['_annotation']), ']</span>', "\n";
+		if (isset($node['description'])) {
+			echo "<span class=\"json_schema_node_description\">", htmlspecialchars($node['description']), "</span>\n";
 		}
 		echo "</div>\n";
 

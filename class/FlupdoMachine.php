@@ -28,8 +28,7 @@ namespace Smalldb\StateMachine;
  *
  * The state machine is configured using JSON object passed to the constructor
  * (the `$config` parameter). The object must match the following JSON schema
- * (grey items are inherited -- see the inheritance diagram below;
- * [JSON format](FlupdoMachine.schema.json)):
+ * ([JSON format](FlupdoMachine.schema.json)):
  *
  * @htmlinclude doxygen/html/FlupdoMachine.schema.html
  */

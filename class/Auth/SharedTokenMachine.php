@@ -48,7 +48,7 @@ namespace Smalldb\StateMachine\Auth;
  *
  * The state machine is configured using JSON object passed to the constructor
  * (the `$config` parameter). The object must match the following JSON schema
- * (the grey items are inherited; [JSON format](Auth/SharedTokenMachine.schema.json)):
+ * ([JSON format](Auth/SharedTokenMachine.schema.json)):
  *
  * @htmlinclude doxygen/html/Auth/SharedTokenMachine.schema.html
  */
