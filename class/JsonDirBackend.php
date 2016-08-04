@@ -119,7 +119,8 @@ class JsonDirBackend extends AbstractBackend
 				switch ($ext) {
 					case 'json':
 					case 'json.php':
-						$this->machine_type_table[$machine_type] = Utils::parse_json_file($this->base_dir.$file);
+						$filename = $this->base_dir.$file;
+						$this->machine_type_table[$machine_type] = JsonReader::loadString(file_get_contents($filename), [], $filename);
 						break;
 				} 
 			}
@@ -149,7 +150,9 @@ class JsonDirBackend extends AbstractBackend
 					// FIXME: Replace this with extendible loading infrastructure.
 					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
 						// Include JSON file (simple merge)
-						$machine_def = array_replace_recursive(Utils::parse_json_file($include_file), $machine_def);
+						$machine_def = array_replace_recursive(
+								JsonReader::loadString(file_get_contents($include_file), $include_opts, $include_file),
+								$machine_def);
 					}
 					else if (preg_match('/\.graphml$/i', $include_file)) {
 						// Include GraphML file (find states and transitions, then simply add them to the definition)
@@ -178,37 +181,7 @@ class JsonDirBackend extends AbstractBackend
 					BpmnReader::postprocessDefinition($machine_def);
 				}
 
-				// Make sure the names are always set
-				if (!empty($machine_def['properties'])) {
-					foreach ($machine_def['properties'] as $p_name => & $property) {
-						if (empty($property['name'])) {
-							$property['name'] = $p_name;
-						}
-					}
-					unset($property);
-				}
-				if (!empty($machine_def['actions'])) {
-					foreach ($machine_def['actions'] as $a_name => & $action) {
-						if (empty($action['name'])) {
-							$action['name'] = $a_name;
-						}
-					}
-					unset($action);
-				}
-
-				// Sort actions, so they appear everywhere in defined order
-				// (readers may provide them in random order)
-				uasort($machine_def['actions'], function($a, $b) {
-					$aw = (isset($a['weight']) ? $a['weight'] : 50);
-					$bw = (isset($b['weight']) ? $b['weight'] : 50);
-
-					if ($aw == $bw) {
-						return strcoll(isset($a['label']) ? $a['label'] : $a['name'],
-							isset($b['label']) ? $b['label'] : $b['name']);
-					} else {
-						return $aw - $bw;
-					}
-				});
+				JsonReader::postprocessDefinition($machine_def);
 
 				unset($machine_def);
 			}

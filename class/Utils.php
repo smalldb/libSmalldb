@@ -308,13 +308,23 @@ class Utils
 			throw new JsonException("Failed to read file: ".$filename);
 		}
 
+		return static::parse_json_string($json_str);
+	}
+
+
+	/**
+	 * Decode JSON string.
+	 *
+	 * @param $json_str String to parse.
+	 * @param $filename If set the exception message will contain $filename.
+	 */
+	static function parse_json_string($json_str, $filename = null)
+	{
 		$data = json_decode($json_str, TRUE, 512, JSON_BIGINT_AS_STRING);
 		$error = json_last_error();
-
 		if ($error !== JSON_ERROR_NONE) {
-			throw new JsonException(json_last_error_msg().' ('.$filename.')', $error);
+			throw new JsonException($filename !== null ? json_last_error_msg().' ('.$filename.')' : json_last_error_msg(), $error);
 		}
-
 		return $data;
 	}
 
