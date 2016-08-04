@@ -19,7 +19,9 @@
 namespace Smalldb\StateMachine;
 
 /**
- * Simple testing machine implementation. Uses array to store all data.
+ * Simple testing machine implementation.
+ *
+ * Uses array to store all data. Any transition is allowed.
  */
 class ArrayMachine extends AbstractMachine
 {
@@ -28,7 +30,7 @@ class ArrayMachine extends AbstractMachine
 	/**
 	 * Data storage for all state machines
 	 */
-	protected $properties = array();
+	protected $properties_storage = array();
 
 
 	/**
@@ -36,10 +38,7 @@ class ArrayMachine extends AbstractMachine
 	 */
 	public function initializeMachine($args)
 	{
-		$this->states  = $args['states'];
-		$this->actions = $args['actions'];
-		$this->properties = (array) @ $args['properties'];
-		$this->state_groups = (array) @ $args['state_groups'];
+		parent::initializeMachine($args);
 	}
 
 
@@ -70,8 +69,6 @@ class ArrayMachine extends AbstractMachine
 	}
 
 
-
-
 	/**
 	 * Get current state of state machine.
 	 */
@@ -80,17 +77,19 @@ class ArrayMachine extends AbstractMachine
 		if ($id === null) {
 			return '';
 		} else {
-			return @ $this->properties[$id]['state'];
+			return isset($this->properties_storage[$id]['state'])
+				? $this->properties_storage[$id]['state']
+				: '';
 		}
 	}
 
 
 	/**
-	 * Get all properties of state machine, including it's state.
+	 * Get all properties_storage of state machine, including it's state.
 	 */
 	public function getProperties($id, & $state_cache = null)
 	{
-		return @ $this->properties[$id];
+		return @ $this->properties_storage[$id];
 	}
 
 
@@ -109,11 +108,11 @@ class ArrayMachine extends AbstractMachine
 
 		// create new machine
 		if ($id === null) {
-			$id = count($this->properties);
+			$id = count($this->properties_storage);
 			echo " [new]";
 		}
 
-		$this->properties[$id]['state'] = $expected_states[0];
+		$this->properties_storage[$id]['state'] = $expected_states[0];
 
 		$new_state = $this->getState($id);
 		echo " -> ", var_export($new_state), " (id = ", var_export($id), ").\n";

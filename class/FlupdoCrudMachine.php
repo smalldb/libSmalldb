@@ -64,28 +64,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 	{
 		parent::initializeMachine($config);
 
-		// user_id table column & auth property
-		if (isset($config['user_id_table_column'])) {
-			$this->user_id_table_column = $config['user_id_table_column'];
-		}
-
-		// owner relation
-		if (isset($config['owner_relation'])) {
-			$this->owner_relation = $config['owner_relation'];
-		}
-		if (isset($config['owner_create_transition'])) {
-			$this->owner_create_transition = $config['owner_create_transition'];
-		}
-
-		// create time column
-		if (isset($config['time_created_table_column'])) {
-			$this->time_created_table_column = $config['time_created_table_column'];
-		}
-
-		// modification time column
-		if (isset($config['time_modified_table_column'])) {
-			$this->time_modified_table_column = $config['time_modified_table_column'];
-		}
+		$this->initializeMachineConfig($config, [
+			'user_id_table_column', 'owner_relation', 'owner_create_transition',
+			'time_created_table_column', 'time_modified_table_column'
+		]);
 
 		// nested-sets configuration
 		if (isset($config['nested_sets'])) {
@@ -99,11 +81,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 			if (isset($ns['enabled'])) {
 				$this->nested_sets_enabled = $ns['enabled'];
 			}
-		}
-
-		// Create default transitions?
-		if (empty($config['no_default_machine'])) {
-			$this->setupDefaultMachine($config);
 		}
 	}
 
@@ -197,16 +174,6 @@ class FlupdoCrudMachine extends FlupdoMachine
 				),
 			),
 		);
-
-		// Merge with config
-		if (isset($config['actions'])) {
-			$this->actions = array_replace_recursive($this->actions, $config['actions']);
-		}
-
-		// Merge with config
-		if (isset($config['states'])) {
-			$this->states = array_replace_recursive($this->states, $config['states']);
-		}
 	}
 
 

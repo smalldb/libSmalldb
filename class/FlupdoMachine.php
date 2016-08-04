@@ -124,6 +124,9 @@ class FlupdoMachine extends AbstractMachine
 	 */
 	protected function initializeMachine($config)
 	{
+		// Load simple config options
+		$this->initializeMachineConfig($config, ['table', 'table_alias']);
+
 		// Get flupdo resource
 		$this->flupdo = $this->getContext(isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database');
 		if (!($this->flupdo instanceof \Smalldb\Flupdo\IFlupdo)) {
@@ -151,50 +154,17 @@ class FlupdoMachine extends AbstractMachine
 			$this->sphinx = null;
 		}
 
-		// Use config if not specified otherwise
-		if ($this->table === null && isset($config['table'])) {
-			$this->table = (string) $config['table'];
-		}
-		if ($this->table_alias === null && isset($config['table_alias'])) {
-			$this->table_alias = (string) $config['table_alias'];
-		}
-		if ($this->url_fmt === null && isset($config['url'])) {
-			$this->url_fmt = (string) $config['url'];
-		}
-		if ($this->parent_url_fmt === null && isset($config['parent_url'])) {
-			$this->parent_url_fmt = (string) $config['parent_url'];
-		}
-		if ($this->post_action_url_fmt === null && isset($config['post_action_url'])) {
-			$this->post_action_url_fmt = (string) $config['post_action_url'];
-		}
-		foreach($this as $k => $v) {
-			switch ($k) {
-				case 'flupdo':
-				case 'table':
-				case 'table_alias':
-				case 'url_fmt':
-				case 'parent_url_fmt':
-				case 'post_action_url_fmt':
-					break;
-				default:
-					// FIXME: Is this a good idea?
-					if ($this->$k === null && isset($config[$k])) {
-						$this->$k = $config[$k];
-					}
-					break;
-			}
-		}
-
-		// Properties
+		// Properties (unless set before)
 		if ($this->properties === null) {
 			if (empty($config['properties'])) {
 				// Scan database for properties if not specified
 				$this->scanTableColumns();
-			} else {
-				// If properties are difined manualy, use them
-				$this->properties = $config['properties'];
 			}
 		}
+
+		// Setup machine. Properties may be set before initializing,
+		// this will merge config with autodetected properties
+		parent::initializeMachine($config);
 
 		// Collect primary key from properties
 		if ($this->pk_columns === null) {

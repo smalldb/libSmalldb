@@ -272,12 +272,31 @@ abstract class AbstractMachine
 		$this->machine_type = $type;
 		$this->initializeMachine($config);
 
-		// Store state diagram extras
-		if (isset($config['state_diagram_extras'])) {
-			$this->state_diagram_extras = $config['state_diagram_extras'];
+		// Create default machine (see FlupdoCrudMachine)?
+		if (empty($config['no_default_machine'])) {
+			$this->setupDefaultMachine($config);
 		}
+	}
+
+
+	/**
+	 * Define state machine used by all instances of this type.
+	 *
+	 * @warning Derived classes always must call parent's implementation.
+	 */
+	protected function initializeMachine($config)
+	{
+		// Load configuration
+		$this->initializeMachineConfig($config, [
+			'states', 'state_groups', 'actions',
+			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
+			'properties', 'views', 'references',
+			'url_fmt', 'parent_url_fmt', 'post_action_url_fmt',
+			'state_diagram_extras'
+		]);
 
 		// Sort actions, so they appear everywhere in defined order
+		// FIXME: Sort by key, label is optional and not used by state machine.
 		uasort($this->actions, function($a, $b) {
 			$aw = (isset($a['weight']) ? $a['weight'] : 50);
 			$bw = (isset($b['weight']) ? $b['weight'] : 50);
@@ -292,9 +311,44 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Define state machine used by all instances of this type.
+	 * Setup default machine when initializeMachine is finished.
+	 *
+	 * This method should check what is already defined to not overwrite
+	 * provided definitions.
+	 *
+	 * @note This method is not called is $config['no_default_machine'] is set.
+	 *
+	 * @warning Derived classes may not call parent's implementation.
 	 */
-	abstract protected function initializeMachine($config);
+	protected function setupDefaultMachine($config)
+	{
+		// nop
+	}
+
+
+	/**
+	 * Merge $config into state machine member variables.
+	 *
+	 * Already set member variables are not overwriten. If the member
+	 * variable is an array, the $config array is merged with the config,
+	 * overwriting only matching keys (using array_replace_recursive).
+	 *
+	 * @param $config Configuration passed to state machine
+	 * @param $keys List of feys from $config to load into member variables
+	 * 	of the same name.
+	 */
+	protected function initializeMachineConfig($config, $keys)
+	{
+		foreach ($keys as $k) {
+			if (isset($config[$k])) {
+				if ($this->$k === null) {
+					$this->$k = $config[$k];
+				} else if (is_array($this->$k) && is_array($config[$k])) {
+					$this->$k = array_replace_recursive($this->$k, $config[$k]);
+				}
+			}
+		}
+	}
 
 
 	/**
