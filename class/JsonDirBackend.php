@@ -178,6 +178,38 @@ class JsonDirBackend extends AbstractBackend
 					BpmnReader::postprocessDefinition($machine_def);
 				}
 
+				// Make sure the names are always set
+				if (!empty($machine_def['properties'])) {
+					foreach ($machine_def['properties'] as $p_name => & $property) {
+						if (empty($property['name'])) {
+							$property['name'] = $p_name;
+						}
+					}
+					unset($property);
+				}
+				if (!empty($machine_def['actions'])) {
+					foreach ($machine_def['actions'] as $a_name => & $action) {
+						if (empty($action['name'])) {
+							$action['name'] = $a_name;
+						}
+					}
+					unset($action);
+				}
+
+				// Sort actions, so they appear everywhere in defined order
+				// (readers may provide them in random order)
+				uasort($machine_def['actions'], function($a, $b) {
+					$aw = (isset($a['weight']) ? $a['weight'] : 50);
+					$bw = (isset($b['weight']) ? $b['weight'] : 50);
+
+					if ($aw == $bw) {
+						return strcoll(isset($a['label']) ? $a['label'] : $a['name'],
+							isset($b['label']) ? $b['label'] : $b['name']);
+					} else {
+						return $aw - $bw;
+					}
+				});
+
 				unset($machine_def);
 			}
 

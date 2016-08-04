@@ -294,19 +294,6 @@ abstract class AbstractMachine
 			'url_fmt', 'parent_url_fmt', 'post_action_url_fmt',
 			'state_diagram_extras'
 		]);
-
-		// Sort actions, so they appear everywhere in defined order
-		// FIXME: Sort by key, label is optional and not used by state machine.
-		uasort($this->actions, function($a, $b) {
-			$aw = (isset($a['weight']) ? $a['weight'] : 50);
-			$bw = (isset($b['weight']) ? $b['weight'] : 50);
-
-			if ($aw == $bw) {
-				return strcoll(isset($a['label']) ? $a['label'] : '', isset($b['label']) ? $b['label'] : '');
-			} else {
-				return $aw - $bw;
-			}
-		});
 	}
 
 
