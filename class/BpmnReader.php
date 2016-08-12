@@ -41,7 +41,7 @@ class BpmnReader implements IMachineDefinitionReader
 {
 
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($data_string, $options = array(), $filename = null)
+	public static function loadString($data_string, $options = [], $filename = null)
 	{
 		// Options
 		$bpmn_process_id = isset($options['process_id']) ? $options['process_id'] : null;
@@ -58,132 +58,121 @@ class BpmnReader implements IMachineDefinitionReader
 			if (!preg_match('/^[a-zA-Z0-9_.-]*$/', $bpmn_process_id)) {
 				throw new BpmnException('Invalid process ID (only alphanumeric characters, underscore, dot and dash are allowed): '.var_export($bpmn_process_id, true));
 			}
-			$process_element = $xpath->query('/bpmn:definitions/bpmn:process[@id=\''.$bpmn_process_id.'\']')->item(0);
+			$machine_process_element = $xpath->query('/bpmn:definitions/bpmn:process[@id=\''.$bpmn_process_id.'\']')->item(0);
 		} else {
-			$process_element = $xpath->query('/bpmn:definitions/bpmn:process')->item(0);
+			$machine_process_element = $xpath->query('/bpmn:definitions/bpmn:process')->item(0);
 		}
 
 		// Process element is mandatory
-		if (!$process_element) {
+		if (!$machine_process_element) {
 			throw new BpmnException('Process element not found: '.var_export($bpmn_process_id, true));
 		}
 
 		// Lets collect arrows, events and tasks (still in BPMN semantics)
-		$arrows = array();
-		$nodes = array();
+		$arrows = [];
+		$nodes = [];
+		$groups = [];
 
-		// Get arrows -- the sequence flow
-		foreach($xpath->query('./bpmn:sequenceFlow[@id][@sourceRef][@targetRef]', $process_element) as $el) {
-			$id = $el->getAttribute('id');
-			$name = $el->getAttribute('name');
-			$sourceRef = $el->getAttribute('sourceRef');
-			$targetRef = $el->getAttribute('targetRef');
-			$arrows[$id] = array(
-				'source' => $sourceRef,
-				'target' => $targetRef,
-				'name' => $name,
-			);
-		}
-
-		// Get start events
-		foreach($xpath->query('./bpmn:startEvent[@id]', $process_element) as $el) {
+		// Get processes (groups)
+		foreach($xpath->query('//bpmn:process[@id]') as $el) {
 			$id = $el->getAttribute('id');
 			$name = $el->getAttribute('name');
 
-			$incoming = array();
-			foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
-				$incoming[] = $in->wholeText;
-			}
-
-			$outgoing = array();
-			foreach($xpath->query('./bpmn:outgoing/text()[1]', $el) as $out) {
-				$outgoing[] = $out->wholeText;
-			}
-
-			$nodes[$id] = array(
+			$groups[$id] = [
 				'id' => $id,
-				'name' => $name,
-				'type' => 'start',
-				'incoming' => $incoming,
-				'outgoing' => $outgoing,
-			);
+				'name' => $name == '' ? $id : $name,
+				'nodes' => [],
+			];
 		}
 
-		// Get intermediate events
-		foreach($xpath->query('./bpmn:intermediateThrowEvent[@id]', $process_element) as $el) {
-			$id = $el->getAttribute('id');
-			$name = $el->getAttribute('name');
+		// Get arrows
+		foreach (['sequenceFlow', 'messageFlow'] as $type) {
+			foreach($xpath->query('//bpmn:'.$type.'[@id][@sourceRef][@targetRef]') as $el) {
+				// Arrow properties
+				$id = $el->getAttribute('id');
+				$name = $el->getAttribute('name');
+				$sourceRef = $el->getAttribute('sourceRef');
+				$targetRef = $el->getAttribute('targetRef');
 
-			$incoming = array();
-			foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
-				$incoming[] = $in->wholeText;
+				// Get process where the arrow belongs
+				$process_element = $el->parentNode;
+				if ($process_element && $process_element->tagName == 'bpmn:process') {
+					$process_id = $process_element->getAttribute('id');
+				} else {
+					$process_id = null;
+				}
+
+				// Store arrow
+				$arrows[$id] = [
+					'id' => $id,
+					'type' => $type,
+					'source' => $sourceRef,
+					'target' => $targetRef,
+					'name' => $name,
+					'process' => $process_id,
+				];
 			}
-
-			$outgoing = array();
-			foreach($xpath->query('./bpmn:outgoing/text()[1]', $el) as $out) {
-				$outgoing[] = $out->wholeText;
-			}
-
-			$nodes[$id] = array(
-				'id' => $id,
-				'name' => $name,
-				'type' => 'intermediate',
-				'incoming' => $incoming,
-				'outgoing' => $outgoing,
-			);
 		}
 
-		// Get end events
-		foreach($xpath->query('./bpmn:endEvent[@id]', $process_element) as $el) {
-			$id = $el->getAttribute('id');
-			$name = $el->getAttribute('name');
+		// Get event nodes
+		foreach (['startEvent', 'task', 'intermediateThrowEvent', 'endEvent',
+			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway'] as $type)
+		{
+			foreach($xpath->query('//bpmn:'.$type.'[@id]') as $el) {
+				$id = $el->getAttribute('id');
+				$name = $el->getAttribute('name');
+				if ($name == '') {
+					$name = $id;
+				}
 
-			$incoming = array();
-			foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
-				$incoming[] = $in->wholeText;
+				// Get process where the arrow belongs
+				$process_element = $el->parentNode;
+				if ($process_element && $process_element->tagName == 'bpmn:process') {
+					$process_id = $process_element->getAttribute('id');
+					$groups[$process_id]['nodes'][] = $id;
+				} else {
+					$process_id = null;
+				}
+
+				$incoming = [];
+				foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
+					$incoming[] = $in->wholeText;
+				}
+
+				$outgoing = [];
+				foreach($xpath->query('./bpmn:outgoing/text()[1]', $el) as $out) {
+					$outgoing[] = $out->wholeText;
+				}
+
+				$nodes[$id] = [
+					'id' => $id,
+					'name' => $name,
+					'type' => $type,
+					'process' => $process_id,
+					'incoming' => $incoming,
+					'outgoing' => $outgoing,
+				];
 			}
-
-			$outgoing = array();
-			foreach($xpath->query('./bpmn:outgoing/text()[1]', $el) as $out) {
-				$outgoing[] = $out->wholeText;
-			}
-
-			$nodes[$id] = array(
-				'id' => $id,
-				'name' => $name,
-				'type' => 'end',
-				'incoming' => $incoming,
-				'outgoing' => $outgoing,
-			);
 		}
 
-		// Get tasks
-		foreach($xpath->query('./bpmn:task[@id]', $process_element) as $el) {
-			$id = $el->getAttribute('id');
-			$name = $el->getAttribute('name');
+		// Store fragment in state machine definition
+		return [
+			'bpmn_fragments' => [
+				$filename.'#'.$bpmn_process_id => [
+					'file' => $filename,
+					'process_id' => $bpmn_process_id,
+					'arrows' => $arrows,
+					'nodes' => $nodes,
+					'groups' => $groups,
+				],
+			],
+		];
 
-			$incoming = array();
-			foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
-				$incoming[] = $in->wholeText;
-			}
-
-			$outgoing = array();
-			foreach($xpath->query('./bpmn:outgoing/text()[1]', $el) as $out) {
-				$outgoing[] = $out->wholeText;
-			}
-
-			$nodes[$id] = array(
-				'id' => $id,
-				'name' => $name,
-				'type' => 'task',
-				'incoming' => $incoming,
-				'outgoing' => $outgoing,
-			);
-		}
+		///---------------
 
 		// Dump BPMN fragment
 		/*
-		printf("\nBPMN diagram: %s, %s\n", basename($filename), $bpmn_process_id);
+		printf("\n<pre>BPMN diagram: %s, %s\n", basename($filename), $bpmn_process_id);
 		printf("  Nodes:\n");
 		foreach ($nodes as $id => $n) {
 			printf("    %s (%s)\n", var_export($n['name'], true), var_export($id, true));
@@ -198,19 +187,8 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($arrows as $id => $a) {
 			printf("    %25s --> %-25s (%s, %s)\n", $a['source'], $a['target'], var_export($id, true), var_export($a['name'], true));
 		}
-		printf("\n");
+		printf("</pre>\n");
 		// */
-
-		return array(
-			'bpmn_fragments' => array(
-				$filename.'#'.$bpmn_process_id => array(
-					'file' => $filename,
-					'process_id' => $bpmn_process_id,
-					'arrows' => $arrows,
-					'nodes' => $nodes,
-				),
-			),
-		);
 
 	}
 
@@ -224,62 +202,121 @@ class BpmnReader implements IMachineDefinitionReader
 		$bpmn_fragments = $machine_def['bpmn_fragments'];
 		unset($machine_def['bpmn_fragments']);
 
-		$states = array();
-		$actions = array();
+		$states = [];
+		$actions = [];
 
-		// Trivial strategy: Expect all states to be manually named and
-		// simply add them to state machines. Basically, swap arrows
-		// and tasks to get states and transitions.
+		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_file => $fragment) {
+			$primary_process_id = $fragment['process_id'];
 			$prefix = "bpmn_".(0xffff & crc32($fragment_file)).'_';
-			$diagram = "\tsubgraph cluster_$prefix {\nlabel= \"BPMN: ".basename($fragment_file)."\"; color=\"#5373B4\";\n";
+			$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN: ".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
 
-			// Arrows are states
-			foreach ($fragment['arrows'] as $a_id => $a) {
-				// Register state
-				$state_name = trim($a['name']);
-				if ($state_name != '') {
-					$states[$state_name] = array();
+			// Calculate neighbour nodes
+			$next_node = [];
+			foreach ($fragment['arrows'] as $id => $a) {
+				if ($a['type'] == 'sequenceFlow') {
+					$next_node[$a['source']][] = $a['target'];
 				}
 			}
 
-			// Tasks are actions
-			foreach ($fragment['nodes'] as $n_id => $n) {
-				$node = [];
-				if ($n['type'] == 'task') {
-					$action = trim($n['name']);
-					foreach ($n['incoming'] as $in) {
-						foreach($n['outgoing']as $out) {
-							$in_name = $fragment['arrows'][$in]['name'];
-							$out_name = $fragment['arrows'][$out]['name'];
-							$actions[$action]['transitions'][$in_name]['targets'][] = $out_name;
-
-							$in_id = AbstractMachine::exportDotIdentifier($in_name, $prefix);
-							$out_id = AbstractMachine::exportDotIdentifier($out_name, $prefix);
-
-							$node[$in_id] = $in_name;
-							$node[$out_id] = $out_name;
-
-							$diagram .= $in_id.' -> '.$out_id." [ label = \" ".addcslashes($action, '"')." \" ];\n";
+			// Calculate distance of each node from nearest start event to detect backward arrows
+			$queue = [];
+			foreach ($fragment['nodes'] as $id => $n) {
+				if ($n['type'] == 'startEvent') {
+					$queue[] = $id;
+					$fragment['nodes'][$id]['_distance'] = 0;
+				}
+			}
+			while (!empty($queue)) {
+				$id = array_pop($queue);
+				$distance = $fragment['nodes'][$id]['_distance'] + 1;
+				if (isset($next_node[$id])) {
+					foreach ($next_node[$id] as $next_id) {
+						$n = $fragment['nodes'][$next_id];
+						if (!isset($n['_distance'])) {
+							$fragment['nodes'][$next_id]['_distance'] = $distance;
+							$queue[] = $next_id;
 						}
 					}
 				}
-				foreach ($node as $id => $label) {
-					$diagram .= "$id [ label = \"".addcslashes($label, '"')."\"];\n";
-				}
 			}
 
-			$diagram .= "}";
+			// Draw arrows
+			foreach ($fragment['arrows'] as $id => $a) {
+				$source = AbstractMachine::exportDotIdentifier($a['source'], $prefix);
+				$target = AbstractMachine::exportDotIdentifier($a['target'], $prefix); 
+				$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance']);
+				$diagram .= "\t\t" . $source . ' -> ' . $target. ' [tooltip="'.addcslashes($a['id'], '"').'"';
+				if ($backwards) {
+					$diagram .= ',constraint=0';
+				}
+				switch ($a['type']) {
+					case 'sequenceFlow':
+						$diagram .= 'style=solid,color="#666666"';
+						$w = $backwards ? 3 : 5;
+						break;
+					case 'messageFlow':
+						$diagram .= 'style=dashed,color="#666666",arrowhead=empty,arrowtail=odot';
+						$w = 0;
+						break;
+					default: $diagram .= 'color=red'; break;
+				}
+				if ($a['process'] == $primary_process_id) {
+					$diagram .= ',color="#44aa44",penwidth=1.5';
+				}
+				$diagram .= ",weight=$w];\n";
+
+				$nodes[$source] = $a['source'];
+				$nodes[$target] = $a['target'];
+			}
+
+			$diagram .= "\n";
+
+			// Draw nodes
+			foreach ($fragment['nodes'] as $id => $n) {
+				$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
+
+				$diagram .= "\t\t" . $graph_id . " [label=\"".addcslashes($n['name'], '"')."\",tooltip=\"".addcslashes($n['id'], '"')."\"";
+				switch ($n['type']) {
+					case 'startEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,label="",root=1'; break;
+					case 'intermediateThrowEvent': $diagram .= ',shape=doublecircle,width=0.35,label=""'; break;
+					case 'endEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,penwidth=3,label=""'; break;
+					case 'exclusiveGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="X"'; break;
+					case 'parallelGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="+"'; break;
+					case 'inclusiveGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="O"'; break;
+					case 'complexGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="*"'; break;
+					case 'eventBasedGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="E"'; break;
+				}
+				if ($n['process'] == $primary_process_id) {
+					$diagram .= ',color="#44aa44"';
+				}
+				$diagram .= "];\n";
+			}
+
+			foreach ($fragment['groups'] as $id => $g) {
+				$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
+
+				$diagram .= "\n\t\tsubgraph cluster_$graph_id {\n\t\t\tlabel= \"".basename($g['name'])."\"; color=\"#aaaaaa\";\n\n";
+				foreach ($g['nodes'] as $n_id) {
+					$graph_n_id = AbstractMachine::exportDotIdentifier($n_id, $prefix);
+					$diagram .= "\t\t\t".$graph_n_id.";\n";
+				}
+				$diagram .= "\t\t}\n";
+			}
+
+			$diagram .= "\t}\n";
+
+			//echo "<pre>", $diagram, "</pre>";
 
 			// Add BPMN diagram to state diagram
 			$machine_def['state_diagram_extras'][] = $diagram;
 		}
 
 		// Update the definition
-		$machine_def = array_replace_recursive(array(
+		$machine_def = array_replace_recursive([
 				'states' => $states,
 				'actions' => $actions,
-			), $machine_def);
+			], $machine_def);
 	}
 
 }
