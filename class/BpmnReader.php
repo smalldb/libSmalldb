@@ -344,30 +344,47 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// To invoke an action, we have to be in a state, so lets add a state in front of each action
+			$preceding_states = [];
 			foreach ($paths as $src => $dst_list) {
 				$n = $fragment['nodes'][$src];
 				if ($n['type'] == 'task') {
-					$states['before_'.$src] = [
+					$preceding_states[$src] = 'before_'.$src;
+				}
+				if ($n['type'] == 'endEvent') {
+					$preceding_states[$src] = '';
+				}
+			}
+
+			// But if there is path between start event and action,
+			// then action's preceding state is the start event.
+			foreach ($paths as $src => $dst_list) {
+				$n = $fragment['nodes'][$src];
+				if ($n['type'] == 'startEvent') {
+					foreach ($dst_list as $dst) {
+						$preceding_states[$dst] = '';
+					}
+				}
+			}
+
+			// Register preceding states
+			foreach ($preceding_states as $s) {
+				if ($s != '') {
+					$states[$s] = [
 					];
 				}
 			}
 
 			// So the actions start in the newly assigned states...
 			foreach ($paths as $src => $dst_list) {
-				$src_n = $fragment['nodes'][$src];
-				if ($src_n['type'] == 'startEvent') {
-					$src_state = '';
-				} else {
-					$src_state = 'before_'.$src;
+				if (!isset($preceding_states[$src])) {
+					continue;
 				}
+				$src_state = $preceding_states[$src];
+				$src_n = $fragment['nodes'][$src];
+				$action_name = $src_n['name'];
 				foreach ($dst_list as $dst) {
-					$dst_n = $fragment['nodes'][$dst];
-					if ($dst_n['type'] == 'endEvent') {
-						$dst_state = '';
-					} else {
-						$dst_state = 'before_'.$dst;
-					}
-					$actions[$src_n['name']]['transitions'][$src_state]['targets'][] = $dst_state;
+					$dst_state = $preceding_states[$dst];
+					$actions[$action_name]['transitions'][$src_state]['targets'][] = $dst_state;
 				}
 			}
 			var_dump($actions);
