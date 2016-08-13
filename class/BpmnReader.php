@@ -209,7 +209,7 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($bpmn_fragments as $fragment_file => $fragment) {
 			$primary_process_id = $fragment['process_id'];
 			$prefix = "bpmn_".(0xffff & crc32($fragment_file)).'_';
-			$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN: ".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
+			$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN:\\n".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
 
 			// Calculate neighbour nodes
 			$next_node = [];
@@ -219,14 +219,17 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 
-			// Calculate distance of each node from nearest start event to detect backward arrows
-			$queue = [];
+			// Collect start nodes
+			$start_nodes = [];
 			foreach ($fragment['nodes'] as $id => $n) {
 				if ($n['type'] == 'startEvent') {
-					$queue[] = $id;
+					$start_nodes[] = $id;
 					$fragment['nodes'][$id]['_distance'] = 0;
 				}
 			}
+
+			// Calculate distance of each node from nearest start event to detect backward arrows (DFS)
+			$queue = $start_nodes;
 			while (!empty($queue)) {
 				$id = array_pop($queue);
 				$distance = $fragment['nodes'][$id]['_distance'] + 1;
@@ -304,9 +307,65 @@ class BpmnReader implements IMachineDefinitionReader
 				$diagram .= "\t\t}\n";
 			}
 
+
+			// Cluster with fragment of the final state machine
+			$diagram .= "\tsubgraph cluster_".$prefix."_sm {\n\t\tlabel= \"State machine\"; color=\"#B47353\"; fillcolor=\"#ffffee\"; style=filled;\n\n";
+
+			// Walk from each task to next tasks, collecting state machine actions
+			$paths = [];
+			foreach ($fragment['nodes'] as $n_id => $n) {
+				// If node is task and it is from the primary process
+				if ($n['type'] == 'task' && $n['process'] == $primary_process_id) {
+					// Add task to paths, so we know about all tasks
+					if (!isset($paths[$n_id])) {
+						$paths[$n_id] = [];
+					}
+
+					// Find all next tasks (DFS limited to non-task nodes)
+					$queue = [$n_id];
+					$visited = [$n_id => true];
+					while (!empty($queue)) {
+						$id = array_pop($queue);
+						if (isset($next_node[$id])) {
+							foreach ($next_node[$id] as $next_id) {
+								$next_n = $fragment['nodes'][$next_id];
+								if ($next_n['process'] == $primary_process_id) {
+									if ($next_n['type'] == 'task') {
+										$paths[$n_id][] = $next_id;
+									} else if (empty($visited[$next_id])) {
+										$visited[$next_id] = true;
+										$queue[] = $next_id;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Draw found paths
+			foreach ($paths as $src => $dst_list) {
+				// Draw the action
+				$n = $fragment['nodes'][$src];
+				$graph_src = AbstractMachine::exportDotIdentifier($src, $prefix.'_action');
+				$diagram .= $graph_src."[label=\"".addcslashes($n['name'], '"')."\"];\n";
+
+				// Draw all follow-up actions
+				foreach ($dst_list as $dst) {
+					$source = AbstractMachine::exportDotIdentifier($src, $prefix.'_action');
+					$target = AbstractMachine::exportDotIdentifier($dst, $prefix.'_action'); 
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ";\n";
+				}
+			}
+
 			$diagram .= "\t}\n";
 
 			//echo "<pre>", $diagram, "</pre>";
+
+
+
+
+			$diagram .= "\t}\n";
 
 			// Add BPMN diagram to state diagram
 			$machine_def['state_diagram_extras'][] = $diagram;
