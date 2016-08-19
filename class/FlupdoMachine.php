@@ -209,8 +209,8 @@ class FlupdoMachine extends AbstractMachine
 				// build properties description
 				$this->properties = array();
 				foreach($r as $cm) {
-					$this->properties[$cm['label']] = array(
-						'label' => $cm['label'],
+					$this->properties[$cm['name']] = array(
+						'name' => $cm['name'],
 						'type' => $cm['type'],
 						'is_pk' => (bool) $cm['pk'],
 					);
@@ -227,8 +227,8 @@ class FlupdoMachine extends AbstractMachine
 				$this->properties = array();
 				for ($i = 0; $i < $col_cnt; $i++) {
 					$cm = $r->getColumnMeta($i);
-					$this->properties[$cm['label']] = array(
-						'label' => $cm['label'],
+					$this->properties[$cm['name']] = array(
+						'name' => $cm['name'],
 						'type' => $cm['native_type'],
 						'is_pk' => in_array('primary_key', $cm['flags']),
 					);
