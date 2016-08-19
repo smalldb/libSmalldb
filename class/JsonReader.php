@@ -50,21 +50,21 @@ class JsonReader implements IMachineDefinitionReader
 				}
 			}
 			unset($action);
+
+			// Sort actions, so they appear everywhere in defined order
+			// (readers may provide them in random order)
+			uasort($machine_def['actions'], function($a, $b) {
+				$aw = (isset($a['weight']) ? $a['weight'] : 50);
+				$bw = (isset($b['weight']) ? $b['weight'] : 50);
+
+				if ($aw == $bw) {
+					return strcoll(isset($a['label']) ? $a['label'] : $a['name'],
+						isset($b['label']) ? $b['label'] : $b['name']);
+				} else {
+					return $aw - $bw;
+				}
+			});
 		}
-
-		// Sort actions, so they appear everywhere in defined order
-		// (readers may provide them in random order)
-		uasort($machine_def['actions'], function($a, $b) {
-			$aw = (isset($a['weight']) ? $a['weight'] : 50);
-			$bw = (isset($b['weight']) ? $b['weight'] : 50);
-
-			if ($aw == $bw) {
-				return strcoll(isset($a['label']) ? $a['label'] : $a['name'],
-					isset($b['label']) ? $b['label'] : $b['name']);
-			} else {
-				return $aw - $bw;
-			}
-		});
 	}
 
 }
