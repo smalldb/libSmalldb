@@ -17,7 +17,7 @@
  */
 
 namespace Smalldb\StateMachine\Auth;
-use Smalldb\StateMachine;
+use Smalldb\StateMachine\AbstractBackend;
 
 /**
  * IAuth implementation using Smalldb state machine and shared session token 
