@@ -193,10 +193,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Set times
 		if ($this->time_created_table_column) {
-			$properties[$this->time_created_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_created_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
 		}
 		if ($this->time_modified_table_column) {
-			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
 		}
 
 
@@ -272,13 +272,13 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Set modification time
 		if ($this->time_modified_table_column) {
-			$properties[$this->time_modified_table_column] = new \Flupdo\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
 		}
 		// Build update query
 		$q = $this->flupdo->update($this->queryGetThisTable($this->flupdo));
 		$this->queryAddPrimaryKeyWhere($q, $ref->id);
 		foreach ($this->encodeProperties($properties) as $k => $v) {
-			if ($v instanceof \Flupdo\Flupdo\FlupdoRawSql || $v instanceof \Flupdo\Flupdo\FlupdoBuilder) {
+			if ($v instanceof \Smalldb\Flupdo\FlupdoRawSql || $v instanceof \Smalldb\Flupdo\FlupdoBuilder) {
 				$q->set(array($this->flupdo->quoteIdent($k).' = ', $v));
 			} else {
 				$q->set($q->quoteIdent($k).' = ?', $v);

@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine;
 
-use	\Flupdo\Flupdo\Flupdo,
-	\Flupdo\Flupdo\FlupdoProxy;
+use	\Smalldb\Flupdo\Flupdo,
+	\Smalldb\Flupdo\FlupdoProxy;
 
 /**
  * Smalldb Backend which loads state machine definitions from a directory full 
