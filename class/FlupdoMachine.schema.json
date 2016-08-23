@@ -61,6 +61,10 @@
             "type": ["null", "string"],
             "default": null
         },
+        "state_select": {
+            "description": "SQL expression to calculate current state (required unless the getStateSelect method is overriden).",
+            "type": "string"
+        },
         "table": {
             "description": "Name of the SQL table where state machines of this type are stored.",
             "type": "string"

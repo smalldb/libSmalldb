@@ -125,7 +125,7 @@ class FlupdoMachine extends AbstractMachine
 	protected function initializeMachine($config)
 	{
 		// Load simple config options
-		$this->initializeMachineConfig($config, ['table', 'table_alias']);
+		$this->initializeMachineConfig($config, ['table', 'table_alias', 'state_select']);
 
 		// Get flupdo resource
 		$this->flupdo = $this->getContext(isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database');
