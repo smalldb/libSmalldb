@@ -52,9 +52,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/// Order by this column
 	protected $nested_sets_order_by = 'id';
 
-	/// Set this column to NOW() on create transition
+	/// Set this column to CURRENT_TIMESTAMP on create transition
 	protected $time_created_table_column = null;
-	/// Set this column to NOW() on edit transition. If MySQL is in use, it is better to use CURRENT_TIMESTAMP column feature.
+	/// Set this column to CURRENT_TIMESTAMP on edit transition. If MySQL is in use, it is better to use CURRENT_TIMESTAMP column feature.
 	protected $time_modified_table_column = null;
 
 	/**
@@ -193,10 +193,10 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Set times
 		if ($this->time_created_table_column) {
-			$properties[$this->time_created_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_created_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('CURRENT_TIMESTAMP');
 		}
 		if ($this->time_modified_table_column) {
-			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('CURRENT_TIMESTAMP');
 		}
 
 
@@ -272,7 +272,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Set modification time
 		if ($this->time_modified_table_column) {
-			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('NOW()');
+			$properties[$this->time_modified_table_column] = new \Smalldb\Flupdo\FlupdoRawSql('CURRENT_TIMESTAMP');
 		}
 		// Build update query
 		$q = $this->flupdo->update($this->queryGetThisTable($this->flupdo));
