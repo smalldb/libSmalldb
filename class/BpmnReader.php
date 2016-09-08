@@ -345,7 +345,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($starting_nodes as $s_id => $s_n) {
 				$q = 'Qs_'.$s_id;
 				$states[$q] = [
-					'color' => '#ffccaa',
+					//'color' => '#ffccaa',
 				];
 
 				// Connect to initial state (for now)
@@ -353,21 +353,18 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
+			// Part 1/2: States
 			foreach ($invoking_actions as $in_id => $in_a) {
 				$qi = 'Qi_'.$in_id;
 				$states[$qi] = [
-					'color' => '#ffff88',
+					//'color' => '#ffff88',
 				];
 
 				foreach ($inv_rc_nodes[$in_id] as $rcv_id => $rcv_n) {
 					$qr = 'Qr_'.$rcv_id;
 					$states[$qr] = [
-						'color' => '#aaddff',
+						//'color' => '#aaddff',
 					];
-
-					$inv_a = $invoking_actions[$in_id];
-					$a = $inv_a['name'] ?: 'A'.($action_no++);
-					$actions[$a]['transitions'][$qi]['targets'][] = $qr;
 				}
 			}
 
@@ -375,7 +372,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($ending_nodes as $e_id => $e_n) {
 				$q = 'Qe_'.$e_id;
 				$states[$q] = [
-					'color' => '#ffccaa',
+					//'color' => '#ffccaa',
 				];
 
 				// Connect to initial state
@@ -391,7 +388,59 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 
-			// Merge equivalent states
+			// Build replacement table
+			$uf = new UnionFind();
+			$uf->add('');
+			foreach ($states as $s_id => $s) {
+				$uf->add($s_id);
+			}
+			foreach ($starting_nodes as $s_id => $s_n) {
+				$uf->union('', 'Qs_'.$s_id);
+			}
+			foreach ($eq_states as $src => $dst_list) {
+				foreach ($dst_list as $dst) {
+					$uf->union($src, $dst);
+				}
+			}
+			foreach ($ending_nodes as $e_id => $e_n) {
+				$uf->union('', 'Qe_'.$e_id);
+			}
+
+			$state_replace = $uf->findAll();
+			/*
+			echo "<pre>";
+			foreach ($state_replace as $src => $dst) {
+				if ($src == $dst) {
+					echo "<span style=\"color:grey\">$src == $dst</span>\n";
+				} else {
+					echo "$src == $dst\n";
+				}
+			}
+			echo "</pre>";
+			// */
+
+			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
+			// Part 2/2: Actions
+			foreach ($invoking_actions as $in_id => $in_a) {
+				$qi = 'Qi_'.$in_id;
+				foreach ($inv_rc_nodes[$in_id] as $rcv_id => $rcv_n) {
+					$qr = 'Qr_'.$rcv_id;
+					$inv_a = $invoking_actions[$in_id];
+					$a = $inv_a['name'] ?: 'A'.($action_no++);
+
+					$qir = $state_replace[$qi];
+					$qrr = $state_replace[$qr];
+					$actions[$a]['transitions'][$qir]['targets'][] = $qrr;
+				}
+			}
+
+			// Remove merged states
+			foreach ($state_replace as $src => $dst) {
+				if ($src !== $dst) {
+					unset($states[$src]);
+				}
+			}
+
 
 			/*
 			 * Render
@@ -516,6 +565,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Draw $eq_states
+			/*
 			foreach ($eq_start_states as $q) {
 				$actions['=']['transitions']['']['targets'][] = $q;
 				$actions['=']['transitions']['']['color'] = '#88dd66';
@@ -530,6 +580,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$actions['=']['transitions'][$q]['targets'][] = '';
 				$actions['=']['transitions'][$q]['color'] = '#88dd66';
 			}
+			// */
 
 			//-------------------------------------------
 
