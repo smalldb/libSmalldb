@@ -34,6 +34,8 @@ namespace Smalldb\StateMachine;
  * 
  *   - `process_id`: ID of BPMN process to use from the file (string). If
  *     null, the first process is used.
+ *   - `state_machine_participant`: ID of BPMN participant to implement by
+ *     Smalldb state machine.
  *
  * @see https://camunda.org/bpmn/tool/
  */
@@ -45,6 +47,7 @@ class BpmnReader implements IMachineDefinitionReader
 	{
 		// Options
 		$bpmn_process_id = isset($options['process_id']) ? $options['process_id'] : null;
+		$state_machine_participant_id = isset($options['state_machine_participant_id']) ? $options['state_machine_participant_id'] : null;
 
 		// Load GraphML into DOM
 		$dom = new \DOMDocument;
@@ -114,8 +117,8 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Get event nodes
-		foreach (['startEvent', 'task', 'intermediateThrowEvent', 'endEvent',
+		// Get nodes
+		foreach (['participant', 'startEvent', 'task', 'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
 			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway'] as $type)
 		{
 			foreach($xpath->query('//bpmn:'.$type.'[@id]') as $el) {
@@ -125,13 +128,16 @@ class BpmnReader implements IMachineDefinitionReader
 					$name = $id;
 				}
 
-				// Get process where the arrow belongs
-				$process_element = $el->parentNode;
-				if ($process_element && $process_element->tagName == 'bpmn:process') {
+				// Get process where the node belongs
+				if (($processRef = $el->getAttribute('processRef'))) {
+					$process_id = $processRef;
+				} else if (($process_element = $el->parentNode) && $process_element->tagName == 'bpmn:process') {
 					$process_id = $process_element->getAttribute('id');
-					$groups[$process_id]['nodes'][] = $id;
 				} else {
 					$process_id = null;
+				}
+				if ($process_id) {
+					$groups[$process_id]['nodes'][] = $id;
 				}
 
 				$incoming = [];
@@ -161,6 +167,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$filename.'#'.$bpmn_process_id => [
 					'file' => $filename,
 					'process_id' => $bpmn_process_id,
+					'state_machine_participant_id' => $state_machine_participant_id,
 					'arrows' => $arrows,
 					'nodes' => $nodes,
 					'groups' => $groups,
@@ -208,6 +215,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_file => $fragment) {
 			$primary_process_id = $fragment['process_id'];
+			$state_machine_participant_id = $fragment['state_machine_participant_id'];
 			$prefix = "bpmn_".(0xffff & crc32($fragment_file)).'_';
 			$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN:\\n".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
 
@@ -221,10 +229,14 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Collect start nodes
 			$start_nodes = [];
+			$end_nodes = [];
 			foreach ($fragment['nodes'] as $id => $n) {
 				if ($n['type'] == 'startEvent') {
 					$start_nodes[] = $id;
 					$fragment['nodes'][$id]['_distance'] = 0;
+				} else {
+					// Mark all other nodes as unreachable (but define the distance)
+					$fragment['nodes'][$id]['_distance'] = null;
 				}
 			}
 
@@ -244,12 +256,155 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 
+			/*
+			 * State machine synthesis
+			 */
+
+			// Find nodes connected to state machine participant
+			$state_machine_participant_id = $fragment['state_machine_participant_id'];
+			$invoking_actions = [];
+			$receiving_nodes = [];
+			$starting_nodes = [];
+			$ending_nodes = [];
+			foreach ($fragment['arrows'] as $a_id => $a) {
+				if ($a['target'] == $state_machine_participant_id) {
+					$invoking_actions[$a['source']] = $a;//$fragment['nodes'][$a['source']];
+				}
+				if ($a['source'] == $state_machine_participant_id) {
+					$receiving_nodes[$a['target']] = $fragment['nodes'][$a['target']];
+				}
+			}
+
+			// Find start & end nodes
+			foreach ($fragment['nodes'] as $n_id => $n) {
+				if ($n['type'] == 'startEvent') {
+					$starting_nodes[$n_id] = $n;
+				} else if ($n['type'] == 'endEvent') {
+					$ending_nodes[$n_id] = $n;
+				}
+			}
+
+			// Find receiving nodes for each invoking node
+			// (DFS to next task, the receiver cannot be further than that)
+			$inv_rc_nodes = [];
+			foreach ($invoking_actions as $in_id => $invoking_action) {
+				$queue = [ $in_id ];
+				$inv_rc_nodes[$in_id] = [];
+				$in = $fragment['nodes'][$in_id];
+				$cur_process = $in['process'];
+				while (!empty($queue)) {
+					$id = array_pop($queue);
+					if (isset($next_node[$id])) {
+						foreach ($next_node[$id] as $next_id) {
+							$n = $fragment['nodes'][$next_id];
+							if ($n['process'] != $cur_process || isset($invoking_actions[$next_id])) {
+								// The receiving node must be within the same process and it must not be invoking node.
+								continue;
+							}
+							if (isset($receiving_nodes[$next_id])) {
+								$inv_rc_nodes[$in_id][$next_id] = $n;
+							} else if (!isset($seen[$next_id])) {
+								$queue[] = $next_id;
+								$seen[$next_id] = true;
+							}
+						}
+					}
+				}
+				if (empty($inv_rc_nodes[$in_id])) {
+					$inv_rc_nodes[$in_id][$in_id] = $in;
+					$receiving_nodes[$in_id] = $in;
+				}
+			}
+
+			// Find connections to next transition invocations
+			$sm_next_node = [];
+			$seen = [];
+			foreach (array_merge($starting_nodes, $receiving_nodes) as $in_id => $in) {
+				$queue = [ $in_id ];
+				while (!empty($queue)) {
+					$id = array_pop($queue);
+					if (isset($next_node[$id])) {
+						foreach ($next_node[$id] as $next_id) {
+							if (isset($invoking_actions[$next_id]) || isset($receiving_nodes[$next_id]) || isset($ending_nodes[$next_id])) {
+								$sm_next_node[$in_id][] = $next_id;
+							} else if (!isset($seen[$next_id])) {
+								$queue[] = $next_id;
+								$seen[$next_id] = true;
+							}
+						}
+					}
+				}
+			}
+
+			$action_no = 1;
+			$eq_states = [];
+			$eq_start_states = [];
+			$eq_end_states = [];
+
+			// Add initial states
+			foreach ($starting_nodes as $s_id => $s_n) {
+				$q = 'Qs_'.$s_id;
+				$states[$q] = [
+					'color' => '#ffccaa',
+				];
+
+				// Connect to initial state (for now)
+				$eq_start_states[] = $q;
+			}
+
+			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
+			foreach ($invoking_actions as $in_id => $in_a) {
+				$qi = 'Qi_'.$in_id;
+				$states[$qi] = [
+					'color' => '#ffff88',
+				];
+
+				foreach ($inv_rc_nodes[$in_id] as $rcv_id => $rcv_n) {
+					$qr = 'Qr_'.$rcv_id;
+					$states[$qr] = [
+						'color' => '#aaddff',
+					];
+
+					$inv_a = $invoking_actions[$in_id];
+					$a = $inv_a['name'] ?: 'A'.($action_no++);
+					$actions[$a]['transitions'][$qi]['targets'][] = $qr;
+				}
+			}
+
+			// Add final states
+			foreach ($ending_nodes as $e_id => $e_n) {
+				$q = 'Qe_'.$e_id;
+				$states[$q] = [
+					'color' => '#ffccaa',
+				];
+
+				// Connect to initial state
+				$eq_end_states[] = $q;
+			}
+
+			// Connect fragments of the state machine (green arrows)
+			foreach ($sm_next_node as $src => $dst_list) {
+				$qr = isset($starting_nodes[$src]) ? 'Qs_'.$src : 'Qr_'.$src;
+				foreach ($dst_list as $dst) {
+					$qi = isset($ending_nodes[$dst]) ? 'Qe_'.$dst : 'Qi_'.$dst;
+					$eq_states[$qr][] = $qi;
+				}
+			}
+
+			// Merge equivalent states
+
+			/*
+			 * Render
+			 */
+
 			// Draw arrows
 			foreach ($fragment['arrows'] as $id => $a) {
 				$source = AbstractMachine::exportDotIdentifier($a['source'], $prefix);
 				$target = AbstractMachine::exportDotIdentifier($a['target'], $prefix); 
-				$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance']);
+				$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
+						&& $fragment['nodes'][$a['target']]['_distance'];
 				$diagram .= "\t\t" . $source . ' -> ' . $target. ' [tooltip="'.addcslashes($a['id'], '"').'"';
+				$diagram .= ",label=\"".addcslashes($a['name'], '"')."\"";
 				if ($backwards) {
 					$diagram .= ',constraint=0';
 				}
@@ -264,7 +419,7 @@ class BpmnReader implements IMachineDefinitionReader
 						break;
 					default: $diagram .= 'color=red'; break;
 				}
-				if ($a['process'] == $primary_process_id) {
+				if ($primary_process_id && $a['process'] == $primary_process_id) {
 					$diagram .= ',color="#44aa44",penwidth=1.5';
 				}
 				$diagram .= ",weight=$w];\n";
@@ -279,9 +434,22 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($fragment['nodes'] as $id => $n) {
 				$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
 
-				$diagram .= "\t\t" . $graph_id . " [label=\"".addcslashes($n['name'], '"')."\",tooltip=\"".addcslashes($n['id'], '"')."\"";
+				$diagram .= "\t\t" . $graph_id . " [tooltip=\"".addcslashes($n['id'], '"')."\"";
 				switch ($n['type']) {
+					case 'startEvent':
+					case 'endEvent':
+					case 'intermediateCatchEvent':
+					case 'intermediateThrowEvent':
+						//$diagram .= ",xlabel=\"".addcslashes($n['name'], '"')."\"";
+						break;
+					default:
+						$diagram .= ",label=\"".addcslashes($n['name'], '"')."\"";
+						break;
+				}
+				switch ($n['type']) {
+					case 'participant': $diagram .= ',shape=box,style=filled,fillcolor="#ffffff",penwidth=2'; break;
 					case 'startEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,label="",root=1'; break;
+					case 'intermediateCatchEvent': $diagram .= ',shape=doublecircle,width=0.35,label=""'; break;
 					case 'intermediateThrowEvent': $diagram .= ',shape=doublecircle,width=0.35,label=""'; break;
 					case 'endEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,penwidth=3,label=""'; break;
 					case 'exclusiveGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="X"'; break;
@@ -290,12 +458,29 @@ class BpmnReader implements IMachineDefinitionReader
 					case 'complexGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="*"'; break;
 					case 'eventBasedGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="E"'; break;
 				}
-				if ($n['process'] == $primary_process_id) {
-					$diagram .= ',color="#44aa44"';
+
+				// Algorithm-specific nodes
+				if (($primary_process_id && $n['process'] == $primary_process_id)
+					|| ($state_machine_participant_id && $n['id'] == $state_machine_participant_id))
+				{
+					$diagram .= ',color="#44aa44",fillcolor="#eeffdd"';
+				}
+				if (isset($starting_nodes[$id]) || isset($ending_nodes[$id])) {
+					$diagram .= ',fillcolor="#ffccaa"';
+				}
+
+				// Receiving/invoking background
+				if (isset($invoking_actions[$id]) && isset($receiving_nodes[$id])) {
+					$diagram .= ',fillcolor="#ffff88;0.5:#aaddff",gradientangle=270';
+				} else if (isset($invoking_actions[$id])) {
+					$diagram .= ',fillcolor="#ffff88"';
+				} else if (isset($receiving_nodes[$id])) {
+					$diagram .= ',fillcolor="#aaddff"';
 				}
 				$diagram .= "];\n";
 			}
 
+			// Draw groups
 			foreach ($fragment['groups'] as $id => $g) {
 				$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
 
@@ -307,9 +492,46 @@ class BpmnReader implements IMachineDefinitionReader
 				$diagram .= "\t\t}\n";
 			}
 
+			//-------------------------------------------
 
-			// Cluster with fragment of the final state machine
-			$diagram .= "\tsubgraph cluster_".$prefix."_sm {\n\t\tlabel= \"State machine\"; color=\"#B47353\"; fillcolor=\"#ffffee\"; style=filled;\n\n";
+			// Draw $sm_next_node
+			foreach ($sm_next_node as $src => $dst_list) {
+				foreach($dst_list as $dst) {
+					$source = AbstractMachine::exportDotIdentifier($src, $prefix);
+					$target = AbstractMachine::exportDotIdentifier($dst, $prefix); 
+
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#88dd6688"' . "]\n";
+				}
+			}
+
+			// Draw $inv_rc_nodes
+			foreach ($inv_rc_nodes as $src => $dst_list) {
+				foreach($dst_list as $dst_node) {
+					$dst = $dst_node['id'];
+					$source = AbstractMachine::exportDotIdentifier($src, $prefix);
+					$target = AbstractMachine::exportDotIdentifier($dst, $prefix); 
+
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#66aaff88"' . "]\n";
+				}
+			}
+
+			// Draw $eq_states
+			foreach ($eq_start_states as $q) {
+				$actions['=']['transitions']['']['targets'][] = $q;
+				$actions['=']['transitions']['']['color'] = '#88dd66';
+			}
+			foreach ($eq_states as $src => $dst_list) {
+				foreach($dst_list as $dst) {
+					$actions['=']['transitions'][$src]['targets'][] = $dst;
+					$actions['=']['transitions'][$src]['color'] = '#88dd66';
+				}
+			}
+			foreach ($eq_end_states as $q) {
+				$actions['=']['transitions'][$q]['targets'][] = '';
+				$actions['=']['transitions'][$q]['color'] = '#88dd66';
+			}
+
+			//-------------------------------------------
 
 			// Walk from each task to next tasks, collecting state machine actions
 			$paths = [];
@@ -348,7 +570,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($paths as $src => $dst_list) {
 				$n = $fragment['nodes'][$src];
 				if ($n['type'] == 'task') {
-					$preceding_states[$src] = 'before_'.$src;
+					$preceding_states[$src] = 'before_'.$n['name'];
 				}
 				if ($n['type'] == 'endEvent') {
 					$preceding_states[$src] = '';
@@ -387,9 +609,10 @@ class BpmnReader implements IMachineDefinitionReader
 					$actions[$action_name]['transitions'][$src_state]['targets'][] = $dst_state;
 				}
 			}
-			var_dump($actions);
+			//var_dump($actions);
 
 			// Draw found paths
+			$diagram .= "\tsubgraph cluster_".$prefix."_sm {\n\t\tlabel= \"Action paths\"; color=\"#44aa44\"; fillcolor=\"#ffffee\"; style=filled;\n\n";
 			foreach ($paths as $src => $dst_list) {
 				// Draw the action
 				$n = $fragment['nodes'][$src];
@@ -403,7 +626,6 @@ class BpmnReader implements IMachineDefinitionReader
 					$diagram .= "\t\t" . $source . ' -> ' . $target. ";\n";
 				}
 			}
-
 			$diagram .= "\t}\n";
 
 			//echo "<pre>", $diagram, "</pre>";
