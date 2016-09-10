@@ -66,10 +66,8 @@ class UnionFind
 	{
 		$r = $x;
 		while ($r !== $this->parents[$r]) {
+			$this->parents[$r] = $this->parents[$this->parents[$r]]; // Optimize nodes a little on the way to the root
 			$r = $this->parents[$r];
-		}
-		if ($this->parents[$x] !== $r) {
-			$this->parents[$x] = $r;
 		}
 		return $r;
 	}
