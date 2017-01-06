@@ -319,14 +319,16 @@ class BpmnReader implements IMachineDefinitionReader
 			// Find connections to next transition invocations
 			$sm_next_node = [];
 			foreach (array_merge($starting_nodes, $receiving_nodes) as $in_id => $in) {
-				$seen = [];
+				$seen = [ $in_id => true ];
 				$queue = [ $in_id ];
 				while (!empty($queue)) {
 					$id = array_pop($queue);
 					if (isset($next_node[$id])) {
 						foreach ($next_node[$id] as $next_id) {
 							if (isset($invoking_actions[$next_id]) || isset($receiving_nodes[$next_id]) || isset($ending_nodes[$next_id])) {
-								$sm_next_node[$in_id][] = $next_id;
+								if ($next_id != $in_id) {
+									$sm_next_node[$in_id][] = $next_id;
+								}
 							} else if (!isset($seen[$next_id])) {
 								$queue[] = $next_id;
 								$seen[$next_id] = true;
