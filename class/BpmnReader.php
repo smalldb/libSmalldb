@@ -203,6 +203,8 @@ class BpmnReader implements IMachineDefinitionReader
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
 	public static function postprocessDefinition(& $machine_def)
 	{
+		// Qb_* is Begin of a blue arrow
+		// Qe_* is End of a blue arrow
 		if (!isset($machine_def['bpmn_fragments'])) {
 			return;
 		}
@@ -285,7 +287,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Find receiving nodes for each invoking node
-			// (DFS to next task, the receiver cannot be further than that)
+			// (DFS to next task or waiting, the receiver cannot be further than that)
 			$inv_rc_nodes = [];
 			foreach ($invoking_actions as $in_id => $invoking_action) {
 				$queue = [ $in_id ];
@@ -303,7 +305,8 @@ class BpmnReader implements IMachineDefinitionReader
 							}
 							if (isset($receiving_nodes[$next_id])) {
 								$inv_rc_nodes[$in_id][$next_id] = $n;
-							} else if (!isset($seen[$next_id])) {
+							} else if (!isset($seen[$next_id]) && $fragment['nodes'][$next_id]['type'] != 'intermediateCatchEvent') {
+								// Continue search if node is not visited nor is a catch event.
 								$queue[] = $next_id;
 								$seen[$next_id] = true;
 							}
@@ -311,8 +314,8 @@ class BpmnReader implements IMachineDefinitionReader
 					}
 				}
 				if (empty($inv_rc_nodes[$in_id])) {
-					$inv_rc_nodes[$in_id][$in_id] = $in;
-					$receiving_nodes[$in_id] = $in;
+					$inv_rc_nodes[$in_id][$in_id] = $in;	// Add implicit receiving arrow ...
+					$receiving_nodes[$in_id] = $in;		// ... and make node receiving.
 				}
 			}
 
@@ -340,30 +343,28 @@ class BpmnReader implements IMachineDefinitionReader
 
 			$action_no = 1;
 			$eq_states = [];
-			$eq_start_states = [];
-			$eq_end_states = [];
 
 			// Add initial states
 			foreach ($starting_nodes as $s_id => $s_n) {
-				$q = 'Qs_'.$s_id;
+				$q = 'Qe_'.$s_id;
 				$states[$q] = [
 					//'color' => '#ffccaa',
 				];
-
-				// Connect to initial state (for now)
-				$eq_start_states[] = $q;
 			}
 
 			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
 			// Part 1/2: States
+			$used_receiving_nodes = [];
 			foreach ($invoking_actions as $in_id => $in_a) {
-				$qi = 'Qi_'.$in_id;
+				$qi = 'Qb_'.$in_id;
 				$states[$qi] = [
 					//'color' => '#ffff88',
 				];
 
+				// Create used receiving nodes
 				foreach ($inv_rc_nodes[$in_id] as $rcv_id => $rcv_n) {
-					$qr = 'Qr_'.$rcv_id;
+					$qr = 'Qe_'.$rcv_id;
+					$used_receiving_nodes[$rcv_id] = true;
 					$states[$qr] = [
 						//'color' => '#aaddff',
 					];
@@ -372,21 +373,31 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Add final states
 			foreach ($ending_nodes as $e_id => $e_n) {
-				$q = 'Qe_'.$e_id;
+				$q = 'Qb_'.$e_id;
 				$states[$q] = [
 					//'color' => '#ffccaa',
 				];
-
-				// Connect to initial state
-				$eq_end_states[] = $q;
 			}
 
 			// Connect fragments of the state machine (green arrows)
 			foreach ($sm_next_node as $src => $dst_list) {
-				$qr = isset($starting_nodes[$src]) ? 'Qs_'.$src : 'Qr_'.$src;
 				foreach ($dst_list as $dst) {
-					$qi = isset($ending_nodes[$dst]) ? 'Qe_'.$dst : 'Qi_'.$dst;
-					$eq_states[$qr][] = $qi;
+					$eq_states['Qe_'.$src][] = 'Qb_'.$dst;
+				}
+			}
+
+			// Create unused receiving nodes and add green arrows on them (as they are pass-through)
+			foreach ($receiving_nodes as $rcv_id => $rcv) {
+				if (empty($used_receiving_nodes[$rcv_id])) {
+					$qb = 'Qb_'.$rcv_id;
+					$qe = 'Qe_'.$rcv_id;
+					if (!isset($states[$qb])) {
+						$states[$qb] = [];
+					}
+					if (!isset($states[$qe])) {
+						$states[$qe] = [];
+					}
+					$eq_states[$qb][] = $qe;
 				}
 			}
 
@@ -397,15 +408,27 @@ class BpmnReader implements IMachineDefinitionReader
 				$uf->add($s_id);
 			}
 			foreach ($starting_nodes as $s_id => $s_n) {
-				$uf->union('', 'Qs_'.$s_id);
+				$uf->union('', 'Qe_'.$s_id);
 			}
 			foreach ($eq_states as $src => $dst_list) {
 				foreach ($dst_list as $dst) {
-					$uf->union($src, $dst);
+					if (!isset($states[$src]) || !isset($states[$dst])) {
+						//throw new \RuntimeException("Source state \"$src\" is not defined, something is wrong - can't merge \"$src\" with \"$dst\".");
+						$s = AbstractMachine::exportDotIdentifier(preg_replace('/^Q[eb]_/', '', $src), $prefix);
+						$d = AbstractMachine::exportDotIdentifier(preg_replace('/^Q[eb]_/', '', $dst), $prefix);
+						$m = addcslashes("Can't merge states:\n"
+							."\"$src\"".(isset($states[$src]) ? "" : " - not defined")."\n"
+							."\"$dst\"".(isset($states[$dst]) ? "" : " - not defined"), "\n\"");
+						$diagram .= "\t\t\"$m\" [color=\"#ff0000\",fillcolor=\"#ffeeee\"];\n";
+						$diagram .= "\t\t$s -> \"$m\":n [color=\"#ffaaaa\",style=dashed,arrowhead=none];\n";
+						$diagram .= "\t\t$d -> \"$m\":n [color=\"#ffaaaa\",style=dashed,arrowhead=none];\n";
+					} else {
+						$uf->union($src, $dst);
+					}
 				}
 			}
 			foreach ($ending_nodes as $e_id => $e_n) {
-				$uf->union('', 'Qe_'.$e_id);
+				$uf->union('', 'Qb_'.$e_id);
 			}
 
 			$state_replace = $uf->findAll();
@@ -424,9 +447,9 @@ class BpmnReader implements IMachineDefinitionReader
 			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
 			// Part 2/2: Actions
 			foreach ($invoking_actions as $in_id => $in_a) {
-				$qi = 'Qi_'.$in_id;
+				$qi = 'Qb_'.$in_id;
 				foreach ($inv_rc_nodes[$in_id] as $rcv_id => $rcv_n) {
-					$qr = 'Qr_'.$rcv_id;
+					$qr = 'Qe_'.$rcv_id;
 					$inv_a = $invoking_actions[$in_id];
 					$a = $inv_a['name'] ?: 'A'.($action_no++);
 
@@ -461,7 +484,7 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 				switch ($a['type']) {
 					case 'sequenceFlow':
-						$diagram .= 'style=solid,color="#666666"';
+						$diagram .= 'style=solid,color="#666666",fontcolor="#aaaaaa"';
 						$w = $backwards ? 3 : 5;
 						break;
 					case 'messageFlow':
@@ -491,7 +514,9 @@ class BpmnReader implements IMachineDefinitionReader
 					case 'endEvent':
 					case 'intermediateCatchEvent':
 					case 'intermediateThrowEvent':
-						//$diagram .= ",xlabel=\"".addcslashes($n['name'], '"')."\"";
+						if ($n['name'] != $id) {
+							$diagram .= ",xlabel=\"".addcslashes($n['name'], '"')."\",fontcolor=\"#aaaaaa\"";
+						}
 						break;
 					default:
 						$diagram .= ",label=\"".addcslashes($n['name'], '"')."\"";
@@ -525,7 +550,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$diagram .= ',fillcolor="#ffff88;0.5:#aaddff",gradientangle=270';
 				} else if (isset($invoking_actions[$id])) {
 					$diagram .= ',fillcolor="#ffff88"';
-				} else if (isset($receiving_nodes[$id])) {
+				} else if (isset($receiving_nodes[$id]) && !empty($used_receiving_nodes[$id])) {
 					$diagram .= ',fillcolor="#aaddff"';
 				}
 				$diagram .= "];\n";
@@ -545,44 +570,42 @@ class BpmnReader implements IMachineDefinitionReader
 
 			//-------------------------------------------
 
-			// Draw $sm_next_node
+			// Draw $sm_next_node -- base for green arrows
+			/*
 			foreach ($sm_next_node as $src => $dst_list) {
 				foreach($dst_list as $dst) {
 					$source = AbstractMachine::exportDotIdentifier($src, $prefix);
 					$target = AbstractMachine::exportDotIdentifier($dst, $prefix); 
 
-					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#88dd6688"' . "]\n";
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=3,style=dashed,color="#88dd6688"'
+						. "]\n";
+				}
+			}
+			// */
+
+			// Draw $eq_states (green arrows)
+			foreach ($eq_states as $src => $dst_list) {
+				$source = AbstractMachine::exportDotIdentifier(preg_replace('/^Q[be]_/', '', $src), $prefix);
+				foreach($dst_list as $dst) {
+					$target = AbstractMachine::exportDotIdentifier(preg_replace('/^Q[be]_/', '', $dst), $prefix); 
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#88dd6688"'
+						//. ",label=\"$src\n$dst\",fontcolor=\"#44aa00\""
+						. "]\n";
 				}
 			}
 
-			// Draw $inv_rc_nodes
+			// Draw $inv_rc_nodes (blue arrows)
 			foreach ($inv_rc_nodes as $src => $dst_list) {
 				foreach($dst_list as $dst_node) {
 					$dst = $dst_node['id'];
 					$source = AbstractMachine::exportDotIdentifier($src, $prefix);
 					$target = AbstractMachine::exportDotIdentifier($dst, $prefix); 
 
-					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#66aaff88"' . "]\n";
+					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=5,color="#66aaff88"'
+						//. ",label=\"$src\n$dst\",fontcolor=\"#0044aa\""
+						. "]\n";
 				}
 			}
-
-			// Draw $eq_states
-			/*
-			foreach ($eq_start_states as $q) {
-				$actions['=']['transitions']['']['targets'][] = $q;
-				$actions['=']['transitions']['']['color'] = '#88dd66';
-			}
-			foreach ($eq_states as $src => $dst_list) {
-				foreach($dst_list as $dst) {
-					$actions['=']['transitions'][$src]['targets'][] = $dst;
-					$actions['=']['transitions'][$src]['color'] = '#88dd66';
-				}
-			}
-			foreach ($eq_end_states as $q) {
-				$actions['=']['transitions'][$q]['targets'][] = '';
-				$actions['=']['transitions'][$q]['color'] = '#88dd66';
-			}
-			// */
 
 			//-------------------------------------------
 
@@ -682,9 +705,6 @@ class BpmnReader implements IMachineDefinitionReader
 			$diagram .= "\t}\n";
 
 			//echo "<pre>", $diagram, "</pre>";
-
-
-
 
 			$diagram .= "\t}\n";
 
