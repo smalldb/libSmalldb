@@ -140,6 +140,15 @@ class BpmnReader implements IMachineDefinitionReader
 					$groups[$process_id]['nodes'][] = $id;
 				}
 
+				// Detect special features of intermediateCatchEvent and similar nodes
+				$features = [];
+				if ($xpath->evaluate('count(./bpmn:timerEventDefinition)', $el)) {
+					$features['timerEventDefinition'] = true;
+				}
+				if ($xpath->evaluate('count(./bpmn:messageEventDefinition)', $el)) {
+					$features['messageEventDefinition'] = true;
+				}
+
 				$incoming = [];
 				foreach($xpath->query('./bpmn:incoming/text()[1]', $el) as $in) {
 					$incoming[] = $in->wholeText;
@@ -157,6 +166,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'process' => $process_id,
 					'incoming' => $incoming,
 					'outgoing' => $outgoing,
+					'features' => $features,
 					'annotations' => [],
 				];
 			}
@@ -195,8 +205,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 		}
-
-
 
 		// Store fragment in state machine definition
 		return [
@@ -552,11 +560,18 @@ class BpmnReader implements IMachineDefinitionReader
 					case 'intermediateCatchEvent':
 					case 'intermediateThrowEvent':
 						if ($n['name'] != $id) {
-							$diagram .= ",xlabel=\"".addcslashes($n['name'], '"')."\",fontcolor=\"#aaaaaa\"";
+							$diagram .= ",xlabel=<<font color=\"#aaaaaa\">".htmlspecialchars($n['name'])."</font>>";
+						}
+						var_dump($n['features']);
+						if (isset($n['features']['timerEventDefinition'])) {
+							$diagram .= ",label=\"T\"";
+						} else {
+							$diagram .= ",label=\"M\"";
 						}
 						break;
 					case 'textAnnotation':
-						$diagram .= ",shape=note,fillcolor=\"#ffffff\",fontcolor=\"#888888\",color=\"#aaaaaa\",label=\"".addcslashes(wordwrap($n['text'], 32), '"')."\"";
+						$diagram .= ",shape=note,fillcolor=\"#ffffff\",fontcolor=\"#888888\",color=\"#aaaaaa\""
+							. ",label=\"".addcslashes(wordwrap($n['text'], 32), '"')."\"";
 						break;
 					default:
 						$diagram .= ",label=\"".addcslashes($n['name'], '"')."\"";
@@ -564,10 +579,10 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 				switch ($n['type']) {
 					case 'participant': $diagram .= ',shape=box,style=filled,fillcolor="#ffffff",penwidth=2'; break;
-					case 'startEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,label="",root=1'; break;
-					case 'intermediateCatchEvent': $diagram .= ',shape=doublecircle,width=0.35,label=""'; break;
-					case 'intermediateThrowEvent': $diagram .= ',shape=doublecircle,width=0.35,label=""'; break;
-					case 'endEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,penwidth=3,label=""'; break;
+					case 'startEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,root=1'; break;
+					case 'intermediateCatchEvent': $diagram .= ',shape=doublecircle,width=0.35'; break;
+					case 'intermediateThrowEvent': $diagram .= ',shape=doublecircle,width=0.35'; break;
+					case 'endEvent': $diagram .= ',shape=circle,width=0.4,height=0.4,penwidth=3'; break;
 					case 'exclusiveGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="X"'; break;
 					case 'parallelGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="+"'; break;
 					case 'inclusiveGateway': $diagram .= ',shape=diamond,style=filled,height=0.5,width=0.5,label="O"'; break;
