@@ -157,9 +157,46 @@ class BpmnReader implements IMachineDefinitionReader
 					'process' => $process_id,
 					'incoming' => $incoming,
 					'outgoing' => $outgoing,
+					'annotations' => [],
 				];
 			}
 		}
+
+		// Get annotations
+		foreach($xpath->query('//bpmn:textAnnotation[@id]') as $el) {
+			$id = $el->getAttribute('id');
+			$text = $el->nodeValue;
+
+			$nodes[$id] = [
+				'id' => $id,
+				'text' => $text,
+				'type' => 'textAnnotation',
+				'process' => $process_id,
+				'associations' => [],
+			];
+		}
+
+		// Get annotations' associations
+		foreach($xpath->query('//bpmn:association[@id]') as $el) {
+			$source = $el->getAttribute('sourceRef');
+			$target = $el->getAttribute('targetRef');
+
+			if (!isset($nodes[$source]) || !isset($nodes[$target])) {
+				continue;
+			}
+
+			if ($nodes[$source]['type'] == 'textAnnotation' && $nodes[$target]['type'] != 'textAnnotation') {
+				$nodes[$source]['associations'][] = $target;
+				$nodes[$target]['annotations'][] = $source;
+			}
+			if ($nodes[$target]['type'] == 'textAnnotation' && $nodes[$source]['type'] != 'textAnnotation') {
+				$nodes[$target]['associations'][] = $source;
+				$nodes[$source]['annotations'][] = $target;
+			}
+
+		}
+
+
 
 		// Store fragment in state machine definition
 		return [
@@ -518,6 +555,9 @@ class BpmnReader implements IMachineDefinitionReader
 							$diagram .= ",xlabel=\"".addcslashes($n['name'], '"')."\",fontcolor=\"#aaaaaa\"";
 						}
 						break;
+					case 'textAnnotation':
+						$diagram .= ",shape=note,fillcolor=\"#ffffff\",fontcolor=\"#888888\",color=\"#aaaaaa\",label=\"".addcslashes(wordwrap($n['text'], 32), '"')."\"";
+						break;
 					default:
 						$diagram .= ",label=\"".addcslashes($n['name'], '"')."\"";
 						break;
@@ -554,6 +594,14 @@ class BpmnReader implements IMachineDefinitionReader
 					$diagram .= ',fillcolor="#aaddff"';
 				}
 				$diagram .= "];\n";
+
+				// Draw annotation associations
+				if (!empty($n['annotations'])) {
+					foreach ($n['annotations'] as $ann_node_id) {
+						$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
+						$diagram .= "\t\t" . $graph_id . " -> " . $ann_graph_id . " [style=dashed,color=\"#aaaaaa\",arrowhead=none];\n";
+					}
+				}
 			}
 
 			// Draw groups
