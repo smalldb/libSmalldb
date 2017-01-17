@@ -1103,13 +1103,15 @@ abstract class AbstractMachine
 		$group_content = array();
 		if (!empty($this->states)) {
 			foreach ($this->states as $s => $state) {
-				echo "\t", $this->exportDotIdentifier($s);
-				//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
-				echo " [ label=\"", addcslashes($s, '"'), "\"";
-				if (!empty($state['color'])) {
-					echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
+				if ($s != '') {
+					echo "\t", $this->exportDotIdentifier($s);
+					//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
+					echo " [ label=\"", addcslashes($s, '"'), "\"";
+					if (!empty($state['color'])) {
+						echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
+					}
+					echo " ];\n";
 				}
-				echo " ];\n";
 
 				if (isset($state['group'])) {
 					$group_content[$state['group']][] = $s;

@@ -119,7 +119,8 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Get nodes
 		foreach (['participant', 'startEvent', 'task', 'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
-			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway'] as $type)
+			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway',
+			'textAnnotation'] as $type)
 		{
 			foreach($xpath->query('//bpmn:'.$type.'[@id]') as $el) {
 				$id = $el->getAttribute('id');
@@ -167,23 +168,14 @@ class BpmnReader implements IMachineDefinitionReader
 					'incoming' => $incoming,
 					'outgoing' => $outgoing,
 					'features' => $features,
-					'annotations' => [],
 				];
+
+				if ($type == 'textAnnotation') {
+					$nodes[$id]['text'] = $el->nodeValue;
+				} else {
+					$nodes[$id]['annotations'] = [];
+				}
 			}
-		}
-
-		// Get annotations
-		foreach($xpath->query('//bpmn:textAnnotation[@id]') as $el) {
-			$id = $el->getAttribute('id');
-			$text = $el->nodeValue;
-
-			$nodes[$id] = [
-				'id' => $id,
-				'text' => $text,
-				'type' => 'textAnnotation',
-				'process' => $process_id,
-				'associations' => [],
-			];
 		}
 
 		// Get annotations' associations
@@ -308,7 +300,6 @@ class BpmnReader implements IMachineDefinitionReader
 			 */
 
 			// Find nodes connected to state machine participant
-			$state_machine_participant_id = $fragment['state_machine_participant_id'];
 			$invoking_actions = [];
 			$receiving_nodes = [];
 			$starting_nodes = [];
@@ -393,6 +384,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($starting_nodes as $s_id => $s_n) {
 				$q = 'Qe_'.$s_id;
 				$states[$q] = [
+					'bpmn_nodes' => [$s_id],
 					//'color' => '#ffccaa',
 				];
 			}
@@ -403,6 +395,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($invoking_actions as $in_id => $in_a) {
 				$qi = 'Qb_'.$in_id;
 				$states[$qi] = [
+					'bpmn_nodes' => [$in_id],
 					//'color' => '#ffff88',
 				];
 
@@ -411,6 +404,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$qr = 'Qe_'.$rcv_id;
 					$used_receiving_nodes[$rcv_id] = true;
 					$states[$qr] = [
+						'bpmn_nodes' => [$rcv_id],
 						//'color' => '#aaddff',
 					];
 				}
@@ -420,6 +414,7 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach ($ending_nodes as $e_id => $e_n) {
 				$q = 'Qb_'.$e_id;
 				$states[$q] = [
+					'bpmn_nodes' => [$e_id],
 					//'color' => '#ffccaa',
 				];
 			}
@@ -437,12 +432,51 @@ class BpmnReader implements IMachineDefinitionReader
 					$qb = 'Qb_'.$rcv_id;
 					$qe = 'Qe_'.$rcv_id;
 					if (!isset($states[$qb])) {
-						$states[$qb] = [];
+						$states[$qb] = [
+							'bpmn_nodes' => [$rcv_id],
+						];
 					}
 					if (!isset($states[$qe])) {
-						$states[$qe] = [];
+						$states[$qe] = [
+							'bpmn_nodes' => [$rcv_id],
+						];
 					}
 					$eq_states[$qb][] = $qe;
+				}
+			}
+
+			// Find annotations and assign them to nearby Qe_* states
+			// (all states already exist; path finding from Qe_* to annotation nodes)
+			$ann_node_origin = [];
+			foreach (array_keys($eq_states) as $s_id) {
+				foreach ($states[$s_id]['bpmn_nodes'] as $s_node_id) {
+					$seen = [ $s_node_id => true ];
+					$queue = [ $s_node_id ];
+					$states[$s_id]['annotations'] = [];
+					while (!empty($queue)) {
+						$id = array_pop($queue);
+						$node_annotations = $fragment['nodes'][$id]['annotations'];
+						if (!empty($node_annotations)) {
+							foreach ($node_annotations as $ann_id) {
+								$ann_node = $fragment['nodes'][$ann_id];
+								$ann_text = trim($ann_node['text']);
+								if ($ann_text[0] == '@') {
+									$ann_node_origin[$ann_id][] = $s_node_id;
+									$states[$s_id]['annotations'][$ann_id] = $ann_text;
+								}
+							}
+						}
+						if (isset($next_node[$id])) {
+							foreach ($next_node[$id] as $next_id) {
+								if (empty($invoking_actions[$next_id]) && empty($receiving_nodes[$next_id]) 
+									&& empty($seen[$next_id]))
+								{
+									$queue[] = $next_id;
+									$seen[$next_id] = true;
+								}
+							}
+						}
+					}
 				}
 			}
 
@@ -451,9 +485,6 @@ class BpmnReader implements IMachineDefinitionReader
 			$uf->add('');
 			foreach ($states as $s_id => $s) {
 				$uf->add($s_id);
-			}
-			foreach ($starting_nodes as $s_id => $s_n) {
-				$uf->union('', 'Qe_'.$s_id);
 			}
 			foreach ($eq_states as $src => $dst_list) {
 				foreach ($dst_list as $dst) {
@@ -472,11 +503,7 @@ class BpmnReader implements IMachineDefinitionReader
 					}
 				}
 			}
-			foreach ($ending_nodes as $e_id => $e_n) {
-				$uf->union('', 'Qb_'.$e_id);
-			}
 
-			$state_replace = $uf->findAll();
 			/*
 			echo "<pre>";
 			foreach ($state_replace as $src => $dst) {
@@ -488,6 +515,62 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 			echo "</pre>";
 			// */
+
+			// Detect annotation symbol
+			if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
+				$state_machine_annotation_symbol = $m[1];
+			} else {
+				$state_machine_annotation_symbol = '@';
+			}
+
+			// Name states using annotations with the symbol
+			$custom_state_names = [];
+			foreach ($states as $s_id => $s) {
+				if (!empty($s['annotations'])) {
+					foreach ($s['annotations'] as $ann) {
+						$custom_state_name = null;
+
+						if ($state_machine_annotation_symbol == '@') {
+							if (preg_match('/^@([^\s]+)$/', $ann, $m)) {
+								$custom_state_name = $m[1];
+							}
+						} else {
+							if (preg_match('/^\s*(@[^:\s]+):\s*(.+)$/', $ann, $m) && $m[1] == $state_machine_annotation_symbol) {
+								$custom_state_name = $m[2];
+							}
+						}
+
+						if ($custom_state_name !== null) {
+							$custom_state_names[$s_id] = ($custom_state_name == '-' ? '' : $custom_state_name);
+						}
+					}
+				}
+			}
+
+			// Add implicit '' for start states
+			foreach ($starting_nodes as $s_id => $s_n) {
+				$s = 'Qe_'.$s_id;
+				if (!isset($custom_state_names[$uf->find($s)])) {
+					$uf->union('', $s);
+				}
+			}
+
+			// Add implicit '' for final states
+			foreach ($ending_nodes as $e_id => $e_n) {
+				$s = 'Qb_'.$e_id;
+				if (!isset($custom_state_names[$uf->find($s)])) {
+					$uf->union('', $s);
+				}
+			}
+
+			// Add custom names to replacement table
+			foreach ($custom_state_names as $s_id => $custom_state_name) {
+				$uf->add($custom_state_name);
+				$uf->union($custom_state_name, $s_id);	// Final name of the state is the last one
+			}
+
+			// Calculate replacement table
+			$state_replace = $uf->findAll();
 
 			// Build isolated fragments of the state machine (blue arrows; invoking--receiving groups)
 			// Part 2/2: Actions
@@ -504,12 +587,17 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 
-			// Remove merged states
-			foreach ($state_replace as $src => $dst) {
-				if ($src !== $dst) {
-					unset($states[$src]);
+			// Merge state configurations of equal states
+			$merged_states = [];
+			foreach ($states as $s_id => $s) {
+				$m_id = $state_replace[$s_id];
+				if (empty($merged_states[$m_id])) {
+					$merged_states[$m_id] = $s;
+				} else {
+					$merged_states[$m_id] = array_replace_recursive($s, $merged_states[$m_id]);
 				}
 			}
+			$states = $merged_states;
 
 
 			/*
@@ -562,11 +650,12 @@ class BpmnReader implements IMachineDefinitionReader
 						if ($n['name'] != $id) {
 							$diagram .= ",xlabel=<<font color=\"#aaaaaa\">".htmlspecialchars($n['name'])."</font>>";
 						}
-						var_dump($n['features']);
 						if (isset($n['features']['timerEventDefinition'])) {
 							$diagram .= ",label=\"T\"";
-						} else {
+						} else if (isset($n['features']['messageEventDefinition'])) {
 							$diagram .= ",label=\"M\"";
+						} else {
+							$diagram .= ",label=\"\"";
 						}
 						break;
 					case 'textAnnotation':
@@ -616,6 +705,31 @@ class BpmnReader implements IMachineDefinitionReader
 						$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
 						$diagram .= "\t\t" . $graph_id . " -> " . $ann_graph_id . " [style=dashed,color=\"#aaaaaa\",arrowhead=none];\n";
 					}
+				}
+			}
+
+			// Link state annotations to their effective node
+			/*
+			foreach ($states as $s_id => $s) {
+				foreach ($s['bpmn_nodes'] as $bpmn_node_id) {
+					$state_graph_id = $s_id ? AbstractMachine::exportDotIdentifier($s_id) : 'BEGIN';
+					$node_graph_id = AbstractMachine::exportDotIdentifier($bpmn_node_id, $prefix);
+					foreach ($s['annotations'] as $ann_node_id => $a) {
+						$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
+						//$diagram .= "\t\t" . $ann_graph_id . " -> " . $node_graph_id
+						//	. " [style=dashed,penwidth=2,color=\"#66aaff88\",arrowhead=none,constraint=0]";
+						$diagram .= "\t\t" . $ann_graph_id . " -> " . $state_graph_id
+							. " [style=dashed,penwidth=2,color=\"#66aaff88\",arrowhead=none,constraint=0]";
+					}
+				}
+			}
+			// */
+			foreach ($ann_node_origin as $ann_id => $node_ids) {
+				$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_id, $prefix);
+				foreach ($node_ids as $node_id) {
+					$node_graph_id = AbstractMachine::exportDotIdentifier($node_id, $prefix);
+					$diagram .= "\t\t" . $ann_graph_id . " -> " . $node_graph_id
+						. " [style=dashed,penwidth=2,color=\"#88dd6688\",arrowhead=none,constraint=0]";
 				}
 			}
 
@@ -777,7 +891,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Update the definition
 		$machine_def = array_replace_recursive([
-				'states' => $states,
+				'states' => $merged_states,
 				'actions' => $actions,
 			], $machine_def);
 	}
