@@ -639,38 +639,6 @@ class BpmnReader implements IMachineDefinitionReader
 
 			$diagram .= "\n";
 
-			/*
-			// Build state-bpmn map
-			$nodes_state = [];
-			foreach ($states as $s_id => $s) {
-				foreach ($s['bpmn_nodes'] as $n_id) {
-					$nodes_state[$n_id] = $s_id;
-				}
-			}
-
-			// Paint nodes with state of nearby green arrow
-			foreach ($sm_next_node as $in_id => $in_end_list) {
-				$seen = [ $in_id => true ];
-				$queue = [ $in_id ];
-				while (!empty($queue)) {
-					$id = array_pop($queue);
-					if (isset($nodes_state[$in_id])) {
-						$fragment['nodes'][$id]['related_state'] = $nodes_state[$in_id];
-					}
-					if (isset($next_node[$id])) {
-						foreach ($next_node[$id] as $next_id) {
-							if (isset($invoking_actions[$next_id]) || isset($receiving_nodes[$next_id]) || isset($ending_nodes[$next_id])) {
-								// nop
-							} else if (!isset($seen[$next_id])) {
-								$queue[] = $next_id;
-								$seen[$next_id] = true;
-							}
-						}
-					}
-				}
-			}
-			 */
-
 			// Draw nodes
 			foreach ($fragment['nodes'] as $id => $n) {
 				$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
@@ -745,21 +713,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Link state annotations to their effective node
-			/*
-			foreach ($states as $s_id => $s) {
-				foreach ($s['bpmn_nodes'] as $bpmn_node_id) {
-					$state_graph_id = $s_id ? AbstractMachine::exportDotIdentifier($s_id) : 'BEGIN';
-					$node_graph_id = AbstractMachine::exportDotIdentifier($bpmn_node_id, $prefix);
-					foreach ($s['annotations'] as $ann_node_id => $a) {
-						$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
-						//$diagram .= "\t\t" . $ann_graph_id . " -> " . $node_graph_id
-						//	. " [style=dashed,penwidth=2,color=\"#66aaff88\",arrowhead=none,constraint=0]";
-						$diagram .= "\t\t" . $ann_graph_id . " -> " . $state_graph_id
-							. " [style=dashed,penwidth=2,color=\"#66aaff88\",arrowhead=none,constraint=0]";
-					}
-				}
-			}
-			// */
 			foreach ($ann_node_origin as $ann_id => $node_ids) {
 				$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_id, $prefix);
 				foreach ($node_ids as $node_id) {
@@ -782,19 +735,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			//-------------------------------------------
-
-			// Draw $sm_next_node -- base for green arrows
-			/*
-			foreach ($sm_next_node as $src => $dst_list) {
-				foreach($dst_list as $dst) {
-					$source = AbstractMachine::exportDotIdentifier($src, $prefix);
-					$target = AbstractMachine::exportDotIdentifier($dst, $prefix); 
-
-					$diagram .= "\t\t" . $source . ' -> ' . $target. ' [constraint=0,splines=line,penwidth=3,style=dashed,color="#88dd6688"'
-						. "]\n";
-				}
-			}
-			// */
 
 			// Draw $eq_states (green arrows)
 			foreach ($eq_states as $src => $dst_list) {
