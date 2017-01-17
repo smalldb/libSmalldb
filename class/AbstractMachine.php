@@ -1089,6 +1089,7 @@ abstract class AbstractMachine
 
 		// Start state
 		echo "\t", "BEGIN [",
+			"id = \"BEGIN\",",
 			"label = \"\",",
 			"shape = circle,",
 			"color = black,",
@@ -1104,9 +1105,10 @@ abstract class AbstractMachine
 		if (!empty($this->states)) {
 			foreach ($this->states as $s => $state) {
 				if ($s != '') {
-					echo "\t", $this->exportDotIdentifier($s);
+					$id = $this->exportDotIdentifier($s);
+					echo "\t", $id;
 					//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
-					echo " [ label=\"", addcslashes($s, '"'), "\"";
+					echo " [ id = \"", addcslashes($id, '"'), "\", label=\"", addcslashes($s, '"'), "\"";
 					if (!empty($state['color'])) {
 						echo ", fillcolor=\"", addcslashes($state['color'], '"'), "\"";
 					}
@@ -1183,6 +1185,7 @@ abstract class AbstractMachine
 		// Final state
 		if ($have_final_state) {
 			echo "\n\t", "END [",
+				" id = \"END\",",
 				" label = \"\",",
 				" shape = doublecircle,",
 				" color = black,",
