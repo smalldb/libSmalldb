@@ -18,9 +18,6 @@
 
 namespace Smalldb\StateMachine;
 
-use	\Smalldb\Flupdo\Flupdo,
-	\Smalldb\Flupdo\FlupdoProxy;
-
 /**
  * Smalldb Backend which loads state machine definitions from a directory full 
  * of JSON files and other files included by the JSON files; each JSON file
@@ -44,6 +41,11 @@ class JsonDirBackend extends AbstractBackend
 	 * Name of directory which contains JSON files with state machine definitions.
 	 */
 	protected $base_dir;
+
+	/**
+	 * Configuration passed to all state machines
+	 */
+	private $machine_global_config = array();
 
 	/**
 	 * Static table of known machine types. Inherit this class and replace this
@@ -74,6 +76,10 @@ class JsonDirBackend extends AbstractBackend
 
 		// Get base dir (constants are available)
 		$this->base_dir = rtrim(Utils::filename_format($options['base_dir'], array()), '/').'/';
+
+		if (isset($options['machine_global_config'])) {
+			$this->machine_global_config = $options['machine_global_config'];
+		}
 
 		// Load machine definitions from APC cache
 		if (!empty($options['cache_disabled'])) {
@@ -182,6 +188,9 @@ class JsonDirBackend extends AbstractBackend
 				}
 
 				JsonReader::postprocessDefinition($machine_def);
+
+				// Add global defaults (don't override)
+				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
 
 				unset($machine_def);
 			}
@@ -310,9 +319,14 @@ class JsonDirBackend extends AbstractBackend
 	 */
 	protected function createMachine($type)
 	{
-		$desc = @ $this->machine_type_table[$type];
-		if ($desc === null || empty($desc['class'])) {
+		if (isset($this->machine_type_table[$type])) {
+			$desc = $this->machine_type_table[$type];
+		} else {
 			return null;
+		}
+
+		if (empty($desc['class'])) {
+			throw new InvalidArgumentException('Class not specified in machine configuration.');
 		}
 
 		//debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
