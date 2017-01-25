@@ -117,7 +117,7 @@ class SimpleBackend extends AbstractBackend
 	{
 		if (isset($this->known_types[$type])) {
 			$t = $this->known_types[$type];
-			return new $t['class']($this, $type, $t['args'], $this->getContext());
+			return new $t['class']($this, $type, $t['args']);
 		} else {
 			return null;
 		}

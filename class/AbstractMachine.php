@@ -55,11 +55,6 @@ abstract class AbstractMachine
 	protected $backend;
 
 	/**
-	 * Global context passed from backend.
-	 */
-	protected $context;
-
-	/**
 	 * Identification within $backend.
 	 */
 	protected $machine_type;
@@ -265,10 +260,9 @@ abstract class AbstractMachine
 	 * optional array of additional configuration (passed directly
 	 * to initializeMachine method).
 	 */
-	public function __construct(AbstractBackend $backend, $type, $config, $context)
+	public function __construct(AbstractBackend $backend, $type, $config)
 	{
 		$this->backend = $backend;
-		$this->context = $context;
 		$this->machine_type = $type;
 		$this->initializeMachine($config);
 
@@ -439,13 +433,7 @@ abstract class AbstractMachine
 	 */
 	protected function getContext($resource_name = null)
 	{
-		if ($resource_name === null) {
-			return $this->context;
-		} else {
-			return is_array($this->context)
-				? $this->context[$resource_name]
-				: $this->context->$resource_name;
-		}
+		return $this->backend->getContext($resource_name);
 	}
 
 
