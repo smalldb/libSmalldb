@@ -163,7 +163,11 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public function jsonSerialize()
 	{
-		return $this->properties;
+		if ($this->isNullRef()) {
+			return null;
+		} else {
+			return $this->properties;
+		}
 	}
 
 
