@@ -619,11 +619,11 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 				switch ($a['type']) {
 					case 'sequenceFlow':
-						$diagram .= 'style=solid,color="#666666",fontcolor="#aaaaaa"';
+						$diagram .= ',style=solid,color="#666666",fontcolor="#aaaaaa"';
 						$w = $backwards ? 3 : 5;
 						break;
 					case 'messageFlow':
-						$diagram .= 'style=dashed,color="#666666",arrowhead=empty,arrowtail=odot';
+						$diagram .= ',style=dashed,color="#666666",arrowhead=empty,arrowtail=odot';
 						$w = 0;
 						break;
 					default: $diagram .= 'color=red'; break;
@@ -652,7 +652,7 @@ class BpmnReader implements IMachineDefinitionReader
 					case 'intermediateCatchEvent':
 					case 'intermediateThrowEvent':
 						if ($n['name'] != $id) {
-							$diagram .= ",xlabel=<<font color=\"#aaaaaa\">".htmlspecialchars($n['name'])."</font>>";
+							$diagram .= ",xlabel=<<font color=\"#aaaaaa\"> ".htmlspecialchars(trim($n['name']))." </font>>";
 						}
 						if (isset($n['features']['timerEventDefinition'])) {
 							$diagram .= ",label=\"T\"";
