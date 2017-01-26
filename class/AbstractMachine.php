@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Utils;
+
+
 /**
  * Implementation of the state machine transitions.
  *

@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Utils;
+
+
 /**
  * Smalldb Backend which loads state machine definitions from a directory full 
  * of JSON files and other files included by the JSON files; each JSON file

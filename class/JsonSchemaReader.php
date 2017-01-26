@@ -17,6 +17,9 @@
  */
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Utils;
+
+
 /**
  * Load JSON schema from file and interpret `extends_file` directive.
  */

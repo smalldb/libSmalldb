@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2016, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2016-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
  */
 
 namespace Smalldb\StateMachine;
+
+use Smalldb\StateMachine\Utils\UnionFind;
+use Smalldb\StateMachine\Utils\DepthFirstSearch;
+
 
 /**
  * BPMN reader
@@ -280,20 +284,18 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Calculate distance of each node from nearest start event to detect backward arrows (DFS)
-			$queue = $start_nodes;
-			while (!empty($queue)) {
-				$id = array_pop($queue);
-				$distance = $fragment['nodes'][$id]['_distance'] + 1;
-				if (isset($next_node[$id])) {
-					foreach ($next_node[$id] as $next_id) {
-						$n = $fragment['nodes'][$next_id];
-						if (!isset($n['_distance'])) {
-							$fragment['nodes'][$next_id]['_distance'] = $distance;
-							$queue[] = $next_id;
-						}
+			$distance = 0;
+			(new DepthFirstSearch())
+				->onProcessNode(function($current_node_id) use (& $fragment, & $distance) {
+					$distance = $fragment['nodes'][$current_node_id]['_distance'] + 1;
+				})
+				->onCheckNextNode(function($current_node_id, $next_node_id, $next_node_seen) use (& $fragment, & $distance) {
+					if (!isset($fragment['nodes'][$next_node_id]['_distance'])) {
+						$fragment['nodes'][$next_node_id]['_distance'] = $distance;
 					}
-				}
-			}
+					return true;
+				})
+				->start($start_nodes, $next_node);
 
 			/*
 			 * State machine synthesis
@@ -451,8 +453,8 @@ class BpmnReader implements IMachineDefinitionReader
 			foreach (array_keys($eq_states) as $s_id) {
 				foreach ($states[$s_id]['bpmn_nodes'] as $s_node_id) {
 					$seen = [ $s_node_id => true ];
-					$queue = [ $s_node_id ];
 					$states[$s_id]['annotations'] = [];
+					$queue = [ $s_node_id ];
 					while (!empty($queue)) {
 						$id = array_pop($queue);
 						$node_annotations = $fragment['nodes'][$id]['annotations'];

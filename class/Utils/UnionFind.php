@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Utils;
 
 /**
  * Union-Find on scalar values (IDs or indexes)

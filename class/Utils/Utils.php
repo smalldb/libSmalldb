@@ -16,7 +16,8 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Utils;
+
 
 /**
  * Utilities.
