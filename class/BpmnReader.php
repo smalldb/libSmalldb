@@ -531,7 +531,8 @@ class BpmnReader implements IMachineDefinitionReader
 					if ($c == 1) {
 						$custom_state_names[$s_id] = reset($ann_state_names);
 					} else if ($c > 1) {
-						throw new BpmnException('Annotations define multiple names for a single state: '.join(', ', $ann_state_names));
+						throw new BpmnAnnotationException('Annotations define multiple names for a single state (found when searching): '
+							.join(', ', $ann_state_names));
 					}
 				}
 			}
@@ -561,11 +562,12 @@ class BpmnReader implements IMachineDefinitionReader
 			// Calculate replacement table
 			$state_replace = $uf->findAll();
 
-			// TODO: Zkontrolovat, ze vsechny custom stavy jsou samostatnea zadne se nespojily.
+			// Check that two custom states are not merged into one
 			foreach ($custom_state_names as $a) {
 				foreach ($custom_state_names as $b) {
 					if ($a !== $b && $uf->find($a) === $uf->find($b)) {
-						throw \RuntimeException("Merged custom states: ".$custom_state_name." = ".$state_replace[$custom_state_name]);
+						throw new BpmnAnnotationException('Annotations define multiple names for a single state (found when merging): '
+							.join(', ', [$a, $b]));
 					}
 				}
 			}
