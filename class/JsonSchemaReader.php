@@ -61,13 +61,13 @@ class JsonSchemaReader
 	 */
 	public static function parseFile($filename, & $extendedFiles = null)
 	{
-		$schema = static::annotateSchema(\Smalldb\StateMachine\Utils::parse_json_file($filename), false);
+		$schema = static::annotateSchema(Utils::parse_json_file($filename), false);
 		$extends_file = isset($schema['extends_file']) ? dirname($filename).'/'.$schema['extends_file'] : null;
 		while ($extends_file !== null) {
 			if ($extendedFiles !== null) {
 				$extendedFiles[] = $extends_file;
 			}
-			$part = static::annotateSchema(\Smalldb\StateMachine\Utils::parse_json_file($extends_file),
+			$part = static::annotateSchema(Utils::parse_json_file($extends_file),
 					str_replace('.schema.json', '', basename($extends_file)));
 			$extends_file = isset($part['extends_file']) ? dirname($extends_file).'/'.$part['extends_file'] : null;
 			$schema = static::extendSchema($part, $schema);
