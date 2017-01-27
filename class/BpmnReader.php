@@ -786,24 +786,18 @@ class BpmnReader implements IMachineDefinitionReader
 					}
 
 					// Find all next tasks (DFS limited to non-task nodes)
-					$queue = [$n_id];
-					$visited = [$n_id => true];
-					while (!empty($queue)) {
-						$id = array_pop($queue);
-						if (isset($next_node[$id])) {
-							foreach ($next_node[$id] as $next_id) {
-								$next_n = $fragment['nodes'][$next_id];
-								if ($next_n['process'] == $primary_process_id) {
-									if ($next_n['type'] == 'task' || $next_n['type'] == 'endEvent') {
-										$paths[$n_id][] = $next_id;
-									} else if (empty($visited[$next_id])) {
-										$visited[$next_id] = true;
-										$queue[] = $next_id;
-									}
+					GraphSearch::DFS()
+						->onCheckNextNode(function($id, $next_id, $seen) use (& $fragment, & $paths, $primary_process_id) {
+							$next_n = $fragment['nodes'][$next_id];
+							if ($next_n['process'] == $primary_process_id) {
+								if ($next_n['type'] == 'task' || $next_n['type'] == 'endEvent') {
+									$paths[$n_id][] = $next_id;
+								} else {
+									return true;
 								}
 							}
-						}
-					}
+						})
+						->start([$n_id], $next_node);
 				}
 			}
 
