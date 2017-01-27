@@ -27,13 +27,14 @@ interface IMachineDefinitionReader
 	/**
 	 * Parse string and return fragment of state machine definition.
 	 *
+	 * @param $machine_type - Name of state machine (for better error messages)
 	 * @param $data_string - Data to parse.
 	 * @param $options - Additional options specified in master definition.
 	 * @param $filename - Name of the file (or similar identifier) - only for
 	 * 	debug messages.
 	 * @return array - Fragment of machine definition.
 	 */
-	public static function loadString($data_string, $options = array(), $filename = null);
+	public static function loadString($machine_type, $data_string, $options = array(), $filename = null);
 
 	/**
 	 * If reader was invoked, it may need to postprocess the definition
@@ -42,8 +43,9 @@ interface IMachineDefinitionReader
 	 * Postprocessing is invoked only once, even when loadString has been
 	 * invoked multiple times.
 	 *
+	 * @param $machine_type - Name of state machine (for better error messages)
 	 * @param $machine_def - Machine definition to be processed in place.
 	 */
-	public static function postprocessDefinition(& $machine_def);
+	public static function postprocessDefinition($machine_type, & $machine_def);
 }
 

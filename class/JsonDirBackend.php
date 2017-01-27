@@ -129,7 +129,7 @@ class JsonDirBackend extends AbstractBackend
 					case 'json':
 					case 'json.php':
 						$filename = $this->base_dir.$file;
-						$this->machine_type_table[$machine_type] = JsonReader::loadString(file_get_contents($filename), [], $filename);
+						$this->machine_type_table[$machine_type] = JsonReader::loadString($machine_type, file_get_contents($filename), [], $filename);
 						break;
 				} 
 			}
@@ -160,20 +160,20 @@ class JsonDirBackend extends AbstractBackend
 					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
 						// Include JSON file (simple merge)
 						$machine_def = array_replace_recursive(
-								JsonReader::loadString(file_get_contents($include_file), $include_opts, $include_file),
+								JsonReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
 								$machine_def);
 					}
 					else if (preg_match('/\.graphml$/i', $include_file)) {
 						// Include GraphML file (find states and transitions, then simply add them to the definition)
 						$machine_def = array_replace_recursive(
-								GraphMLReader::loadString(file_get_contents($include_file), $include_opts, $include_file),
+								GraphMLReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
 								$machine_def);
 						$graphml_reader_used = true;
 					}
 					else if (preg_match('/\.bpmn$/i', $include_file)) {
 						// Load relevant fragment of BPMN diagram, it will be merged with other fragments and added to the definition later.
 						$machine_def = array_replace_recursive(
-								BpmnReader::loadString(file_get_contents($include_file), $include_opts, $include_file),
+								BpmnReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
 								$machine_def);
 						$bpmn_reader_used = true;
 					}
@@ -183,14 +183,14 @@ class JsonDirBackend extends AbstractBackend
 				}
 
 				if ($graphml_reader_used) {
-					GraphMLReader::postprocessDefinition($machine_def);
+					GraphMLReader::postprocessDefinition($machine_type, $machine_def);
 				}
 
 				if ($bpmn_reader_used) {
-					BpmnReader::postprocessDefinition($machine_def);
+					BpmnReader::postprocessDefinition($machine_type, $machine_def);
 				}
 
-				JsonReader::postprocessDefinition($machine_def);
+				JsonReader::postprocessDefinition($machine_type, $machine_def);
 
 				// Add global defaults (don't override)
 				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);

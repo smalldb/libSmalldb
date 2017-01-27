@@ -28,14 +28,14 @@ class JsonReader implements IMachineDefinitionReader
 {
 
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($data_string, $options = array(), $filename = null)
+	public static function loadString($machine_type, $data_string, $options = array(), $filename = null)
 	{
 		return Utils::parse_json_string($data_string, $filename);
 	}
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition(& $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def)
 	{
 		// Make sure the names are always set
 		if (!empty($machine_def['properties'])) {

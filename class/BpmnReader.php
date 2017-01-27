@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Utils\UnionFind;
-use Smalldb\StateMachine\Utils\DepthFirstSearch;
+use Smalldb\StateMachine\Utils\GraphSearch;
 
 
 /**
@@ -47,7 +47,7 @@ class BpmnReader implements IMachineDefinitionReader
 {
 
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($data_string, $options = [], $filename = null)
+	public static function loadString($machine_type, $data_string, $options = [], $filename = null)
 	{
 		// Options
 		$bpmn_process_id = isset($options['process_id']) ? $options['process_id'] : null;
@@ -202,6 +202,31 @@ class BpmnReader implements IMachineDefinitionReader
 
 		}
 
+		// Dump BPMN fragment
+		/*
+		printf("\n<pre>BPMN diagram: %s, %s\n", basename($filename), $bpmn_process_id);
+		printf("  Nodes:\n");
+		foreach ($nodes as $id => $n) {
+			printf("    %s (%s)\n", var_export($n['name'], true), var_export($id, true));
+			foreach ($n['incoming'] as $in) {
+				printf("        In:  %s\n", $in);
+			}
+			foreach ($n['outgoing'] as $out) {
+				printf("        Out: %s\n", $out);
+			}
+			if (isset($n['annotations'])) {
+				foreach ($n['annotations'] as $ann) {
+					printf("        Ann: [%s] %s\n", $ann, trim($nodes[$ann]['text']));
+				}
+			}
+		}
+		printf("  Arrows:\n");
+		foreach ($arrows as $id => $a) {
+			printf("    %25s --> %-25s (%s, %s)\n", $a['source'], $a['target'], var_export($id, true), var_export($a['name'], true));
+		}
+		printf("</pre>\n");
+		// */
+
 		// Store fragment in state machine definition
 		return [
 			'bpmn_fragments' => [
@@ -216,33 +241,11 @@ class BpmnReader implements IMachineDefinitionReader
 			],
 		];
 
-		///---------------
-
-		// Dump BPMN fragment
-		/*
-		printf("\n<pre>BPMN diagram: %s, %s\n", basename($filename), $bpmn_process_id);
-		printf("  Nodes:\n");
-		foreach ($nodes as $id => $n) {
-			printf("    %s (%s)\n", var_export($n['name'], true), var_export($id, true));
-			foreach ($n['incoming'] as $in) {
-				printf("        In:  %s\n", $in);
-			}
-			foreach ($n['outgoing'] as $out) {
-				printf("        Out: %s\n", $out);
-			}
-		}
-		printf("  Arrows:\n");
-		foreach ($arrows as $id => $a) {
-			printf("    %25s --> %-25s (%s, %s)\n", $a['source'], $a['target'], var_export($id, true), var_export($a['name'], true));
-		}
-		printf("</pre>\n");
-		// */
-
 	}
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition(& $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def)
 	{
 		// Qb_* is Begin of a blue arrow
 		// Qe_* is End of a blue arrow
@@ -283,15 +286,16 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 
-			// Calculate distance of each node from nearest start event to detect backward arrows (DFS)
+			// Calculate distance of each node from nearest start event 
+			// to detect backward arrows and make diagrams look better
 			$distance = 0;
-			(new DepthFirstSearch())
-				->onProcessNode(function($current_node_id) use (& $fragment, & $distance) {
-					$distance = $fragment['nodes'][$current_node_id]['_distance'] + 1;
+			GraphSearch::BFS()
+				->onProcessNode(function($id) use (& $fragment, & $distance) {
+					$distance = $fragment['nodes'][$id]['_distance'] + 1;
 				})
-				->onCheckNextNode(function($current_node_id, $next_node_id, $next_node_seen) use (& $fragment, & $distance) {
-					if (!isset($fragment['nodes'][$next_node_id]['_distance'])) {
-						$fragment['nodes'][$next_node_id]['_distance'] = $distance;
+				->onCheckNextNode(function($id, $next_id, $seen) use (& $fragment, & $distance) {
+					if (!isset($fragment['nodes'][$next_id]['_distance'])) {
+						$fragment['nodes'][$next_id]['_distance'] = $distance;
 					}
 					return true;
 				})
@@ -328,29 +332,28 @@ class BpmnReader implements IMachineDefinitionReader
 			// (DFS to next task or waiting, the receiver cannot be further than that)
 			$inv_rc_nodes = [];
 			foreach ($invoking_actions as $in_id => $invoking_action) {
-				$queue = [ $in_id ];
 				$inv_rc_nodes[$in_id] = [];
 				$in = $fragment['nodes'][$in_id];
 				$cur_process = $in['process'];
-				while (!empty($queue)) {
-					$id = array_pop($queue);
-					if (isset($next_node[$id])) {
-						foreach ($next_node[$id] as $next_id) {
-							$n = $fragment['nodes'][$next_id];
-							if ($n['process'] != $cur_process || isset($invoking_actions[$next_id])) {
-								// The receiving node must be within the same process and it must not be invoking node.
-								continue;
-							}
-							if (isset($receiving_nodes[$next_id])) {
-								$inv_rc_nodes[$in_id][$next_id] = $n;
-							} else if (!isset($seen[$next_id]) && $fragment['nodes'][$next_id]['type'] != 'intermediateCatchEvent') {
-								// Continue search if node is not visited nor is a catch event.
-								$queue[] = $next_id;
-								$seen[$next_id] = true;
-							}
+
+				GraphSearch::DFS()
+					->onCheckNextNode(function($id, $next_id, $seen)
+						use (& $inv_rc_nodes, $in_id, $fragment, $cur_process, $receiving_nodes, $invoking_actions)
+					{
+						$n = $fragment['nodes'][$next_id];
+						if ($n['process'] != $cur_process || isset($invoking_actions[$next_id])) {
+							// The receiving node must be within the same process and it must not be invoking node.
+							return false;
+						} else if (isset($receiving_nodes[$next_id])) {
+							$inv_rc_nodes[$in_id][$next_id] = $n;
+							return false;
+						} else if ($fragment['nodes'][$next_id]['type'] != 'intermediateCatchEvent') {
+							// Continue search if node is not a catch event.
+							return true;
 						}
-					}
-				}
+					})
+					->start([$in_id], $next_node);
+
 				if (empty($inv_rc_nodes[$in_id])) {
 					$inv_rc_nodes[$in_id][$in_id] = $in;	// Add implicit receiving arrow ...
 					$receiving_nodes[$in_id] = $in;		// ... and make node receiving.
@@ -360,23 +363,19 @@ class BpmnReader implements IMachineDefinitionReader
 			// Find connections to next transition invocations
 			$sm_next_node = [];
 			foreach (array_merge($starting_nodes, $receiving_nodes) as $in_id => $in) {
-				$seen = [ $in_id => true ];
-				$queue = [ $in_id ];
-				while (!empty($queue)) {
-					$id = array_pop($queue);
-					if (isset($next_node[$id])) {
-						foreach ($next_node[$id] as $next_id) {
-							if (isset($invoking_actions[$next_id]) || isset($receiving_nodes[$next_id]) || isset($ending_nodes[$next_id])) {
-								if ($next_id != $in_id) {
-									$sm_next_node[$in_id][] = $next_id;
-								}
-							} else if (!isset($seen[$next_id])) {
-								$queue[] = $next_id;
-								$seen[$next_id] = true;
+				GraphSearch::DFS()
+					->onCheckNextNode(function($id, $next_id, $seen)
+						use (& $fragment, & $sm_next_node, $in_id, $invoking_actions, $receiving_nodes, $ending_nodes)
+					{
+						if (isset($invoking_actions[$next_id]) || isset($receiving_nodes[$next_id]) || isset($ending_nodes[$next_id])) {
+							if ($next_id != $in_id) {
+								$sm_next_node[$in_id][] = $next_id;
 							}
+						} else {
+							return true;
 						}
-					}
-				}
+					})
+					->start([$in_id], $next_node);
 			}
 
 			$action_no = 1;
@@ -452,33 +451,25 @@ class BpmnReader implements IMachineDefinitionReader
 			$ann_node_origin = [];
 			foreach (array_keys($eq_states) as $s_id) {
 				foreach ($states[$s_id]['bpmn_nodes'] as $s_node_id) {
-					$seen = [ $s_node_id => true ];
 					$states[$s_id]['annotations'] = [];
-					$queue = [ $s_node_id ];
-					while (!empty($queue)) {
-						$id = array_pop($queue);
-						$node_annotations = $fragment['nodes'][$id]['annotations'];
-						if (!empty($node_annotations)) {
-							foreach ($node_annotations as $ann_id) {
-								$ann_node = $fragment['nodes'][$ann_id];
-								$ann_text = trim($ann_node['text']);
-								if ($ann_text[0] == '@') {
-									$ann_node_origin[$ann_id][] = $s_node_id;
-									$states[$s_id]['annotations'][$ann_id] = $ann_text;
+					GraphSearch::DFS()
+						->onProcessNode(function($id) use (& $fragment, & $states, $invoking_actions, $receiving_nodes, $s_id, $s_node_id) {
+							$node_annotations = $fragment['nodes'][$id]['annotations'];
+							if (!empty($node_annotations)) {
+								foreach ($node_annotations as $ann_id) {
+									$ann_node = $fragment['nodes'][$ann_id];
+									$ann_text = trim($ann_node['text']);
+									if ($ann_text[0] == '@') {
+										$ann_node_origin[$ann_id][] = $s_node_id;
+										$states[$s_id]['annotations'][$ann_id] = $ann_text;
+									}
 								}
 							}
-						}
-						if (isset($next_node[$id])) {
-							foreach ($next_node[$id] as $next_id) {
-								if (empty($invoking_actions[$next_id]) && empty($receiving_nodes[$next_id]) 
-									&& empty($seen[$next_id]))
-								{
-									$queue[] = $next_id;
-									$seen[$next_id] = true;
-								}
-							}
-						}
-					}
+						})
+						->onCheckNextNode(function($id, $next_id, $seen) use (& $fragment, & $states, $invoking_actions, $receiving_nodes) {
+							return empty($invoking_actions[$next_id]) && empty($receiving_nodes[$next_id]);
+						})
+						->start([$s_node_id], $next_node);
 				}
 			}
 
@@ -517,6 +508,7 @@ class BpmnReader implements IMachineDefinitionReader
 			$custom_state_names = [];
 			foreach ($states as $s_id => $s) {
 				if (!empty($s['annotations'])) {
+					$ann_state_names = [];
 					foreach ($s['annotations'] as $ann) {
 						$custom_state_name = null;
 
@@ -531,8 +523,15 @@ class BpmnReader implements IMachineDefinitionReader
 						}
 
 						if ($custom_state_name !== null) {
-							$custom_state_names[$s_id] = ($custom_state_name == '-' ? '' : $custom_state_name);
+							$ann_state_names[] = ($custom_state_name == '-' ? '' : $custom_state_name);
 						}
+					}
+
+					$c = count($ann_state_names);
+					if ($c == 1) {
+						$custom_state_names[$s_id] = reset($ann_state_names);
+					} else if ($c > 1) {
+						throw new BpmnException('Annotations define multiple names for a single state: '.join(', ', $ann_state_names));
 					}
 				}
 			}
@@ -563,6 +562,13 @@ class BpmnReader implements IMachineDefinitionReader
 			$state_replace = $uf->findAll();
 
 			// TODO: Zkontrolovat, ze vsechny custom stavy jsou samostatnea zadne se nespojily.
+			foreach ($custom_state_names as $a) {
+				foreach ($custom_state_names as $b) {
+					if ($a !== $b && $uf->find($a) === $uf->find($b)) {
+						throw \RuntimeException("Merged custom states: ".$custom_state_name." = ".$state_replace[$custom_state_name]);
+					}
+				}
+			}
 
 			/*
 			echo "<pre>";

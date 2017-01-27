@@ -34,7 +34,7 @@ class GraphMLReader implements IMachineDefinitionReader
 {
 
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($data_string, $options = array(), $filename = null)
+	public static function loadString($machine_type, $data_string, $options = array(), $filename = null)
 	{
 		// Options
 		$graphml_group_name = isset($options['group']) ? $options['group'] : null;
@@ -226,7 +226,7 @@ class GraphMLReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition(& $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def)
 	{
 		// NOP.
 	}

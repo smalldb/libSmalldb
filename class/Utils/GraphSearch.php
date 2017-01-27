@@ -19,9 +19,9 @@
 namespace Smalldb\StateMachine\Utils;
 
 /**
- * Depth First Search.
+ * Depth First Search & friends.
  */
-class DepthFirstSearch
+class GraphSearch
 {
 
 	private $processNodeCb;
@@ -30,11 +30,16 @@ class DepthFirstSearch
 	private $checkNextNodeCb;
 	private $checkNextNodeCbDefault;
 
+	private $strategy;
+
+	const DFS_STRATEGY = 1;
+	const BFS_STRATEGY = 2;
+
 
 	/**
 	 * Constructor.
 	 */
-	public function __construct()
+	private function __construct()
 	{
 		$this->processNodeCb
 			= $this->processNodeCbDefault
@@ -43,6 +48,22 @@ class DepthFirstSearch
 		$this->checkNextNodeCb
 			= $this->checkNextNodeCbDefault
 			= function($current_node_id, $next_node_id, $next_node_seen) { return true; };
+	}
+
+
+	public static function DFS()
+	{
+		$gs = new self();
+		$gs->strategy = self::DFS_STRATEGY;
+		return $gs;
+	}
+
+
+	public static function BFS()
+	{
+		$gs = new self();
+		$gs->strategy = self::BFS_STRATEGY;
+		return $gs;
 	}
 
 
@@ -97,7 +118,15 @@ class DepthFirstSearch
 
 		// Process queue
 		while (!empty($queue)) {
-			$current_node_id = array_pop($queue);
+			// get next node
+			switch ($this->strategy) {
+				case self::DFS_STRATEGY:
+					$current_node_id = array_pop($queue);
+					break;
+				case self::BFS_STRATEGY:
+					$current_node_id = array_shift($queue);
+					break;
+			}
 
 			// Process node
 			$processNodeCb($current_node_id);
