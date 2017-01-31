@@ -72,6 +72,13 @@ class JsonDirBackend extends AbstractBackend
 
 	/**
 	 * Constructor compatible with cascade resource factory.
+	 *
+	 * Options:
+	 * 
+	 *   - `machine_global_config`: Config wich will be merged into all state machines
+	 *   - `cache_disabled`: Don't use caching
+	 *   - `file_readers`: File readers map (regexp -> class name)
+	 *
 	 */
 	public function __construct($options, $context = null, $alias)
 	{
@@ -117,6 +124,17 @@ class JsonDirBackend extends AbstractBackend
 		}
 		closedir($dh);
 
+		// File readers
+		$file_readers = [
+			'/\.json\(\.php\)\?$/i' => JsonReader::class,
+			'/\.graphml$/i' => GraphMLReader::class,
+			'/\.bpmn$/i' => BpmnReader::class,
+		];
+		if (!empty($options['file_readers'])) {
+			$file_readers = array_merge($file_readers, $options['file_readers']);
+		}
+		$postprocess_list = array_fill_keys(array_reverse($file_readers), false);
+
 		// Load data if cache is obsolete
 		if (!$cache_loaded || $youngest_mtime >= $cache_mtime) {
 			//debug_msg('Machine type table cache miss. Reloading...');
@@ -130,12 +148,14 @@ class JsonDirBackend extends AbstractBackend
 					case 'json.php':
 						$filename = $this->base_dir.$file;
 						$this->machine_type_table[$machine_type] = JsonReader::loadString($machine_type, file_get_contents($filename), [], $filename);
+						$postprocess_list[JsonReader::class] = true;
 						break;
 				} 
 			}
 			ksort($this->machine_type_table);
 
 			// Load all included files
+			// TODO: Recursively process includes of includes
 			foreach ($this->machine_type_table as $machine_type => $json_config) {
 				$graphml_reader_used = false;
 				$bpmn_reader_used = false;
@@ -156,41 +176,29 @@ class JsonDirBackend extends AbstractBackend
 					}
 
 					// Detect file type and use proper loader
-					// FIXME: Replace this with extendible loading infrastructure.
-					if (preg_match('/\.json\(\.php\)\?$/i', $include_file)) {
-						// Include JSON file (simple merge)
-						$machine_def = array_replace_recursive(
-								JsonReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
-								$machine_def);
+					$reader_matched = false;
+					foreach ($file_readers as $pattern => $reader) {
+						if (preg_match($pattern, $include_file)) {
+							$machine_def = array_replace_recursive(
+									$reader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
+									$machine_def);
+
+							$reader_matched = true;
+							$postprocess_list[$reader] = true;
+							break;
+						}
 					}
-					else if (preg_match('/\.graphml$/i', $include_file)) {
-						// Include GraphML file (find states and transitions, then simply add them to the definition)
-						$machine_def = array_replace_recursive(
-								GraphMLReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
-								$machine_def);
-						$graphml_reader_used = true;
-					}
-					else if (preg_match('/\.bpmn$/i', $include_file)) {
-						// Load relevant fragment of BPMN diagram, it will be merged with other fragments and added to the definition later.
-						$machine_def = array_replace_recursive(
-								BpmnReader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
-								$machine_def);
-						$bpmn_reader_used = true;
-					}
-					else {
+					if (!$reader_matched) {
 						throw new RuntimeException('Unknown file format: '.$include_file);
 					}
 				}
 
-				if ($graphml_reader_used) {
-					GraphMLReader::postprocessDefinition($machine_type, $machine_def);
+				// Run post-processing of each reader
+				foreach ($postprocess_list as $reader => $used) {
+					if ($used) {
+						$reader::postprocessDefinition($machine_type, $machine_def);
+					}
 				}
-
-				if ($bpmn_reader_used) {
-					BpmnReader::postprocessDefinition($machine_type, $machine_def);
-				}
-
-				JsonReader::postprocessDefinition($machine_type, $machine_def);
 
 				// Add global defaults (don't override)
 				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
