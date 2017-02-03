@@ -453,7 +453,7 @@ class BpmnReader implements IMachineDefinitionReader
 				foreach ($states[$s_id]['bpmn_nodes'] as $s_node_id) {
 					$states[$s_id]['annotations'] = [];
 					GraphSearch::DFS()
-						->onProcessNode(function($id) use (& $fragment, & $states, $invoking_actions, $receiving_nodes, $s_id, $s_node_id) {
+						->onProcessNode(function($id) use (& $fragment, & $states, & $ann_node_origin, $invoking_actions, $receiving_nodes, $s_id, $s_node_id) {
 							$node_annotations = $fragment['nodes'][$id]['annotations'];
 							if (!empty($node_annotations)) {
 								foreach ($node_annotations as $ann_id) {
