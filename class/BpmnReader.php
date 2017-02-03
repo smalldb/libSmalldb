@@ -134,6 +134,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'name' => $name,
 					'_transition' => false,
 					'_state' => false,
+					'_state_name' => null,
 					'_generated' => false,
 					'_dependency_only' => false,
 				];
@@ -185,9 +186,10 @@ class BpmnReader implements IMachineDefinitionReader
 					'_invoking' => false,
 					'_receiving' => false,
 					'_receiving_nodes' => null,
-					'_action' => null,
+					'_action_name' => null,
 					'_transition' => null,
 					'_state' => null,
+					'_state_name' => null,
 					'_generated' => false,
 				];
 
@@ -322,10 +324,10 @@ class BpmnReader implements IMachineDefinitionReader
 				&& ($nodes[$a['target']]['process'] == $state_machine_process_id))
 			{
 				$g->tagNode($a['source'], '_invoking');
-				if ($nodes[$a['source']]['_action'] !== null && $nodes[$a['source']]['_action'] != $a['target']) {
+				if ($nodes[$a['source']]['_action_name'] !== null && $nodes[$a['source']]['_action_name'] != $a['target']) {
 					$errors = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['source']]];
 				} else {
-					$nodes[$a['source']]['_action'] = $a['id'];
+					$nodes[$a['source']]['_action_name'] = $a['id'];
 				}
 			}
 
@@ -334,10 +336,10 @@ class BpmnReader implements IMachineDefinitionReader
 				&& ($nodes[$a['source']]['process'] == $state_machine_process_id))
 			{
 				$g->tagNode($a['target'], '_receiving');
-				if ($nodes[$a['target']]['_action'] !== null && $nodes[$a['target']]['_action'] != $a['source']) {
+				if ($nodes[$a['target']]['_action_name'] !== null && $nodes[$a['target']]['_action_name'] != $a['source']) {
 					$errors = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['target']]];
 				} else {
-					$nodes[$a['target']]['_action'] = $a['id'];
+					$nodes[$a['target']]['_action_name'] = $a['id'];
 				}
 			}
 		}
@@ -360,7 +362,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'_invoking' => false,
 					'_receiving' => false,
 					'_receiving_nodes' => null,
-					'_action' => null,
+					'_action_name' => null,
 					'_transition' => null,
 					'_state' => null,
 					'_generated' => true,
@@ -652,7 +654,7 @@ class BpmnReader implements IMachineDefinitionReader
 		$actions = [];
 		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
 			// Get action
-			$a_arrow = $g->getArrow($node['_action']);
+			$a_arrow = $g->getArrow($node['_action_name']);
 			$a_node = $g->getNode($a_arrow['target']);
 			$action = $a_node['name'];
 
@@ -663,6 +665,20 @@ class BpmnReader implements IMachineDefinitionReader
 				$actions[$action]['transitions'][$state_before]['targets'][] = $state_after;
 			}
 		}
+
+		// At this point the state machine is complete, so lets assign states and transitions to BPMN nodes.
+		foreach ($nodes as $id => & $node) {
+			if ($node['_state']) {
+				$node['_state_name'] = $uf->find($id);
+			}
+		}
+		unset($node);
+		foreach ($arrows as $id => & $arrow) {
+			if ($arrow['_state']) {
+				$arrow['_state_name'] = $uf->find($id);
+			}
+		}
+		unset($arrow);
 
 		// Calculate distance of each node from nearest start event 
 		// to detect backward arrows and make diagrams look much better
