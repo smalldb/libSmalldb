@@ -35,10 +35,24 @@ class UnionFind
 
 
 	/**
-	 * Create set $x
+	 * Create set $x, the $x may or may not exist before
 	 */
 	public function add($x)
 	{
+		if (!isset($this->parents[$x])) {
+			$this->parents[$x] = $x;
+		}
+	}
+
+
+	/**
+	 * Create set $x, the $x must not exist before
+	 */
+	public function addUnique($x)
+	{
+		if (isset($this->parents[$x])) {
+			throw new \RuntimeException('Element "'.$x.'" is already present in the union find.');
+		}
 		$this->parents[$x] = $x;
 	}
 
@@ -51,20 +65,30 @@ class UnionFind
 		$ar = $this->find($a);
 		$br = $this->find($b);
 
-		if ($ar === $br) {
-			return;
-		} else {
+		if ($ar !== $br) {
 			$this->parents[$br] = $ar;
 		}
+
+		/*
+		$c = function($x) {
+			return sprintf('<span style="background:#%x">%s</span>', crc32($x) & 0xffffff | 0x808080, $x);
+		};
+
+		echo '<br><b>', $c($a), ' == ', $c($b), "</b><br>";
+		var_dump($this->parents);
+		echo '    ', $c($a), ' … ', ($ar === $this->parents[$ar] ? $c($ar).' is root' : '<b>'.$c($ar).' is NOT root!</b>'), "<br>";
+		echo '    ', $c($b), ' … ', ($br === $this->parents[$br] ? $c($br).' is root' : '<b>'.$c($br).' is NOT root!</b>'), "<br>";
+		echo '    ', $c($ar), ' =?= ', $c($br), "<br>";
+		echo '    ', $c($br), ' --&gt; ', $c($this->parents[$br]), "<br>";
+		// */
 	}
 
 
 	/**
 	 * Get representative of $x
 	 */
-	public function find($x)
+	public function find($r)
 	{
-		$r = $x;
 		while ($r !== $this->parents[$r]) {
 			$this->parents[$r] = $this->parents[$this->parents[$r]]; // Optimize nodes a little on the way to the root
 			$r = $this->parents[$r];
@@ -83,6 +107,33 @@ class UnionFind
 			$a[$x] = $this->find($x);
 		}
 		return $a;
+	}
+
+
+	/**
+	 * Get a representative for each component.
+	 */
+	public function findDistinct()
+	{
+		$a = [];
+		foreach ($this->parents as $x => $r) {
+			$a[$this->find($x)] = null;
+		}
+		return array_keys($a);
+	}
+
+
+	/**
+	 * Debug: Dump the UF tree to Dot for Graphviz
+	 */
+	public function dumpDot()
+	{
+		$dot = '';
+		foreach ($this->parents as $x => $r) {
+			$dot .= sprintf("\"[UF] %s\" [fillcolor=\"#%x\"];\n", $x, crc32($x) & 0xffffff | 0x808080);
+			$dot .= "\"[UF] $r\" -> \"[UF] $x\" [arrowhead=none,arrowtail=vee];\n";
+		}
+		return $dot;
 	}
 
 }

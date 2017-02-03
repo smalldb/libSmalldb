@@ -23,12 +23,13 @@ namespace Smalldb\StateMachine\Utils;
  */
 class GraphSearch
 {
+	private $graph;
 
 	private $processNodeCb;
 	private $processNodeCbDefault;
 
-	private $checkNextNodeCb;
-	private $checkNextNodeCbDefault;
+	private $checkArrowCb;
+	private $checkArrowCbDefault;
 
 	private $strategy;
 
@@ -39,29 +40,31 @@ class GraphSearch
 	/**
 	 * Constructor.
 	 */
-	private function __construct()
+	private function __construct(Graph $g)
 	{
+		$this->graph = $g;
+
 		$this->processNodeCb
 			= $this->processNodeCbDefault
-			= function($current_node_id) {};
+			= function(& $current_node) { return true; };
 
-		$this->checkNextNodeCb
-			= $this->checkNextNodeCbDefault
-			= function($current_node_id, $next_node_id, $next_node_seen) { return true; };
+		$this->checkArrowCb
+			= $this->checkArrowCbDefault
+			= function(& $current_node, & $arrow, & $next_node, $next_node_seen) { return true; };
 	}
 
 
-	public static function DFS()
+	public static function DFS(Graph $g)
 	{
-		$gs = new self();
+		$gs = new self($g);
 		$gs->strategy = self::DFS_STRATEGY;
 		return $gs;
 	}
 
 
-	public static function BFS()
+	public static function BFS(Graph $g)
 	{
-		$gs = new self();
+		$gs = new self($g);
 		$gs->strategy = self::BFS_STRATEGY;
 		return $gs;
 	}
@@ -72,7 +75,7 @@ class GraphSearch
 	 *
 	 * @param $callback function($current_node_id)
 	 */
-	public function onProcessNode(callable $callback)
+	public function onNode(callable $callback)
 	{
 		$this->processNodeCb = $callback ? : $this->processNodeCbDefault;
 		return $this;
@@ -85,13 +88,13 @@ class GraphSearch
 	 * Nodes are inspected always, even when they have been seen before,
 	 * but once seen nodes are not enqueued again.
 	 *
-	 * @param $callback function($current_node_id, $next_node_id, $next_node_seen)
+	 * @param $callback function($current_node_id, $next_node_id, $next_node_seen, $arrow_id)
 	 * @return True if the $next_node_id should be engueued for processing.
 	 * 	The node will not be enqueued if it was already visited.
 	 */
-	public function onCheckNextNode(callable $callback)
+	public function onArrow(callable $callback)
 	{
-		$this->checkNextNodeCb = $callback ? : $this->checkNextNodeCb;
+		$this->checkArrowCb = $callback ? : $this->checkArrowCb;
 		return $this;
 	}
 
@@ -99,21 +102,22 @@ class GraphSearch
 	/**
 	 * Start DFS from $startNodes.
 	 *
-	 * @param $startNodes List of starting nodes.
-	 * @param $nextNodes Map $current_node_id -> list of $next_nodes.
+	 * @param $startNodes List of starting nodes or their IDs.
+	 * @param $nextNodes Map $current_node_id -> list of [ $next_node_id, $arrow_id ].
 	 */
-	public function start($start_nodes, $next_nodes)
+	public function start($start_nodes)
 	{
-		$queue = [];	// It is a stack ;)
+		$queue = [];	// Sometimes, it is a stack ;)
 		$seen = [];
 
 		$processNodeCb = $this->processNodeCb;
-		$checkNextNodeCb = $this->checkNextNodeCb;
+		$checkArrowCb = $this->checkArrowCb;
 
 		// Enqueue nodes as mark them seen
-		foreach ($start_nodes as $n) {
-			$seen[$n] = true;
-			$queue[] = $n;
+		foreach ($start_nodes as $node) {
+			$id = is_scalar($node) ? $node : $node['id'];
+			$seen[$id] = true;
+			$queue[] = $id;
 		}
 
 		// Process queue
@@ -129,20 +133,24 @@ class GraphSearch
 			}
 
 			// Process node
-			$processNodeCb($current_node_id);
+			if (!$processNodeCb($this->graph->getNode($current_node_id))) {
+				continue;
+			}
 
 			// add next nodes to queue
-			if (isset($next_nodes[$current_node_id])) {
-				foreach ($next_nodes[$current_node_id] as $next_node_id) {
-					// Check next node whether it is worth processing
-					$next_node_seen = !empty($seen[$next_node_id]);
-					if ($checkNextNodeCb($current_node_id, $next_node_id, $next_node_seen)) {
-						if (!$next_node_seen) {
-							$queue[] = $next_node_id;
-						}
+			$arrows = $this->graph->getArrowsByNode($current_node_id);
+
+			foreach ($arrows as $arrow) {
+				$next_node_id = $arrow['target'];
+
+				// Check next node whether it is worth processing
+				$next_node_seen = !empty($seen[$next_node_id]);
+				if ($checkArrowCb($this->graph->getNode($current_node_id), $arrow, $this->graph->getNode($next_node_id), $next_node_seen)) {
+					if (!$next_node_seen) {
+						$queue[] = $next_node_id;
 					}
-					$seen[$next_node_id] = true;
 				}
+				$seen[$next_node_id] = true;
 			}
 		}
 	}

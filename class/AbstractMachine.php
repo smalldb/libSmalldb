@@ -1074,12 +1074,12 @@ abstract class AbstractMachine
 		// Wrap state diagram into subgraph if there are extras to avoid mixing of them together
 		if (!empty($this->state_diagram_extras)) {
 			echo "\tsubgraph cluster_main {\n",
-				"\tgraph [ margin = 10 ];\n",
-				"\tcolor = transparent;\n\n";
+				"\t\t", "graph [ margin = 10 ];\n",
+				"\t\t", "color = transparent;\n\n";
 		}
 
 		// Start state
-		echo "\t", "BEGIN [",
+		echo "\t\t", "BEGIN [",
 			"id = \"BEGIN\",",
 			"label = \"\",",
 			"shape = circle,",
@@ -1091,13 +1091,13 @@ abstract class AbstractMachine
 			"];\n";
 
 		// States
-		echo "\t", "node [ shape=ellipse, fontsize=9, style=\"filled\", fontname=\"sans\", fillcolor=\"#eeeeee\", penwidth=2 ];\n";
+		echo "\t\t", "node [ shape=ellipse, fontsize=9, style=\"filled\", fontname=\"sans\", fillcolor=\"#eeeeee\", penwidth=2 ];\n";
 		$group_content = array();
 		if (!empty($this->states)) {
 			foreach ($this->states as $s => $state) {
 				if ($s != '') {
 					$id = $this->exportDotIdentifier($s);
-					echo "\t", $id;
+					echo "\t\t", $id;
 					//echo " [ label=\"", addcslashes(empty($state['label']) ? $s : $state['label'], '"'), "\"";
 					echo " [ id = \"", addcslashes($id, '"'), "\", label=\"", addcslashes($s, '"'), "\"";
 					if (!empty($state['color'])) {
@@ -1148,7 +1148,7 @@ abstract class AbstractMachine
 								$missing_states[$dst] = true;
 							}
 						}
-						echo "\t", $s_src, " -> ", $s_dst, " [ ";
+						echo "\t\t", $s_src, " -> ", $s_dst, " [ ";
 						//echo "label=\" ", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "  \"";
 						echo "label=\" ", addcslashes($a, '"'), "  \"";
 						if (!empty($transition['color'])) {
@@ -1170,12 +1170,12 @@ abstract class AbstractMachine
 
 		// Missing states
 		foreach ($missing_states as $s => $state) {
-			echo "\t", $this->exportDotIdentifier($s), " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
+			echo "\t\t", $this->exportDotIdentifier($s), " [ label=\"", addcslashes($s, '"'), "\\n(undefined)\", fillcolor=\"#ffccaa\" ];\n";
 		}
 
 		// Final state
 		if ($have_final_state) {
-			echo "\n\t", "END [",
+			echo "\n\t\t", "END [",
 				" id = \"END\",",
 				" label = \"\",",
 				" shape = doublecircle,",
@@ -1189,7 +1189,7 @@ abstract class AbstractMachine
 
 		// Close state diagram subgraph
 		if (!empty($this->state_diagram_extras)) {
-			echo "}\n";
+			echo "\t}\n";
 		}
 
 		// Optionaly render machine-specific debug data
