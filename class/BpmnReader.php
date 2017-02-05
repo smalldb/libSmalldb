@@ -547,6 +547,49 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
+		// All message flows from a single task in the state machine process end in the same state
+		foreach ($nodes as $id => $node) {
+			if ($node['process'] == $state_machine_process_id && $node['type'] == 'task') {
+				// Collect nodes to which message flows flow
+				$receiving_nodes = [];
+				$targets = [];
+				$state_arrows = [];
+				foreach ($g->getArrowsByNode($node) as $a_id => $arrow) {
+					if ($arrow['type'] == 'messageFlow') {
+						if ($nodes[$arrow['target']]['_receiving']) {
+							// There should be one receiving node ...
+							$receiving_nodes[] = $arrow['target'];
+						} else {
+							// ... and multiple other targets
+							$targets[] = $arrow['target'];
+						}
+						$state_arrows[] = $a_id;
+					}
+				}
+
+				if (!empty($targets) && count($receiving_nodes) == 1) {
+					// If there are targets, define the state equivalence
+					$rcv = reset($receiving_nodes);
+					$uf->add('Qout_'.$rcv);
+					foreach ($targets as $t) {
+						$uf->add('Qout_'.$t);
+						$uf->union('Qout_'.$rcv, 'Qout_'.$t);
+
+						// Assign state to the target node
+						$g->tagNode($t, '_state');
+						$uf->add($t);
+						$uf->union('Qout_'.$t, $t);
+					}
+					foreach ($state_arrows as $a_id) {
+						// Assign state to the arrow
+						$g->tagArrow($a_id, '_state');
+						$uf->add($a_id);
+						$uf->union('Qout_'.$rcv, $a_id);
+					}
+				}
+			}
+		}
+
 		// Detect state machine annotation symbol
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
