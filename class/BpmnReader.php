@@ -83,7 +83,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			$groups[$id] = [
 				'id' => $id,
-				'name' => $name == '' ? $id : $name,
+				'name' => $name,
 				'nodes' => [],
 				'participant' => null,
 				'_generated' => false,
@@ -105,6 +105,9 @@ class BpmnReader implements IMachineDefinitionReader
 
 			if (isset($groups[$process_id])) {
 				$groups[$process_id]['participant'] = $id;
+				if ($name != '') {
+					$groups[$process_id]['name'] = $name;
+				}
 			} else {
 				$groups[$process_id] = [
 					'id' => $process_id,
