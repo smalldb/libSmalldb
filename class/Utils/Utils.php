@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Utils;
 
+use Smalldb\StateMachine\JsonException;
 
 /**
  * Utilities.
