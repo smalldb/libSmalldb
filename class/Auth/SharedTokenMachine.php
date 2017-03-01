@@ -234,6 +234,11 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	/**
 	 * Login user
 	 *
+	 * @return New session ID on success, null otherwise.
+	 *
+	 * @note When using Reference to log in, check returned Reference
+	 * 	object using Reference::isNullRef().
+	 *
 	 * @see Timing attack prevention:
 	 * 	http://blog.ircmaxell.com/2014/11/its-all-about-time.html
 	 */
@@ -257,7 +262,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 		if (!$passwd_valid) {
 			// One more protection against timing attack
 			time_nanosleep(0, abs(crc32($user.$password.time().__FILE__) % 200000));
-			return false;
+			return null;
 		}
 
 		// Login OK - generate session token
@@ -275,7 +280,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 		if ($n == 1) {
 			return $session_id;
 		} else {
-			return false;
+			return null;
 		}
 	}
 
