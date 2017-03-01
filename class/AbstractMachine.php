@@ -557,7 +557,7 @@ abstract class AbstractMachine
 		if (isset($this->actions[$transition_name])) {
 			$action = $this->actions[$transition_name];
 		} else {
-			throw new TransitionException('Unknown transition "'.$transition_name.'" reuested on machine "'.$this->machine_type.'".');
+			throw new TransitionException('Unknown transition "'.$transition_name.'" requested on machine "'.$this->machine_type.'".');
 		}
 
 		// get transition (instance of action)
