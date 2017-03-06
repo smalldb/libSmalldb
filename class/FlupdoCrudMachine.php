@@ -52,6 +52,9 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/// Order by this column
 	protected $nested_sets_order_by = 'id';
 
+	/// Generate random id?
+	protected $generate_random_id = null;
+
 	/// Set this column to CURRENT_TIMESTAMP on create transition
 	protected $time_created_table_column = null;
 	/// Set this column to CURRENT_TIMESTAMP on edit transition. If MySQL is in use, it is better to use CURRENT_TIMESTAMP column feature.
@@ -66,6 +69,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		$this->initializeMachineConfig($config, [
 			'user_id_table_column', 'owner_relation', 'owner_create_transition',
+			'generate_random_id',
 			'time_created_table_column', 'time_modified_table_column'
 		]);
 
@@ -217,6 +221,14 @@ class FlupdoCrudMachine extends FlupdoMachine
 					'Permission denied to create machine %s because transition %s of %s is not allowed.',
 					$this->machine_type, $this->owner_create_transition, $ref->machine_type
 				));
+			}
+		}
+
+		// Generate random ID
+		if ($this->generate_random_id) {
+			list($random_property) = $this->describeId();
+			if (empty($properties[$random_property])) {
+				$properties[$random_property] = mt_rand(1, 2147483647);
 			}
 		}
 

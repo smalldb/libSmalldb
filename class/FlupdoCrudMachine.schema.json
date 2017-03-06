@@ -16,6 +16,10 @@
             "description": "Name of the owner state machine's transition which must be allowed to create a new instance of this state machine.",
             "type": ["null", "string"]
         },
+        "generate_random_id": {
+            "description": "Generate random ID if not specified.",
+            "type": ["null", "bool"]
+        },
         "time_created_table_column": {
             "description": "Column to store time of creation.",
             "type": ["null", "string"]
