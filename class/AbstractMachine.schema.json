@@ -186,6 +186,18 @@
                     }
                 }
             }
+        },
+        "default_access_policy": {
+            "description": "Default access policy (used unless given action specifies another policy). See 'access_policies'.",
+            "type": [ "string", "null" ]
+        },
+        "read_access_policy": {
+            "description": "Access policy when reading state machine state and properties. See 'access_policies'.",
+            "type": [ "string", "null" ]
+        },
+        "listing_access_policy": {
+            "description": "Access policy when listing state machine instances (user may be able to read any state machine state, but may not be able to enumerate them). See 'access_policies'.",
+            "type": [ "string", "null" ]
         }
     }
 }
