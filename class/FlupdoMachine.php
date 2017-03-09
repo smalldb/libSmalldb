@@ -361,11 +361,13 @@ class FlupdoMachine extends AbstractMachine
 
 			// anonymous: Only anonymous users allowed (not logged in)
 			case 'anonymous':
+				$user_id = $this->auth->getUserId();
 				$query->where($user_id === null ? 'TRUE' : 'FALSE');
 				return;
 
 			// user: All logged-in users allowed
 			case 'user':
+				$user_id = $this->auth->getUserId();
 				$query->where($user_id !== null ? 'TRUE' : 'FALSE');
 				return;
 
