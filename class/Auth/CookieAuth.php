@@ -95,7 +95,8 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 	public function checkSession()
 	{
 		// Get session token
-		$session_token = @ $_COOKIE[$this->cookie_name];
+		$session_token = isset($_COOKIE[$this->cookie_name]) ? $_COOKIE[$this->cookie_name]
+			: (isset($_SERVER['HTTP_AUTH_TOKEN']) ? $_SERVER['HTTP_AUTH_TOKEN'] : null);
 
 		// Get reference to session state machine
 		if ($session_token) {
