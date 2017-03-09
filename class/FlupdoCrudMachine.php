@@ -101,12 +101,12 @@ class FlupdoCrudMachine extends FlupdoMachine
 		$no_default_transitions = !empty($config['crud_machine_no_default_transitions']);	/// @deprecated
 
 		// Exists state only
-		$this->states = $no_default_transitions ? array() : array(
+		$this->states = array_replace_recursive($no_default_transitions ? array() : array(
 			'exists' => array(
 				'label' => _('Exists'),
 				'description' => '',
 			),
-		);
+		), $this->states ? : []);
 
 		// Simple 'exists' state if not state select is not defined
 		if ($this->state_select === null) {
@@ -114,7 +114,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 		}
 
 		// Actions
-		$this->actions = array(
+		$this->actions = array_replace_recursive(array(
 			'create' => array(
 				'label' => _('Create'),
 				'description' => _('Create a new item'),
@@ -177,7 +177,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 					),
 				),
 			),
-		);
+		), $this->actions ? : []);
 	}
 
 
