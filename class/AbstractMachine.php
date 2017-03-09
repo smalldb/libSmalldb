@@ -495,7 +495,7 @@ abstract class AbstractMachine
 	 * TODO: Transition should not have full definition of the policy, only
 	 * 	its name. Definitions should be in common place.
 	 */
-	public function isTransitionAllowed(Reference $ref, $transition_name, $state = null)
+	public function isTransitionAllowed(Reference $ref, $transition_name, $state = null, & $access_policy = null)
 	{
 		if ($state === null) {
 			$state = $ref->state;
@@ -503,6 +503,7 @@ abstract class AbstractMachine
 
 		if ($transition_name == '') {
 			// Read access
+			$access_policy = $this->read_access_policy;
 			return $this->checkAccessPolicy($this->read_access_policy, $ref);
 		} else if (isset($this->actions[$transition_name]['transitions'][$state])) {
 			$tr = $this->actions[$transition_name]['transitions'][$state];
@@ -569,8 +570,9 @@ abstract class AbstractMachine
 		$transition = array_merge($action, $transition);
 
 		// check access_policy
-		if (!$this->isTransitionAllowed($ref, $transition_name, $state)) {
-			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'" of machine "'.$this->machine_type.'".');
+		if (!$this->isTransitionAllowed($ref, $transition_name, $state, $access_policy)) {
+			throw new TransitionAccessException('Access denied to transition "'.$transition_name.'" '
+				.'of machine "'.$this->machine_type.'" (used access policy: "'.$access_policy.'").');
 		}
 
 		// invoke pre-transition checks
