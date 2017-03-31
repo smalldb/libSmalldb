@@ -226,7 +226,7 @@ class GraphMLReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
 	{
 		// NOP.
 	}

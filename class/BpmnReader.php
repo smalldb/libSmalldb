@@ -270,7 +270,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
 	{
 		if (!isset($machine_def['bpmn_fragments'])) {
 			return;
@@ -280,32 +280,34 @@ class BpmnReader implements IMachineDefinitionReader
 
 		$states = [];
 		$actions = [];
-		$errors = [];
+		$success = true;
 
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_name => $fragment) {
 			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
 
 			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors, $fragment_extra_vars) = static::inferStateMachine($prefix, $fragment_name, $fragment);
+			list($fragment_machine_def, $fragment_errors, $fragment_extra_vars) = static::inferStateMachine($prefix, $fragment_name, $fragment, $errors);
 
 			// Update the definition
 			if (empty($fragment_errors)) {
 				$machine_def = array_replace_recursive($fragment_machine_def, $machine_def);
+			} else {
+				$success = false;
 			}
 
 			// Add BPMN diagram to state diagram
 			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 		}
 
+		return $success;
 	}
 
 
-	protected static function inferStateMachine($prefix, $fragment_file, & $fragment)
+	protected static function inferStateMachine($prefix, $fragment_file, & $fragment, & $errors)
 	{
 		// Results
 		$machine_def = [];
-		$errors = [];
 
 		// Shortcuts
 		$state_machine_process_id = & $fragment['state_machine_process_id'];
@@ -328,7 +330,7 @@ class BpmnReader implements IMachineDefinitionReader
 			{
 				$g->tagNode($a['source'], '_invoking');
 				if ($nodes[$a['source']]['_action_name'] !== null && $nodes[$a['source']]['_action_name'] != $a['target']) {
-					$errors = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['source']]];
+					$errors[] = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['source']]];
 				} else {
 					$nodes[$a['source']]['_action_name'] = $a['id'];
 				}
@@ -340,7 +342,7 @@ class BpmnReader implements IMachineDefinitionReader
 			{
 				$g->tagNode($a['target'], '_receiving');
 				if ($nodes[$a['target']]['_action_name'] !== null && $nodes[$a['target']]['_action_name'] != $a['source']) {
-					$errors = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['target']]];
+					$errors[] = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['target']]];
 				} else {
 					$nodes[$a['target']]['_action_name'] = $a['id'];
 				}
@@ -684,8 +686,13 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($custom_state_names as $a => $na) {
 			foreach ($custom_state_names as $b => $nb) {
 				if ($a !== $b && $uf->find($a) === $uf->find($b)) {
-					throw new BpmnAnnotationException('Annotations define multiple names for a single state (found when merging): '
-						.join(', ', [$a, $b]));
+					$n = array_merge($na, $nb);
+					sort($n);
+					$errors[] = [
+						'text' => 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]),
+						'nodes' => $n,
+					];
+					break 2;
 				}
 			}
 		}
@@ -694,6 +701,10 @@ class BpmnReader implements IMachineDefinitionReader
 		$states = [];
 		foreach ($uf->findDistinct() as $id) {
 			$states[$id] = [];
+		}
+
+		if (!empty($errors)) {
+			return [ $machine_def, $errors, [] ];
 		}
 
 		// Find all transitions

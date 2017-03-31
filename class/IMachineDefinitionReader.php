@@ -45,7 +45,11 @@ interface IMachineDefinitionReader
 	 *
 	 * @param $machine_type - Name of state machine (for better error messages)
 	 * @param $machine_def - Machine definition to be processed in place.
+	 * @param $errors - List of errors in state machine definition. Errors
+	 * 	may be specified in the diagram as well.
+	 *
+	 * @return bool True when machine is successfully loaded, false otherwise.
 	 */
-	public static function postprocessDefinition($machine_type, & $machine_def);
+	public static function postprocessDefinition($machine_type, & $machine_def, & $errors);
 }
 

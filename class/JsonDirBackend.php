@@ -157,9 +157,9 @@ class JsonDirBackend extends AbstractBackend
 			// Load all included files
 			// TODO: Recursively process includes of includes
 			foreach ($this->machine_type_table as $machine_type => $json_config) {
-				$graphml_reader_used = false;
-				$bpmn_reader_used = false;
 				$machine_def = & $this->machine_type_table[$machine_type];
+				$machine_success = true;
+				$errors = [];
 				foreach ((array) @ $json_config['include'] as $include) {
 					// String is filename
 					if (!is_array($include)) {
@@ -196,12 +196,16 @@ class JsonDirBackend extends AbstractBackend
 				// Run post-processing of each reader
 				foreach ($postprocess_list as $reader => $used) {
 					if ($used) {
-						$reader::postprocessDefinition($machine_type, $machine_def);
+						$machine_success &= $reader::postprocessDefinition($machine_type, $machine_def, $errors);
 					}
 				}
 
 				// Add global defaults (don't override)
 				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
+
+				// Store errors in definition
+				// TODO: Replace simple array with a ErrorListener which preserves context of the error.
+				$machine_def['errors'] = $errors;
 
 				unset($machine_def);
 			}

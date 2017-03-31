@@ -70,6 +70,13 @@ abstract class AbstractMachine
 	protected $state_diagram_extras = [];
 
 	/**
+	 * List of errors in state machine definition.
+	 *
+	 * Populated by IMachineDefinitionReader when loading the state mahcine.
+	 */
+	protected $errors = [];
+
+	/**
 	 * URL format string where machine is located, usualy only the path
 	 * part, e.g. "/machine-type/{id}".
 	 *
@@ -285,7 +292,7 @@ abstract class AbstractMachine
 	{
 		// Load configuration
 		$this->initializeMachineConfig($config, [
-			'states', 'state_groups', 'actions',
+			'states', 'state_groups', 'actions', 'errors',
 			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
 			'properties', 'views', 'references',
 			'url_fmt', 'parent_url_fmt', 'post_action_url_fmt',
@@ -332,6 +339,17 @@ abstract class AbstractMachine
 				}
 			}
 		}
+	}
+
+
+	/**
+	 * Get errors found while loading the machine definition.
+	 *
+	 * @return List of errors.
+	 */
+	public function getErrors()
+	{
+		return $this->errors;
 	}
 
 
@@ -552,6 +570,10 @@ abstract class AbstractMachine
 	 */
 	public function invokeTransition(Reference $ref, $transition_name, $args, & $returns, callable $new_id_callback = null)
 	{
+		if (!empty($this->errors)) {
+			throw new StateMachineHasErrorsException('Cannot use state machine with errors in definition: "'.$this->machine_type.'".');
+		}
+
 		$state = $ref->state;
 
 		// get action
@@ -717,6 +739,7 @@ abstract class AbstractMachine
 		$results['id'] = $this->describeId();
 		$results['class'] = get_class($this);
 		$results['missing_methods'] = [];
+		$results['errors'] = $this->errors;
 
 		foreach ($this->describeAllMachineActions() as $a => $action) {
 			foreach ($action['transitions'] as $t => $transition) {

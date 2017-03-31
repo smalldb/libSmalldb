@@ -35,7 +35,7 @@ class JsonReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def)
+	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
 	{
 		// Make sure the names are always set
 		if (!empty($machine_def['properties'])) {
