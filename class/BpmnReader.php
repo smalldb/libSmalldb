@@ -379,6 +379,13 @@ class BpmnReader implements IMachineDefinitionReader
 		unset($arrow);
 		$g->recalculateGraph();
 
+		// Timers events are also invoking nodes (kind of)
+		foreach ($nodes as $node) {
+			if ($node['type'] == 'intermediateCatchEvent' && isset($node['features']['timerEventDefinition'])) {
+				$g->tagNode($node, '_invoking');
+			}
+		}
+
 		// Find receiving nodes for each invoking node
 		// (DFS to next task or waiting, the receiver cannot be further than that)
 		foreach ($g->getNodesByTag('_invoking') as $in_id => & $invoking_node) {
@@ -440,17 +447,21 @@ class BpmnReader implements IMachineDefinitionReader
 
 			if (empty($receiving_nodes)) {
 				// If there is no receiving node, add implicit returning message flow.
-				$new_id = 'x_'.$in_id.'_receiving';
-				$arrows[$new_id] = [
-					'id' => $new_id,
-					'type' => 'messageFlow',
-					'source' => $inv_arrow['target'],
-					'target' => $invoking_node['id'],
-					'name' => $inv_arrow['name'],
-					'_transition' => false,
-					'_state' => false,
-					'_generated' => true,
-				];
+				if ($inv_arrow) {
+					// Add receiving arrow only if there is invoking arrow
+					// (timer events may represent transitions without invoking arrow).
+					$new_id = 'x_'.$in_id.'_receiving';
+					$arrows[$new_id] = [
+						'id' => $new_id,
+						'type' => 'messageFlow',
+						'source' => $inv_arrow['target'],
+						'target' => $invoking_node['id'],
+						'name' => $inv_arrow['name'],
+						'_transition' => false,
+						'_state' => false,
+						'_generated' => true,
+					];
+				}
 				$g->tagNode($invoking_node, '_receiving');
 				$invoking_node['_receiving_nodes'][] = $invoking_node['id'];
 			} else {
@@ -472,11 +483,11 @@ class BpmnReader implements IMachineDefinitionReader
 						}
 					}
 
-					if ($rcv_arrow['source'] == $state_machine_participant_id) {
+					if ($rcv_arrow && $rcv_arrow['source'] == $state_machine_participant_id) {
 						$rcv_arrow['source'] = $inv_arrow['target'];
 					}
 
-					$invoking_node['_receiving_nodes'][] = $rcv_arrow['target'];
+					$invoking_node['_receiving_nodes'][] = $rcv_node;
 
 					unset($a);
 					unset($rcv_arrow);
@@ -526,6 +537,14 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Merge green arrows and nodes into states
 		$uf = new UnionFind();
+		foreach ($nodes as $id => $node) {
+			if ($node['_invoking']) {
+				$uf->add('Qin_'.$id);
+			}
+			if ($node['_receiving']) {
+				$uf->add('Qout_'.$id);
+			}
+		}
 		foreach ($arrows as $id => $arrow) {
 			if ($arrow['_state']) {
 				// Add entry and exit points
@@ -541,6 +560,8 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($nodes as $id => $node) {
 			if ($node['_state']) {
 				// Connect input with output as this node is pass-through
+				$uf->add('Qout_'.$id);
+				$uf->add('Qin_'.$id);
 				$uf->union('Qin_'.$id, 'Qout_'.$id);
 
 				// Add the node itself, so we can find to which state it belongs
@@ -667,6 +688,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Add implicit '' for start states
 		foreach ($g->getNodesByType('startEvent') as $s_id => $s_n) {
 			$s = 'Qout_'.$s_id;
+			$uf->add($s);
 			if (!isset($custom_state_names[$uf->find($s)])) {
 				$uf->add('');
 				$uf->union('', $s);
@@ -676,6 +698,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Add implicit '' for final states
 		foreach ($g->getNodesByType('endEvent') as $e_id => $e_n) {
 			$s = 'Qin_'.$e_id;
+			$uf->add($s);
 			if (!isset($custom_state_names[$uf->find($s)])) {
 				$uf->add('');
 				$uf->union('', $s);
@@ -710,6 +733,10 @@ class BpmnReader implements IMachineDefinitionReader
 		// Find all transitions
 		$actions = [];
 		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
+			if (empty($node['_action_name'])) {
+				// Skip invoking nodes without action
+				continue;
+			}
 			// Get action
 			$a_arrow = $g->getArrow($node['_action_name']);
 			$a_node = $g->getNode($a_arrow['target']);
@@ -818,6 +845,10 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($fragment['arrows'] as $id => $a) {
 			$source = AbstractMachine::exportDotIdentifier($a['source'], $prefix);
 			$target = AbstractMachine::exportDotIdentifier($a['target'], $prefix); 
+			if (!$a['source'] || !$a['target']) {
+				var_dump($id);
+				var_dump($a);
+			}
 			$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
 					&& $fragment['nodes'][$a['target']]['_distance'];
 			$label = $a['name'];

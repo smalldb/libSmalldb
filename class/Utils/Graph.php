@@ -95,12 +95,18 @@ class Graph
 
 	public function & getNode($node_id)
 	{
+		if (!isset($this->nodes[$node_id])) {
+			throw new \InvalidArgumentException('Unknown node: ' . $node_id);
+		}
 		return $this->nodes[$node_id];
 	}
 
 
 	public function & getArrow($arrow_id)
 	{
+		if (!isset($this->arrows[$arrow_id])) {
+			throw new \InvalidArgumentException('Unknown arrow: ' . $arrow_id);
+		}
 		return $this->arrows[$arrow_id];
 	}
 
@@ -146,7 +152,7 @@ class Graph
 	public function tagNode($node, $tag, $tagged = true)
 	{
 		if (!isset($tag)) {
-			throw new InvalidArgumentException('Unknown node tag: ' . $tag);
+			throw new \InvalidArgumentException('Unknown node tag: ' . $tag);
 		}
 		$node_id = is_scalar($node) ? $node : $node['id'];
 		$this->nodes[$node_id][$tag] = (bool) $tagged;
@@ -164,7 +170,7 @@ class Graph
 	public function tagArrow($arrow, $tag, $tagged = true)
 	{
 		if (!isset($tag)) {
-			throw new InvalidArgumentException('Unknown arrow tag: ' . $tag);
+			throw new \InvalidArgumentException('Unknown arrow tag: ' . $tag);
 		}
 		$arrow_id = is_scalar($arrow) ? $arrow : $arrow['id'];
 		$this->arrows[$arrow_id][$tag] = (bool) $tagged;

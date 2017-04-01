@@ -89,6 +89,9 @@ class UnionFind
 	 */
 	public function find($r)
 	{
+		if (!isset($this->parents[$r])) {
+			throw new \InvalidArgumentException('Element "'.$r.'" is not defined.');
+		}
 		while ($r !== $this->parents[$r]) {
 			$this->parents[$r] = $this->parents[$this->parents[$r]]; // Optimize nodes a little on the way to the root
 			$r = $this->parents[$r];

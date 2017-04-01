@@ -1091,6 +1091,7 @@ abstract class AbstractMachine
 			"	bgcolor = transparent;\n",
 			"	pad = 0;\n",
 			"	margin = 0;\n",
+			#"	splines = line;\n",
 			"	edge [ arrowtail=none, arrowhead=normal, dir=both, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
 			"	node [ shape=box, style=\"rounded,filled\", fontsize=9, fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
 			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
@@ -1174,7 +1175,6 @@ abstract class AbstractMachine
 							}
 						}
 						echo "\t\t", $s_src, " -> ", $s_dst, " [ ";
-						//echo "label=\" ", addcslashes(empty($action['label']) ? $a : $action['label'], '"'), "  \"";
 						echo "label=\" ", addcslashes($a, '"'), "  \"";
 						if (!empty($transition['color'])) {
 							echo ", color=\"", addcslashes($transition['color'], '"'), "\"";
