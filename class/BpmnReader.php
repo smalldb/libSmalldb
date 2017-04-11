@@ -380,11 +380,13 @@ class BpmnReader implements IMachineDefinitionReader
 		$g->recalculateGraph();
 
 		// Timers events are also invoking nodes (kind of)
+		/*
 		foreach ($nodes as $node) {
 			if ($node['type'] == 'intermediateCatchEvent' && isset($node['features']['timerEventDefinition'])) {
 				$g->tagNode($node, '_invoking');
 			}
 		}
+		// */
 
 		// Find receiving nodes for each invoking node
 		// (DFS to next task or waiting, the receiver cannot be further than that)
