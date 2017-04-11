@@ -887,12 +887,17 @@ class BpmnReader implements IMachineDefinitionReader
 					break;
 				case 'messageFlow':
 					$diagram .= ',style="dashed",arrowhead=empty,arrowtail=odot';
-					$w = $backwards ? 0 : 1;
+					// Bug: Graphviz can't combine rang and clusters
+					//$w = $backwards ? 0 : 1;	// Desired weights
+					//$diagram .= ',constraint=0';	// Workaround
+					$w = 0;				// Another workaround
 					break;
 				default: $color = '#ff0000'; break;
 			}
 
-			$diagram .= ",color=\"$color$alpha\",fontcolor=\"#aaaaaa$alpha\",weight=$w];\n";
+			$diagram .= ",color=\"$color$alpha\",fontcolor=\"#aaaaaa$alpha\"";
+			$diagram .= ",weight=$w";
+			$diagram .= "];\n";
 
 			$nodes[$source] = $a['source'];
 			$nodes[$target] = $a['target'];
