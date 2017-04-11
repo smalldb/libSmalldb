@@ -188,6 +188,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'_distance' => null,
 					'_invoking' => false,
 					'_receiving' => false,
+					'_possibly_receiving' => false,
 					'_receiving_nodes' => null,
 					'_action_name' => null,
 					'_transition' => null,
@@ -341,6 +342,7 @@ class BpmnReader implements IMachineDefinitionReader
 				&& ($nodes[$a['source']]['process'] == $state_machine_process_id))
 			{
 				$g->tagNode($a['target'], '_receiving');
+				$g->tagNode($a['target'], '_possibly_receiving');
 				if ($nodes[$a['target']]['_action_name'] !== null && $nodes[$a['target']]['_action_name'] != $a['source']) {
 					$errors[] = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['target']]];
 				} else {
@@ -366,6 +368,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'_distance' => null,
 					'_invoking' => false,
 					'_receiving' => false,
+					'_possibly_receiving' => false,
 					'_receiving_nodes' => null,
 					'_action_name' => null,
 					'_transition' => null,
@@ -465,6 +468,7 @@ class BpmnReader implements IMachineDefinitionReader
 					];
 				}
 				$g->tagNode($invoking_node, '_receiving');
+				$g->tagNode($invoking_node, '_possibly_receiving');
 				$invoking_node['_receiving_nodes'][] = $invoking_node['id'];
 			} else {
 				// If there are receiving nodes, make sure the arrows start from task, not from participant.
@@ -529,7 +533,7 @@ class BpmnReader implements IMachineDefinitionReader
 					return false;
 				}
 				$g->tagArrow($arrow, '_state');
-				if ($next_node['_invoking'] || $next_node['type'] == 'endEvent') {
+				if ($next_node['_invoking'] || $next_node['_receiving']) {
 					return false;
 				}
 				$g->tagNode($next_node, '_state');
@@ -561,14 +565,16 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 		foreach ($nodes as $id => $node) {
 			if ($node['_state']) {
-				// Connect input with output as this node is pass-through
+				// Connect input with output as this node is pass-through, unless it is a receiving node
 				$uf->add('Qout_'.$id);
-				$uf->add('Qin_'.$id);
-				$uf->union('Qin_'.$id, 'Qout_'.$id);
+				if (!$node['_possibly_receiving']) {
+					$uf->add('Qin_'.$id);
+					$uf->union('Qin_'.$id, 'Qout_'.$id);
+				}
 
 				// Add the node itself, so we can find to which state it belongs
 				$uf->addUnique($id);
-				$uf->union($id, 'Qin_'.$id);
+				$uf->union($id, 'Qout_'.$id);
 			}
 		}
 
@@ -994,6 +1000,8 @@ class BpmnReader implements IMachineDefinitionReader
 				$diagram .= ",fillcolor=\"#ffff88$alpha\"";
 			} else if ($n['_receiving']) {
 				$diagram .= ",fillcolor=\"#aaddff$alpha\"";
+			} else if ($n['_possibly_receiving']) {
+				$diagram .= ",fillcolor=\"#eeeeee$alpha;0.5:#aaddff$alpha\",gradientangle=270";
 			}
 
 			// End of node.
