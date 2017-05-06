@@ -33,6 +33,13 @@ abstract class AbstractBackend
 	private $context = null;
 	private $machine_type_cache = array();
 
+	/**
+	 * Provides a factory to get typed references.
+	 *
+	 * @var ReferenceFactory
+	 */
+	public $ref;
+
 
 	/**
 	 * Initialize backend. $alias is used for debugging and logging.
@@ -51,6 +58,8 @@ abstract class AbstractBackend
 		if ($context !== null) {
 			$this->setContext($context);
 		}
+
+		$this->ref = new ReferenceFactory($this);
 	}
 
 
