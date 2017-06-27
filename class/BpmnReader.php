@@ -1019,6 +1019,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Draw groups
+		//*
 		foreach ($fragment['groups'] as $id => $g) {
 			$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
 
@@ -1038,6 +1039,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 			$diagram .= "\t\t}\n";
 		}
+		// */
 
 		// Render errors
 		foreach ($errors as $err) {

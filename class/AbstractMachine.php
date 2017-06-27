@@ -1070,6 +1070,117 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Export state machine as JSON siutable for Grafovatko.
+	 *
+	 * Usage: json_encode($machine->exportJson());
+	 *
+	 * @param $debug_opts Machine-specific debugging options - passed to
+	 * 	exportDotRenderDebugData(). If empty/false, no debug data are
+	 * 	added to the diagram.
+	 * @return Array suitable for json_encode().
+	 */
+	public function exportJson($debug_opts = false)
+	{
+		$nodes = [
+			[
+				"id" => "BEGIN",
+				"shape" => "uml.initial_state",
+			]
+		];
+		$edges = [];
+
+		// States
+		if (!empty($this->states)) {
+			foreach ($this->states as $s => $state) {
+				if ($s != '') {
+					$nodes[] = [
+						"id" => 's_'.$s,
+						"label" => $s,
+						"fill" => $state['color'] ?? "#eee",
+						"shape" => "uml.state",
+					];
+				}
+			}
+		}
+
+		$have_final_state = false;
+		$missing_states = array();
+
+		// Transitions
+		$used_actions = array();
+		if (!empty($this->actions)) {
+			foreach ($this->actions as $a => $action) {
+				if (empty($action['transitions'])) {
+					continue;
+				}
+				foreach ($action['transitions'] as $src => $transition) {
+					$transition = array_merge($action, $transition);
+					if ($src === null || $src === '') {
+						$s_src = 'BEGIN';
+					} else {
+						$s_src = 's_'.$src;
+						if (!array_key_exists($src, $this->states)) {
+							$missing_states[$src] = true;
+						}
+					}
+					foreach ($transition['targets'] as $dst) {
+						if ($dst === null || $dst === '') {
+							$s_dst = $src == '' ? 'BEGIN':'END';
+							$have_final_state = true;
+						} else {
+							$s_dst = 's_'.$dst;
+							if (!array_key_exists($dst, $this->states)) {
+								$missing_states[$dst] = true;
+							}
+						}
+						$edges[] = [
+							'start' => $s_src,
+							'end' => $s_dst,
+							'label' => $a,
+							'color' => $transition['color'] ?? "#000",
+							'weight' => $transition['weight'] ?? null,
+							'arrowTail' => isset($transition['access_policy']) && isset($this->access_policies[$transition['access_policy']]['arrow_tail'])
+								? $this->access_policies[$transition['access_policy']]['arrow_tail']
+								: null,
+						];
+					}
+				}
+			}
+		}
+
+		// Missing states
+		foreach ($missing_states as $s => $state) {
+			$nodes[] = [
+				'id' => 's_'.$s,
+				'label' => $s."\n(undefined)",
+				'color' => '#ffccaa',
+			];
+		}
+
+		// Final state
+		if ($have_final_state) {
+			$nodes[] = [
+				'id' => 'END',
+				'shape' => 'uml.final_state',
+			];
+		}
+
+		// Optionaly render machine-specific debug data
+		if ($debug_opts) {
+			//$this->exportJsonRenderExtras($debug_opts);
+		}
+
+		return [
+			'graph' => [
+				'layout' => 'dagre',
+			],
+			'nodes' => $nodes,
+			'edges' => $edges,
+		];
+	}
+
+
+	/**
 	 * Export state machine to Graphviz source code.
 	 *
 	 * @param $debug_opts Machine-specific debugging options - passed to
