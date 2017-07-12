@@ -300,6 +300,17 @@ class BpmnReader implements IMachineDefinitionReader
 			// Add BPMN diagram to state diagram
 			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 			$machine_def['state_diagram_extras_json']['nodes'][] = static::renderBpmnJson($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
+			$machine_def['state_diagram_extras_json']['extraSvg'][] =
+				['defs', [], [
+					['linearGradient', ['id' => 'bpmn_gradient_rcv_inv', 'gradientTransform' => 'rotate(90)'], [
+						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
+						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+					]],
+					['linearGradient', ['id' => 'bpmn_gradient_pos_rcv', 'gradientTransform' => 'rotate(90)'], [
+						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
+						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+					]],
+				]];
 		}
 
 		return $success;
@@ -1269,15 +1280,14 @@ class BpmnReader implements IMachineDefinitionReader
 			// Receiving/invoking background
 			// TODO: Gradients for inv+rcv and possibly rcv nodes
 			if ($n['_invoking'] && $n['_receiving']) {
-				//$diagram .= ",fillcolor=\"#ffff88$alpha;0.5:#aaddff$alpha\",gradientangle=270";
-				$node['fill'] = '#ccffbb';
+				$node['fill'] = 'url(#bpmn_gradient_rcv_inv)';
 			} else if ($n['_invoking']) {
 				$node['fill'] = '#ffff88';
 			} else if ($n['_receiving']) {
 				$node['fill'] = '#aaddff';
 			} else if ($n['_possibly_receiving']) {
 				$node['fill'] = '#eeeeff';
-				//$diagram .= ",fillcolor=\"#eeeeee$alpha;0.5:#aaddff$alpha\",gradientangle=270";
+				$node['fill'] = 'url(#bpmn_gradient_pos_rcv)';
 			}
 
 			// Add node to graph
