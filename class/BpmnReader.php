@@ -299,6 +299,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Add BPMN diagram to state diagram
 			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
+			$machine_def['state_diagram_extras_json']['nodes'][] = static::renderBpmnJson($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 		}
 
 		return $success;
@@ -1058,5 +1059,222 @@ class BpmnReader implements IMachineDefinitionReader
 		return $diagram;
 	}
 
+
+	protected static function renderBpmnJson($prefix, $fragment_file, $fragment, $errors, $extra_vars)
+	{
+		// Initialize node for the BPMN fragment
+		$diagram_node = [
+			'id' => $prefix,
+			'label' => "BPMN: ".basename($fragment_file),
+			'color' => "#5373B4",
+			'graph' => [
+				'layout' => 'dagre',
+				'nodes' => [],
+				'edges' => [],
+			],
+		];
+
+		// TODO: Draw nested graphs for participants
+
+		// Draw arrows
+		foreach ($fragment['arrows'] as $id => $a) {
+			$source_id = $prefix.$a['source'];
+			$target_id = $prefix.$a['target']; 
+			$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
+					&& $fragment['nodes'][$a['target']]['_distance'];
+			$label = trim($a['name']);
+			if ($a['_generated'] && $label != '') {
+				$label = "($label)";
+			}
+			$edge = [
+				'id' => $prefix.$id,
+				'start' => $source_id,
+				'end' => $target_id,
+				'label' => $label,
+				'tooltip' => json_encode($a, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
+			];
+
+			// Low opacity for generated edges
+			if ($a['_generated']) {
+				$edge['opacity'] = '0.4';
+			}
+
+			// Edge color
+			if ($a['_transition']) {
+				$edge['color'] = "#2266cc";
+			} else if ($a['_state']) {
+				$edge['color'] = "#66aa22";
+			} else {
+				$edge['color'] = "#666666";
+			}
+
+			// Edge style
+			switch ($a['type']) {
+				case 'sequenceFlow':
+					if ($a['_dependency_only']) {
+						$edge['color'] = 'transparent';
+					}
+					break;
+				case 'messageFlow':
+					$edge['stroke_dasharray'] = '5,4';
+					$edge['arrowHead'] = 'empty';
+					$edge['arrowTail'] = 'odot';
+					break;
+				default:
+					$edge['color'] = '#ff0000';
+					break;
+			}
+
+			// Add edge to graph
+			$diagram_node['graph']['edges'][] = $edge;
+		}
+
+		// Draw nodes
+		$hidden_nodes = [];
+		foreach ($fragment['nodes'] as $id => $n) {
+			$node = [
+				'id' => $prefix.$id,
+			];
+
+			// Skip unconnected participants
+			if ($n['type'] == 'participant') {
+				$has_connection = false;
+				foreach ($fragment['arrows'] as $a) {
+					if ($a['target'] == $n['id'] || $a['source'] == $n['id']) {
+						$has_connection = true;
+						break;
+					}
+				}
+				if (!$has_connection) {
+					$hidden_nodes[$id] = true;
+					continue;
+				}
+			}
+
+			// Node label
+			$label = trim($n['name']);
+			if ($n['_generated'] && $label != '') {
+				$label = "($label)";
+			}
+			$node['label'] = $label;
+			$node['tooltip'] = json_encode($n, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+
+			// Node type (symbol)
+			switch ($n['type']) {
+				case 'task':
+					$node['shape'] = 'bpmn.task';
+					break;
+
+				case 'participant':
+					break;
+
+				case 'startEvent':
+					$node['shape'] = 'bpmn.event';
+					$node['event_type'] = 'start';
+					break;
+
+				case 'intermediateCatchEvent':
+				case 'intermediateThrowEvent':
+					$node['shape'] = 'bpmn.event';
+					$node['event_type'] = 'intermediate';
+					$node['event_is_throwing'] = ($n['type'] == 'intermediateThrowEvent');
+					if (isset($n['features']['timerEventDefinition'])) {
+						$node['event_symbol'] = 'timer';
+					} else if (isset($n['features']['messageEventDefinition'])) {
+						$node['event_symbol'] = 'message';
+					}
+					break;
+
+				case 'endEvent':
+					$node['shape'] = 'bpmn.event';
+					$node['event_type'] = 'end';
+					break;
+
+				case 'exclusiveGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'exclusive';
+					break;
+
+				case 'eventBasedGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'event';
+					break;
+
+				case 'parallelEventBasedGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'parallel_event';
+					break;
+
+				case 'inclusiveGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'inclusive';
+					break;
+
+				case 'complexGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'complex';
+					break;
+
+				case 'parallelGateway':
+					$node['shape'] = 'bpmn.gateway';
+					$node['gateway_type'] = 'parallel';
+					break;
+
+				case 'textAnnotation':
+					$node['shape'] = 'note';
+					$node['label'] = $n['text'];
+					$node['color'] = '#aaaaaa';
+					break;
+			}
+
+			// Low opacity for generated nodes
+			if ($n['_generated']) {
+				$node['opacity'] = '0.4';
+			}
+
+			// Node color
+			if ($n['_transition']) {
+				$node['color'] = '#2266cc';
+			} else if ($n['_state']) {
+				$node['color'] = '#66aa22';
+			} else if ($n['type'] == 'textAnnotation') {
+				$node['color'] = '#aaaaaa';
+			} else {
+				$node['color'] = '#000000';
+			}
+
+			// Receiving/invoking background
+			// TODO: Gradients for inv+rcv and possibly rcv nodes
+			if ($n['_invoking'] && $n['_receiving']) {
+				//$diagram .= ",fillcolor=\"#ffff88$alpha;0.5:#aaddff$alpha\",gradientangle=270";
+				$node['fill'] = '#ccffbb';
+			} else if ($n['_invoking']) {
+				$node['fill'] = '#ffff88';
+			} else if ($n['_receiving']) {
+				$node['fill'] = '#aaddff';
+			} else if ($n['_possibly_receiving']) {
+				$node['fill'] = '#eeeeff';
+				//$diagram .= ",fillcolor=\"#eeeeee$alpha;0.5:#aaddff$alpha\",gradientangle=270";
+			}
+
+			// Add node to graph
+			$diagram_node['graph']['nodes'][] = $node;
+
+			// Draw annotation associations
+			if (!empty($n['annotations'])) {
+				foreach ($n['annotations'] as $ann_node_id) {
+					$diagram_node['graph']['edges'][] = [
+						'id' => $prefix.$ann_node_id.'__line',
+						'start' => $node['id'],
+						'end' => $prefix.$ann_node_id,
+						'stroke_dasharray' => '5,4',
+						'color' => '#aaaaaa',
+						'arrowHead' => 'none',
+					];
+				}
+			}
+		}
+		return $diagram_node;
+	}
 }
 

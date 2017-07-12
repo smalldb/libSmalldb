@@ -68,6 +68,7 @@ abstract class AbstractMachine
 	 * @see BpmnReader, GraphMLReader
 	 */
 	protected $state_diagram_extras = [];
+	protected $state_diagram_extras_json = [];
 
 	/**
 	 * List of errors in state machine definition.
@@ -296,7 +297,7 @@ abstract class AbstractMachine
 			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
 			'properties', 'views', 'references',
 			'url_fmt', 'parent_url_fmt', 'post_action_url_fmt',
-			'state_diagram_extras'
+			'state_diagram_extras', 'state_diagram_extras_json'
 		]);
 	}
 
@@ -1074,6 +1075,8 @@ abstract class AbstractMachine
 	 *
 	 * Usage: json_encode($machine->exportJson());
 	 *
+	 * @see https://grafovatko.smalldb.org/
+	 *
 	 * @param $debug_opts Machine-specific debugging options - passed to
 	 * 	exportDotRenderDebugData(). If empty/false, no debug data are
 	 * 	added to the diagram.
@@ -1165,18 +1168,21 @@ abstract class AbstractMachine
 			];
 		}
 
-		// Optionaly render machine-specific debug data
-		if ($debug_opts) {
-			//$this->exportJsonRenderExtras($debug_opts);
-		}
-
-		return [
-			'graph' => [
-				'layout' => 'dagre',
-			],
+		// Smalldb state diagram
+		$machine_graph = [
+			'layout' => 'dagre',
 			'nodes' => $nodes,
 			'edges' => $edges,
 		];
+
+		// Optionaly render machine-specific debug data
+		if ($debug_opts) {
+			// Return the extended graph
+			return $this->exportJsonAddExtras($debug_opts, $machine_graph);
+		} else {
+			// Return the Smalldb state diagram only
+			return $machine_graph;
+		}
 	}
 
 
@@ -1398,6 +1404,46 @@ abstract class AbstractMachine
 				echo $e, "\n";
 			}
 			echo "\t}\n";
+		}
+	}
+
+
+	/**
+	 * Add extra diagram features into the diagram.
+	 *
+	 * Extend this method to add debugging visualizations.
+	 *
+	 * @see AbstractMachine::exportJson().
+	 * @see https://grafovatko.smalldb.org/
+	 *
+	 * @param $debug_opts Machine-specific Options to configure visible
+	 * 	debug data.
+	 * @param $machine_graph Smalldb state chart wrapped in a 'smalldb' node.
+	 */
+	protected function exportJsonAddExtras($debug_opts, $machine_graph)
+	{
+		if (!empty($this->state_diagram_extras_json)) {
+			$graph = $this->state_diagram_extras_json;
+			if (!isset($graph['layout'])) {
+				$graph['layout'] = 'row';
+			}
+			if (!isset($graph['nodes'])) {
+				$graph['nodes'] = [];
+			}
+			if (!isset($graph['edges'])) {
+				$graph['edges'] = [];
+			}
+			array_unshift($graph['nodes'], [
+					'id' => 'smalldb',
+					'label' => $this->machine_type,
+					'graph' => $machine_graph,
+					'color' => '#aaa',
+					'x' => 0,
+					'y' => 0,
+				]);
+			return $graph;
+		} else {
+			return $machine_graph;
 		}
 	}
 
