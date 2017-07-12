@@ -1068,18 +1068,35 @@ class BpmnReader implements IMachineDefinitionReader
 			'label' => "BPMN: ".basename($fragment_file),
 			'color' => "#5373B4",
 			'graph' => [
-				'layout' => 'dagre',
+				'layout' => 'row',
 				'nodes' => [],
 				'edges' => [],
 			],
 		];
 
 		// TODO: Draw nested graphs for participants
+		$process_nodes = [];
+		foreach ($fragment['participants'] as $id => $p) {
+			$process_nodes[$p['process']] = [
+				'id' => $prefix.$id,
+				'label' => $p['name'],
+				'color' => $p['_state_machine'] ? '#280' : '#888',
+				'fill' => $p['_state_machine'] ? '#f8f8f8' : '#fff',
+				'graph' => [
+					'layout' => 'dagre',
+					'nodes' => [],
+					'edges' => [],
+				],
+			];
+			$diagram_node['graph']['nodes'][] = & $process_nodes[$p['process']];
+		}
 
 		// Draw arrows
 		foreach ($fragment['arrows'] as $id => $a) {
 			$source_id = $prefix.$a['source'];
 			$target_id = $prefix.$a['target']; 
+			$source = $fragment['nodes'][$a['source']];
+			$target = $fragment['nodes'][$a['target']];
 			$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
 					&& $fragment['nodes'][$a['target']]['_distance'];
 			$label = trim($a['name']);
@@ -1126,7 +1143,11 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Add edge to graph
-			$diagram_node['graph']['edges'][] = $edge;
+			if ($source['process'] == $target['process']) {
+				$process_nodes[$source['process']]['graph']['edges'][] = $edge;
+			} else {
+				$diagram_node['graph']['edges'][] = $edge;
+			}
 		}
 
 		// Draw nodes
@@ -1134,10 +1155,12 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($fragment['nodes'] as $id => $n) {
 			$node = [
 				'id' => $prefix.$id,
+				'fill' => "#fff",
 			];
 
 			// Skip unconnected participants
 			if ($n['type'] == 'participant') {
+				continue;
 				$has_connection = false;
 				foreach ($fragment['arrows'] as $a) {
 					if ($a['target'] == $n['id'] || $a['source'] == $n['id']) {
@@ -1258,12 +1281,12 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Add node to graph
-			$diagram_node['graph']['nodes'][] = $node;
+			$process_nodes[$n['process']]['graph']['nodes'][] = $node;
 
 			// Draw annotation associations
 			if (!empty($n['annotations'])) {
 				foreach ($n['annotations'] as $ann_node_id) {
-					$diagram_node['graph']['edges'][] = [
+					$process_nodes[$n['process']]['graph']['edges'][] = [
 						'id' => $prefix.$ann_node_id.'__line',
 						'start' => $node['id'],
 						'end' => $prefix.$ann_node_id,

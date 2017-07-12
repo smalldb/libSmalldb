@@ -1426,6 +1426,9 @@ abstract class AbstractMachine
 			$graph = $this->state_diagram_extras_json;
 			if (!isset($graph['layout'])) {
 				$graph['layout'] = 'row';
+				$graph['layoutOptions'] = [
+					'align' => 'top',
+				];
 			}
 			if (!isset($graph['nodes'])) {
 				$graph['nodes'] = [];
