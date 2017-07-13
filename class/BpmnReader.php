@@ -302,11 +302,11 @@ class BpmnReader implements IMachineDefinitionReader
 			$machine_def['state_diagram_extras_json']['nodes'][] = static::renderBpmnJson($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 			$machine_def['state_diagram_extras_json']['extraSvg'][] =
 				['defs', [], [
-					['linearGradient', ['id' => 'bpmn_gradient_rcv_inv', 'gradientTransform' => 'rotate(90)'], [
+					['linearGradient', ['id' => 'bpmn_gradient_rcv_inv'], [
 						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
 						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 					]],
-					['linearGradient', ['id' => 'bpmn_gradient_pos_rcv', 'gradientTransform' => 'rotate(90)'], [
+					['linearGradient', ['id' => 'bpmn_gradient_pos_rcv'], [
 						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
 						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 					]],
@@ -1079,7 +1079,7 @@ class BpmnReader implements IMachineDefinitionReader
 			'label' => "BPMN: ".basename($fragment_file),
 			'color' => "#5373B4",
 			'graph' => [
-				'layout' => 'row',
+				'layout' => 'column',
 				'nodes' => [],
 				'edges' => [],
 			],
@@ -1095,6 +1095,9 @@ class BpmnReader implements IMachineDefinitionReader
 				'fill' => $p['_state_machine'] ? '#f8f8f8' : '#fff',
 				'graph' => [
 					'layout' => 'dagre',
+					'layoutOptions' => [
+						'rankdir' => 'LR',
+					],
 					'nodes' => [],
 					'edges' => [],
 				],
