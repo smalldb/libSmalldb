@@ -12,9 +12,6 @@
     "autoload": {
         "psr-4": { "Smalldb\\StateMachine\\": "class/" }
     },
-    "repositories": [
-        { "type": "composer", "url": "https://akvarko.frozen-doe.net/composer/" }
-    ],
     "require": {
         "php": ">=5.4"
     },
