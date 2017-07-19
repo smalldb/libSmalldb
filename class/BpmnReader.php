@@ -1080,6 +1080,9 @@ class BpmnReader implements IMachineDefinitionReader
 			'color' => "#5373B4",
 			'graph' => [
 				'layout' => 'column',
+				'layoutOptions' => [
+					'sortNodes' => true,
+				],
 				'nodes' => [],
 				'edges' => [],
 			],
