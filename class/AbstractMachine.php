@@ -405,9 +405,9 @@ abstract class AbstractMachine
 	 * lifetime. If cache is empty, but available, an empty array is 
 	 * supplied.
 	 *
-	 * FIXME: Override or call handlers?
+	 * @see AbstractMachine::calculateViewValue()
 	 */
-	public function getView($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	public final function getView($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
 		// Check cache
 		if (isset($view_cache[$view])) {
@@ -439,9 +439,21 @@ abstract class AbstractMachine
 					// Create reference & cache it
 					return ($view_cache[$view] = $this->resolveMachineReference($view, $properties_cache));
 				} else {
-					throw new InvalidArgumentException('Unknown view "'.$view.'" requested on machine "'.$this->machine_type.'".');
+					return ($view_cache[$view] = $this->calculateViewValue($id, $view, $properties_cache, $view_cache, $persistent_view_cache));
 				}
 		}
+	}
+
+
+	/**
+	 * Calculate value of a view.
+	 *
+	 * Returned value is cached in $view_cache until a transition occurs or
+	 * the cache is invalidated.
+	 */
+	protected function calculateViewValue($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	{
+		throw new InvalidArgumentException('Unknown view "'.$view.'" requested on machine "'.$this->machine_type.'".');
 	}
 
 

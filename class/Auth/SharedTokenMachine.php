@@ -232,6 +232,37 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 
 
 	/**
+	 * Resolve specific views
+	 *
+	 * TODO: Replace this with something better.
+	 *
+	 * @note Don't modify caches. The return value will be cached in $view_cache automatically.
+	 */
+	public function calculateViewValue($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	{
+		switch ($view) {
+			case 'user_login':
+				if ($this->getState($id)) {
+					$user = $this->getView($id, 'user', $properties_cache, $view_cache, $persistent_view_cache);
+					return $user && $user->state ? $user[$this->user_login_property] : null;
+				} else {
+					return null;
+				}
+			case 'user_password':
+				if ($this->getState($id)) {
+					$user = $this->getView($id, 'user', $properties_cache, $view_cache, $persistent_view_cache);
+					return $user && $user->state ? $user[$this->user_password_property] : null;
+				} else {
+					return null;
+				}
+			default:
+				// This will throw a nice exception
+				return parent::calculateViewValue($id, $view, $properties_cache, $view_cache, $persistent_view_cache);
+		}
+	}
+
+
+	/**
 	 * Login user
 	 *
 	 * @return New session ID on success, null otherwise.
