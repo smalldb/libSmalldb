@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Hook;
+
+
 /**
  * Container and factory of all state machines.
  *
@@ -32,6 +35,8 @@ abstract class AbstractBackend
 	private $alias;
 	private $context = null;
 	private $machine_type_cache = array();
+
+	private $after_reference_created = null;
 
 
 	/**
@@ -60,6 +65,18 @@ abstract class AbstractBackend
 	public function getAlias()
 	{
 		return $this->alias;
+	}
+
+
+	/**
+	 * Get afterReferenceCreated hook.
+	 */
+	public function afterReferenceCreated()
+	{
+		if (!$this->after_reference_created) {
+			$this->after_reference_created = new Hook();
+		}
+		return $this->after_reference_created;
 	}
 
 
@@ -206,7 +223,13 @@ abstract class AbstractBackend
 		if ($m === null) {
 			throw new RuntimeException('Cannot create machine: '.$type);
 		}
-		return new Reference($m, $id);
+
+		$ref = new Reference($m, $id);
+
+		if ($this->after_reference_created) {
+			$this->after_reference_created->emit($ref);
+		}
+		return $ref;
 	}
 
 
