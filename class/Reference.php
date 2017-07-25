@@ -99,10 +99,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public function afterPkChanged()
 	{
-		if (!$this->after_pk_changed) {
-			$this->after_pk_changed = new Hook();
-		}
-		return $this->after_pk_changed;
+		return $this->after_pk_changed ?? ($this->after_pk_changed = new Hook());
 	}
 
 	/**
@@ -112,10 +109,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public function beforeTransition()
 	{
-		if (!$this->before_transition) {
-			$this->before_transition = new Hook();
-		}
-		return $this->before_transition;
+		return $this->before_transition ?? ($this->before_transition = new Hook());
 	}
 
 	/**
@@ -125,10 +119,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public function afterTransition()
 	{
-		if (!$this->after_transition) {
-			$this->after_transition = new Hook();
-		}
-		return $this->after_transition;
+		return $this->after_transition ?? ($this->after_transition = new Hook());
 	}
 
 	/// @}

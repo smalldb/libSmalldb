@@ -73,10 +73,7 @@ abstract class AbstractBackend
 	 */
 	public function afterReferenceCreated()
 	{
-		if (!$this->after_reference_created) {
-			$this->after_reference_created = new Hook();
-		}
-		return $this->after_reference_created;
+		return $this->after_reference_created ?? ($this->after_reference_created = new Hook());
 	}
 
 
