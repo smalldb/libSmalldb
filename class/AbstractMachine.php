@@ -63,6 +63,11 @@ abstract class AbstractMachine
 	protected $machine_type;
 
 	/**
+	 * Debugger
+	 */
+	private $debug_logger = null;
+
+	/**
 	 * List of additional diagram parts in Dot language provided by backend (and its readers).
 	 *
 	 * @see BpmnReader, GraphMLReader
@@ -281,6 +286,24 @@ abstract class AbstractMachine
 		if (empty($config['no_default_machine'])) {
 			$this->setupDefaultMachine($config);
 		}
+	}
+
+
+	/**
+	 * Set debug logger
+	 */
+	public function setDebugLogger(IDebugLogger $debug_logger)
+	{
+		$this->debug_logger = $debug_logger;
+	}
+
+
+	/**
+	 * Get debug logger
+	 */
+	public function getDebugLogger()
+	{
+		return $this->debug_logger;
 	}
 
 
@@ -589,6 +612,10 @@ abstract class AbstractMachine
 
 		$state = $ref->state;
 
+		if ($this->debug_logger) {
+			$this->debug_logger->beforeTransition($ref, $state, $transition_name, $args);
+		}
+
 		// get action
 		if (isset($this->actions[$transition_name])) {
 			$action = $this->actions[$transition_name];
@@ -669,10 +696,13 @@ abstract class AbstractMachine
 			}
 		}
 
-
 		// state changed notification
 		if ($state != $new_state) {
 			$this->onStateChanged($ref, $state, $transition_name, $new_state);
+		}
+
+		if ($this->debug_logger) {
+			$this->debug_logger->afterTransition($ref, $state, $transition_name, $new_state, $ret, $returns);
 		}
 
 		return $ret;
@@ -684,6 +714,7 @@ abstract class AbstractMachine
 	 */
 	protected function onStateChanged(Reference $ref, $old_state, $transition_name, $new_state)
 	{
+		// TODO: Use Hook
 	}
 
 
@@ -712,7 +743,11 @@ abstract class AbstractMachine
 	 */
 	public function ref($id)
 	{
-		return new Reference($this, $id);
+		$ref = new Reference($this, $id);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $ref);
+		}
+		return $ref;
 	}
 
 
@@ -723,7 +758,11 @@ abstract class AbstractMachine
 	 */
 	public function nullRef()
 	{
-		return new Reference($this, null);
+		$ref = new Reference($this, null);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $ref);
+		}
+		return $ref;
 	}
 
 
@@ -734,7 +773,11 @@ abstract class AbstractMachine
 	 */
 	public function hotRef($properties)
 	{
-		return Reference::createPreheatedReference($this, $properties);
+		$ref = Reference::createPreheatedReference($this, $properties);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $ref);
+		}
+		return $ref;
 	}
 
 

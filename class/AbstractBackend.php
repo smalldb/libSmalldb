@@ -35,7 +35,7 @@ abstract class AbstractBackend
 	private $alias;
 	private $context = null;
 	private $machine_type_cache = array();
-
+	private $debug_logger = null;
 	private $after_reference_created = null;
 
 
@@ -56,6 +56,24 @@ abstract class AbstractBackend
 		if ($context !== null) {
 			$this->setContext($context);
 		}
+	}
+
+
+	/**
+	 * Set debug logger
+	 */
+	public function setDebugLogger(IDebugLogger $debug_logger)
+	{
+		$this->debug_logger = $debug_logger;
+	}
+
+
+	/**
+	 * Get debug logger
+	 */
+	public function getDebugLogger()
+	{
+		return $this->debug_logger;
 	}
 
 
@@ -167,6 +185,10 @@ abstract class AbstractBackend
 			return $this->machine_type_cache[$type];
 		} else {
 			$m = $this->createMachine($type);
+			if ($this->debug_logger) {
+				$m->setDebugLogger($this->debug_logger);
+				$this->debug_logger->afterMachineCreated($this, $type, $m);
+			}
 			if ($m !== null) {
 				$this->machine_type_cache[$type] = $m;
 			}
@@ -220,12 +242,16 @@ abstract class AbstractBackend
 		if ($m === null) {
 			throw new RuntimeException('Cannot create machine: '.$type);
 		}
-
 		$ref = new Reference($m, $id);
 
+		// Emit events
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $ref);
+		}
 		if ($this->after_reference_created) {
 			$this->after_reference_created->emit($ref);
 		}
+
 		return $ref;
 	}
 
@@ -238,7 +264,20 @@ abstract class AbstractBackend
 	public function nullRef($type)
 	{
 		$m = $this->getMachine($type);
-		return new Reference($m, null);
+		if ($m === null) {
+			throw new RuntimeException('Cannot create machine: '.$type);
+		}
+		$ref = new Reference($m, null);
+
+		// Emit events
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $ref);
+		}
+		if ($this->after_reference_created) {
+			$this->after_reference_created->emit($ref);
+		}
+
+		return $ref;
 	}
 
 
