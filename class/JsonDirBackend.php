@@ -92,14 +92,14 @@ class JsonDirBackend extends AbstractBackend
 		}
 
 		// Load machine definitions from APC cache
-		if (!empty($options['cache_disabled'])) {
+		if (!empty($options['cache_disabled']) || !function_exists('apcu_fetch')) {
 			$cache_loaded = false;
 			$cache_mtime = 0;
 			$cache_disabled = true;
 		} else {
 			$cache_disabled = false;
 			$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
-			$cache_data = apc_fetch($cache_key, $cache_loaded);
+			$cache_data = apcu_fetch($cache_key, $cache_loaded);
 			if ($cache_loaded) {
 				list($this->machine_type_table, $cache_mtime) = $cache_data;
 				//debug_dump($this->machine_type_table, 'Cached @ '.strftime('%F %T', $cache_mtime));
@@ -211,7 +211,7 @@ class JsonDirBackend extends AbstractBackend
 			}
 
 			if (!$cache_disabled) {
-				apc_store($cache_key, array($this->machine_type_table, time()));
+				apcu_store($cache_key, array($this->machine_type_table, time()));
 			}
 		}
 	}
