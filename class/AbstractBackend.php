@@ -65,6 +65,10 @@ abstract class AbstractBackend
 	public function setDebugLogger(IDebugLogger $debug_logger)
 	{
 		$this->debug_logger = $debug_logger;
+
+		if ($this->debug_logger) {
+			$this->debug_logger->afterDebugLoggerRegistered($this);
+		}
 	}
 
 

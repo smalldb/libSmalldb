@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine;
 
 interface IDebugLogger
 {
+	function afterDebugLoggerRegistered($smalldb);
 	function afterMachineCreated($smalldb, $type, $machine);
 	function afterReferenceCreated($smalldb, $ref, $properties = null);
 	function beforeTransition($ref, $old_state, $transition_name, $args);
