@@ -127,7 +127,7 @@ class SimpleBackend extends AbstractBackend
 	/**
 	 * @copydoc AbstractBackend::createListing()
 	 */
-	public function createListing($query_filters, $filtering_flags = 0)
+	protected function createListing($query_filters, $filtering_flags = 0)
 	{
 		throw new \Exception('Not implemented.');
 	}

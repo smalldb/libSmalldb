@@ -37,6 +37,7 @@ abstract class AbstractBackend
 	private $machine_type_cache = array();
 	private $debug_logger = null;
 	private $after_reference_created = null;
+	private $after_listing_created = null;
 
 
 	/**
@@ -96,6 +97,15 @@ abstract class AbstractBackend
 	public function afterReferenceCreated()
 	{
 		return $this->after_reference_created ?? ($this->after_reference_created = new Hook());
+	}
+
+
+	/**
+	 * Get afterListingCreated hook.
+	 */
+	public function afterListingCreated()
+	{
+		return $this->after_listing_created ?? ($this->after_listing_created = new Hook());
 	}
 
 
@@ -286,7 +296,29 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Creates a listing using given query filters.
+	 * Create a listing using given query filters via createListing() method.
+	 *
+	 * @see createListing()
+	 *
+	 * @return IListing.
+	 */
+	public final function listing($query_filters, $filtering_flags = 0)
+	{
+		$listing = $this->createListing($query_filters, $filtering_flags);
+
+		if ($this->debug_logger) {
+			$this->debug_logger->afterListingCreated($this, $listing);
+		}
+		if ($this->after_listing_created) {
+			$this->after_listing_created->emit($ref);
+		}
+
+		return $listing;
+	}
+
+
+	/**
+	 * Create a listing using given query filters.
 	 *
 	 * Listing class is inferred from the query filters, callers should not 
 	 * expect any particular class to be used. This allows to replace 
@@ -298,7 +330,7 @@ abstract class AbstractBackend
 	 *
 	 * @return IListing.
 	 */
-	abstract public function createListing($query_filters, $filtering_flags = 0);
+	abstract protected function createListing($query_filters, $filtering_flags = 0);
 
 
 	/**

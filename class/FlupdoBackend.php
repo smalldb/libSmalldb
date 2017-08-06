@@ -122,7 +122,7 @@ class FlupdoBackend extends AbstractBackend
 	/**
 	 * Creates a listing using given filters.
 	 */
-	public function createListing($filters, $filtering_flags = 0)
+	protected function createListing($filters, $filtering_flags = 0)
 	{
 		$type = $filters['type'];
 		return $this->getMachine($type)->createListing($filters, $filtering_flags);

@@ -226,7 +226,7 @@ class JsonDirBackend extends AbstractBackend
 	 * @see AbstractBackend::createListing()
 	 * @return IListing
 	 */
-	public function createListing($filters, $filtering_flags = 0)
+	protected function createListing($filters, $filtering_flags = 0)
 	{
 		$type = $filters['type'];
 		$machine = $this->getMachine($type);
