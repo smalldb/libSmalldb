@@ -13,7 +13,7 @@
         "psr-4": { "Smalldb\\StateMachine\\": "class/" }
     },
     "require": {
-        "php": ">=5.4"
+        "php": ">=7.0"
     },
     "require-dev": {
         "smalldb/doc-tools": "dev-master"
