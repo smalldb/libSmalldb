@@ -307,7 +307,7 @@ abstract class AbstractBackend
 		$listing = $this->createListing($query_filters, $filtering_flags);
 
 		if ($this->debug_logger) {
-			$this->debug_logger->afterListingCreated($this, $listing);
+			$this->debug_logger->afterListingCreated($this, $listing, $query_filters);
 		}
 		if ($this->after_listing_created) {
 			$this->after_listing_created->emit($ref);
