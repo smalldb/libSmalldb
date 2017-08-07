@@ -745,7 +745,7 @@ abstract class AbstractMachine
 	{
 		$ref = new Reference($this, $id);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this, $ref);
+			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
 		}
 		return $ref;
 	}
@@ -760,7 +760,7 @@ abstract class AbstractMachine
 	{
 		$ref = new Reference($this, null);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this, $ref);
+			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
 		}
 		return $ref;
 	}
@@ -775,7 +775,7 @@ abstract class AbstractMachine
 	{
 		$ref = Reference::createPreheatedReference($this, $properties);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this, $ref);
+			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
 		}
 		return $ref;
 	}
