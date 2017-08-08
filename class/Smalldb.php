@@ -198,9 +198,9 @@ class Smalldb
 			$listing = $backend->listing($query_filters, $filtering_flags);
 
 			if ($listing) {
-				if ($this->debug_logger) {
-					$this->debug_logger->afterListingCreated($backend, $listing, $query_filters);
-				}
+				//if ($this->debug_logger) {
+				//	$this->debug_logger->afterListingCreated($backend, $listing, $query_filters);
+				//}
 				if ($this->after_listing_created) {
 					$this->after_listing_created->emit($listing);
 				}
