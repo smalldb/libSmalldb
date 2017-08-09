@@ -104,6 +104,16 @@
                         "type": "bool",
                         "default": false
                     },
+                    "is_calculated": {
+                        "description": "Flag whether the property is a calculated. Use sql_select option to specify SQL expression used to calculate the property.",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "sql_select": {
+                        "description": "SQL expression (i.e. subselect) to retrieve the property value.",
+                        "type": "string",
+                        "default": null
+                    },
                     "components": {
                         "description": "Property is composed from these database columns. Data are loaded into a key-value map (array); the components are the keys, the database columns are the values.",
                         "type": [ "null", "object" ],

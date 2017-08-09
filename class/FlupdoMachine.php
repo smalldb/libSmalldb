@@ -538,7 +538,7 @@ class FlupdoMachine extends AbstractMachine
 						$query->select("$table.$column_quoted AS $column_quoted");
 					}
 				}
-			} else if (!empty($p['calculated']) && isset($p['sql_select'])) {
+			} else if ((!empty($p['is_calculated']) || !empty($p['calculated'])) && isset($p['sql_select'])) {
 				$query->select("({$p['sql_select']}) AS $pi_quoted");
 			} else {
 				$query->select("$table.$pi_quoted AS $pi_quoted");
