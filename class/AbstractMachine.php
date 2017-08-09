@@ -613,7 +613,7 @@ abstract class AbstractMachine
 		$state = $ref->state;
 
 		if ($this->debug_logger) {
-			$this->debug_logger->beforeTransition($ref, $state, $transition_name, $args);
+			$this->debug_logger->beforeTransition($this->backend, $ref, $state, $transition_name, $args);
 		}
 
 		// get action
@@ -702,7 +702,7 @@ abstract class AbstractMachine
 		}
 
 		if ($this->debug_logger) {
-			$this->debug_logger->afterTransition($ref, $state, $transition_name, $new_state, $ret, $returns);
+			$this->debug_logger->afterTransition($this->backend, $ref, $state, $transition_name, $new_state, $ret, $returns);
 		}
 
 		return $ret;
