@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,13 +61,13 @@ class FlupdoCrudMachine extends FlupdoMachine
 	protected $time_modified_table_column = null;
 
 	/**
-	 * @copydoc FlupdoMachine::initializeMachine()
+	 * @copydoc FlupdoMachine::configureMachine()
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
-		parent::initializeMachine($config);
+		parent::configureMachine($config);
 
-		$this->initializeMachineConfig($config, [
+		$this->loadMachineConfig($config, [
 			'user_id_table_column', 'owner_relation', 'owner_create_transition',
 			'generate_random_id',
 			'time_created_table_column', 'time_modified_table_column'
@@ -92,7 +92,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 	/**
 	 * Setup basic CRUD machine.
 	 */
-	protected function setupDefaultMachine($config)
+	protected function setupDefaultMachine(array $config)
 	{
 		// Name of inputs and outputs with properties
 		$io_name = isset($config['io_name']) ? (string) $config['io_name'] : 'item';
@@ -210,7 +210,7 @@ class FlupdoCrudMachine extends FlupdoMachine
 
 		// Set owner
 		if ($this->user_id_table_column) {
-			$properties[$this->user_id_table_column] = $this->backend->getAuth()->getUserId();
+			$properties[$this->user_id_table_column] = $this->auth->getUserId();
 		}
 
 		// Check permission of owning machine

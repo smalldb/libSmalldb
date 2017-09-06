@@ -77,11 +77,7 @@ class Smalldb
 	 */
 	public function registerBackend(AbstractBackend $backend)
 	{
-		$alias = $backend->getAlias();
-
-		if (isset($this->backends[$alias])) {
-			throw new InvalidArgumentException('Duplicate backend alias: '.$alias);
-		} else if (in_array($backend, $this->backends, TRUE)) {
+		if (in_array($backend, $this->backends, TRUE)) {
 			throw new InvalidArgumentException('Duplicate backend: '.get_class($backend));
 		} else {
 			$this->backends[] = $backend;
@@ -100,6 +96,21 @@ class Smalldb
 	public function getBackends()
 	{
 		return $this->backends;
+	}
+
+
+	/**
+	 * Obtain machine from backends.
+	 */
+	public function getMachine(string $type)
+	{
+		foreach ($this->backends as $b => $backend) {
+			$m = $backend->getMachine($this, $type);
+			if ($m !== null) {
+				return $m;
+			}
+		}
+		return null;
 	}
 
 
@@ -136,7 +147,7 @@ class Smalldb
 		foreach ($this->backends as $b => $backend) {
 			if ($backend->inferMachineType($argv, $type, $id)) {
 				// Create reference
-				$m = $backend->getMachine($type);
+				$m = $backend->getMachine($this, $type);
 				if ($m === null) {
 					throw new RuntimeException('Cannot create machine: '.$type);
 				}
@@ -166,7 +177,7 @@ class Smalldb
 	public function nullRef(string $type): Reference
 	{
 		foreach ($this->backends as $b => $backend) {
-			$m = $backend->getMachine($type);
+			$m = $backend->getMachine($this, $type);
 			if ($m !== null) {
 				$ref = new Reference($m, null);
 
@@ -195,7 +206,7 @@ class Smalldb
 	public final function listing($query_filters, $filtering_flags = 0)
 	{
 		foreach ($this->backends as $b => $backend) {
-			$listing = $backend->listing($query_filters, $filtering_flags);
+			$listing = $backend->listing($this, $query_filters, $filtering_flags);
 
 			if ($listing) {
 				//if ($this->debug_logger) {
@@ -224,8 +235,8 @@ class Smalldb
 		$results = [];
 
 		foreach ($this->backends as $b => $backend) {
-			foreach($this->getKnownTypes() as $m) {
-				$machine = $this->getMachine($m);
+			foreach($backend->getKnownTypes() as $m) {
+				$machine = $backend->getMachine($this, $m);
 				$results[$b][$m] = $machine->performSelfCheck();
 			}
 		}

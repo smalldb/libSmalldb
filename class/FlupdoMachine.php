@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
  */
 
 namespace Smalldb\StateMachine;
+
+use Smalldb\Flupdo\IFlupdo;
+
 
 /**
  * Base class for state machines accessed via Flupdo.
@@ -37,14 +40,14 @@ class FlupdoMachine extends AbstractMachine
 	/**
 	 * Database connection.
 	 *
-	 * @var Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\IFlupdo
 	 */
 	protected $flupdo;
 
 	/**
 	 * Sphinx indexer connection.
 	 *
-	 * @var Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\IFlupdo
 	 */
 	protected $sphinx;
 
@@ -120,39 +123,22 @@ class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Constructor.
+	 */
+	public function __construct(IFlupdo $flupdo, IAuth $auth = null, IFlupdo $sphinx = null)
+	{
+		$this->flupdo = $flupdo;
+		$this->auth = $auth;
+		$this->sphinx = $sphinx;
+	}
+
+	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
 		// Load simple config options
-		$this->initializeMachineConfig($config, ['table', 'table_alias', 'state_select']);
-
-		// Get flupdo resource
-		$this->flupdo = $this->getContext(isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database');
-		if (!($this->flupdo instanceof \Smalldb\Flupdo\IFlupdo)) {
-			throw new InvalidArgumentException('Flupdo resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
-		}
-
-		// Get authenticator
-		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
-		$this->auth = $this->getContext($auth_resource_name);
-		if (!$this->auth) {
-			throw new InvalidArgumentException('Authenticator is missing.');
-		}
-		if (!($this->auth instanceof \Smalldb\StateMachine\Auth\IAuth)) {
-			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\Auth\\IAuth.');
-		}
-
-		// Get sphinx resource (optional)
-		$sphinx_resource_name = isset($config['sphinx_resource']) ? $config['sphinx_resource'] : null;
-		if ($sphinx_resource_name) {
-			$this->sphinx = $this->getContext($sphinx_resource_name);
-			if (!($this->sphinx instanceof \Smalldb\Flupdo\IFlupdo)) {
-				throw new InvalidArgumentException('Sphinx resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
-			}
-		} else {
-			$this->sphinx = null;
-		}
+		$this->loadMachineConfig($config, ['table', 'table_alias', 'state_select']);
 
 		// Properties (unless set before)
 		if ($this->properties === null) {
@@ -164,7 +150,7 @@ class FlupdoMachine extends AbstractMachine
 
 		// Setup machine. Properties may be set before initializing,
 		// this will merge config with autodetected properties
-		parent::initializeMachine($config);
+		parent::configureMachine($config);
 
 		// Collect primary key from properties
 		if ($this->pk_columns === null) {

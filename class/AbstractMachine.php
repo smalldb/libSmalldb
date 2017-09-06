@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2012-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,14 +51,14 @@ abstract class AbstractMachine
 	const RETURNS_NEW_ID = 'new_id';
 
 	/**
-	 * Backend, where all machines are stored.
+	 * Smalldb entry point
 	 *
-	 * @var AbstractBackend
+	 * @var Smalldb
 	 */
-	protected $backend;
+	protected $smalldb = null;
 
 	/**
-	 * Identification within $backend.
+	 * Identification of the machine.
 	 */
 	protected $machine_type;
 
@@ -271,16 +271,32 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Constructor. Machine gets reference to owning backend, name of its
-	 * type (under which is this machine registered in backend) and
-	 * optional array of additional configuration (passed directly
-	 * to initializeMachine method).
+	 * Constructor is left empty so the machine implementation can use it to
+	 * obtain resources automatically via dependency injection.
 	 */
-	public function __construct(AbstractBackend $backend, $type, $config)
+	public function __construct()
 	{
-		$this->backend = $backend;
+		// Nop.
+	}
+
+
+	/**
+	 * Configure machine. Machine gets reference to Smalldb entry point,
+	 * name of its type (under which is this machine registered) and
+	 * optional array of additional configuration (passed directly to
+	 * initializeMachine method).
+	 *
+	 * This method is called only once, right after backend creates/gets
+	 * instance of this class.
+	 */
+	public final function initializeMachine(Smalldb $smalldb, string $type, array $config)
+	{
+		if ($this->smalldb !== null) {
+			throw new RuntimeException('Machine is already configured.');
+		}
+		$this->smalldb = $smalldb;
 		$this->machine_type = $type;
-		$this->initializeMachine($config);
+		$this->configureMachine($config);
 
 		// Create default machine (see FlupdoCrudMachine)?
 		if (empty($config['no_default_machine'])) {
@@ -312,10 +328,10 @@ abstract class AbstractMachine
 	 *
 	 * @warning Derived classes always must call parent's implementation.
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
 		// Load configuration
-		$this->initializeMachineConfig($config, [
+		$this->loadMachineConfig($config, [
 			'states', 'state_groups', 'actions', 'errors',
 			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
 			'properties', 'views', 'references',
@@ -331,28 +347,28 @@ abstract class AbstractMachine
 	 * This method should check what is already defined to not overwrite
 	 * provided definitions.
 	 *
-	 * @note This method is not called is $config['no_default_machine'] is set.
+	 * @note This method is not called when $config['no_default_machine'] is set.
 	 *
 	 * @warning Derived classes may not call parent's implementation.
 	 */
-	protected function setupDefaultMachine($config)
+	protected function setupDefaultMachine(array $config)
 	{
 		// nop
 	}
 
 
 	/**
-	 * Merge $config into state machine member variables.
+	 * Merge $config into state machine member variables (helper method).
 	 *
 	 * Already set member variables are not overwriten. If the member
 	 * variable is an array, the $config array is merged with the config,
-	 * overwriting only matching keys (using array_replace_recursive).
+	 * overwriting only matching keys (using `array_replace_recursive`).
 	 *
 	 * @param $config Configuration passed to state machine
 	 * @param $keys List of feys from $config to load into member variables
 	 * 	of the same name.
 	 */
-	protected function initializeMachineConfig($config, $keys)
+	protected function loadMachineConfig(array $config, array $keys)
 	{
 		foreach ($keys as $k) {
 			if (isset($config[$k])) {
@@ -481,20 +497,6 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get context object (whatever it is).
-	 *
-	 * @param $resource_name Resource of the context to return.
-	 * @return Return whole context if `$resource` is null, otherwise returns
-	 * 	requested resource from the context.
-	 * @see AbstractBackend::getContext()
-	 */
-	protected function getContext($resource_name = null)
-	{
-		return $this->backend->getContext($resource_name);
-	}
-
-
-	/**
 	 * Create URL using properties and given format.
 	 */
 	protected function urlFormat($id, $url_fmt, $properties_cache)
@@ -539,7 +541,7 @@ abstract class AbstractMachine
 		// Get referenced machine type
 		$ref_machine_type = $r['machine_type'];
 
-		return new Reference($this->backend->getMachine($ref_machine_type), $ref_machine_id);
+		return new Reference($this->smalldb->getMachine($ref_machine_type), $ref_machine_id);
 	}
 
 
@@ -613,7 +615,7 @@ abstract class AbstractMachine
 		$state = $ref->state;
 
 		if ($this->debug_logger) {
-			$this->debug_logger->beforeTransition($this->backend, $ref, $state, $transition_name, $args);
+			$this->debug_logger->beforeTransition($this, $ref, $state, $transition_name, $args);
 		}
 
 		// get action
@@ -702,7 +704,7 @@ abstract class AbstractMachine
 		}
 
 		if ($this->debug_logger) {
-			$this->debug_logger->afterTransition($this->backend, $ref, $state, $transition_name, $new_state, $ret, $returns);
+			$this->debug_logger->afterTransition($this, $ref, $state, $transition_name, $new_state, $ret, $returns);
 		}
 
 		return $ret;
@@ -728,15 +730,6 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get backend which owns this machine.
-	 */
-	public function getBackend()
-	{
-		return $this->backend;
-	}
-
-
-	/**
 	 * Helper to create Reference to this machine.
 	 *
 	 * @see AbstractBackend::ref
@@ -745,7 +738,7 @@ abstract class AbstractMachine
 	{
 		$ref = new Reference($this, $id);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
+			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
 		return $ref;
 	}
@@ -760,7 +753,7 @@ abstract class AbstractMachine
 	{
 		$ref = new Reference($this, null);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
+			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
 		return $ref;
 	}
@@ -775,7 +768,7 @@ abstract class AbstractMachine
 	{
 		$ref = Reference::createPreheatedReference($this, $properties);
 		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this->backend, $ref);
+			$this->debug_logger->afterReferenceCreated(null, $ref, $properties);
 		}
 		return $ref;
 	}

@@ -81,11 +81,11 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	protected $user_password_property = 'password';
 
 	/**
-	 * @copydoc FlupdoMachine::initializeMachine()
+	 * @copydoc FlupdoMachine::configureMachine()
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
-		parent::initializeMachine($config);
+		parent::configureMachine($config);
 
 		if (isset($config['table_columns'])) {
 			$this->table_columns = array_replace_recursive($this->table_columns, $config['table_columns']);
@@ -105,7 +105,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	/**
 	 * Setup session machine
 	 */
-	protected function setupDefaultMachine($config)
+	protected function setupDefaultMachine(array $config)
 	{
 
 		// State function

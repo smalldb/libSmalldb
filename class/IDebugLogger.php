@@ -21,10 +21,10 @@ namespace Smalldb\StateMachine;
 interface IDebugLogger
 {
 	function afterDebugLoggerRegistered(AbstractBackend $smalldb);
-	function afterMachineCreated(AbstractBackend $smalldb, string $type, AbstractMachine $machine);
-	function afterReferenceCreated(AbstractBackend $smalldb, Reference $ref, array $properties = null);
-	function afterListingCreated(AbstractBackend $smalldb, IListing $listing, array $filters);
-	function beforeTransition(AbstractBackend $smalldb, Reference $ref, string $old_state, string $transition_name, $args);
-	function afterTransition(AbstractBackend $smalldb, Reference $ref, string $old_state, string $transition_name, string $new_state, $return_value, $returns);
+	function afterMachineCreated(AbstractBackend $backend = null, string $type, AbstractMachine $machine);
+	function afterReferenceCreated(AbstractBackend $backend = null, Reference $ref, array $properties = null);
+	function afterListingCreated(AbstractBackend $backend = null, IListing $listing, array $filters);
+	function beforeTransition(AbstractMachine $machine, Reference $ref, string $old_state, string $transition_name, $args);
+	function afterTransition(AbstractMachine $machine, Reference $ref, string $old_state, string $transition_name, string $new_state, $return_value, $returns);
 }
 

@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Auth;
 
-use Smalldb\StateMachine\AbstractBackend;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Utils\Hook;
 
 
@@ -61,9 +61,9 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 	 * Constructor.
 	 *
 	 * @param $config Configuration options - see Configuration section.
-	 * @param $smalldb Instance of %Smalldb backend (AbstractBackend).
+	 * @param $smalldb %Smalldb entry point.
 	 */
-	public function __construct($config, AbstractBackend $smalldb)
+	public function __construct($config, Smalldb $smalldb)
 	{
 		$this->smalldb = $smalldb;
 

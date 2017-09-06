@@ -41,6 +41,11 @@ use Smalldb\StateMachine\Utils\Utils;
 class JsonDirBackend extends AbstractBackend
 {
 	/**
+	 * DI Container from which machines are obtained.
+	 */
+	protected $container;
+
+	/**
 	 * Name of directory which contains JSON files with state machine definitions.
 	 */
 	protected $base_dir;
@@ -80,9 +85,9 @@ class JsonDirBackend extends AbstractBackend
 	 *   - `file_readers`: File readers map (regexp -> class name)
 	 *
 	 */
-	public function __construct($options, $context = null, $alias)
+	public function __construct($options, \Psr\Container\ContainerInterface $container = null)
 	{
-		parent::__construct($options, $context, $alias);
+		$this->container = $container;
 
 		// Get base dir (constants are available)
 		$this->base_dir = rtrim(Utils::filename_format($options['base_dir'], array()), '/').'/';
@@ -98,7 +103,7 @@ class JsonDirBackend extends AbstractBackend
 			$cache_disabled = true;
 		} else {
 			$cache_disabled = false;
-			$cache_key = __CLASS__.':'.$alias.':'.$this->base_dir;
+			$cache_key = get_class($this).':'.$this->base_dir;
 			$cache_data = apcu_fetch($cache_key, $cache_loaded);
 			if ($cache_loaded) {
 				list($this->machine_type_table, $cache_mtime) = $cache_data;
@@ -226,10 +231,10 @@ class JsonDirBackend extends AbstractBackend
 	 * @see AbstractBackend::createListing()
 	 * @return IListing
 	 */
-	protected function createListing($filters, $filtering_flags = 0)
+	protected function createListing(Smalldb $smalldb, $filters, $filtering_flags = 0)
 	{
 		$type = $filters['type'];
-		$machine = $this->getMachine($type);
+		$machine = $this->getMachine($smalldb, $type);
 		if ($machine === null) {
 			throw new InvalidArgumentException('Machine type "'.$type.'" not found.');
 		}
@@ -332,7 +337,7 @@ class JsonDirBackend extends AbstractBackend
 	 *
 	 * Returns descendant of AbstractMachine or null.
 	 */
-	protected function createMachine($type)
+	protected function createMachine(Smalldb $smalldb, $type)
 	{
 		if (isset($this->machine_type_table[$type])) {
 			$desc = $this->machine_type_table[$type];
@@ -344,8 +349,17 @@ class JsonDirBackend extends AbstractBackend
 			throw new InvalidArgumentException('Class not specified in machine configuration.');
 		}
 
-		//debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
-		return new $desc['class']($this, $type, $desc);
+		$m = null;
+		if ($this->container && $this->container instanceof \Psr\Container\ContainerInterface && $this->container->has($desc['class'])) {
+			$m = $this->container->get($desc['class']);
+		}
+		if ($m === null) {
+			//debug_msg('Creating machine %s from class: %s', $type, $desc['class']);
+			$m = new $desc['class']();
+		}
+
+		$m->initializeMachine($smalldb, $type, $desc);
+		return $m;
 	}
 
 }
