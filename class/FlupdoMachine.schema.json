@@ -131,6 +131,20 @@
                     }
                 }
             }
+        },
+        "references": {
+            "additionalProperties": {
+                "properties": {
+                    "properties": {
+                        "description": "Properties from referred machine loaded into this machine as calculated properties.",
+                        "type": "object",
+                        "additionalProperties": {
+                            "description": "Keys are local property names, values are property names of the referred machine.",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     }
 }
