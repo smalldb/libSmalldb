@@ -2,7 +2,7 @@
     "title": "Smalldb Flupdo State Machine",
     "extends_file": "AbstractMachine.schema.json",
     "type": "object",
-    "required": [ "auth_resource", "table" ],
+    "required": [ "table" ],
     "properties": {
         "access_policies": {
             "additionalProperties": {
@@ -45,21 +45,6 @@
                     }
                 }
             }
-        },
-        "flupdo_resource": {
-            "description": "Context property containing the Flupdo instance connected to database.",
-            "type": "string",
-            "default": "database"
-        },
-        "auth_resource": {
-            "description": "Context property containing the authenticator (IAuth)",
-            "type": "string",
-            "default": "auth"
-        },
-        "sphinx_resource": {
-            "description": "Context property containing the Flupdo resource connected to a Sphinx search engine.",
-            "type": ["null", "string"],
-            "default": null
         },
         "state_select": {
             "description": "SQL expression to calculate current state (required unless the getStateSelect method is overriden).",
