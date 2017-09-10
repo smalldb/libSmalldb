@@ -132,13 +132,10 @@ abstract class AbstractBackend
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
 		} else {
-			$m = $this->createMachine($smalldb, $type);
+			$m = $this->machine_type_cache[$type] = $this->createMachine($smalldb, $type);
 			if ($this->debug_logger) {
 				$m->setDebugLogger($this->debug_logger);
 				$this->debug_logger->afterMachineCreated($this, $type, $m);
-			}
-			if ($m !== null) {
-				$this->machine_type_cache[$type] = $m;
 			}
 			return $m;
 		}

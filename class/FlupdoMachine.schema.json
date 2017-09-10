@@ -94,6 +94,11 @@
                         "type": "bool",
                         "default": false
                     },
+                    "is_referred": {
+                        "description": "Flag whether the property should be included (as a calculated property) when another machine refer to this machine.",
+                        "type": "bool",
+                        "default": false
+                    },
                     "sql_select": {
                         "description": "SQL expression (i.e. subselect) to retrieve the property value.",
                         "type": "string",
