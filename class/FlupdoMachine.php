@@ -502,46 +502,62 @@ class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Add a single property to the query.
+	 */
+	private function queryAddPropertySelect(\Smalldb\Flupdo\FlupdoBuilder $query, string $table_alias, string $property_name, array $property, string $property_prefix = '')
+	{
+		$table_q = $query->quoteIdent($table_alias);
+		$p_q = $query->quoteIdent($property_name);
+		$pa_q = $query->quoteIdent($property_prefix.$property_name);
+		if (!empty($p['components'])) {
+			foreach ($p['components'] as $component => $column) {
+				if (!isset($this->properties[$column])) {
+					// make sure the components are selected, but only if they are not standalone properties
+					$column_q = $query->quoteIdent($column);
+					$alias_q = $property_prefix !== '' ? $query->quoteIdent($property_prefix.$column) : $column_q;
+					$query->select("$table_q.$column_q AS $alias_q");
+				}
+			}
+		} else if ((!empty($p['is_calculated']) || !empty($p['calculated'])) && isset($p['sql_select'])) {
+			// FIXME: Provide a symbol for the current table alias - this will not work when importing properties.
+			$query->select("({$p['sql_select']}) AS $pa_q");
+		} else {
+			$query->select("$table_q.$p_q AS $pa_q");
+		}
+	}
+
+	/**
 	 * Add properties to select.
 	 *
-	 * TODO: Skip some properties in lisings.
+	 * TODO: Skip some properties in listings.
 	 */
-	protected function queryAddPropertiesSelect($query)
+	protected function queryAddPropertiesSelect(\Smalldb\Flupdo\FlupdoBuilder $query)
 	{
-		$table = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
+		$table = $this->table_alias ? $this->table_alias : $this->table;
+		$table_q = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
 
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
-			$pi_quoted = $query->quoteIdent($pi);
 			if ($pi == 'state') {
 				// State is not accepted as property and 'state' is reserved name.
 				continue;
-			} else if (!empty($p['components'])) {
-				foreach ($p['components'] as $component => $column) {
-					if (!isset($this->properties[$column])) {
-						// make sure the components are selected, but only if they are not standalone properties
-						$column_quoted = $query->quoteIdent($column);
-						$query->select("$table.$column_quoted AS $column_quoted");
-					}
-				}
-			} else if ((!empty($p['is_calculated']) || !empty($p['calculated'])) && isset($p['sql_select'])) {
-				$query->select("({$p['sql_select']}) AS $pi_quoted");
-			} else {
-				$query->select("$table.$pi_quoted AS $pi_quoted");
 			}
+			$this->queryAddPropertySelect($query, $table, $pi, $p);
 		}
 
 		// Import foreign properties using references
 		if (!empty($this->references)) {
 			foreach ($this->references as $r => $ref) {
-				$ref_machine = $this->backend->getMachine($ref['machine_type']);
+				$ref_machine = $this->smalldb->getMachine($ref['machine_type']);
 				if (!$ref_machine) {
 					throw new \InvalidArgumentException(sprintf('Unknown machine type "%s" for reference "%s".', $ref['machine_type'], $r));
 				}
 
 				// Generate reference join
-				$ref_alias = $query->quoteIdent('ref_'.$r);
-				$ref_table = $query->quoteIdent($ref_machine->table);
+				$ref_alias = 'ref_'.$r;
+				$ref_alias_q = $query->quoteIdent($ref_alias);
+				$ref_table = $ref_machine->table;
+				$ref_table_q = $query->quoteIdent($ref_table);
 
 				$ref_that_id = $ref_machine->describeId();
 				$ref_this_id = $ref['machine_id'];
@@ -566,15 +582,22 @@ class FlupdoMachine extends AbstractMachine
 					// Join refered table
 					$on = array();
 					for ($i = 0; $i < $id_len; $i++) {
-						$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+						$on[] = "$table_q.${ref_this_id[$i]} = $ref_alias_q.${ref_that_id[$i]}";
 					}
-					$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
+					$query->leftJoin("$ref_table_q AS $ref_alias_q ON ".join(' AND ', $on));
 				}
 
-				// Import properties
+				// Import referred properties
+				foreach ($ref_machine->properties as $p => $ref_p) {
+					if (!empty($ref_p['is_referred'])) {
+						$this->queryAddPropertySelect($query, $ref_alias, $p, $ref_p, $r.'_');
+					}
+				}
+
+				// Import explicitly referred properties
 				if (!empty($ref['properties'])) {
 					foreach ($ref['properties'] as $p => $ref_p) {
-						$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+						$this->queryAddPropertySelect($query, $ref_alias, $p, $ref_p, $r.'_');
 					}
 				}
 			}
