@@ -27,22 +27,22 @@ namespace Smalldb\StateMachine;
  */
 class ReferenceFactory
 {
-	/** @var AbstractBackend */
-	protected $backend;
+	/** @var Smalldb */
+	protected $smalldb;
 
 	/**
 	 * Constructor.
 	 */
-	public function __construct(AbstractBackend $backend)
+	public function __construct(Smalldb $smalldb)
 	{
-		$this->backend = $backend;
+		$this->smalldb = $smalldb;
 	}
 
 
-	protected function __call($name, $args)
+	public function __call($name, $args)
 	{
 		array_unshift($args, $name);
-		return $this->backend->ref($args);
+		return $this->smalldb->ref($args);
 	}
 
 }
