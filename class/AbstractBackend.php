@@ -37,13 +37,6 @@ abstract class AbstractBackend
 	private $after_reference_created = null;
 	private $after_listing_created = null;
 
-	/**
-	 * Provides a factory to get typed references.
-	 *
-	 * @var ReferenceFactory
-	 */
-	public $ref;
-
 
 	/**
 	 * Set debug logger
@@ -55,8 +48,6 @@ abstract class AbstractBackend
 		if ($this->debug_logger) {
 			$this->debug_logger->afterDebugLoggerRegistered($this);
 		}
-
-		$this->ref = new ReferenceFactory($this);
 	}
 
 
