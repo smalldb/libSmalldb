@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2013-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
  */
 
 namespace Smalldb\StateMachine;
+
+use Smalldb\Flupdo\IFlupdo;
+
 
 /**
  * Base class for state machines accessed via Flupdo.
@@ -37,14 +40,14 @@ class FlupdoMachine extends AbstractMachine
 	/**
 	 * Database connection.
 	 *
-	 * @var Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\IFlupdo
 	 */
 	protected $flupdo;
 
 	/**
 	 * Sphinx indexer connection.
 	 *
-	 * @var Smalldb\Flupdo\Flupdo
+	 * @var Smalldb\Flupdo\IFlupdo
 	 */
 	protected $sphinx;
 
@@ -120,39 +123,22 @@ class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Constructor.
+	 */
+	public function __construct(IFlupdo $flupdo, IAuth $auth = null, IFlupdo $sphinx = null)
+	{
+		$this->flupdo = $flupdo;
+		$this->auth = $auth;
+		$this->sphinx = $sphinx;
+	}
+
+	/**
 	 * Define state machine used by all instances of this type.
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
 		// Load simple config options
-		$this->initializeMachineConfig($config, ['table', 'table_alias', 'state_select']);
-
-		// Get flupdo resource
-		$this->flupdo = $this->getContext(isset($config['flupdo_resource']) ? $config['flupdo_resource'] : 'database');
-		if (!($this->flupdo instanceof \Smalldb\Flupdo\IFlupdo)) {
-			throw new InvalidArgumentException('Flupdo resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
-		}
-
-		// Get authenticator
-		$auth_resource_name = isset($config['auth_resource']) ? $config['auth_resource'] : 'auth';
-		$this->auth = $this->getContext($auth_resource_name);
-		if (!$this->auth) {
-			throw new InvalidArgumentException('Authenticator is missing.');
-		}
-		if (!($this->auth instanceof \Smalldb\StateMachine\Auth\IAuth)) {
-			throw new InvalidArgumentException('Authenticator resource is not an instance of \\Smalldb\\StateMachine\\Auth\\IAuth.');
-		}
-
-		// Get sphinx resource (optional)
-		$sphinx_resource_name = isset($config['sphinx_resource']) ? $config['sphinx_resource'] : null;
-		if ($sphinx_resource_name) {
-			$this->sphinx = $this->getContext($sphinx_resource_name);
-			if (!($this->sphinx instanceof \Smalldb\Flupdo\IFlupdo)) {
-				throw new InvalidArgumentException('Sphinx resource does not implement \\Smalldb\\Flupdo\\IFlupdo.');
-			}
-		} else {
-			$this->sphinx = null;
-		}
+		$this->loadMachineConfig($config, ['table', 'table_alias', 'state_select']);
 
 		// Properties (unless set before)
 		if ($this->properties === null) {
@@ -164,7 +150,7 @@ class FlupdoMachine extends AbstractMachine
 
 		// Setup machine. Properties may be set before initializing,
 		// this will merge config with autodetected properties
-		parent::initializeMachine($config);
+		parent::configureMachine($config);
 
 		// Collect primary key from properties
 		if ($this->pk_columns === null) {
@@ -516,46 +502,62 @@ class FlupdoMachine extends AbstractMachine
 
 
 	/**
+	 * Add a single property to the query.
+	 */
+	private function queryAddPropertySelect(\Smalldb\Flupdo\FlupdoBuilder $query, string $table_alias, string $property_name, array $property, string $property_prefix = '')
+	{
+		$table_q = $query->quoteIdent($table_alias);
+		$p_q = $query->quoteIdent($property_name);
+		$pa_q = $query->quoteIdent($property_prefix.$property_name);
+		if (!empty($p['components'])) {
+			foreach ($p['components'] as $component => $column) {
+				if (!isset($this->properties[$column])) {
+					// make sure the components are selected, but only if they are not standalone properties
+					$column_q = $query->quoteIdent($column);
+					$alias_q = $property_prefix !== '' ? $query->quoteIdent($property_prefix.$column) : $column_q;
+					$query->select("$table_q.$column_q AS $alias_q");
+				}
+			}
+		} else if ((!empty($p['is_calculated']) || !empty($p['calculated'])) && isset($p['sql_select'])) {
+			// FIXME: Provide a symbol for the current table alias - this will not work when importing properties.
+			$query->select("({$p['sql_select']}) AS $pa_q");
+		} else {
+			$query->select("$table_q.$p_q AS $pa_q");
+		}
+	}
+
+	/**
 	 * Add properties to select.
 	 *
-	 * TODO: Skip some properties in lisings.
+	 * TODO: Skip some properties in listings.
 	 */
-	protected function queryAddPropertiesSelect($query)
+	protected function queryAddPropertiesSelect(\Smalldb\Flupdo\FlupdoBuilder $query)
 	{
-		$table = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
+		$table = $this->table_alias ? $this->table_alias : $this->table;
+		$table_q = $query->quoteIdent($this->table_alias ? $this->table_alias : $this->table);
 
 		// Add properties (some may be calculated)
 		foreach ($this->properties as $pi => $p) {
-			$pi_quoted = $query->quoteIdent($pi);
 			if ($pi == 'state') {
 				// State is not accepted as property and 'state' is reserved name.
 				continue;
-			} else if (!empty($p['components'])) {
-				foreach ($p['components'] as $component => $column) {
-					if (!isset($this->properties[$column])) {
-						// make sure the components are selected, but only if they are not standalone properties
-						$column_quoted = $query->quoteIdent($column);
-						$query->select("$table.$column_quoted AS $column_quoted");
-					}
-				}
-			} else if (!empty($p['calculated']) && isset($p['sql_select'])) {
-				$query->select("({$p['sql_select']}) AS $pi_quoted");
-			} else {
-				$query->select("$table.$pi_quoted AS $pi_quoted");
 			}
+			$this->queryAddPropertySelect($query, $table, $pi, $p);
 		}
 
 		// Import foreign properties using references
 		if (!empty($this->references)) {
 			foreach ($this->references as $r => $ref) {
-				$ref_machine = $this->backend->getMachine($ref['machine_type']);
+				$ref_machine = $this->smalldb->getMachine($ref['machine_type']);
 				if (!$ref_machine) {
 					throw new \InvalidArgumentException(sprintf('Unknown machine type "%s" for reference "%s".', $ref['machine_type'], $r));
 				}
 
 				// Generate reference join
-				$ref_alias = $query->quoteIdent('ref_'.$r);
-				$ref_table = $query->quoteIdent($ref_machine->table);
+				$ref_alias = 'ref_'.$r;
+				$ref_alias_q = $query->quoteIdent($ref_alias);
+				$ref_table = $ref_machine->table;
+				$ref_table_q = $query->quoteIdent($ref_table);
 
 				$ref_that_id = $ref_machine->describeId();
 				$ref_this_id = $ref['machine_id'];
@@ -580,15 +582,22 @@ class FlupdoMachine extends AbstractMachine
 					// Join refered table
 					$on = array();
 					for ($i = 0; $i < $id_len; $i++) {
-						$on[] = "$table.${ref_this_id[$i]} = $ref_alias.${ref_that_id[$i]}";
+						$on[] = "$table_q.${ref_this_id[$i]} = $ref_alias_q.${ref_that_id[$i]}";
 					}
-					$query->leftJoin("$ref_table AS $ref_alias ON ".join(' AND ', $on));
+					$query->leftJoin("$ref_table_q AS $ref_alias_q ON ".join(' AND ', $on));
 				}
 
-				// Import properties
+				// Import referred properties
+				foreach ($ref_machine->properties as $p => $ref_p) {
+					if (!empty($ref_p['is_referred'])) {
+						$this->queryAddPropertySelect($query, $ref_alias, $p, $ref_p, $r.'_');
+					}
+				}
+
+				// Import explicitly referred properties
 				if (!empty($ref['properties'])) {
 					foreach ($ref['properties'] as $p => $ref_p) {
-						$query->select($ref_alias.'.'.$query->quoteIdent($ref_p).' AS '.$query->quoteIdent($p));
+						$this->queryAddPropertySelect($query, $ref_alias, $p, $ref_p, $r.'_');
 					}
 				}
 			}

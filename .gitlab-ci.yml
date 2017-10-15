@@ -1,8 +1,9 @@
 stages:
         - deploy
+        - post-deploy
 
 mirror:
-        stage: deploy
+        stage: post-deploy
         only:
                 - tags
                 - master

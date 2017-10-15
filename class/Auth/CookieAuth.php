@@ -17,7 +17,10 @@
  */
 
 namespace Smalldb\StateMachine\Auth;
-use Smalldb\StateMachine\AbstractBackend;
+
+use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\Utils\Hook;
+
 
 /**
  * IAuth implementation using Smalldb state machine and shared session token 
@@ -32,7 +35,7 @@ use Smalldb\StateMachine\AbstractBackend;
  * @warning Always use the same reference provided by getSessionMachine() to
  * 	manipulate the current session, otherwise the cookies will not be
  * 	updated, because other references does not have the
- * 	Reference::$after_transition_cb callback registered.
+ * 	Reference::afterTransition() hook registered.
  *
  * @see http://smalldb.org/security/
  */
@@ -58,9 +61,9 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 	 * Constructor.
 	 *
 	 * @param $config Configuration options - see Configuration section.
-	 * @param $smalldb Instance of %Smalldb backend (AbstractBackend).
+	 * @param $smalldb %Smalldb entry point.
 	 */
-	public function __construct($config, AbstractBackend $smalldb)
+	public function __construct($config, Smalldb $smalldb)
 	{
 		$this->smalldb = $smalldb;
 
@@ -124,7 +127,7 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 
 		// Update token on state change
 		$t = $this;
-		$this->session_machine->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
+		$this->session_machine->afterTransition()->addListener(function($ref, $transition_name, $arguments, $return_value, $returns) use ($t) {
 			if (!$ref->state) {
 				// Remove cookie when session is terminated
 				setcookie($t->cookie_name, null, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
@@ -136,7 +139,7 @@ class CookieAuth implements \Smalldb\StateMachine\Auth\IAuth
 				// Update cookie on state change
 				setcookie($t->cookie_name, $ref->id, time() + $t->cookie_ttl, '/', null, !empty($_SERVER['HTTPS']), true);
 			}
-		};
+		});
 
 		// Everything else is up to the state machine
 	}

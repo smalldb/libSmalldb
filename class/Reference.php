@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Hook;
+
+
 /**
  * %Reference to one or more state machines. Allows you to invoke transitions in
  * the easy way by calling methods on this reference object. This is syntactic
@@ -74,41 +77,50 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 
 
 	/************************************************************************//**
-	 * @name	Callbacks
+	 * @name	Hooks
 	 * @{
 	 *
-	 * Callbacks are lists of callables. Reference calls them when 
+	 * Hooks are lists of callables. Reference calls them when
 	 * something interesting happens.
 	 *
-	 * To register a callable simply add it to the list.
+	 * @see Hook class
+	 *
+	 * @example `$ref->afterPkChanged()->addListener(function() { ... });`
 	 */
 
-	/**
-	 * List of callbacks called when reference primary key changes.
-	 *
-	 * Just append callable to this array:
-	 *
-	 * `$ref->on_pk_change[] = function($ref, $new_pk) { };`
-	 */
-	public $pk_changed_cb = array();
+	private $after_pk_changed = null;
+	private $before_transition = null;
+	private $after_transition = null;
 
 	/**
-	 * List of callbacks called before transition is invoked.
+	 * Hook invoked when reference primary key changes.
 	 *
-	 * Just append callable to this array:
-	 *
-	 * `$ref->before_transition_cb[] = function($ref, $transition_name, $arguments) { };`
+	 * Callback: `function($ref, $new_pk)`
 	 */
-	public $before_transition_cb = array();
+	public function afterPkChanged()
+	{
+		return $this->after_pk_changed ?? ($this->after_pk_changed = new Hook());
+	}
 
 	/**
-	 * List of callbacks called after transition is invoked.
+	 * Hook invoked before transition is invoked.
 	 *
-	 * Just append callable to this array:
-	 *
-	 * `$ref->after_transition_cb[] = function($ref, $transition_name, $arguments, $return_value, $returns) { };`
+	 * Callback: `function($ref, $transition_name, $arguments)`
 	 */
-	public $after_transition_cb = array();
+	public function beforeTransition()
+	{
+		return $this->before_transition ?? ($this->before_transition = new Hook());
+	}
+
+	/**
+	 * Hook invoked after transition is invoked.
+	 *
+	 * Callback: `function($ref, $transition_name, $arguments, $return_value, $returns)`
+	 */
+	public function afterTransition()
+	{
+		return $this->after_transition ?? ($this->after_transition = new Hook());
+	}
 
 	/// @}
 
@@ -198,24 +210,6 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 
 
 	/**
-	 * Call all registered callbacks when event happens.
-	 */
-	protected function emit($callback_list)
-	{
-		if (empty($callback_list)) {
-			return;
-		}
-
-		$args = func_get_args();
-		$args[0] = $this;
-
-		foreach ($callback_list as $cb) {
-			call_user_func_array($cb, $args);
-		}
-	}
-
-
-	/**
 	 * Returns true if reference points only to machine type. Such 
 	 * reference may not be used to modify any machine, however, it can be 
 	 * used to invoke 'create'-like transitions.
@@ -245,7 +239,10 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public function __call($name, $arguments)
 	{
-		$this->emit($this->before_transition_cb, $name, $arguments);
+		if ($this->before_transition) {
+			$this->before_transition->emit($this, $name, $arguments);
+		}
+
 		$old_id = $this->id;
 
 		$this->clearCache();
@@ -258,7 +255,9 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 			}
 		});
 
-		$this->emit($this->after_transition_cb, $name, $arguments, $r, $returns);
+		if ($this->after_transition) {
+			$this->after_transition->emit($this, $name, $arguments, $r, $returns);
+		}
 
 		switch ($returns) {
 			case AbstractMachine::RETURNS_VALUE:
@@ -266,7 +265,9 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 				return $r;
 			case AbstractMachine::RETURNS_NEW_ID:
 				// When state machine ID changes, reference must be updated to point to the same machine.
-				$this->emit($this->pk_changed_cb, $old_id, $this->id);
+				if ($this->after_pk_changed) {
+					$this->after_pk_changed->emit($this, $old_id, $this->id);
+				}
 				return $this;
 			default:
 				throw new RuntimeException('Unknown semantics of the return value: '.$returns);

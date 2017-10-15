@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Hook;
+
+
 /**
  * Container and factory of all state machines.
  *
@@ -29,9 +32,10 @@ namespace Smalldb\StateMachine;
  */
 abstract class AbstractBackend
 {
-	private $alias;
-	private $context = null;
 	private $machine_type_cache = array();
+	private $debug_logger = null;
+	private $after_reference_created = null;
+	private $after_listing_created = null;
 
 	/**
 	 * Provides a factory to get typed references.
@@ -42,21 +46,14 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Initialize backend. $alias is used for debugging and logging.
-	 * Options should contain all required backend-specific data for
-	 * backend initialization.
-	 *
-	 * @param $options are used by derived classes to configure everything.
-	 * @param $context is accessible to AbstractMachine, but it may not be
-	 * 	available in constructor - see setContext().
-	 * @param $alias is used to identify instances in log.
+	 * Set debug logger
 	 */
-	public function __construct($options, $context = null, $alias)
+	public function setDebugLogger(IDebugLogger $debug_logger)
 	{
-		$this->alias = $alias;
+		$this->debug_logger = $debug_logger;
 
-		if ($context !== null) {
-			$this->setContext($context);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterDebugLoggerRegistered($this);
 		}
 
 		$this->ref = new ReferenceFactory($this);
@@ -64,46 +61,29 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Get current alias.
+	 * Get debug logger
 	 */
-	public function getAlias()
+	public function getDebugLogger()
 	{
-		return $this->alias;
+		return $this->debug_logger;
 	}
 
 
 	/**
-	 * Set context if not set yet.
-	 *
-	 * Context cannot be changed later, but to 
+	 * Get afterReferenceCreated hook.
 	 */
-	public function setContext($context)
+	public function afterReferenceCreated()
 	{
-		if ($this->context !== null) {
-			throw new RuntimeException('Context is already set.');
-		}
-
-		$this->context = $context;
+		return $this->after_reference_created ?? ($this->after_reference_created = new Hook());
 	}
 
 
 	/**
-	 * Get context object (whatever it is).
-	 *
-	 * @param $resource_name Resource of the context to return.
-	 * @return Return whole context if `$resource` is null, otherwise returns
-	 * 	requested resource from the context.
-	 * @see AbstractMachine::getContext()
+	 * Get afterListingCreated hook.
 	 */
-	public function getContext($resource_name = null)
+	public function afterListingCreated()
 	{
-		if ($resource_name === null) {
-			return $this->context;
-		} else {
-			return is_array($this->context)
-				? $this->context[$resource_name]
-				: $this->context->$resource_name;
-		}
+		return $this->after_listing_created ?? ($this->after_listing_created = new Hook());
 	}
 
 
@@ -140,7 +120,7 @@ abstract class AbstractBackend
 	 *
 	 * Returns descendant of AbstractMachine or null.
 	 */
-	protected abstract function createMachine($type);
+	protected abstract function createMachine(Smalldb $smalldb, $type);
 
 
 	/**
@@ -156,14 +136,15 @@ abstract class AbstractBackend
 	/**
 	 * Get state machine of given type, create it if necessary.
 	 */
-	public function getMachine($type)
+	public function getMachine(Smalldb $smalldb, $type)
 	{
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
 		} else {
-			$m = $this->createMachine($type);
-			if ($m !== null) {
-				$this->machine_type_cache[$type] = $m;
+			$m = $this->machine_type_cache[$type] = $this->createMachine($smalldb, $type);
+			if ($this->debug_logger) {
+				$m->setDebugLogger($this->debug_logger);
+				$this->debug_logger->afterMachineCreated($this, $type, $m);
 			}
 			return $m;
 		}
@@ -171,68 +152,29 @@ abstract class AbstractBackend
 
 
 	/**
-	 * Get reference to state machine instance of given type and id.
+	 * Create a listing using given query filters via createListing() method.
 	 *
-	 * If the first argument is instance of Reference, this makes copy of it.
-	 * If the first argument is an array, it will be used instead of all arguments.
+	 * @see createListing()
 	 *
-	 * These calls are equivalent:
-	 *
-	 *     $ref = $this->ref('item', 1, 2, 3);
-	 *     $ref = $this->ref(array('item', 1, 2, 3));
-	 *     $ref = $this->ref($this->ref('item', 1, 2, 3)));
+	 * @return IListing.
 	 */
-	public function ref($arg1 /* ... */)
+	public final function listing(Smalldb $smalldb, $query_filters, $filtering_flags = 0)
 	{
-		$argc = func_num_args();
+		$listing = $this->createListing($smalldb, $query_filters, $filtering_flags);
 
-		// Clone if Reference is given
-		if ($arg1 instanceof Reference) {
-			if ($argc != 1) {
-				throw new InvalidArgumentException('The first argument is Reference and more than one argument given.');
-			}
-			return clone $arg1;
+		if ($this->debug_logger) {
+			$this->debug_logger->afterListingCreated($this, $listing, $query_filters);
+		}
+		if ($this->after_listing_created) {
+			$this->after_listing_created->emit($ref);
 		}
 
-		// Get arguments
-		if (is_array($arg1)) {
-			if ($argc != 1) {
-				throw new InvalidArgumentException('The first argument is array and more than one argument given.');
-			}
-			$args = $arg1;
-			$argc = count($arg1);
-		} else {
-			$args = func_get_args();
-		}
-
-		// Decode arguments to machine type and machine-specific ID
-		if (!$this->inferMachineType($args, $type, $id)) {
-			throw new InvalidReferenceException('Cannot infer machine type: '.$type);
-		}
-
-		// Create reference
-		$m = $this->getMachine($type);
-		if ($m === null) {
-			throw new RuntimeException('Cannot create machine: '.$type);
-		}
-		return new Reference($m, $id);
+		return $listing;
 	}
 
 
 	/**
-	 * Get reference to non-existent state machine instance of given type. 
-	 * You may want to invoke 'create' or similar transition using this 
-	 * reference.
-	 */
-	public function nullRef($type)
-	{
-		$m = $this->getMachine($type);
-		return new Reference($m, null);
-	}
-
-
-	/**
-	 * Creates a listing using given query filters.
+	 * Create a listing using given query filters.
 	 *
 	 * Listing class is inferred from the query filters, callers should not 
 	 * expect any particular class to be used. This allows to replace 
@@ -244,7 +186,7 @@ abstract class AbstractBackend
 	 *
 	 * @return IListing.
 	 */
-	abstract public function createListing($query_filters, $filtering_flags = 0);
+	abstract protected function createListing(Smalldb $smalldb, $query_filters, $filtering_flags = 0);
 
 
 	/**

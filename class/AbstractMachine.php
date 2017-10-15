@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2012-2017, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,16 +51,21 @@ abstract class AbstractMachine
 	const RETURNS_NEW_ID = 'new_id';
 
 	/**
-	 * Backend, where all machines are stored.
+	 * Smalldb entry point
 	 *
-	 * @var AbstractBackend
+	 * @var Smalldb
 	 */
-	protected $backend;
+	protected $smalldb = null;
 
 	/**
-	 * Identification within $backend.
+	 * Identification of the machine.
 	 */
 	protected $machine_type;
+
+	/**
+	 * Debugger
+	 */
+	private $debug_logger = null;
 
 	/**
 	 * List of additional diagram parts in Dot language provided by backend (and its readers).
@@ -68,6 +73,7 @@ abstract class AbstractMachine
 	 * @see BpmnReader, GraphMLReader
 	 */
 	protected $state_diagram_extras = [];
+	protected $state_diagram_extras_json = [];
 
 	/**
 	 * List of errors in state machine definition.
@@ -265,16 +271,32 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Constructor. Machine gets reference to owning backend, name of its
-	 * type (under which is this machine registered in backend) and
-	 * optional array of additional configuration (passed directly
-	 * to initializeMachine method).
+	 * Constructor is left empty so the machine implementation can use it to
+	 * obtain resources automatically via dependency injection.
 	 */
-	public function __construct(AbstractBackend $backend, $type, $config)
+	public function __construct()
 	{
-		$this->backend = $backend;
+		// Nop.
+	}
+
+
+	/**
+	 * Configure machine. Machine gets reference to Smalldb entry point,
+	 * name of its type (under which is this machine registered) and
+	 * optional array of additional configuration (passed directly to
+	 * initializeMachine method).
+	 *
+	 * This method is called only once, right after backend creates/gets
+	 * instance of this class.
+	 */
+	public final function initializeMachine(Smalldb $smalldb, string $type, array $config)
+	{
+		if ($this->smalldb !== null) {
+			throw new RuntimeException('Machine is already configured.');
+		}
+		$this->smalldb = $smalldb;
 		$this->machine_type = $type;
-		$this->initializeMachine($config);
+		$this->configureMachine($config);
 
 		// Create default machine (see FlupdoCrudMachine)?
 		if (empty($config['no_default_machine'])) {
@@ -284,19 +306,37 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Set debug logger
+	 */
+	public function setDebugLogger(IDebugLogger $debug_logger)
+	{
+		$this->debug_logger = $debug_logger;
+	}
+
+
+	/**
+	 * Get debug logger
+	 */
+	public function getDebugLogger()
+	{
+		return $this->debug_logger;
+	}
+
+
+	/**
 	 * Define state machine used by all instances of this type.
 	 *
 	 * @warning Derived classes always must call parent's implementation.
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
 		// Load configuration
-		$this->initializeMachineConfig($config, [
+		$this->loadMachineConfig($config, [
 			'states', 'state_groups', 'actions', 'errors',
 			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
 			'properties', 'views', 'references',
 			'url_fmt', 'parent_url_fmt', 'post_action_url_fmt',
-			'state_diagram_extras'
+			'state_diagram_extras', 'state_diagram_extras_json'
 		]);
 	}
 
@@ -307,28 +347,28 @@ abstract class AbstractMachine
 	 * This method should check what is already defined to not overwrite
 	 * provided definitions.
 	 *
-	 * @note This method is not called is $config['no_default_machine'] is set.
+	 * @note This method is not called when $config['no_default_machine'] is set.
 	 *
 	 * @warning Derived classes may not call parent's implementation.
 	 */
-	protected function setupDefaultMachine($config)
+	protected function setupDefaultMachine(array $config)
 	{
 		// nop
 	}
 
 
 	/**
-	 * Merge $config into state machine member variables.
+	 * Merge $config into state machine member variables (helper method).
 	 *
 	 * Already set member variables are not overwriten. If the member
 	 * variable is an array, the $config array is merged with the config,
-	 * overwriting only matching keys (using array_replace_recursive).
+	 * overwriting only matching keys (using `array_replace_recursive`).
 	 *
 	 * @param $config Configuration passed to state machine
 	 * @param $keys List of feys from $config to load into member variables
 	 * 	of the same name.
 	 */
-	protected function initializeMachineConfig($config, $keys)
+	protected function loadMachineConfig(array $config, array $keys)
 	{
 		foreach ($keys as $k) {
 			if (isset($config[$k])) {
@@ -404,9 +444,9 @@ abstract class AbstractMachine
 	 * lifetime. If cache is empty, but available, an empty array is 
 	 * supplied.
 	 *
-	 * FIXME: Override or call handlers?
+	 * @see AbstractMachine::calculateViewValue()
 	 */
-	public function getView($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	public final function getView($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
 		// Check cache
 		if (isset($view_cache[$view])) {
@@ -438,23 +478,21 @@ abstract class AbstractMachine
 					// Create reference & cache it
 					return ($view_cache[$view] = $this->resolveMachineReference($view, $properties_cache));
 				} else {
-					throw new InvalidArgumentException('Unknown view "'.$view.'" requested on machine "'.$this->machine_type.'".');
+					return ($view_cache[$view] = $this->calculateViewValue($id, $view, $properties_cache, $view_cache, $persistent_view_cache));
 				}
 		}
 	}
 
 
 	/**
-	 * Get context object (whatever it is).
+	 * Calculate value of a view.
 	 *
-	 * @param $resource_name Resource of the context to return.
-	 * @return Return whole context if `$resource` is null, otherwise returns
-	 * 	requested resource from the context.
-	 * @see AbstractBackend::getContext()
+	 * Returned value is cached in $view_cache until a transition occurs or
+	 * the cache is invalidated.
 	 */
-	protected function getContext($resource_name = null)
+	protected function calculateViewValue($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
-		return $this->backend->getContext($resource_name);
+		throw new InvalidArgumentException('Unknown view "'.$view.'" requested on machine "'.$this->machine_type.'".');
 	}
 
 
@@ -503,7 +541,7 @@ abstract class AbstractMachine
 		// Get referenced machine type
 		$ref_machine_type = $r['machine_type'];
 
-		return new Reference($this->backend->getMachine($ref_machine_type), $ref_machine_id);
+		return new Reference($this->smalldb->getMachine($ref_machine_type), $ref_machine_id);
 	}
 
 
@@ -575,6 +613,10 @@ abstract class AbstractMachine
 		}
 
 		$state = $ref->state;
+
+		if ($this->debug_logger) {
+			$this->debug_logger->beforeTransition($this, $ref, $state, $transition_name, $args);
+		}
 
 		// get action
 		if (isset($this->actions[$transition_name])) {
@@ -656,10 +698,13 @@ abstract class AbstractMachine
 			}
 		}
 
-
 		// state changed notification
 		if ($state != $new_state) {
 			$this->onStateChanged($ref, $state, $transition_name, $new_state);
+		}
+
+		if ($this->debug_logger) {
+			$this->debug_logger->afterTransition($this, $ref, $state, $transition_name, $new_state, $ret, $returns);
 		}
 
 		return $ret;
@@ -671,6 +716,7 @@ abstract class AbstractMachine
 	 */
 	protected function onStateChanged(Reference $ref, $old_state, $transition_name, $new_state)
 	{
+		// TODO: Use Hook
 	}
 
 
@@ -684,22 +730,17 @@ abstract class AbstractMachine
 
 
 	/**
-	 * Get backend which owns this machine.
-	 */
-	public function getBackend()
-	{
-		return $this->backend;
-	}
-
-
-	/**
 	 * Helper to create Reference to this machine.
 	 *
 	 * @see AbstractBackend::ref
 	 */
 	public function ref($id)
 	{
-		return new Reference($this, $id);
+		$ref = new Reference($this, $id);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated(null, $ref);
+		}
+		return $ref;
 	}
 
 
@@ -710,7 +751,11 @@ abstract class AbstractMachine
 	 */
 	public function nullRef()
 	{
-		return new Reference($this, null);
+		$ref = new Reference($this, null);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated(null, $ref);
+		}
+		return $ref;
 	}
 
 
@@ -721,7 +766,11 @@ abstract class AbstractMachine
 	 */
 	public function hotRef($properties)
 	{
-		return Reference::createPreheatedReference($this, $properties);
+		$ref = Reference::createPreheatedReference($this, $properties);
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated(null, $ref, $properties);
+		}
+		return $ref;
 	}
 
 
@@ -1070,6 +1119,122 @@ abstract class AbstractMachine
 
 
 	/**
+	 * Export state machine as JSON siutable for Grafovatko.
+	 *
+	 * Usage: json_encode($machine->exportJson());
+	 *
+	 * @see https://grafovatko.smalldb.org/
+	 *
+	 * @param $debug_opts Machine-specific debugging options - passed to
+	 * 	exportDotRenderDebugData(). If empty/false, no debug data are
+	 * 	added to the diagram.
+	 * @return Array suitable for json_encode().
+	 */
+	public function exportJson($debug_opts = false)
+	{
+		$nodes = [
+			[
+				"id" => "BEGIN",
+				"shape" => "uml.initial_state",
+			]
+		];
+		$edges = [];
+
+		// States
+		if (!empty($this->states)) {
+			foreach ($this->states as $s => $state) {
+				if ($s != '') {
+					$nodes[] = [
+						"id" => 's_'.$s,
+						"label" => $s,
+						"fill" => $state['color'] ?? "#eee",
+						"shape" => "uml.state",
+					];
+				}
+			}
+		}
+
+		$have_final_state = false;
+		$missing_states = array();
+
+		// Transitions
+		$used_actions = array();
+		if (!empty($this->actions)) {
+			foreach ($this->actions as $a => $action) {
+				if (empty($action['transitions'])) {
+					continue;
+				}
+				foreach ($action['transitions'] as $src => $transition) {
+					$transition = array_merge($action, $transition);
+					if ($src === null || $src === '') {
+						$s_src = 'BEGIN';
+					} else {
+						$s_src = 's_'.$src;
+						if (!array_key_exists($src, $this->states)) {
+							$missing_states[$src] = true;
+						}
+					}
+					foreach ($transition['targets'] as $dst) {
+						if ($dst === null || $dst === '') {
+							$s_dst = $src == '' ? 'BEGIN':'END';
+							$have_final_state = true;
+						} else {
+							$s_dst = 's_'.$dst;
+							if (!array_key_exists($dst, $this->states)) {
+								$missing_states[$dst] = true;
+							}
+						}
+						$edges[] = [
+							'start' => $s_src,
+							'end' => $s_dst,
+							'label' => $a,
+							'color' => $transition['color'] ?? "#000",
+							'weight' => $transition['weight'] ?? null,
+							'arrowTail' => isset($transition['access_policy']) && isset($this->access_policies[$transition['access_policy']]['arrow_tail'])
+								? $this->access_policies[$transition['access_policy']]['arrow_tail']
+								: null,
+						];
+					}
+				}
+			}
+		}
+
+		// Missing states
+		foreach ($missing_states as $s => $state) {
+			$nodes[] = [
+				'id' => 's_'.$s,
+				'label' => $s."\n(undefined)",
+				'color' => '#ffccaa',
+			];
+		}
+
+		// Final state
+		if ($have_final_state) {
+			$nodes[] = [
+				'id' => 'END',
+				'shape' => 'uml.final_state',
+			];
+		}
+
+		// Smalldb state diagram
+		$machine_graph = [
+			'layout' => 'dagre',
+			'nodes' => $nodes,
+			'edges' => $edges,
+		];
+
+		// Optionaly render machine-specific debug data
+		if ($debug_opts) {
+			// Return the extended graph
+			return $this->exportJsonAddExtras($debug_opts, $machine_graph);
+		} else {
+			// Return the Smalldb state diagram only
+			return $machine_graph;
+		}
+	}
+
+
+	/**
 	 * Export state machine to Graphviz source code.
 	 *
 	 * @param $debug_opts Machine-specific debugging options - passed to
@@ -1091,7 +1256,7 @@ abstract class AbstractMachine
 			"	bgcolor = transparent;\n",
 			"	pad = 0;\n",
 			"	margin = 0;\n",
-			#"	splines = line;\n",
+			//"	splines = line;\n",
 			"	edge [ arrowtail=none, arrowhead=normal, dir=both, arrowsize=0.6, fontsize=8, fontname=\"sans\" ];\n",
 			"	node [ shape=box, style=\"rounded,filled\", fontsize=9, fontname=\"sans\", fillcolor=\"#eeeeee\" ];\n",
 			"	graph [ fontsize=9, fontname=\"sans bold\" ];\n",
@@ -1287,6 +1452,49 @@ abstract class AbstractMachine
 				echo $e, "\n";
 			}
 			echo "\t}\n";
+		}
+	}
+
+
+	/**
+	 * Add extra diagram features into the diagram.
+	 *
+	 * Extend this method to add debugging visualizations.
+	 *
+	 * @see AbstractMachine::exportJson().
+	 * @see https://grafovatko.smalldb.org/
+	 *
+	 * @param $debug_opts Machine-specific Options to configure visible
+	 * 	debug data.
+	 * @param $machine_graph Smalldb state chart wrapped in a 'smalldb' node.
+	 */
+	protected function exportJsonAddExtras($debug_opts, $machine_graph)
+	{
+		if (!empty($this->state_diagram_extras_json)) {
+			$graph = $this->state_diagram_extras_json;
+			if (!isset($graph['layout'])) {
+				$graph['layout'] = 'row';
+				$graph['layoutOptions'] = [
+					'align' => 'top',
+				];
+			}
+			if (!isset($graph['nodes'])) {
+				$graph['nodes'] = [];
+			}
+			if (!isset($graph['edges'])) {
+				$graph['edges'] = [];
+			}
+			array_unshift($graph['nodes'], [
+					'id' => 'smalldb',
+					'label' => $this->machine_type,
+					'graph' => $machine_graph,
+					'color' => '#aaa',
+					'x' => 0,
+					'y' => 0,
+				]);
+			return $graph;
+		} else {
+			return $machine_graph;
 		}
 	}
 

@@ -198,6 +198,28 @@
         "listing_access_policy": {
             "description": "Access policy when listing state machine instances (user may be able to read any state machine state, but may not be able to enumerate them). See 'access_policies'.",
             "type": [ "string", "null" ]
+        },
+        "references": {
+            "description": "References to other state machines (like foreign keys).",
+            "type": "object",
+            "additionalProperties": {
+                "description": "Reference to other state machine (like a foreign key).",
+                "type": "object",
+                "properties": {
+                    "machine_type": {
+                        "description": "Type of referenced machine.",
+                        "type": "string"
+                    },
+                    "machine_id": {
+                        "description": "Properties referring the other state machine.",
+                        "type": "array",
+                        "items": {
+                            "description": "Names of local properties which contain ID of the referred machine.",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     }
 }

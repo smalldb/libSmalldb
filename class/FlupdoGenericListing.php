@@ -553,6 +553,15 @@ class FlupdoGenericListing implements IListing
 
 
 	/**
+	 * Get original filters without unknown filters
+	 */
+	public function getQueryFilters()
+	{
+		return $this->query_filters;
+	}
+
+
+	/**
 	 * Return unknown filters, subset of $query_filters.
 	 */
 	public function getUnknownFilters()

@@ -2,7 +2,7 @@
     "title": "Smalldb Flupdo State Machine",
     "extends_file": "AbstractMachine.schema.json",
     "type": "object",
-    "required": [ "auth_resource", "table" ],
+    "required": [ "table" ],
     "properties": {
         "access_policies": {
             "additionalProperties": {
@@ -45,21 +45,6 @@
                     }
                 }
             }
-        },
-        "flupdo_resource": {
-            "description": "Context property containing the Flupdo instance connected to database.",
-            "type": "string",
-            "default": "database"
-        },
-        "auth_resource": {
-            "description": "Context property containing the authenticator (IAuth)",
-            "type": "string",
-            "default": "auth"
-        },
-        "sphinx_resource": {
-            "description": "Context property containing the Flupdo resource connected to a Sphinx search engine.",
-            "type": ["null", "string"],
-            "default": null
         },
         "state_select": {
             "description": "SQL expression to calculate current state (required unless the getStateSelect method is overriden).",
@@ -104,6 +89,21 @@
                         "type": "bool",
                         "default": false
                     },
+                    "is_calculated": {
+                        "description": "Flag whether the property is a calculated. Use sql_select option to specify SQL expression used to calculate the property.",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "is_referred": {
+                        "description": "Flag whether the property should be included (as a calculated property) when another machine refer to this machine.",
+                        "type": "bool",
+                        "default": false
+                    },
+                    "sql_select": {
+                        "description": "SQL expression (i.e. subselect) to retrieve the property value.",
+                        "type": "string",
+                        "default": null
+                    },
                     "components": {
                         "description": "Property is composed from these database columns. Data are loaded into a key-value map (array); the components are the keys, the database columns are the values.",
                         "type": [ "null", "object" ],
@@ -118,6 +118,20 @@
                         "type": [ "null", "string" ],
                         "enum": [ null, "json" ],
                         "default": null
+                    }
+                }
+            }
+        },
+        "references": {
+            "additionalProperties": {
+                "properties": {
+                    "properties": {
+                        "description": "Properties from referred machine loaded into this machine as calculated properties.",
+                        "type": "object",
+                        "additionalProperties": {
+                            "description": "Keys are local property names, values are property names of the referred machine.",
+                            "type": "string"
+                        }
                     }
                 }
             }

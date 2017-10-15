@@ -81,11 +81,11 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	protected $user_password_property = 'password';
 
 	/**
-	 * @copydoc FlupdoMachine::initializeMachine()
+	 * @copydoc FlupdoMachine::configureMachine()
 	 */
-	protected function initializeMachine($config)
+	protected function configureMachine(array $config)
 	{
-		parent::initializeMachine($config);
+		parent::configureMachine($config);
 
 		if (isset($config['table_columns'])) {
 			$this->table_columns = array_replace_recursive($this->table_columns, $config['table_columns']);
@@ -105,7 +105,7 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 	/**
 	 * Setup session machine
 	 */
-	protected function setupDefaultMachine($config)
+	protected function setupDefaultMachine(array $config)
 	{
 
 		// State function
@@ -227,6 +227,37 @@ class SharedTokenMachine extends \Smalldb\StateMachine\FlupdoCrudMachine
 		}
 		if (isset($config['access_policies'])) {
 			$this->access_policies = array_replace_recursive($this->access_policies, $config['access_policies']);
+		}
+	}
+
+
+	/**
+	 * Resolve specific views
+	 *
+	 * TODO: Replace this with something better.
+	 *
+	 * @note Don't modify caches. The return value will be cached in $view_cache automatically.
+	 */
+	public function calculateViewValue($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
+	{
+		switch ($view) {
+			case 'user_login':
+				if ($this->getState($id)) {
+					$user = $this->getView($id, 'user', $properties_cache, $view_cache, $persistent_view_cache);
+					return $user && $user->state ? $user[$this->user_login_property] : null;
+				} else {
+					return null;
+				}
+			case 'user_password':
+				if ($this->getState($id)) {
+					$user = $this->getView($id, 'user', $properties_cache, $view_cache, $persistent_view_cache);
+					return $user && $user->state ? $user[$this->user_password_property] : null;
+				} else {
+					return null;
+				}
+			default:
+				// This will throw a nice exception
+				return parent::calculateViewValue($id, $view, $properties_cache, $view_cache, $persistent_view_cache);
 		}
 	}
 
