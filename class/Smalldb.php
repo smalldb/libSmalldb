@@ -110,7 +110,7 @@ class Smalldb
 	/**
 	 * Get list of registered backends
 	 */
-	public function getBackends()
+	public function getBackends(): array
 	{
 		return $this->backends;
 	}
@@ -237,6 +237,20 @@ class Smalldb
 			}
 		}
 		throw new RuntimeException('Cannot create listing.');
+	}
+
+
+	/**
+	 * Generate list of all machines.
+	 */
+	public function getAllMachines()
+	{
+		foreach ($this->backends as $b => $backend) {
+			foreach ($backend->getKnownTypes() as $m) {
+				yield $m => $backend->getMachine($this, $m);
+			}
+		}
+		return;
 	}
 
 

@@ -127,7 +127,7 @@ abstract class AbstractBackend
 	/**
 	 * Get state machine of given type, create it if necessary.
 	 */
-	public function getMachine(Smalldb $smalldb, $type)
+	public function getMachine(Smalldb $smalldb, $type): AbstractMachine
 	{
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
