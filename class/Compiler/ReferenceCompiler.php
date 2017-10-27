@@ -50,10 +50,7 @@ class ReferenceCompiler
 		$ref_class_name = str_replace('_', '', ucwords($machine_name, '_')) . 'Reference';
 
 		$php = new PhpFileWriter("$dest_dir/$ref_class_name.php");
-		$php->writeln("<?php");
-		$php->comment("");
-		$php->comment("Generated file, do NOT edit!");
-		$php->comment("");
+		$php->fileHeader(__CLASS__);
 
 		$php->namespace("Smalldb\\Generated");
 		$php->beginClass("$ref_class_name extends \\Smalldb\\StateMachine\\Reference");

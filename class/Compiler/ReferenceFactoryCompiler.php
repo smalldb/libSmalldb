@@ -47,10 +47,7 @@ class ReferenceFactoryCompiler
 	public function compile(string $dest_dir)
 	{
 		$php = new PhpFileWriter($dest_dir.'/ReferenceFactory.php');
-		$php->writeln("<?php");
-		$php->comment('');
-		$php->comment('Generated file, do NOT edit!');
-		$php->comment('');
+		$php->fileHeader(__CLASS__);
 
 		$php->namespace("Smalldb\\Generated");
 		$php->beginClass('ReferenceFactory');
