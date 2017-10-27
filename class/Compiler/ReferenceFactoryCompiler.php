@@ -48,30 +48,34 @@ class ReferenceFactoryCompiler
 	{
 		$php = new PhpFileWriter($dest_dir.'/ReferenceFactory.php');
 		$php->fileHeader(__CLASS__);
-
 		$php->namespace("Smalldb\\Generated");
 		$php->beginClass('ReferenceFactory');
 
 		$php->writeln("protected \$smalldb;");
 
-		$php->beginMethod('__construct', ["\\Smalldb\\StateMachine\\Smalldb \$smalldb"]);
-		$php->writeln("\$this->smalldb = \$smalldb;");
+		$php->beginFinalMethod('__construct', ["\\Smalldb\\StateMachine\\Smalldb \$smalldb"]);
+		{
+			$php->writeln("\$this->smalldb = \$smalldb;");
+		}
 		$php->endMethod();
 
-		$php->beginMethod('__invoke', ["...\$args"], "\\Smalldb\\StateMachine\\Reference");
-		$php->writeln("return \$this->smalldb->ref(...\$args);");
+		$php->beginFinalMethod('__invoke', ["...\$args"], "\\Smalldb\\StateMachine\\Reference");
+		{
+			$php->writeln("return \$this->smalldb->ref(...\$args);");
+		}
 		$php->endMethod();
 
 		foreach($this->smalldb->getAllMachines() as $m => $machine) {
 			$id = $machine->describeId();
 			$idArgs = array_map(function($a) { return "\$$a"; }, $id);
 			$php->beginMethod($m, $idArgs, "\\Smalldb\\StateMachine\\Reference");
-			$php->writeln("return \$this->smalldb->ref('$m', ".join(", ", $idArgs).");");
+			{
+				$php->writeln("return \$this->smalldb->ref(%s, " . join(", ", $idArgs) . ");", $m);
+			}
 			$php->endMethod();
 		}
 
 		$php->endClass();
-
 		$php->close();
 	}
 

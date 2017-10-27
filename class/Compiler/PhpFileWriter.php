@@ -31,8 +31,20 @@ class PhpFileWriter
 	/**
 	 * PhpFileWriter constructor.
 	 */
-	public function __construct(string $filename)
+	public function __construct(string $filename = null)
 	{
+		if ($filename !== null) {
+			$this->open($filename);
+		}
+	}
+
+
+	public function open(string $filename)
+	{
+		if ($this->f) {
+			throw new \RuntimeException("A file is already open.");
+		}
+
 		$this->f = fopen($filename, "w");
 		if ($this->f === false) {
 			$err = error_get_last();
@@ -40,12 +52,21 @@ class PhpFileWriter
 		}
 	}
 
+	public function toCamelCase(string $identifier): string
+	{
+		return str_replace('_', '', ucwords($identifier, '_'));
+	}
 
-	public function writeln(string $string = ''): self
+
+	public function writeln(string $string = '', ...$args): self
 	{
 		if ($string !== '') {
 			fwrite($this->f, $this->indent);
-			fwrite($this->f, $string);
+			if (count($args) > 0) {
+				fwrite($this->f, vsprintf($string, array_map(function($v) { return var_export($v, true); }, $args)));
+			} else {
+				fwrite($this->f, $string);
+			}
 		}
 		fwrite($this->f, "\n");
 		return $this;
@@ -114,6 +135,14 @@ class PhpFileWriter
 	}
 
 
+	public function beginAbstractClass(string $classname): self
+	{
+		$this->writeln("abstract class $classname");
+		$this->beginBlock();
+		return $this;
+	}
+
+
 	public function endClass(): self
 	{
 		$this->endBlock();
@@ -125,6 +154,14 @@ class PhpFileWriter
 	{
 		$this->writeln('');
 		$this->writeln("public function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
+		$this->beginBlock();
+		return $this;
+	}
+
+	public function beginFinalMethod(string $name, array $args = [], $returnType = ''): self
+	{
+		$this->writeln('');
+		$this->writeln("public final function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
 		$this->beginBlock();
 		return $this;
 	}

@@ -46,23 +46,25 @@ class ReferenceCompiler
 	 */
 	public function compile(string $dest_dir)
 	{
+		$php = new PhpFileWriter();
 		$machine_name = $this->machine->getMachineType();
-		$ref_class_name = str_replace('_', '', ucwords($machine_name, '_')) . 'Reference';
-
-		$php = new PhpFileWriter("$dest_dir/$ref_class_name.php");
+		$ref_class_name = $php->toCamelCase($machine_name) . 'Reference';
+		$php->open("$dest_dir/$ref_class_name.php");
 		$php->fileHeader(__CLASS__);
-
 		$php->namespace("Smalldb\\Generated");
-		$php->beginClass("$ref_class_name extends \\Smalldb\\StateMachine\\Reference");
+		$php->beginAbstractClass("$ref_class_name extends \\Smalldb\\StateMachine\\Reference");
 
-		$php->beginMethod('__construct', ["\\" . get_class($this->machine) . ' $machine', '$id = null']);
-		$php->writeln("parent::__construct(\$machine, \$id);");
+		$php->beginFinalMethod('__construct', ["\\" . get_class($this->machine) . ' $machine', '$id = null']);
+		{
+			$php->writeln("parent::__construct(\$machine, \$id);");
+		}
 		$php->endMethod();
 
 		$r = new \ReflectionClass($this->machine);
 
-		foreach ($this->machine->getAllMachineActions() as $action) {
-			$m = $r->getMethod($action);    // Fixme: Use correct method name
+		// Transition invocation methods
+		foreach ($this->machine->describeAllMachineActions() as $action_name => $action) {
+			$m = $r->getMethod($action_name);    // Fixme: Use correct method name
 			$params = array_map(function ($p) {
 					return ($p->hasType() ? $p->getType().' ' : '')
 						. '$' . $p->getName()
@@ -72,13 +74,30 @@ class ReferenceCompiler
 								: ' = '.$p->getDefaultValue())
 							: '');
 				}, $m->getParameters());
-			$php->beginMethod($action, $params, $m->hasReturnType() ? $m->getReturnType() : '');
-			$php->writeln("return \$this->__call('$action', ".join(', ', $params).");");
+
+			$php->beginFinalMethod($action_name, $params, $m->hasReturnType() ? $m->getReturnType() : '');
+			{
+				$php->writeln("return \$this->__call(%s, " . join(', ', $params) . ");", $action_name);
+			}
+			$php->endMethod();
+		}
+
+		// Property getters
+		foreach ($this->machine->describeAllMachineProperties() as $property_name => $property) {
+			$getter_name = 'get' . $php->toCamelCase($property_name);
+			$php->beginFinalMethod($getter_name, []);
+			{
+				$php->beginBlock("if (\$this->properties_cache === null)");
+				{
+					$php->writeln("\$this->properties_cache = \$this->machine->getProperties(\$this->id);");
+				}
+				$php->endBlock();
+				$php->writeln("return \$this->properties_cache[%s];", $property_name);
+			}
 			$php->endMethod();
 		}
 
 		$php->endClass();
-
 		$php->close();
 	}
 
