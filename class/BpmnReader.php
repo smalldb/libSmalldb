@@ -145,7 +145,8 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Get nodes
-		foreach (['participant', 'startEvent', 'task', 'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
+		foreach (['participant', 'startEvent', 'task', 'sendTask', 'receiveTask', 'userTask', 'serviceTask',
+			'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
 			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway',
 			'textAnnotation'] as $type)
 		{
