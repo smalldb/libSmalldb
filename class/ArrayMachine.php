@@ -34,15 +34,6 @@ class ArrayMachine extends AbstractMachine
 
 
 	/**
-	 * Define state machine using $machine_definition.
-	 */
-	public function initializeMachine($args)
-	{
-		parent::initializeMachine($args);
-	}
-
-
-	/**
 	 * Reflection: Describe ID (primary key).
 	 */
 	public function describeId()

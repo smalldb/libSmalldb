@@ -1092,20 +1092,39 @@ class BpmnReader implements IMachineDefinitionReader
 		// TODO: Draw nested graphs for participants
 		$process_nodes = [];
 		foreach ($fragment['participants'] as $id => $p) {
-			$process_nodes[$p['process']] = [
-				'id' => $prefix.$id,
-				'label' => $p['name'],
-				'color' => $p['_state_machine'] ? '#280' : '#888',
-				'fill' => $p['_state_machine'] ? '#f8f8f8' : '#fff',
-				'graph' => [
-					'layout' => 'dagre',
-					'layoutOptions' => [
-						'rankdir' => 'LR',
+			// TODO: Add lanes
+			if ($p['_state_machine']) {
+				$process_nodes[$p['process']] = [
+					'id' => $prefix.$id,
+					'label' => $p['name'],
+					'color' => '#280',
+					'fill' => '#f8f8f8',
+					'graph' => [
+						'layout' => 'row',
+						'layoutOptions' => [
+							'sortNodes' => 'topological',
+							'arcEdges' => false,
+						],
+						'nodes' => [],
+						'edges' => [],
 					],
-					'nodes' => [],
-					'edges' => [],
-				],
-			];
+				];
+			} else {
+				$process_nodes[$p['process']] = [
+					'id' => $prefix.$id,
+					'label' => $p['name'],
+					'color' => '#888',
+					'fill' => '#fff',
+					'graph' => [
+						'layout' => 'dagre',
+						'layoutOptions' => [
+							'rankdir' => 'LR',
+						],
+						'nodes' => [],
+						'edges' => [],
+					],
+				];
+			}
 			$diagram_node['graph']['nodes'][] = & $process_nodes[$p['process']];
 		}
 
@@ -1147,7 +1166,7 @@ class BpmnReader implements IMachineDefinitionReader
 			switch ($a['type']) {
 				case 'sequenceFlow':
 					if ($a['_dependency_only']) {
-						$edge['color'] = 'transparent';
+						$edge['hidden'] = true;
 					}
 					break;
 				case 'messageFlow':
