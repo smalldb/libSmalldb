@@ -92,6 +92,8 @@ class Smalldb
 
 	/**
 	 * Get list of registered backends
+	 *
+	 * @return AbstractBackend[]
 	 */
 	public function getBackends()
 	{
@@ -101,6 +103,8 @@ class Smalldb
 
 	/**
 	 * Obtain machine from backends.
+	 *
+	 * @return AbstractMachine|null
 	 */
 	public function getMachine(string $type)
 	{
