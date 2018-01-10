@@ -62,6 +62,8 @@ class JsonDirBackend extends SimpleBackend
 		// Get base dir (constants are available)
 		$base_dir = Utils::filename_format($config['base_dir'], array());
 
+		$machine_type_table = null;
+
 		// Load machine definitions from APC cache
 		if (!empty($config['cache_disabled']) || !function_exists('apcu_fetch')) {
 			$cache_disabled = true;
@@ -72,7 +74,7 @@ class JsonDirBackend extends SimpleBackend
 			$cache_key = get_class($this).':'.$base_dir;
 			$cache_data = apcu_fetch($cache_key, $cache_loaded);
 			if ($cache_loaded) {
-				list($this->machine_type_table, $cache_mtime) = $cache_data;
+				list($machine_type_table, $cache_mtime) = $cache_data;
 				//debug_dump($this->machine_type_table, 'Cached @ '.strftime('%F %T', $cache_mtime));
 			} else {
 				$cache_mtime = 0;
@@ -87,11 +89,17 @@ class JsonDirBackend extends SimpleBackend
 		// Load data if cache is obsolete
 		if (!$cache_loaded || $latest_mtime >= $cache_mtime) {
 			//debug_msg('Machine type table cache miss. Reloading...');
-			$this->machine_type_table = $config_reader->loadConfiguration();
+			$machine_type_table = $config_reader->loadConfiguration();
 
 			if (!$cache_disabled) {
-				apcu_store($cache_key, array($this->machine_type_table, $latest_mtime));
+				apcu_store($cache_key, array($machine_type_table, $latest_mtime));
 			}
+		}
+
+		if ($machine_type_table) {
+			$this->registerAllMachineTypes($machine_type_table);
+		} else {
+			throw new RuntimeException("Caching logic failed when loading backend configuration.");
 		}
 	}
 
