@@ -39,6 +39,17 @@ abstract class AbstractBackend
 
 
 	/**
+	 * Configure backend using the $configuration.
+	 *
+	 * This method must be called soon after the instance is created.
+	 */
+	function initializeBackend(array $config)
+	{
+		// No op.
+	}
+
+
+	/**
 	 * Set debug logger
 	 */
 	public function setDebugLogger(IDebugLogger $debug_logger)
@@ -111,7 +122,7 @@ abstract class AbstractBackend
 	 *
 	 * Returns descendant of AbstractMachine or null.
 	 */
-	protected abstract function createMachine(Smalldb $smalldb, $type);
+	protected abstract function createMachine(Smalldb $smalldb, string $type);
 
 
 	/**
@@ -127,13 +138,13 @@ abstract class AbstractBackend
 	/**
 	 * Get state machine of given type, create it if necessary.
 	 */
-	public function getMachine(Smalldb $smalldb, $type)
+	public function getMachine(Smalldb $smalldb, string $type)
 	{
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
 		} else {
 			$m = $this->machine_type_cache[$type] = $this->createMachine($smalldb, $type);
-			if ($this->debug_logger) {
+			if ($m && $this->debug_logger) {
 				$m->setDebugLogger($this->debug_logger);
 				$this->debug_logger->afterMachineCreated($this, $type, $m);
 			}
@@ -157,7 +168,7 @@ abstract class AbstractBackend
 			$this->debug_logger->afterListingCreated($this, $listing, $query_filters);
 		}
 		if ($this->after_listing_created) {
-			$this->after_listing_created->emit($ref);
+			$this->after_listing_created->emit($listing);
 		}
 
 		return $listing;
@@ -185,14 +196,14 @@ abstract class AbstractBackend
 	 *
 	 * This will throw various exceptions on errors.
 	 *
-	 * @return Array with results (machine type -> per-machine results).
+	 * @return array Array with the results (machine type -> per-machine results).
 	 */
-	public function performSelfCheck()
+	public function performSelfCheck(Smalldb $smalldb)
 	{
 		$results = [];
 
 		foreach($this->getKnownTypes() as $m) {
-			$machine = $this->getMachine($m);
+			$machine = $this->getMachine($smalldb, $m);
 			$results[$m] = $machine->performSelfCheck();
 		}
 
