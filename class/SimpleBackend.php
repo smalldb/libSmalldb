@@ -18,9 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
 
 
 /**
@@ -38,7 +36,7 @@ class SimpleBackend extends AbstractBackend
 	 *
 	 * @var ContainerInterface
 	 */
-	protected $state_machine_service_locator = null;
+	private $state_machine_service_locator = null;
 
 	/**
 	 * Static table of known machine types. Inherit this class and replace this
@@ -46,7 +44,7 @@ class SimpleBackend extends AbstractBackend
 	 *
 	 * Each record is also passed to AbstractMachine::initializeMachine().
 	 */
-	protected $machine_type_table = array(
+	private $machine_type_table = array(
 		/* '$machine_name' => array(
 		 *     'table' => '$database_table',
 		 *     'class' => '\SomeNamespace\Class',
