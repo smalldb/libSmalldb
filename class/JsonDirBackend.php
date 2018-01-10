@@ -46,11 +46,6 @@ class JsonDirBackend extends AbstractBackend
 	protected $container;
 
 	/**
-	 * Name of directory which contains JSON files with state machine definitions.
-	 */
-	protected $base_dir;
-
-	/**
 	 * Static table of known machine types. Inherit this class and replace this
 	 * table, or use 'machine_types' option when creating this backend.
 	 *
@@ -85,7 +80,7 @@ class JsonDirBackend extends AbstractBackend
 		$this->container = $container;
 
 		// Get base dir (constants are available)
-		$this->base_dir = Utils::filename_format($options['base_dir'], array());
+		$base_dir = Utils::filename_format($options['base_dir'], array());
 
 		// Load machine definitions from APC cache
 		if (!empty($options['cache_disabled']) || !function_exists('apcu_fetch')) {
@@ -94,7 +89,7 @@ class JsonDirBackend extends AbstractBackend
 			$cache_mtime = 0;
 		} else {
 			$cache_disabled = false;
-			$cache_key = get_class($this).':'.$this->base_dir;
+			$cache_key = get_class($this).':'.$base_dir;
 			$cache_data = apcu_fetch($cache_key, $cache_loaded);
 			if ($cache_loaded) {
 				list($this->machine_type_table, $cache_mtime) = $cache_data;
@@ -105,7 +100,7 @@ class JsonDirBackend extends AbstractBackend
 		}
 
 		// Prepare configuration reader
-		$config_reader = new JsonDirReader($this->base_dir, $options['file_readers'] ?? [], $options['machine_global_config'] ?? []);
+		$config_reader = new JsonDirReader($base_dir, $options['file_readers'] ?? [], $options['machine_global_config'] ?? []);
 		$config_reader->detectConfiguration();
 		$latest_mtime = $config_reader->getLatestMTime();
 
