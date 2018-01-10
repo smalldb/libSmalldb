@@ -114,7 +114,7 @@ class JsonDirReader
 				case 'json.php':
 					$filename = $this->base_dir.$file;
 					$machine_type_table[$machine_type] = JsonReader::loadString($machine_type, file_get_contents($filename), [], $filename);
-					$postprocess_list[JsonReader::class] = true;
+					$this->postprocess_list[JsonReader::class] = true;
 					break;
 			}
 		}
@@ -123,7 +123,7 @@ class JsonDirReader
 		// Load all included files
 		// TODO: Recursively process includes of includes
 		foreach ($machine_type_table as $machine_type => $json_config) {
-			$machine_def = & $machine_type_table[$machine_type];
+			$machine_def = $machine_type_table[$machine_type];
 			$machine_success = true;
 			$errors = [];
 
@@ -151,7 +151,7 @@ class JsonDirReader
 							$machine_def);
 
 						$reader_matched = true;
-						$postprocess_list[$reader] = true;
+						$this->postprocess_list[$reader] = true;
 						break;
 					}
 				}
@@ -176,7 +176,7 @@ class JsonDirReader
 
 			// TODO: Use $machine_machine_success somehow?
 
-			unset($machine_def);
+			$machine_type_table[$machine_type] = $machine_def;
 		}
 
 		return $machine_type_table;
