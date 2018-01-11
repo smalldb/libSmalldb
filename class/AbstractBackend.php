@@ -47,9 +47,20 @@ abstract class AbstractBackend
 	function initializeBackend(array $config)
 	{
 		if ($this->initialized) {
-			throw new RuntimeException("Backend is initialized already.");
+			throw new InitializationException("Backend is initialized already.");
 		}
 		$this->initialized = true;
+	}
+
+
+	/**
+	 * Is this backend initialized?
+	 *
+	 * Note that in the case the initialization has failed, this still may be set to true.
+	 */
+	public function isBackendInitialized(): bool
+	{
+		return $this->initialized;
 	}
 
 
@@ -147,7 +158,7 @@ abstract class AbstractBackend
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
 		} if (!$this->initialized) {
-			throw new RuntimeException("Backend not initialized.");
+			throw new InitializationException("Backend not initialized.");
 		} else {
 			$m = $this->machine_type_cache[$type] = $this->createMachine($smalldb, $type);
 			if ($m && $this->debug_logger) {

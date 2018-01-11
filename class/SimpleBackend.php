@@ -109,6 +109,9 @@ class SimpleBackend extends AbstractBackend
 	 */
 	public function getKnownTypes()
 	{
+		if (!$this->isBackendInitialized()) {
+			throw new InitializationException("Backend not initialized.");
+		}
 		return array_keys($this->machine_type_table);
 	}
 
