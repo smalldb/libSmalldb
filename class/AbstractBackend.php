@@ -36,6 +36,7 @@ abstract class AbstractBackend
 	private $debug_logger = null;
 	private $after_reference_created = null;
 	private $after_listing_created = null;
+	private $initialized = false;
 
 
 	/**
@@ -45,7 +46,10 @@ abstract class AbstractBackend
 	 */
 	function initializeBackend(array $config)
 	{
-		// No op.
+		if ($this->initialized) {
+			throw new RuntimeException("Backend is initialized already.");
+		}
+		$this->initialized = true;
 	}
 
 
@@ -142,6 +146,8 @@ abstract class AbstractBackend
 	{
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
+		} if (!$this->initialized) {
+			throw new RuntimeException("Backend not initialized.");
 		} else {
 			$m = $this->machine_type_cache[$type] = $this->createMachine($smalldb, $type);
 			if ($m && $this->debug_logger) {
