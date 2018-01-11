@@ -23,6 +23,7 @@ class Graph
 
 	/// Nodes - source data
 	protected $nodes;
+
 	/// Arrows - source data
 	protected $arrows;
 

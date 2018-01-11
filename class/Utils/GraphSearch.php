@@ -54,7 +54,7 @@ class GraphSearch
 	}
 
 
-	public static function DFS(Graph $g)
+	public static function DFS(Graph $g): self
 	{
 		$gs = new self($g);
 		$gs->strategy = self::DFS_STRATEGY;
@@ -62,7 +62,7 @@ class GraphSearch
 	}
 
 
-	public static function BFS(Graph $g)
+	public static function BFS(Graph $g): self
 	{
 		$gs = new self($g);
 		$gs->strategy = self::BFS_STRATEGY;
@@ -73,9 +73,9 @@ class GraphSearch
 	/**
 	 * Call $func when entering the node.
 	 *
-	 * @param $callback function($current_node_id)
+	 * @param callable $callback function($current_node_id)
 	 */
-	public function onNode(callable $callback)
+	public function onNode(callable $callback): self
 	{
 		$this->processNodeCb = $callback ? : $this->processNodeCbDefault;
 		return $this;
@@ -84,15 +84,12 @@ class GraphSearch
 
 	/**
 	 * Call $func when inspecting next nodes, before enqueuing them.
-	 *
 	 * Nodes are inspected always, even when they have been seen before,
 	 * but once seen nodes are not enqueued again.
 	 *
-	 * @param $callback function($current_node_id, $next_node_id, $next_node_seen, $arrow_id)
-	 * @return True if the $next_node_id should be engueued for processing.
-	 * 	The node will not be enqueued if it was already visited.
+	 * @param callable $callback function($current_node_id, $next_node_id, $next_node_seen, $arrow_id)
 	 */
-	public function onArrow(callable $callback)
+	public function onArrow(callable $callback): self
 	{
 		$this->checkArrowCb = $callback ? : $this->checkArrowCb;
 		return $this;
@@ -102,10 +99,9 @@ class GraphSearch
 	/**
 	 * Start DFS from $startNodes.
 	 *
-	 * @param $startNodes List of starting nodes or their IDs.
-	 * @param $nextNodes Map $current_node_id -> list of [ $next_node_id, $arrow_id ].
+	 * @param array $startNodes List of starting nodes or their IDs.
 	 */
-	public function start($start_nodes)
+	public function start(array $startNodes)
 	{
 		$queue = [];	// Sometimes, it is a stack ;)
 		$seen = [];
@@ -114,7 +110,7 @@ class GraphSearch
 		$checkArrowCb = $this->checkArrowCb;
 
 		// Enqueue nodes as mark them seen
-		foreach ($start_nodes as $node) {
+		foreach ($startNodes as $node) {
 			$id = is_scalar($node) ? $node : $node['id'];
 			$seen[$id] = true;
 			$queue[] = $id;
@@ -125,32 +121,32 @@ class GraphSearch
 			// get next node
 			switch ($this->strategy) {
 				case self::DFS_STRATEGY:
-					$current_node_id = array_pop($queue);
+					$currentNodeId = array_pop($queue);
 					break;
 				case self::BFS_STRATEGY:
-					$current_node_id = array_shift($queue);
+					$currentNodeId = array_shift($queue);
 					break;
 			}
 
 			// Process node
-			if (!$processNodeCb($this->graph->getNode($current_node_id))) {
+			if (!$processNodeCb($this->graph->getNode($currentNodeId))) {
 				continue;
 			}
 
 			// add next nodes to queue
-			$arrows = $this->graph->getArrowsByNode($current_node_id);
+			$arrows = $this->graph->getArrowsByNode($currentNodeId);
 
 			foreach ($arrows as $arrow) {
-				$next_node_id = $arrow['target'];
+				$nextNodeId = $arrow['target'];
 
 				// Check next node whether it is worth processing
-				$next_node_seen = !empty($seen[$next_node_id]);
-				if ($checkArrowCb($this->graph->getNode($current_node_id), $arrow, $this->graph->getNode($next_node_id), $next_node_seen)) {
+				$next_node_seen = !empty($seen[$nextNodeId]);
+				if ($checkArrowCb($this->graph->getNode($currentNodeId), $arrow, $this->graph->getNode($nextNodeId), $next_node_seen)) {
 					if (!$next_node_seen) {
-						$queue[] = $next_node_id;
+						$queue[] = $nextNodeId;
 					}
 				}
-				$seen[$next_node_id] = true;
+				$seen[$nextNodeId] = true;
 			}
 		}
 	}

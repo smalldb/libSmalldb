@@ -1395,10 +1395,13 @@ abstract class AbstractMachine
 
 	/**
 	 * Convert state machine state name or group name to a safe dot identifier
-	 *
 	 * FIXME: Extract Graphviz library to keep graphs and parts of the graphs contained.
+	 *
+	 * @param string $str  Unsafe generic identifier
+	 * @param string $prefix  Prefix for the Dot identifier
+	 * @return string  Dot identifier
 	 */
-	public static function exportDotIdentifier($str, $prefix = 's_')
+	public static function exportDotIdentifier(string $str, string $prefix = 's_')
 	{
 		return $prefix.preg_replace('/[^a-zA-Z0-9_]+/', '_', $str).'_'.dechex(0xffff & crc32($str));
 	}

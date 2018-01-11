@@ -330,7 +330,8 @@ class BpmnReader implements IMachineDefinitionReader
 
 		$g = new Graph($nodes, $arrows, ['_invoking', '_receiving'], [ '_transition', '_state' ]);
 
-		// Find connections to state machine participant
+		// Stage 1: Find message flows to state machine participant, identify
+		// invoking and potential receiving nodes
 		foreach ($arrows as $a_id => $a) {
 			if ($a['type'] != 'messageFlow') {
 				continue;
@@ -362,7 +363,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Add implicit tasks to BPMN diagram - message flow targets
+		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
 		foreach ($arrows as & $arrow) {
 			if ($a['type'] != 'messageFlow') {
 				continue;
@@ -393,8 +394,8 @@ class BpmnReader implements IMachineDefinitionReader
 		unset($arrow);
 		$g->recalculateGraph();
 
-		// Find receiving nodes for each invoking node
-		// (DFS to next task or waiting, the receiver cannot be further than that)
+		// Stage 1: Find receiving nodes for each invoking node
+		// (DFS to next task or event, the receiver cannot be further than that)
 		foreach ($g->getNodesByTag('_invoking') as $in_id => & $invoking_node) {
 			$nodes[$invoking_node['id']]['_receiving_nodes'] = [];
 			$inv_process = $invoking_node['process'];
@@ -515,7 +516,7 @@ class BpmnReader implements IMachineDefinitionReader
 		unset($invoking_node);
 		$g->recalculateGraph();
 
-		// Remove receiving tag from nodes without action
+		// Stage 1: Remove receiving tag from nodes without action
 		$active_receiving_nodes = [];
 		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
 			foreach ($node['_receiving_nodes'] as $rcv_node_id) {
@@ -528,7 +529,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Detect states - components separed by transitions
+		// Stage 1: Detect states - components separed by transitions
 		GraphSearch::DFS($g)
 			->onArrow(function(& $cur_node, & $arrow, & $next_node, $seen) use ($g) {
 				if ($arrow['_transition'] || $arrow['type'] != 'sequenceFlow' || $next_node['process'] != $cur_node['process']) {
@@ -543,7 +544,7 @@ class BpmnReader implements IMachineDefinitionReader
 			})
 			->start(array_merge($g->getNodesByTag('_receiving'), $g->getNodesByType('startEvent')));
 
-		// Merge green arrows and nodes into states
+		// Stage 2: State detection -- Merge green arrows and nodes into states
 		$uf = new UnionFind();
 		foreach ($nodes as $id => $node) {
 			if ($node['_invoking']) {
@@ -623,14 +624,14 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Detect state machine annotation symbol
+		// Stage 3: Detect state machine annotation symbol
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
 		} else {
 			$state_machine_annotation_symbol = '@';
 		}
 
-		// Collect name states from annotations
+		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
 		foreach ($nodes as $n_id => $node) {
 			if ($node['type'] == 'participant' || $node['type'] == 'annotation') {
@@ -680,7 +681,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Assign state names to states (UnionFind will use them as they are added last)
+		// Stage 3: Assign state names to states (UnionFind will use them as they are added last)
 		foreach ($custom_state_names as $state => $node_ids) {
 			$uf->addUnique($state);
 			foreach ($node_ids as $node_id) {
@@ -695,7 +696,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Add implicit '' for start states
+		// Stage 3: Add implicit '' for start states
 		foreach ($g->getNodesByType('startEvent') as $s_id => $s_n) {
 			$s = 'Qout_'.$s_id;
 			$uf->add($s);
@@ -705,7 +706,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Add implicit '' for final states
+		// Stage 3: Add implicit '' for final states
 		foreach ($g->getNodesByType('endEvent') as $e_id => $e_n) {
 			$s = 'Qin_'.$e_id;
 			$uf->add($s);
@@ -715,7 +716,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Check that two custom states are not merged into one
+		// Stage 3: Check that two custom states are not merged into one
 		foreach ($custom_state_names as $a => $na) {
 			foreach ($custom_state_names as $b => $nb) {
 				if ($a !== $b && $uf->find($a) === $uf->find($b)) {
@@ -730,7 +731,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Create states from merged green arrows
+		// Stage 4: Create states from merged green arrows
 		$states = [];
 		foreach ($uf->findDistinct() as $id) {
 			$states[$id] = [];
@@ -740,7 +741,7 @@ class BpmnReader implements IMachineDefinitionReader
 			return [ $machine_def, $errors, [] ];
 		}
 
-		// Find all transitions
+		// Stage 4: Find all transitions
 		$actions = [];
 		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
 			if (empty($node['_action_name'])) {
@@ -760,7 +761,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// At this point the state machine is complete, so lets assign states and transitions to BPMN nodes.
+		// Stage 4: [debug] At this point the state machine is complete, so let's assign states and transitions to BPMN nodes.
 		foreach ($nodes as $id => & $node) {
 			if ($node['_state']) {
 				$node['_state_name'] = $uf->find($id);
@@ -774,8 +775,8 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 		unset($arrow);
 
-		// Calculate distance of each node from nearest start event 
-		// to detect backward arrows and make diagrams look much better
+		// [visualization] Calculate distance of each node from nearest start
+		// event to detect backward arrows and make diagrams look much better
 		$distance = 0;
 		GraphSearch::BFS($g)
 			->onNode(function(& $cur_node) use (& $distance) {
@@ -795,8 +796,9 @@ class BpmnReader implements IMachineDefinitionReader
 			})
 			->start($g->getNodesByType('startEvent'));
 
-		// Detect connections between generated nodes in state machine process to arrange them nicely
-		// FIXME: This is wrong.
+		// [visualization] Detect connections between generated nodes
+		// in state machine process to arrange them nicely
+		// FIXME: This is wrong, but it works.
 		foreach (array_filter($nodes, function($n) use ($state_machine_process_id) {
 				return $n['type'] == 'task' && $n['process'] == $state_machine_process_id;
 			}) as $start_node) {
@@ -838,10 +840,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 		$g->recalculateGraph();
 
-		// Merge '_state' (green) arrows into states.
-
-		// Connect states using blue arrows
-
+		// Store results in the state machine definition
 		$extra_vars = [];
 		$machine_def['states'] = $states;
 		$machine_def['actions'] = $actions;
@@ -1050,7 +1049,7 @@ class BpmnReader implements IMachineDefinitionReader
 			$m = AbstractMachine::exportDotIdentifier('error_'.md5($err['text']), $prefix);
 			$diagram .= "\t\t\"$m\" [color=\"#ff0000\",fillcolor=\"#ffeeee\",label=\"".addcslashes($err['text'], "\n\"")."\"];\n";
 			foreach ($err['nodes'] as $n) {
-				$nn = AbstractMachine::exportDotIdentifier($n, $prefix);
+				$nn = AbstractMachine::exportDotIdentifier(is_array($n) ? $n['id'] : $n, $prefix);
 				$diagram .= "\t\t$nn -> \"$m\":n [color=\"#ffaaaa\",style=dashed,arrowhead=none];\n";
 			}
 		}
@@ -1182,7 +1181,7 @@ class BpmnReader implements IMachineDefinitionReader
 		$hidden_nodes = [];
 		foreach ($fragment['nodes'] as $id => $n) {
 			$node = [
-				'id' => $prefix.$id,
+				'id' => $prefix . $id,
 				'fill' => "#fff",
 			];
 
@@ -1208,11 +1207,15 @@ class BpmnReader implements IMachineDefinitionReader
 				$label = "($label)";
 			}
 			$node['label'] = $label;
-			$node['tooltip'] = json_encode($n, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+			$node['tooltip'] = json_encode($n, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
 			// Node type (symbol)
 			switch ($n['type']) {
 				case 'task':
+				case 'sendTask':
+				case 'receiveTask':
+				case 'userTask':
+				case 'serviceTask':
 					$node['shape'] = 'bpmn.task';
 					break;
 
@@ -1231,8 +1234,10 @@ class BpmnReader implements IMachineDefinitionReader
 					$node['event_is_throwing'] = ($n['type'] == 'intermediateThrowEvent');
 					if (isset($n['features']['timerEventDefinition'])) {
 						$node['event_symbol'] = 'timer';
-					} else if (isset($n['features']['messageEventDefinition'])) {
-						$node['event_symbol'] = 'message';
+					} else {
+						if (isset($n['features']['messageEventDefinition'])) {
+							$node['event_symbol'] = 'message';
+						}
 					}
 					break;
 
@@ -1286,25 +1291,35 @@ class BpmnReader implements IMachineDefinitionReader
 			// Node color
 			if ($n['_transition']) {
 				$node['color'] = '#2266cc';
-			} else if ($n['_state']) {
-				$node['color'] = '#66aa22';
-			} else if ($n['type'] == 'textAnnotation') {
-				$node['color'] = '#aaaaaa';
 			} else {
-				$node['color'] = '#000000';
+				if ($n['_state']) {
+					$node['color'] = '#66aa22';
+				} else {
+					if ($n['type'] == 'textAnnotation') {
+						$node['color'] = '#aaaaaa';
+					} else {
+						$node['color'] = '#000000';
+					}
+				}
 			}
 
 			// Receiving/invoking background
 			// TODO: Gradients for inv+rcv and possibly rcv nodes
 			if ($n['_invoking'] && $n['_receiving']) {
 				$node['fill'] = 'url(#bpmn_gradient_rcv_inv)';
-			} else if ($n['_invoking']) {
-				$node['fill'] = '#ffff88';
-			} else if ($n['_receiving']) {
-				$node['fill'] = '#aaddff';
-			} else if ($n['_possibly_receiving']) {
-				$node['fill'] = '#eeeeff';
-				$node['fill'] = 'url(#bpmn_gradient_pos_rcv)';
+			} else {
+				if ($n['_invoking']) {
+					$node['fill'] = '#ffff88';
+				} else {
+					if ($n['_receiving']) {
+						$node['fill'] = '#aaddff';
+					} else {
+						if ($n['_possibly_receiving']) {
+							$node['fill'] = '#eeeeff';
+							$node['fill'] = 'url(#bpmn_gradient_pos_rcv)';
+						}
+					}
+				}
 			}
 
 			// Add node to graph
@@ -1314,9 +1329,9 @@ class BpmnReader implements IMachineDefinitionReader
 			if (!empty($n['annotations'])) {
 				foreach ($n['annotations'] as $ann_node_id) {
 					$process_nodes[$n['process']]['graph']['edges'][] = [
-						'id' => $prefix.$ann_node_id.'__line',
+						'id' => $prefix . $ann_node_id . '__line',
 						'start' => $node['id'],
-						'end' => $prefix.$ann_node_id,
+						'end' => $prefix . $ann_node_id,
 						'stroke_dasharray' => '5,4',
 						'color' => '#aaaaaa',
 						'arrowHead' => 'none',
@@ -1324,6 +1339,31 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 		}
+
+		// Render errors
+		foreach ($errors as $err) {
+			$err_node_id = $prefix.'error_'.md5($err['text']);
+			$first_err_node = reset($err['nodes']);
+			$err_process = (is_array($first_err_node) ? $first_err_node['process'] : $fragment['nodes'][$first_err_node]['process']);
+			$process_nodes[$err_process]['graph']['nodes'][] = $node = [
+				'id' => $err_node_id,
+				'color' => "#f00",
+				'fill' => "#fee",
+				'label' => $err['text'],
+			];
+			foreach ($err['nodes'] as $n) {
+				$n_id = (is_array($n) ? $n['id'] : $n);
+				$process_nodes[$err_process]['graph']['edges'][] = [
+					'id' => $err_node_id . '__line_' . $n_id,
+					'start' => $prefix . $n_id,
+					'end' => $err_node_id,
+					'stroke_dasharray' => '5,4',
+					'color' => '#ffaaaa',
+					'arrowHead' => 'none',
+				];
+			}
+		}
+
 		return $diagram_node;
 	}
 }
