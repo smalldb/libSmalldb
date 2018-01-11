@@ -275,13 +275,11 @@ class BpmnReader implements IMachineDefinitionReader
 	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
 	{
 		if (!isset($machine_def['bpmn_fragments'])) {
-			return;
+			return true;
 		}
 		$bpmn_fragments = $machine_def['bpmn_fragments'];
 		unset($machine_def['bpmn_fragments']);
 
-		$states = [];
-		$actions = [];
 		$success = true;
 
 		// Each included BPMN file provided one fragment
@@ -394,15 +392,6 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 		unset($arrow);
 		$g->recalculateGraph();
-
-		// Timers events are also invoking nodes (kind of)
-		/*
-		foreach ($nodes as $node) {
-			if ($node['type'] == 'intermediateCatchEvent' && isset($node['features']['timerEventDefinition'])) {
-				$g->tagNode($node, '_invoking');
-			}
-		}
-		// */
 
 		// Find receiving nodes for each invoking node
 		// (DFS to next task or waiting, the receiver cannot be further than that)
@@ -800,6 +789,8 @@ class BpmnReader implements IMachineDefinitionReader
 				if ($arrow['type'] == 'sequenceFlow' && !$seen) {
 					$next_node['_distance'] = $distance;
 					return true;
+				} else {
+					return false;
 				}
 			})
 			->start($g->getNodesByType('startEvent'));

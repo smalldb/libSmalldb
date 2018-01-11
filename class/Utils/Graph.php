@@ -29,6 +29,9 @@ class Graph
 	/// Arrows (refs) starting at given node - calculated
 	protected $arrows_by_node;
 
+	/// Arrows (refs) ending at given node - calculated
+	protected $arrows_by_node_inv;
+
 	/// Nodes by type - calculated
 	protected $nodes_by_type;
 
@@ -42,14 +45,14 @@ class Graph
 	/**
 	 * Constructor.
 	 *
-	 * @param &$nodes List of nodes indexed by id. Each node
+	 * @param array &$nodes List of nodes indexed by id. Each node
 	 * 	is a key-value array: id, type.
-	 * @param &$arrows List of arrows indexed by id. Each arrow
+	 * @param array &$arrows List of arrows indexed by id. Each arrow
 	 * 	is a key-value array: id, source, target.
-	 * @param $node_tags List of tags (keys) which should be indexed on $nodes.
-	 * @param $arrow_tags List of tags (keys) which should be indexed on $arrows.
+	 * @param array $node_tags List of tags (keys) which should be indexed on $nodes.
+	 * @param array $arrow_tags List of tags (keys) which should be indexed on $arrows.
 	 */
-	public function __construct(& $nodes, & $arrows, $node_tags = [], $arrow_tags = [])
+	public function __construct(array & $nodes, array & $arrows, array $node_tags = [], array $arrow_tags = [])
 	{
 		$this->nodes = & $nodes;
 		$this->arrows = & $arrows;
@@ -114,9 +117,9 @@ class Graph
 	/**
 	 * Get nodes by type
 	 *
-	 * @return List of references to $nodes.
+	 * @return array List of references to $nodes.
 	 */
-	public function getNodesByType($type)
+	public function getNodesByType(string $type): array
 	{
 		return $this->nodes_by_type[$type];
 	}
@@ -125,9 +128,9 @@ class Graph
 	/**
 	 * Get arrows starting from $node
 	 *
-	 * @return List of references to $arrows.
+	 * @return array List of references to $arrows.
 	 */
-	public function getArrowsByNode($node)
+	public function getArrowsByNode($node): array
 	{
 		$node_id = is_scalar($node) ? $node : $node['id'];
 		return isset($this->arrows_by_node[$node_id]) ? $this->arrows_by_node[$node_id] : [];
@@ -137,9 +140,9 @@ class Graph
 	/**
 	 * Get arrows ending in $node
 	 *
-	 * @return List of references to $arrows.
+	 * @return array List of references to $arrows.
 	 */
-	public function getArrowsByTargetNode($node)
+	public function getArrowsByTargetNode($node): array
 	{
 		$node_id = is_scalar($node) ? $node : $node['id'];
 		return isset($this->arrows_by_node_inv[$node_id]) ? $this->arrows_by_node_inv[$node_id] : [];
@@ -149,7 +152,7 @@ class Graph
 	/**
 	 * Set tag on the node.
 	 */
-	public function tagNode($node, $tag, $tagged = true)
+	public function tagNode($node, string $tag, bool $tagged = true)
 	{
 		if (!isset($tag)) {
 			throw new \InvalidArgumentException('Unknown node tag: ' . $tag);
@@ -167,7 +170,7 @@ class Graph
 	/**
 	 * Set tag on the arrow.
 	 */
-	public function tagArrow($arrow, $tag, $tagged = true)
+	public function tagArrow($arrow, string $tag, bool $tagged = true)
 	{
 		if (!isset($tag)) {
 			throw new \InvalidArgumentException('Unknown arrow tag: ' . $tag);
