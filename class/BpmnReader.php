@@ -502,12 +502,12 @@ class BpmnReader implements IMachineDefinitionReader
 					unset($rcv_arrow);
 				}
 
-				// Mark visited arrows as belonging to a transition (blue arrows)
+				// (M_T) Mark visited arrows as belonging to a transition (blue arrows)
 				foreach ($visited_arrows as $id) {
 					$g->tagArrow($id, '_transition');
 				}
 
-				// Mark visited nodes as part of the transition
+				// (M_T) Mark visited nodes as part of the transition
 				foreach ($visited_nodes as $id) {
 					$g->tagNode($id, '_transition');
 				}
@@ -529,22 +529,26 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Stage 1: Detect states - components separed by transitions
-		GraphSearch::DFS($g)
-			->onArrow(function(& $cur_node, & $arrow, & $next_node, $seen) use ($g) {
-				if ($arrow['_transition'] || $arrow['type'] != 'sequenceFlow' || $next_node['process'] != $cur_node['process']) {
-					return false;
-				}
+		// Stage 1: (M_S) Find elements which are part of a state
+		foreach ($nodes as $node) {
+			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
+				&& $node['process'] != $state_machine_process_id
+				&& !$node['_transition'] && !$node['_invoking'] && !$node['_receiving'])
+			{
+				$g->tagNode($node, '_state');
+			}
+		}
+		foreach ($arrows as $arrow) {
+			$source = $nodes[$arrow['source']];
+			$target = $nodes[$arrow['target']];
+			if ($arrow['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
+				&& $target['process'] != $state_machine_process_id && !$target['_transition'])
+			{
 				$g->tagArrow($arrow, '_state');
-				if ($next_node['_invoking'] || $next_node['_receiving']) {
-					return false;
-				}
-				$g->tagNode($next_node, '_state');
-				return true;
-			})
-			->start(array_merge($g->getNodesByTag('_receiving'), $g->getNodesByType('startEvent')));
+			}
+		}
 
-		// Stage 2: State detection -- Merge green arrows and nodes into states
+		// Stage 2: (s) State detection -- Merge green arrows and nodes into states
 		$uf = new UnionFind();
 		foreach ($nodes as $id => $node) {
 			if ($node['_invoking']) {
@@ -581,7 +585,8 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// All message flows from a single task in the state machine process end in the same state
+		// Stage 2: State propagation -- all message flows from a single task
+		// in the state machine process end in the same state.
 		foreach ($nodes as $id => $node) {
 			if ($node['process'] == $state_machine_process_id && $node['type'] == 'task') {
 				// Collect nodes to which message flows flow
