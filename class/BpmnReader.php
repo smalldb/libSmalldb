@@ -328,7 +328,7 @@ class BpmnReader implements IMachineDefinitionReader
 		$arrows = & $fragment['arrows'];
 		$nodes = & $fragment['nodes'];
 
-		$g = new Graph($nodes, $arrows, ['_invoking', '_receiving'], [ '_transition', '_state' ]);
+		$g = new Graph($nodes, $arrows, ['_invoking', '_receiving'], ['_transition', '_state']);
 
 		// Stage 1: Find message flows to state machine participant, identify
 		// invoking and potential receiving nodes
@@ -629,6 +629,44 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
+		// Stage 3: Remove disconnected states (no annotations, no arrows)
+		// These states are created from unreachable portions of the diagram.
+		$used_s = [];
+		$removed_s = [];
+		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
+			$n_in = 'Qin_'.$n_id;
+			if ($uf->has($n_in)) {
+				$s = $uf->find($n_in);
+				$used_s[$s] = true;
+			}
+		}
+		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
+			$n_out = 'Qout_'.$n_id;
+			if ($uf->has($n_out)) {
+				$s = $uf->find($n_out);
+				$used_s[$s] = true;
+			}
+		}
+		foreach ($nodes as $n_id => $node) {
+			if ($node['_state'] && $uf->has($n_id)) {
+				$s = $uf->find($n_id);
+				if (empty($used_s[$s])) {
+					$g->tagNode($node, '_removed', true);
+					$removed_s[$s] = true;
+				}
+			}
+		}
+		foreach ($arrows as $a_id => $arrow) {
+			$n_id = $arrow['source'];
+			if ($arrow['_state'] && $uf->has($n_id)) {
+				$s = $uf->find($n_id);
+				if (empty($used_s[$s])) {
+					$g->tagArrow($arrow, '_removed', true);
+					$removed_s[$s] = true;
+				}
+			}
+		}
+
 		// Stage 3: Detect state machine annotation symbol
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
@@ -738,8 +776,11 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 4: Create states from merged green arrows
 		$states = [];
+		$removed_s = $uf->updateMap($removed_s);
 		foreach ($uf->findDistinct() as $id) {
-			$states[$id] = [];
+			if (empty($removed_s[$id])) {
+				$states[$id] = [];
+			}
 		}
 
 		if (!empty($errors)) {
@@ -1143,8 +1184,8 @@ class BpmnReader implements IMachineDefinitionReader
 				'tooltip' => json_encode($a, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
 			];
 
-			// Low opacity for generated edges
-			if ($a['_generated']) {
+			// Low opacity for generated or removed edges
+			if ($a['_generated'] || !empty($a['_removed'])) {
 				$edge['opacity'] = '0.4';
 			}
 
@@ -1277,8 +1318,8 @@ class BpmnReader implements IMachineDefinitionReader
 					break;
 			}
 
-			// Low opacity for generated nodes
-			if ($n['_generated']) {
+			// Low opacity for generated and removed nodes
+			if ($n['_generated'] || !empty($n['_removed'])) {
 				$node['opacity'] = '0.4';
 			}
 

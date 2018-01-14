@@ -17,6 +17,7 @@
  */
 
 namespace Smalldb\StateMachine\Utils;
+use Smalldb\StateMachine\RuntimeException;
 
 /**
  * Union-Find on scalar values (IDs or indexes)
@@ -85,6 +86,15 @@ class UnionFind
 
 
 	/**
+	 * Check if $x exists in the set.
+	 */
+	public function has($r)
+	{
+		return isset($this->parents[$r]);
+	}
+
+
+	/**
 	 * Get representative of $x
 	 */
 	public function find($r)
@@ -123,6 +133,32 @@ class UnionFind
 			$a[$this->find($x)] = null;
 		}
 		return array_keys($a);
+	}
+
+
+	/**
+	 * Update keys in the $map to match representatives.
+	 *
+	 * @param array $map  Map to update
+	 * @param callable|null $resolveConflict Callable (function($a, $b)) returning a new value to resolve conflicts if two keys has the same representative.
+	 * @return array New map with old values and new keys.
+	 */
+	public function updateMap(array $map, callable $resolveConflict = null): array
+	{
+		$new_map = [];
+		foreach ($map as $k => $v) {
+			$new_k = $this->find($k);
+			if (isset($new_map[$new_k])) {
+				if ($resolveConflict !== null) {
+					$new_map[$new_k] = $resolveConflict($v, $new_map[$new_k]);
+				} else {
+					throw new RuntimeException('Conflicting representatives in the map.');
+				}
+			} else {
+				$new_map[$new_k] = $v;
+			}
+		}
+		return $new_map;
 	}
 
 
