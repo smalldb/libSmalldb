@@ -628,44 +628,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Stage 3: Remove disconnected states (no annotations, no arrows)
-		// These states are created from unreachable portions of the diagram.
-		$used_s = [];
-		$removed_s = [];
-		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
-			$n_in = 'Qin_'.$n_id;
-			if ($uf->has($n_in)) {
-				$s = $uf->find($n_in);
-				$used_s[$s] = true;
-			}
-		}
-		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
-			$n_out = 'Qout_'.$n_id;
-			if ($uf->has($n_out)) {
-				$s = $uf->find($n_out);
-				$used_s[$s] = true;
-			}
-		}
-		foreach ($nodes as $n_id => $node) {
-			if ($node['_state'] && $uf->has($n_id)) {
-				$s = $uf->find($n_id);
-				if (empty($used_s[$s])) {
-					$g->tagNode($node, '_removed', true);
-					$removed_s[$s] = true;
-				}
-			}
-		}
-		foreach ($arrows as $a_id => $arrow) {
-			$n_id = $arrow['source'];
-			if ($arrow['_state'] && $uf->has($n_id)) {
-				$s = $uf->find($n_id);
-				if (empty($used_s[$s])) {
-					$g->tagArrow($arrow, '_removed', true);
-					$removed_s[$s] = true;
-				}
-			}
-		}
-
 		// Stage 3: Detect state machine annotation symbol
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
@@ -738,6 +700,44 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
+		// Stage 4: Mark unused states (no invoking nor receiving nodes)
+		// These states are created from unreachable portions of the diagram.
+		// We do this before the implicit labeling to mark unused branches
+		// in BPMN diagram, but then we ignore such removals.
+		$used_s = [];
+		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
+			$n_in = 'Qin_'.$n_id;
+			if ($uf->has($n_in)) {
+				$s = $uf->find($n_in);
+				$used_s[$s] = true;
+			}
+		}
+		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
+			$n_out = 'Qout_'.$n_id;
+			if ($uf->has($n_out)) {
+				$s = $uf->find($n_out);
+				$used_s[$s] = true;
+			}
+		}
+		foreach ($nodes as $n_id => $node) {
+			if ($node['_state'] && $uf->has($n_id)) {
+				$s = $uf->find($n_id);
+				if (empty($used_s[$s])) {
+					$g->tagNode($node, '_unused', true);
+				}
+			}
+		}
+		foreach ($arrows as $a_id => $arrow) {
+			// No need to check the target node, because the source would have to be a receiving node.
+			$n_id = $arrow['source'];
+			if ($arrow['_state'] && $uf->has($n_id)) {
+				$s = $uf->find($n_id);
+				if (empty($used_s[$s])) {
+					$g->tagArrow($arrow, '_unused', true);
+				}
+			}
+		}
+
 		// Stage 3: Add implicit '' for start states
 		foreach ($g->getNodesByType('startEvent') as $s_id => $s_n) {
 			$s = 'Qout_'.$s_id;
@@ -773,17 +773,15 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Stage 4: Create states from merged green arrows
+		// Stage 4: Create states from s(Ih) and s(Rh)
 		$states = [];
-		$removed_s = $uf->updateMap($removed_s);
-		foreach ($uf->findDistinct() as $id) {
-			if (empty($removed_s[$id])) {
-				$states[$id] = [];
-			}
+		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
+			$s = $uf->find('Qin_' . $n_id);
+			$states[$s] = [];
 		}
-
-		if (!empty($errors)) {
-			return [ $machine_def, $errors, [] ];
+		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
+			$s = $uf->find('Qout_' . $n_id);
+			$states[$s] = [];
 		}
 
 		// Stage 4: Find all transitions
@@ -888,7 +886,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Store results in the state machine definition
 		$extra_vars = [];
 		$machine_def['states'] = $states;
-		$machine_def['actions'] = $actions;
+		$machine_def['actions'] = empty($errors) ? $actions : [];  // no actions if there are errors
 		return [ $machine_def, $errors, $extra_vars ];
 	}
 
@@ -1184,7 +1182,7 @@ class BpmnReader implements IMachineDefinitionReader
 			];
 
 			// Low opacity for generated or removed edges
-			if ($a['_generated'] || !empty($a['_removed'])) {
+			if ($a['_generated'] || !empty($a['_unused'])) {
 				$edge['opacity'] = '0.4';
 			}
 
@@ -1310,7 +1308,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Low opacity for generated and removed nodes
-			if ($n['_generated'] || !empty($n['_removed'])) {
+			if ($n['_generated'] || !empty($n['_unused'])) {
 				$node['opacity'] = '0.4';
 			}
 
