@@ -1343,7 +1343,7 @@ class BpmnReader implements IMachineDefinitionReader
 				'id' => $err_node_id,
 				'color' => "#f00",
 				'fill' => "#fee",
-				'label' => $err['text'],
+				'label' => 'Error: '.$err['text'],
 			];
 			foreach ($err['nodes'] as $n) {
 				$n_id = (is_array($n) ? $n['id'] : $n);
