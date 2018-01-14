@@ -86,7 +86,9 @@ class Graph
 		$this->nodes_by_type = [];
 		$this->node_tags = array_fill_keys(array_keys($this->node_tags), []);
 		foreach ($this->nodes as $id => & $n) {
-			$this->nodes_by_type[$n['type']][$id] = & $n;
+			if (isset($n['type'])) {
+				$this->nodes_by_type[$n['type']][$id] = &$n;    // TODO: Replace with tags
+			}
 			foreach ($this->node_tags as $tag => & $tag_nodes) {
 				if (!empty($n[$tag])) {
 					$tag_nodes[$id] = & $n;

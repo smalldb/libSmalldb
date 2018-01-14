@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine\Utils;
 
+use Smalldb\StateMachine\InvalidArgumentException;
+
+
 /**
  * Depth First Search & friends.
  */
@@ -126,7 +129,10 @@ class GraphSearch
 				case self::BFS_STRATEGY:
 					$currentNodeId = array_shift($queue);
 					break;
+				default:
+					throw new InvalidArgumentException('Invalid strategy.');
 			}
+			$seen[$currentNodeId] = true;
 
 			// Process node
 			if (!$processNodeCb($this->graph->getNode($currentNodeId))) {

@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Graph;
+use Smalldb\StateMachine\Utils\GraphSearch;
 use Smalldb\StateMachine\Utils\Utils;
 
 
@@ -802,7 +804,47 @@ abstract class AbstractMachine
 			$results['missing_methods'] = array_unique($results['missing_methods']);
 		}
 
+		$results['unreachable_states'] = $this->findUnreachableStates();
+
 		return $results;
+	}
+
+
+	/**
+	 * Run DFS from not-exists state and return list of unreachable states.
+	 */
+	public function findUnreachableStates(): array
+	{
+		$nodes = [];
+		foreach ($this->states as $s => $state) {
+			$nodes[$s] = [
+				'id' => $s,
+				'unreachable' => true,
+			];
+		}
+
+		$arrows = [];
+		foreach ($this->actions as $a => $action) {
+			foreach ($action['transitions'] ?? [] as $source => $transition) {
+				foreach ($transition['targets'] ?? [] as $target) {
+					$arrows[] = [
+						'source' => $source,
+						'target' => $target,
+					];
+				}
+			}
+		}
+
+		$g = new Graph($nodes, $arrows, ['unreachable'], []);
+		$g->tagNode('', 'unreachable', false);
+		GraphSearch::DFS($g)
+			->onNode(function ($node) use ($g) {
+				$g->tagNode($node, 'unreachable', false);
+				return true;
+			})
+			->start(['']);
+
+		return array_keys($g->getNodesByTag('unreachable'));
 	}
 
 
@@ -1128,9 +1170,9 @@ abstract class AbstractMachine
 	 * @param $debug_opts Machine-specific debugging options - passed to
 	 * 	exportDotRenderDebugData(). If empty/false, no debug data are
 	 * 	added to the diagram.
-	 * @return Array suitable for json_encode().
+	 * @return array  Array suitable for json_encode().
 	 */
-	public function exportJson($debug_opts = false)
+	public function exportJson($debug_opts = false): array
 	{
 		$nodes = [
 			[
@@ -1142,14 +1184,25 @@ abstract class AbstractMachine
 
 		// States
 		if (!empty($this->states)) {
+			$is_unreachable_state = array_fill_keys($this->findUnreachableStates(), true);
+
 			foreach ($this->states as $s => $state) {
 				if ($s != '') {
-					$nodes[] = [
+					$n = [
 						"id" => 's_'.$s,
 						"label" => $s,
 						"fill" => $state['color'] ?? "#eee",
 						"shape" => "uml.state",
 					];
+
+					// Highlight state if it is unreachable
+					if (!empty($is_unreachable_state[$s])) {
+						$n['label'] .= "\n(unreachable)";
+						$n['color'] = "#ff0000";
+						$n['fill'] = "#ffeedd";
+					}
+
+					$nodes[] = $n;
 				}
 			}
 		}
@@ -1204,7 +1257,8 @@ abstract class AbstractMachine
 			$nodes[] = [
 				'id' => 's_'.$s,
 				'label' => $s."\n(undefined)",
-				'color' => '#ffccaa',
+				'color' => "#ff0000",
+				'fill' => "#ffeedd",
 			];
 		}
 
