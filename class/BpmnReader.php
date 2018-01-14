@@ -1257,14 +1257,11 @@ class BpmnReader implements IMachineDefinitionReader
 					break;
 
 				case 'startEvent':
-					$node['shape'] = 'bpmn.event';
-					$node['event_type'] = 'start';
-					break;
-
 				case 'intermediateCatchEvent':
 				case 'intermediateThrowEvent':
+				case 'endEvent':
 					$node['shape'] = 'bpmn.event';
-					$node['event_type'] = 'intermediate';
+					$node['event_type'] = ['startEvent' => 'start', 'endEvent' => 'end'][$n['type']] ?? 'intermediate';
 					$node['event_is_throwing'] = ($n['type'] == 'intermediateThrowEvent');
 					if (isset($n['features']['timerEventDefinition'])) {
 						$node['event_symbol'] = 'timer';
@@ -1273,11 +1270,6 @@ class BpmnReader implements IMachineDefinitionReader
 							$node['event_symbol'] = 'message';
 						}
 					}
-					break;
-
-				case 'endEvent':
-					$node['shape'] = 'bpmn.event';
-					$node['event_type'] = 'end';
 					break;
 
 				case 'exclusiveGateway':
