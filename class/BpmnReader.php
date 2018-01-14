@@ -284,10 +284,8 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_name => $fragment) {
-			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
-
 			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors, $fragment_extra_vars) = static::inferStateMachine($prefix, $fragment_name, $fragment, $errors);
+			list($fragment_machine_def, $fragment_errors, $fragment_extra_vars) = static::inferStateMachine($fragment_name, $fragment, $errors);
 
 			// Update the definition
 			if (empty($fragment_errors)) {
@@ -297,15 +295,16 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Add BPMN diagram to state diagram
+			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
 			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 			$machine_def['state_diagram_extras_json']['nodes'][] = static::renderBpmnJson($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 			$machine_def['state_diagram_extras_json']['extraSvg'][] =
 				['defs', [], [
-					['linearGradient', ['id' => 'bpmn_gradient_rcv_inv'], [
+					['linearGradient', ['id' => $prefix.'_gradient_rcv_inv'], [
 						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
 						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 					]],
-					['linearGradient', ['id' => 'bpmn_gradient_pos_rcv'], [
+					['linearGradient', ['id' => $prefix.'_gradient_pos_rcv'], [
 						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
 						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 					]],
@@ -316,7 +315,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected static function inferStateMachine($prefix, $fragment_file, & $fragment, & $errors)
+	protected static function inferStateMachine($fragment_file, & $fragment, & $errors)
 	{
 		// Results
 		$machine_def = [];
@@ -1341,7 +1340,7 @@ class BpmnReader implements IMachineDefinitionReader
 			// Receiving/invoking background
 			// TODO: Gradients for inv+rcv and possibly rcv nodes
 			if ($n['_invoking'] && $n['_receiving']) {
-				$node['fill'] = 'url(#bpmn_gradient_rcv_inv)';
+				$node['fill'] = 'url(#'.$prefix.'_gradient_rcv_inv)';
 			} else {
 				if ($n['_invoking']) {
 					$node['fill'] = '#ffff88';
@@ -1351,7 +1350,7 @@ class BpmnReader implements IMachineDefinitionReader
 					} else {
 						if ($n['_possibly_receiving']) {
 							$node['fill'] = '#eeeeff';
-							$node['fill'] = 'url(#bpmn_gradient_pos_rcv)';
+							$node['fill'] = 'url(#'.$prefix.'_gradient_pos_rcv)';
 						}
 					}
 				}
