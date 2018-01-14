@@ -1190,20 +1190,9 @@ class BpmnReader implements IMachineDefinitionReader
 				'fill' => "#fff",
 			];
 
-			// Skip unconnected participants
+			// Skip participants
 			if ($n['type'] == 'participant') {
 				continue;
-				$has_connection = false;
-				foreach ($fragment['arrows'] as $a) {
-					if ($a['target'] == $n['id'] || $a['source'] == $n['id']) {
-						$has_connection = true;
-						break;
-					}
-				}
-				if (!$has_connection) {
-					$hidden_nodes[$id] = true;
-					continue;
-				}
 			}
 
 			// Node label
