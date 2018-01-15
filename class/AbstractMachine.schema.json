@@ -28,6 +28,16 @@
                         "description": "File name of the file to include.",
                         "type": "string",
                         "_annotation": "JsonDirBackend"
+                    },
+                    "svg_file": {
+                        "description": "BPMN reader should colorize this SVG file rather than to render BPMN on its own.",
+                        "type": "string",
+                        "_annotation": "BPMN"
+                    },
+                    "state_machine_participant_id": {
+                        "description": "BPMN reader should synthesize state machine implementing this participant.",
+                        "type": "string",
+                        "_annotation": "BPMN"
                     }
                 },
                 "additionalProperties": {
