@@ -639,7 +639,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
 		foreach ($nodes as $n_id => $node) {
-			if ($node['type'] == 'participant' || $node['type'] == 'annotation') {
+			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
 				continue;
 			}
 
