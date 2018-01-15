@@ -253,6 +253,16 @@ class BpmnReader implements IMachineDefinitionReader
 		printf("</pre><hr>\n");
 		// */
 
+		// Load SVG file with rendered BPMN diagram, so we can colorize it
+		if (isset($options['svg_file'])) {
+			$dir = dirname($filename);
+			$svg_file_name = ($dir == "" ? "./" : $dir . "/") . $options['svg_file'];
+			$svg_file_contents = file_get_contents($svg_file_name);
+		} else {
+			$svg_file_name = null;
+			$svg_file_contents = null;
+		}
+
 		// Store fragment in state machine definition
 		return [
 			'bpmn_fragments' => [
@@ -264,6 +274,8 @@ class BpmnReader implements IMachineDefinitionReader
 					'nodes' => $nodes,
 					'groups' => $groups,
 					'participants' => $participants,
+					'svg_file_name' => $svg_file_name,
+					'svg_file_contents' => $svg_file_contents,
 				],
 			],
 		];
@@ -297,18 +309,7 @@ class BpmnReader implements IMachineDefinitionReader
 			// Add BPMN diagram to state diagram
 			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
 			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
-			$machine_def['state_diagram_extras_json']['nodes'][] = static::renderBpmnJson($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
-			$machine_def['state_diagram_extras_json']['extraSvg'][] =
-				['defs', [], [
-					['linearGradient', ['id' => $prefix.'_gradient_rcv_inv'], [
-						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
-						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
-					]],
-					['linearGradient', ['id' => $prefix.'_gradient_pos_rcv'], [
-						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
-						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
-					]],
-				]];
+			static::renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
 		}
 
 		return $success;
@@ -1105,7 +1106,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected static function renderBpmnJson($prefix, $fragment_file, $fragment, $errors, $extra_vars)
+	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors, $extra_vars)
 	{
 		// Initialize node for the BPMN fragment
 		$diagram_node = [
@@ -1121,6 +1122,9 @@ class BpmnReader implements IMachineDefinitionReader
 				'edges' => [],
 			],
 		];
+
+		$nodes_by_id = [];
+		$arrows_by_id = [];
 
 		// TODO: Draw nested graphs for participants
 		$process_nodes = [];
@@ -1159,6 +1163,7 @@ class BpmnReader implements IMachineDefinitionReader
 				];
 			}
 			$diagram_node['graph']['nodes'][] = & $process_nodes[$p['process']];
+			$nodes_by_id[$id] = & $diagram_node['graph']['nodes'][count($diagram_node['graph']['nodes']) - 1];
 		}
 
 		// Draw arrows
@@ -1214,10 +1219,11 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Add edge to graph
 			if ($source['process'] == $target['process']) {
-				$process_nodes[$source['process']]['graph']['edges'][] = $edge;
+				$arrows_by_id[$id] = & $process_nodes[$source['process']]['graph']['edges'][];
 			} else {
-				$diagram_node['graph']['edges'][] = $edge;
+				$arrows_by_id[$id] = & $diagram_node['graph']['edges'][];
 			}
+			$arrows_by_id[$id] = $edge;
 		}
 
 		// Draw nodes
@@ -1347,7 +1353,8 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Add node to graph
-			$process_nodes[$n['process']]['graph']['nodes'][] = $node;
+			$nodes_by_id[$n['id']] = & $process_nodes[$n['process']]['graph']['nodes'][];
+			$nodes_by_id[$n['id']] = $node;
 
 			// Draw annotation associations
 			if (!empty($n['annotations'])) {
@@ -1388,7 +1395,102 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		return $diagram_node;
+		// Draw provided SVG file as a node (for SVG export from Camunda Modeler)
+		if (isset($fragment['svg_file_contents'])) {
+			$svg_style = '';
+
+			// Style nodes
+			foreach ($nodes_by_id as $id => $node) {
+				// Don't style annotations
+				if (isset($node['shape']) && $node['shape'] == 'note') {
+					continue;
+				}
+				// Top-level shape
+				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual > *:first-child {";
+				if (isset($node['fill'])) {
+					$svg_style .= " fill:" . $node['fill'] . " !important;";
+				}
+				$svg_style .= " }\n";
+				// All shapes
+				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual > * {";
+				if (isset($node['color'])) {
+					$svg_style .= " stroke:" . $node['color'] . " !important;";
+				}
+				$svg_style .= " }\n";
+			}
+
+			// Style arrows
+			foreach ($arrows_by_id as $id => $arrow) {
+				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual * {";
+				if (isset($arrow['color'])) {
+					$svg_style .= " stroke:" . $arrow['color'] . " !important;";
+				}
+				$svg_style .= " }\n";
+			}
+
+			// Close styles
+			$svg_style .= ".djs-element .djs-visual text, .djs-element .djs-visual text * { stroke: none !important; }\n";
+			$svg_style_el = "<style type=\"text/css\">" . htmlspecialchars($svg_style) . "</style>";
+
+			// Add gradient definitions
+			$svg_def_el = '<defs>'
+				. '<linearGradient id="' . $prefix . '_gradient_rcv_inv">'
+				. '<stop offset="50%" stop-color="#ff8" />'
+				. '<stop offset="50%" stop-color="#adf" />'
+				. '</linearGradient>'
+				. '<linearGradient id="' . $prefix . '_gradient_pos_rcv">'
+				. '<stop offset="50%" stop-color="#fff" />'
+				. '<stop offset="50%" stop-color="#adf" />'
+				. '</linearGradient>'
+				. '</defs>';
+
+			//echo "<pre>", htmlspecialchars($svg_style), "</pre>";
+
+			$svg_file_contents = $fragment['svg_file_contents'];
+
+			$svg_end_pos = strrpos($svg_file_contents, '</svg>');
+			$svg_contents_with_style = substr_replace($svg_file_contents, $svg_style_el . $svg_def_el, $svg_end_pos, 0);
+
+			$svg_diagram_node = [
+				'id' => $prefix . '__svg',
+				'label' => "BPMN: " . basename($fragment_file) . ' [' . basename($fragment['svg_file_name']) . ']',
+				'color' => "#5373B4",
+				'graph' => [
+					'layout' => 'column',
+					'layoutOptions' => [
+						'sortNodes' => false,
+					],
+					'nodes' => [
+						[
+							'id' => $prefix . '__svg_img',
+							'shape' => 'svg',
+							'svg' => $svg_contents_with_style,
+						]
+					],
+					'edges' => [],
+				],
+			];
+			$machine_def['state_diagram_extras_json']['nodes'][] = $svg_diagram_node;
+		}
+
+		// Append extras to machine definition
+		if (!isset($fragment['svg_file_contents']) || !empty($errors)) {
+			$machine_def['state_diagram_extras_json']['nodes'][] = $diagram_node;
+			$machine_def['state_diagram_extras_json']['extraSvg'][] =
+				['defs', [], [
+					['linearGradient', ['id' => $prefix . '_gradient_rcv_inv'], [
+						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
+						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+					]],
+					['linearGradient', ['id' => $prefix . '_gradient_pos_rcv'], [
+						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
+						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+					]],
+				],
+				];
+		}
+
 	}
+
 }
 
