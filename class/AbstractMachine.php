@@ -815,7 +815,12 @@ abstract class AbstractMachine
 	 */
 	public function findUnreachableStates(): array
 	{
-		$nodes = [];
+		$nodes = [
+			'' => [
+				'id' => '',
+				'unreachable' => false,
+			]
+		];
 		foreach ($this->states as $s => $state) {
 			$nodes[$s] = [
 				'id' => $s,
