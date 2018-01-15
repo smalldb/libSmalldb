@@ -1106,6 +1106,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
+	// TODO: Refactor this.
 	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors, $extra_vars)
 	{
 		// Initialize node for the BPMN fragment
@@ -1430,9 +1431,43 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Close styles
 			$svg_style .= ".djs-element .djs-visual text, .djs-element .djs-visual text * { stroke: none !important; }\n";
-			$svg_style_el = "<style type=\"text/css\">" . htmlspecialchars($svg_style) . "</style>";
 
-			// Add gradient definitions
+			// Build extras wrapper node
+			$svg_diagram_node = [
+				'id' => $prefix . '__svg',
+				'label' => "BPMN: " . basename($fragment_file) . ' [' . basename($fragment['svg_file_name']) . ']',
+				'color' => "#5373B4",
+				'graph' => [
+					'layout' => 'column',
+					'layoutOptions' => [
+						'sortNodes' => false,
+					],
+					'nodes' => [
+					],
+					'edges' => [],
+				],
+			];
+
+			// Render errors (somehow)
+			foreach ($errors as $err) {
+				$err_node_id = $prefix.'__svg_error_'.md5($err['text']);
+				$svg_diagram_node['graph']['nodes'][] = [
+					'id' => $err_node_id,
+					'color' => "#f00",
+					'fill' => "#fee",
+					'label' => 'Error: '.$err['text'],
+				];
+				foreach ($err['nodes'] as $n) {
+					$n_id = (is_array($n) ? $n['id'] : $n);
+					$svg_style .= ".djs-element[data-element-id=$n_id] > .djs-outline {"
+						. " fill: rgba(255, 0, 0, 0.05) !important;"
+						. " stroke: #f00 !important;"
+						. " stroke-width: 2 !important;"
+						. "}\n";
+				}
+			}
+
+			// Gradient definitions
 			$svg_def_el = '<defs>'
 				. '<linearGradient id="' . $prefix . '_gradient_rcv_inv">'
 				. '<stop offset="50%" stop-color="#ff8" />'
@@ -1444,37 +1479,23 @@ class BpmnReader implements IMachineDefinitionReader
 				. '</linearGradient>'
 				. '</defs>';
 
-			//echo "<pre>", htmlspecialchars($svg_style), "</pre>";
-
+			// Build style element
+			$svg_style_el = "<style type=\"text/css\">" . htmlspecialchars($svg_style) . "</style>";
 			$svg_file_contents = $fragment['svg_file_contents'];
-
 			$svg_end_pos = strrpos($svg_file_contents, '</svg>');
 			$svg_contents_with_style = substr_replace($svg_file_contents, $svg_style_el . $svg_def_el, $svg_end_pos, 0);
 
-			$svg_diagram_node = [
-				'id' => $prefix . '__svg',
-				'label' => "BPMN: " . basename($fragment_file) . ' [' . basename($fragment['svg_file_name']) . ']',
-				'color' => "#5373B4",
-				'graph' => [
-					'layout' => 'column',
-					'layoutOptions' => [
-						'sortNodes' => false,
-					],
-					'nodes' => [
-						[
-							'id' => $prefix . '__svg_img',
-							'shape' => 'svg',
-							'svg' => $svg_contents_with_style,
-						]
-					],
-					'edges' => [],
-				],
+			// Create image node
+			$svg_diagram_node['graph']['nodes'][] = [
+				'id' => $prefix . '__svg_img',
+				'shape' => 'svg',
+				'svg' => $svg_contents_with_style,
 			];
 			$machine_def['state_diagram_extras_json']['nodes'][] = $svg_diagram_node;
 		}
 
 		// Append extras to machine definition
-		if (!isset($fragment['svg_file_contents']) || !empty($errors)) {
+		if (!isset($fragment['svg_file_contents'])) {
 			$machine_def['state_diagram_extras_json']['nodes'][] = $diagram_node;
 			$machine_def['state_diagram_extras_json']['extraSvg'][] =
 				['defs', [], [
