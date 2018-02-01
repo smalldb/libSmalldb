@@ -44,6 +44,8 @@ use Smalldb\StateMachine\Utils\GraphSearch;
  */
 class BpmnReader implements IMachineDefinitionReader
 {
+	// TODO: Instantiate readers and make them configurable
+	static public $disableSvgFile = false;
 
 	/// @copydoc IMachineDefinitionReader::loadString
 	public static function loadString($machine_type, $data_string, $options = [], $filename = null)
@@ -254,7 +256,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// */
 
 		// Load SVG file with rendered BPMN diagram, so we can colorize it
-		if (isset($options['svg_file'])) {
+		if (!static::$disableSvgFile && isset($options['svg_file'])) {
 			$dir = dirname($filename);
 			$svg_file_name = ($dir == "" ? "./" : $dir . "/") . $options['svg_file'];
 			$svg_file_contents = file_get_contents($svg_file_name);

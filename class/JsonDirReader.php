@@ -41,6 +41,7 @@ class JsonDirReader
 		$this->base_dir = rtrim($base_dir, '/').'/';
 
 		// File readers
+		// TODO: Inject readers from DI container
 		$file_readers = [
 			'/\.json\(\.php\)\?$/i' => JsonReader::class,
 			'/\.graphml$/i' => GraphMLReader::class,
