@@ -18,9 +18,12 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Graph\Edge;
+use Smalldb\StateMachine\Graph\MissingElementException;
+use Smalldb\StateMachine\Graph\Node;
 use Smalldb\StateMachine\Utils\UnionFind;
-use Smalldb\StateMachine\Utils\Graph;
-use Smalldb\StateMachine\Utils\GraphSearch;
+use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Graph\GraphSearch;
 
 
 /**
@@ -73,20 +76,22 @@ class BpmnReader implements IMachineDefinitionReader
 		$state_machine_process_id = $participant_el->getAttribute('processRef') ? : '#';
 
 		// Lets collect arrows, events and tasks (still in BPMN semantics)
-		$arrows = [];
-		$nodes = [];
 		$groups = [];
 		$participants = [];
+		$graph = new Graph();
+		$graph->createNodeAttrIndex('type');
+		$graph->createEdgeAttrIndex('type');
+		$graph->createNodeAttrIndex('group');
 
 		// Get processes (groups)
 		foreach($xpath->query('//bpmn:process[@id]') as $el) {
+			/** @var \DomElement $el */
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
 
 			$groups[$id] = [
 				'id' => $id,
 				'name' => $name,
-				'nodes' => [],
 				'participant' => null,
 				'_generated' => false,
 			];
@@ -94,6 +99,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Get participants and their processes
 		foreach($xpath->query('//bpmn:participant[@id]') as $el) {
+			/** @var \DomElement $el */
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
 			$is_state_machine = ($id == $state_machine_participant_id);
@@ -121,31 +127,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Get arrows
-		foreach (['sequenceFlow', 'messageFlow'] as $type) {
-			foreach($xpath->query('//bpmn:'.$type.'[@id][@sourceRef][@targetRef]') as $el) {
-				// Arrow properties
-				$id = trim($el->getAttribute('id'));
-				$name = trim($el->getAttribute('name'));
-				$sourceRef = trim($el->getAttribute('sourceRef'));
-				$targetRef = trim($el->getAttribute('targetRef'));
-
-				// Store arrow
-				$arrows[$id] = [
-					'id' => $id,
-					'type' => $type,
-					'source' => $sourceRef,
-					'target' => $targetRef,
-					'name' => $name,
-					'_transition' => false,
-					'_state' => false,
-					'_state_name' => null,
-					'_generated' => false,
-					'_dependency_only' => false,
-				];
-			}
-		}
-
 		// Get nodes
 		foreach (['participant', 'startEvent', 'task', 'sendTask', 'receiveTask', 'userTask', 'serviceTask',
 			'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
@@ -153,6 +134,7 @@ class BpmnReader implements IMachineDefinitionReader
 			'textAnnotation'] as $type)
 		{
 			foreach($xpath->query('//bpmn:'.$type.'[@id]') as $el) {
+				/** @var \DomElement $el */
 				$id = trim($el->getAttribute('id'));
 				$name = trim($el->getAttribute('name'));
 				if ($name == '') {
@@ -182,7 +164,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$features['messageEventDefinition'] = true;
 				}
 
-				$nodes[$id] = [
+				$node = $graph->createNode($id, [
 					'id' => $id,
 					'name' => $name,
 					'type' => $type,
@@ -198,62 +180,64 @@ class BpmnReader implements IMachineDefinitionReader
 					'_state' => null,
 					'_state_name' => null,
 					'_generated' => false,
-				];
+				]);
 
 				if ($type == 'textAnnotation') {
-					$nodes[$id]['text'] = trim($el->nodeValue);
+					$node->setAttr('text', trim($el->nodeValue));
 				} else {
-					$nodes[$id]['annotations'] = [];
+					$node->setAttr('annotations', []);
 				}
+			}
+		}
+
+		// Get arrows
+		foreach (['sequenceFlow', 'messageFlow'] as $type) {
+			foreach($xpath->query('//bpmn:'.$type.'[@id][@sourceRef][@targetRef]') as $el) {
+				/** @var \DomElement $el */
+
+				// Arrow properties
+				$id = trim($el->getAttribute('id'));
+				$name = trim($el->getAttribute('name'));
+				$sourceRef = trim($el->getAttribute('sourceRef'));
+				$targetRef = trim($el->getAttribute('targetRef'));
+
+				// Store arrow
+				$graph->createEdge($id, $graph->getNode($sourceRef), $graph->getNode($targetRef), [
+					'id' => $id,
+					'type' => $type,
+					'name' => $name,
+					'_transition' => false,
+					'_state' => false,
+					'_state_name' => null,
+					'_generated' => false,
+					'_dependency_only' => false,
+				]);
 			}
 		}
 
 		// Get annotations' associations
 		foreach($xpath->query('//bpmn:association[@id]') as $el) {
-			$source = trim($el->getAttribute('sourceRef'));
-			$target = trim($el->getAttribute('targetRef'));
-
-			if (!isset($nodes[$source]) || !isset($nodes[$target])) {
+			/** @var \DomElement $el */
+			try {
+				$source = $graph->getNode(trim($el->getAttribute('sourceRef')));
+				$target = $graph->getNode(trim($el->getAttribute('targetRef')));
+			}
+			catch (MissingElementException $ex) {
 				continue;
 			}
 
-			if ($nodes[$source]['type'] == 'textAnnotation' && $nodes[$target]['type'] != 'textAnnotation') {
-				$nodes[$source]['associations'][] = $target;
-				$nodes[$target]['annotations'][] = $source;
-			}
-			if ($nodes[$target]['type'] == 'textAnnotation' && $nodes[$source]['type'] != 'textAnnotation') {
-				$nodes[$target]['associations'][] = $source;
-				$nodes[$source]['annotations'][] = $target;
-			}
-		}
+			$sourceType = $source->getAttr('type');
+			$targetType = $target->getAttr('type');
 
-		// Dump BPMN fragment (debug)
-		/*
-		printf("\n<hr><pre>BPMN diagram: <b>%s</b> (participant: <b>%s</b>, process: <b>%s</b>)\n",
-				htmlspecialchars(basename($filename)), htmlspecialchars($state_machine_participant_id), htmlspecialchars($state_machine_process_id));
-		printf("\n  Participants:\n");
-		foreach ($participants as $id => $p) {
-			printf("    %s (%s)\n", var_export($p['name'], true), var_export($id, true));
-		}
-		printf("\n  Groups:\n");
-		foreach ($groups as $id => $g) {
-			printf("    %s (%s)\n", var_export($g['name'], true), var_export($id, true));
-		}
-		printf("\n  Nodes:\n");
-		foreach ($nodes as $id => $n) {
-			printf("    %s (%s)\n", var_export($n['name'], true), var_export($id, true));
-			if (isset($n['annotations'])) {
-				foreach ($n['annotations'] as $ann) {
-					printf("        Ann: [%s] %s\n", $ann, trim($nodes[$ann]['text']));
-				}
+			if ($sourceType == 'textAnnotation' && $targetType != 'textAnnotation') {
+				$source['associations'][] = $target;
+				$target['annotations'][] = $source;
+			}
+			if ($targetType == 'textAnnotation' && $sourceType != 'textAnnotation') {
+				$target['associations'][] = $source;
+				$source['annotations'][] = $target;
 			}
 		}
-		printf("\n  Arrows:\n");
-		foreach ($arrows as $id => $a) {
-			printf("    %40s ---%'--12s---> %-40s (%s, %s)\n", $a['source'], $a['type'], $a['target'], var_export($id, true), var_export($a['name'], true));
-		}
-		printf("</pre><hr>\n");
-		// */
 
 		// Load SVG file with rendered BPMN diagram, so we can colorize it
 		if (!static::$disableSvgFile && isset($options['svg_file'])) {
@@ -272,8 +256,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'file' => $filename,
 					'state_machine_participant_id' => $state_machine_participant_id,
 					'state_machine_process_id' => $state_machine_process_id,
-					'arrows' => $arrows,
-					'nodes' => $nodes,
+					'graph' => $graph,
 					'groups' => $groups,
 					'participants' => $participants,
 					'svg_file_name' => $svg_file_name,
@@ -299,7 +282,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_name => $fragment) {
 			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors, $fragment_extra_vars) = static::inferStateMachine($fragment_name, $fragment, $errors);
+			list($fragment_machine_def, $fragment_errors) = static::inferStateMachine($fragment, $errors);
 
 			// Update the definition
 			if (empty($fragment_errors)) {
@@ -310,72 +293,77 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Add BPMN diagram to state diagram
 			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
-			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
-			static::renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors, $fragment_extra_vars);
+			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors);
+			static::renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors);
 		}
 
 		return $success;
 	}
 
 
-	protected static function inferStateMachine($fragment_file, & $fragment, & $errors)
+	protected static function inferStateMachine(& $fragment, & $errors)
 	{
 		// Results
 		$machine_def = [];
 
+		// Get BPMN graph and setup additional inidices
+		/** @var Graph $graph */
+		$graph = $fragment['graph'];
+		$graph->createNodeAttrIndex('_invoking');
+		$graph->createNodeAttrIndex('_receiving');
+		$graph->createNodeAttrIndex('_possibly_receiving');
+		$graph->createEdgeAttrIndex('_transition');
+		$graph->createEdgeAttrIndex('_state');
+
 		// Shortcuts
 		$state_machine_process_id = & $fragment['state_machine_process_id'];
 		$state_machine_participant_id = & $fragment['state_machine_participant_id'];
-		$groups = & $fragment['groups'];
-		$arrows = & $fragment['arrows'];
-		$nodes = & $fragment['nodes'];
+		$state_machine_participant_node = $graph->getNode($state_machine_participant_id);
 
-		$g = new Graph($nodes, $arrows, ['_invoking', '_receiving'], ['_transition', '_state']);
 
 		// Stage 1: Find message flows to state machine participant, identify
 		// invoking and potential receiving nodes
-		foreach ($arrows as $a_id => $a) {
+		foreach ($graph->getEdges() as $edgeId => $a) {
 			if ($a['type'] != 'messageFlow') {
 				continue;
 			}
 
+			$source = $a->getStart();
+			$target = $a->getEnd();
+
 			// Invoking message flow
-			if ($nodes[$a['source']]['process'] != $state_machine_process_id 
-				&& ($nodes[$a['target']]['process'] == $state_machine_process_id))
-			{
-				$g->tagNode($a['source'], '_invoking');
-				if ($nodes[$a['source']]['_action_name'] !== null && $nodes[$a['source']]['_action_name'] != $a['target']) {
-					$errors[] = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['source']]];
+			if ($source['process'] != $state_machine_process_id && ($target['process'] == $state_machine_process_id)) {
+				$source->setAttr('_invoking', true);
+				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
+					$errors[] = ['text' => 'Multiple actions invoked by a single task.', 'nodes' => [$source]];
 				} else {
-					$nodes[$a['source']]['_action_name'] = $a['id'];
+					$source['_action_name'] = $a->getId();
 				}
 			}
 
 			// Receiving message flow
-			if ($nodes[$a['target']]['process'] != $state_machine_process_id 
-				&& ($nodes[$a['source']]['process'] == $state_machine_process_id))
-			{
-				$g->tagNode($a['target'], '_receiving');
-				$g->tagNode($a['target'], '_possibly_receiving');
-				if ($nodes[$a['target']]['_action_name'] !== null && $nodes[$a['target']]['_action_name'] != $a['source']) {
-					$errors[] = [ 'text' => 'Multiple actions invoked by a single task.', 'nodes' => [$a['target']]];
+			if ($target['process'] != $state_machine_process_id && ($source['process'] == $state_machine_process_id)) {
+				$target->setAttr('_receiving', true);
+				$target->setAttr('_possibly_receiving', true);
+				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
+					$errors[] = ['text' => 'Multiple actions invoked by a single task.', 'nodes' => [$target]];
 				} else {
-					$nodes[$a['target']]['_action_name'] = $a['id'];
+					$target['_action_name'] = $a->getId();
 				}
 			}
 		}
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
-		foreach ($arrows as & $arrow) {
-			if ($a['type'] != 'messageFlow') {
+		foreach ($graph->getEdges() as $edge) {
+			if ($edge['type'] != 'messageFlow') {
 				continue;
 			}
 
-			if ($arrow['target'] == $state_machine_participant_id) {
-				$new_node_id = 'x_' . $arrow['id'] . '_target';
-				$nodes[$new_node_id] = [
+			if ($edge->getEnd()->getId() == $state_machine_participant_id) {
+				$new_node_id = 'x_' . $edge->getId() . '_target';
+				$new_node = $graph->createNode($new_node_id, [
 					'id' => $new_node_id,
-					'name' => $arrow['name'],
+					'name' => $edge['name'],
 					'type' => 'task',
 					'process' => $fragment['state_machine_process_id'],
 					'features' => [],
@@ -388,27 +376,28 @@ class BpmnReader implements IMachineDefinitionReader
 					'_transition' => null,
 					'_state' => null,
 					'_generated' => true,
-				];
+				]);
 				$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
-				$arrow['target'] = $new_node_id;
+				$edge->setEnd($new_node);
 			}
 		}
-		unset($arrow);
-		$g->recalculateGraph();
 
 		// Stage 1: Find receiving nodes for each invoking node
 		// (DFS to next task or event, the receiver cannot be further than that)
-		foreach ($g->getNodesByTag('_invoking') as $in_id => & $invoking_node) {
-			$nodes[$invoking_node['id']]['_receiving_nodes'] = [];
-			$inv_process = $invoking_node['process'];
+		foreach ($graph->getNodesByAttr('_invoking') as $in_id => $invoking_node) {
+			$invoking_node->setAttr('_receiving_nodes', []);
+			$invoking_process = $invoking_node['process'];
+			/** @var Node[] $receiving_nodes */
 			$receiving_nodes = [];
+			/** @var Edge[] $visited_arrows */
 			$visited_arrows = [];
+			/** @var Node[] $visited_nodes */
 			$visited_nodes = [];
 
-			GraphSearch::DFS($g)
-				->onArrow(function(& $cur_node, & $arrow, & $next_node, $seen) use ($g, $inv_process, & $receiving_nodes, & $visited_arrows, & $visited_nodes) {
+			GraphSearch::DFS($graph)
+				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use ($graph, $invoking_process, & $receiving_nodes, & $visited_arrows, & $visited_nodes) {
 					// The receiving node must be within the same process
-					if ($next_node['process'] != $inv_process) {
+					if ($next_node['process'] != $invoking_process) {
 						return false;
 					}
 
@@ -419,8 +408,8 @@ class BpmnReader implements IMachineDefinitionReader
 
 					// If receiving node is found, we are done
 					if ($next_node['_receiving']) {
-						$receiving_nodes[] = $next_node['id'];
-						$visited_arrows[] = $arrow['id'];
+						$receiving_nodes[] = $next_node;
+						$visited_arrows[] = $edge;
 						return false;
 					}
 
@@ -430,129 +419,129 @@ class BpmnReader implements IMachineDefinitionReader
 					}
 
 					// Otherwise continue search
-					$visited_arrows[] = $arrow['id'];
-					$visited_nodes[] = $next_node['id'];
+					$visited_arrows[] = $edge;
+					$visited_nodes[] = $next_node;
 					return true;
 				})
 				->start([$invoking_node]);
 
 			// There should be only one message flow arrow to the state machine.
-			$inv_arrow = null;
-			foreach ($g->getArrowsByNode($invoking_node) as $i => $a) {
-				if ($a['type'] != 'messageFlow') {
-					continue;
-				}
-				if ($nodes[$a['target']]['process'] == $state_machine_process_id) {
-					if (isset($inv_arrow)) {
-						$errors[] = [
-							'text' => 'Multiple invoking arrows.',
-							'nodes' => [ $invoking_node ],
-						];
-						break;
-					} else {
-						$inv_arrow = $a;
+			$invoking_arrow = null;
+			foreach ($invoking_node->getConnectedEdges() as $e) {
+				if ($e->getStart() === $invoking_node) {
+					if ($e['type'] != 'messageFlow') {
+						continue;
+					}
+					$target = $e->getEnd();
+					if ($target['process'] == $state_machine_process_id) {
+						if (isset($invoking_arrow)) {
+							$errors[] = [
+								'text' => 'Multiple invoking arrows.',
+								'nodes' => [$invoking_node],
+							];
+							break;
+						} else {
+							$invoking_arrow = $e;
+						}
 					}
 				}
 			}
 
 			if (empty($receiving_nodes)) {
 				// If there is no receiving node, add implicit returning message flow.
-				if ($inv_arrow) {
+				if ($invoking_arrow) {
 					// Add receiving arrow only if there is invoking arrow
 					// (timer events may represent transitions without invoking arrow).
 					$new_id = 'x_'.$in_id.'_receiving';
-					$arrows[$new_id] = [
+					$graph->createEdge($new_id, $invoking_arrow->getEnd(), $invoking_arrow->getStart(), [
 						'id' => $new_id,
 						'type' => 'messageFlow',
-						'source' => $inv_arrow['target'],
-						'target' => $invoking_node['id'],
-						'name' => $inv_arrow['name'],
+						'name' => $invoking_arrow['name'],
 						'_transition' => false,
 						'_state' => false,
 						'_generated' => true,
-					];
+					]);
 				}
-				$g->tagNode($invoking_node, '_receiving');
-				$g->tagNode($invoking_node, '_possibly_receiving');
-				$invoking_node['_receiving_nodes'][] = $invoking_node['id'];
+				$invoking_node->setAttr('_receiving', true);
+				$invoking_node->setAttr('_possibly_receiving', true);
+				$invoking_node['_receiving_nodes'][$invoking_node->getId()] = $invoking_node;
 			} else {
 				// If there are receiving nodes, make sure the arrows start from task, not from participant.
 				foreach ($receiving_nodes as $ri => $rcv_node) {
 					$rcv_arrow = null;
-					foreach ($g->getArrowsByTargetNode($rcv_node) as $i => & $a) {
-						if ($a['type'] != 'messageFlow') {
+					foreach ($rcv_node->getConnectedEdges() as $i => $a) {
+						if ($a->getEnd() !== $rcv_node || $a['type'] != 'messageFlow') {
 							continue;
 						}
 						if (isset($rcv_arrow)) {
 							$errors[] = [
 								'text' => 'Multiple receiving arrows.',
-								'nodes' => [ $rcv_node ],
+								'nodes' => [$rcv_node],
 							];
 							break;
 						} else {
-							$rcv_arrow = & $a;
+							$rcv_arrow = $a;
 						}
 					}
 
-					if ($rcv_arrow && $rcv_arrow['source'] == $state_machine_participant_id) {
-						$rcv_arrow['source'] = $inv_arrow['target'];
+					if ($rcv_arrow && $rcv_arrow->getStart() == $state_machine_participant_id) {
+						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
 
-					$invoking_node['_receiving_nodes'][] = $rcv_node;
-
-					unset($a);
-					unset($rcv_arrow);
+					$invoking_node['_receiving_nodes'][$rcv_node->getId()] = $rcv_node;
 				}
 
 				// (M_T) Mark visited arrows as belonging to a transition (blue arrows)
-				foreach ($visited_arrows as $id) {
-					$g->tagArrow($id, '_transition');
+				foreach ($visited_arrows as $a) {
+					$a->setAttr('_transition', true);
 				}
 
 				// (M_T) Mark visited nodes as part of the transition
-				foreach ($visited_nodes as $id) {
-					$g->tagNode($id, '_transition');
+				foreach ($visited_nodes as $n) {
+					$n->setAttr('_transition', true);
 				}
 			}
 		}
-		unset($invoking_node);
-		$g->recalculateGraph();
 
 		// Stage 1: Remove receiving tag from nodes without action
+		/** @var Node[] $active_receiving_nodes */
 		$active_receiving_nodes = [];
-		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
-			foreach ($node['_receiving_nodes'] as $rcv_node_id) {
-				$active_receiving_nodes[$rcv_node_id] = true;
+		foreach ($graph->getNodesByAttr('_invoking', true) as $id => $node) {
+			/** @var Node $node */
+			foreach ($node['_receiving_nodes'] as $rcv_node) {
+				/** @var Node $rcv_node */
+				$active_receiving_nodes[$rcv_node->getId()] = $rcv_node;
 			}
 		}
-		foreach ($g->getNodesByTag('_receiving') as $id => $node) {
+		foreach ($graph->getNodesByAttr('_receiving', true) as $id => $node) {
+			/** @var Node $node */
 			if (empty($active_receiving_nodes[$id])) {
-				$g->tagNode($id, '_receiving', false);
+				$node->setAttr('_receiving', false);
 			}
 		}
 
 		// Stage 1: (M_S) Find elements which are part of a state
-		foreach ($nodes as $node) {
+		foreach ($graph->getNodes() as $node) {
 			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
 				&& $node['process'] != $state_machine_process_id
 				&& !$node['_transition'] && !$node['_invoking'] && !$node['_receiving'])
 			{
-				$g->tagNode($node, '_state');
+				$node->setAttr('_state', true);
 			}
 		}
-		foreach ($arrows as $arrow) {
-			$source = $nodes[$arrow['source']];
-			$target = $nodes[$arrow['target']];
-			if ($arrow['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
+		foreach ($graph->getEdges() as $edge) {
+			$source = $edge->getStart();
+			$target = $edge->getEnd();
+			if ($edge['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
 				&& $target['process'] != $state_machine_process_id && !$target['_transition'])
 			{
-				$g->tagArrow($arrow, '_state');
+				$edge->setAttr('_state', true);
 			}
 		}
 
 		// Stage 2: (s) State detection -- Merge green arrows and nodes into states
 		$uf = new UnionFind();
-		foreach ($nodes as $id => $node) {
+		foreach ($graph->getNodes() as $id => $node) {
 			if ($node['_invoking']) {
 				$uf->add('Qin_'.$id);
 			}
@@ -560,19 +549,22 @@ class BpmnReader implements IMachineDefinitionReader
 				$uf->add('Qout_'.$id);
 			}
 		}
-		foreach ($arrows as $id => $arrow) {
-			if ($arrow['_state']) {
+		foreach ($graph->getEdges() as $id => $edge) {
+			if ($edge['_state']) {
+				$sourceId = $edge->getStart()->getId();
+				$targetId = $edge->getEnd()->getId();
+
 				// Add entry and exit points
-				$uf->add('Qout_'.$arrow['source']);
-				$uf->add('Qin_'.$arrow['target']);
-				$uf->union('Qout_'.$arrow['source'], 'Qin_'.$arrow['target']);
+				$uf->add('Qout_'.$sourceId);
+				$uf->add('Qin_'.$targetId);
+				$uf->union('Qout_'.$sourceId, 'Qin_'.$targetId);
 
 				// Add the arrow itself, so we can find to which state it belongs
 				$uf->addUnique($id);
-				$uf->union($id, 'Qin_'.$arrow['target']);
+				$uf->union($id, 'Qin_'.$targetId);
 			}
 		}
-		foreach ($nodes as $id => $node) {
+		foreach ($graph->getNodes() as $id => $node) {
 			if ($node['_state']) {
 				// Connect input with output as this node is pass-through, unless it is a receiving node
 				$uf->add('Qout_'.$id);
@@ -589,50 +581,57 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 2: State propagation -- all message flows from a single task
 		// in the state machine process end in the same state.
-		foreach ($nodes as $id => $node) {
+		foreach ($graph->getNodes() as $id => $node) {
 			if ($node['process'] == $state_machine_process_id && $node['type'] == 'task') {
 				// Collect nodes to which message flows flow
+				/** @var Node[] $receiving_nodes */
 				$receiving_nodes = [];
+				/** @var Node[] $targets */
 				$targets = [];
+				/** @var Edge[] $state_arrows */
 				$state_arrows = [];
-				foreach ($g->getArrowsByNode($node) as $a_id => $arrow) {
-					if ($arrow['type'] == 'messageFlow') {
-						if ($nodes[$arrow['target']]['_receiving']) {
-							// There should be one receiving node ...
-							$receiving_nodes[] = $arrow['target'];
-						} else {
-							// ... and multiple other targets
-							$targets[] = $arrow['target'];
+				foreach ($node->getConnectedEdges() as $edgeId => $edge) {
+					if ($edge->getStart() === $node) {
+						if ($edge['type'] == 'messageFlow') {
+							$target = $edge->getEnd();
+							if ($target['_receiving']) {
+								// There should be one receiving node ...
+								$receiving_nodes[$target->getId()] = $target;
+							} else {
+								// ... and multiple other targets
+								$targets[$target->getId()] = $target;
+							}
+							$state_arrows[$edge->getId()] = $edge;
 						}
-						$state_arrows[] = $a_id;
 					}
 				}
 
 				if (!empty($targets) && count($receiving_nodes) == 1) {
 					// If there are targets, define the state equivalence
 					$rcv = reset($receiving_nodes);
-					$uf->add('Qout_'.$rcv);
-					foreach ($targets as $t) {
+					$rcvId = $rcv->getId();
+					$uf->add('Qout_'.$rcvId);
+					foreach ($targets as $t => $target) {
 						$uf->add('Qout_'.$t);
-						$uf->union('Qout_'.$rcv, 'Qout_'.$t);
+						$uf->union('Qout_'.$rcvId, 'Qout_'.$t);
 
 						// Assign state to the target node
-						$g->tagNode($t, '_state');
+						$target->setAttr('_state', true);
 						$uf->add($t);
 						$uf->union('Qout_'.$t, $t);
 					}
-					foreach ($state_arrows as $a_id) {
+					foreach ($state_arrows as $e => $edge) {
 						// Assign state to the arrow
-						$g->tagArrow($a_id, '_state');
-						$uf->add($a_id);
-						$uf->union('Qout_'.$rcv, $a_id);
+						$edge->setAttr('_state', true);
+						$uf->add($e);
+						$uf->union('Qout_'.$rcvId, $e);
 					}
 				}
 			}
 		}
 
 		// Stage 3: Detect state machine annotation symbol
-		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $fragment['nodes'][$state_machine_participant_id]['name'], $m)) {
+		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $state_machine_participant_node['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
 		} else {
 			$state_machine_annotation_symbol = '@';
@@ -640,7 +639,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
-		foreach ($nodes as $n_id => $node) {
+		foreach ($graph->getNodes() as $n_id => $node) {
 			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
 				continue;
 			}
@@ -651,8 +650,8 @@ class BpmnReader implements IMachineDefinitionReader
 				$texts[] = trim($t);
 			}
 			if (!empty($node['annotations'])) {
-				foreach ($node['annotations'] as $ann_id) {
-					foreach (explode("\n", $nodes[$ann_id]['text']) as $t) {
+				foreach ($node['annotations'] as $ann_id => $ann_node) {
+					foreach (explode("\n", $ann_node['text']) as $t) {
 						$texts[] = trim($t);
 					}
 				}
@@ -692,7 +691,7 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($custom_state_names as $state => $node_ids) {
 			$uf->addUnique($state);
 			foreach ($node_ids as $node_id) {
-				$node = $nodes[$node_id];
+				$node = $graph->getNode($node_id);
 				if ($node['_state'] || $node['_receiving'] || $node['type'] == 'startEvent') {
 					$uf->union($state, 'Qout_'.$node_id);
 				} else if ($node['_invoking'] || $node['type'] == 'endEvent') {
@@ -708,41 +707,41 @@ class BpmnReader implements IMachineDefinitionReader
 		// We do this before the implicit labeling to mark unused branches
 		// in BPMN diagram, but then we ignore such removals.
 		$used_s = [];
-		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
+		foreach ($graph->getNodesByAttr('_invoking', true) as $n_id => $node) {
 			$n_in = 'Qin_'.$n_id;
 			if ($uf->has($n_in)) {
 				$s = $uf->find($n_in);
 				$used_s[$s] = true;
 			}
 		}
-		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
+		foreach ($graph->getNodesByAttr('_receiving', true) as $n_id => $node) {
 			$n_out = 'Qout_'.$n_id;
 			if ($uf->has($n_out)) {
 				$s = $uf->find($n_out);
 				$used_s[$s] = true;
 			}
 		}
-		foreach ($nodes as $n_id => $node) {
+		foreach ($graph->getNodes() as $n_id => $node) {
 			if ($node['_state'] && $uf->has($n_id)) {
 				$s = $uf->find($n_id);
 				if (empty($used_s[$s])) {
-					$g->tagNode($node, '_unused', true);
+					$node->setAttr('_unused', true);
 				}
 			}
 		}
-		foreach ($arrows as $a_id => $arrow) {
+		foreach ($graph->getEdges() as $edgeId => $edge) {
 			// No need to check the target node, because the source would have to be a receiving node.
-			$n_id = $arrow['source'];
-			if ($arrow['_state'] && $uf->has($n_id)) {
+			$n_id = $edge->getStart()->getId();
+			if ($edge['_state'] && $uf->has($n_id)) {
 				$s = $uf->find($n_id);
 				if (empty($used_s[$s])) {
-					$g->tagArrow($arrow, '_unused', true);
+					$edge->setAttr('_unused', true);
 				}
 			}
 		}
 
 		// Stage 3: Add implicit '' for start states
-		foreach ($g->getNodesByType('startEvent') as $s_id => $s_n) {
+		foreach ($graph->getNodesByAttr('type', 'startEvent') as $s_id => $s_n) {
 			$s = 'Qout_'.$s_id;
 			$uf->add($s);
 			if (!isset($custom_state_names[$uf->find($s)])) {
@@ -752,7 +751,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Stage 3: Add implicit '' for final states
-		foreach ($g->getNodesByType('endEvent') as $e_id => $e_n) {
+		foreach ($graph->getNodesByAttr('type', 'endEvent') as $e_id => $e_n) {
 			$s = 'Qin_'.$e_id;
 			$uf->add($s);
 			if (!isset($custom_state_names[$uf->find($s)])) {
@@ -778,141 +777,152 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 4: Create states from s(Ih) and s(Rh)
 		$states = [];
-		foreach ($g->getNodesByTag('_invoking') as $n_id => $node) {
+		foreach ($graph->getNodesByAttr('_invoking', true) as $n_id => $node) {
 			$s = $uf->find('Qin_' . $n_id);
 			$states[$s] = [];
 		}
-		foreach ($g->getNodesByTag('_receiving') as $n_id => $node) {
+		foreach ($graph->getNodesByAttr('_receiving', true) as $n_id => $node) {
 			$s = $uf->find('Qout_' . $n_id);
 			$states[$s] = [];
 		}
 
 		// Stage 4: Find all transitions
 		$actions = [];
-		foreach ($g->getNodesByTag('_invoking') as $id => $node) {
+		foreach ($graph->getNodesByAttr('_invoking', true) as $id => $node) {
 			if (empty($node['_action_name'])) {
 				// Skip invoking nodes without action
 				continue;
 			}
 			// Get action
-			$a_arrow = $g->getArrow($node['_action_name']);
-			$a_node = $g->getNode($a_arrow['target']);
+			$a_arrow = $graph->getEdge($node['_action_name']);
+			$a_node = $a_arrow->getEnd();
 			$action = $a_node['name'];
 
 			// Define transition
 			$state_before = $uf->find('Qin_'.$id);
-			foreach($node['_receiving_nodes'] as $rcv_id) {
-				$state_after = $uf->find('Qout_'.$rcv_id);
+			foreach($node['_receiving_nodes'] as $rcv_node) {
+				$state_after = $uf->find('Qout_'.$rcv_node->getId());
 				$actions[$action]['transitions'][$state_before]['targets'][] = $state_after;
 			}
 		}
 
 		// Stage 4: [debug] At this point the state machine is complete, so let's assign states and transitions to BPMN nodes.
-		foreach ($nodes as $id => & $node) {
+		foreach ($graph->getNodes() as $id => $node) {
 			if ($node['_state']) {
 				$node['_state_name'] = $uf->find($id);
 			}
 		}
-		unset($node);
-		foreach ($arrows as $id => & $arrow) {
-			if ($arrow['_state']) {
-				$arrow['_state_name'] = $uf->find($id);
+		foreach ($graph->getEdges() as $id => $edge) {
+			if ($edge['_state']) {
+				$edge['_state_name'] = $uf->find($id);
 			}
 		}
-		unset($arrow);
 
 		// [visualization] Calculate distance of each node from nearest start
 		// event to detect backward arrows and make diagrams look much better
 		$distance = 0;
-		GraphSearch::BFS($g)
-			->onNode(function(& $cur_node) use (& $distance) {
+		GraphSearch::BFS($graph)
+			->onNode(function(Node $cur_node) use (& $distance) {
 				if (!isset($cur_node['_distance'])) {
 					$cur_node['_distance'] = 0;
 				}
 				$distance = $cur_node['_distance'] + 1;
 				return true;
 			})
-			->onArrow(function(& $cur_node, & $arrow, & $next_node, $seen) use (& $distance) {
-				if ($arrow['type'] == 'sequenceFlow' && !$seen) {
+			->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use (& $distance) {
+				if ($edge['type'] == 'sequenceFlow' && !$seen) {
 					$next_node['_distance'] = $distance;
 					return true;
 				} else {
 					return false;
 				}
 			})
-			->start($g->getNodesByType('startEvent'));
+			->start($graph->getNodesByAttr('type', 'startEvent'));
 
 		// [visualization] Detect connections between generated nodes
 		// in state machine process to arrange them nicely
 		// FIXME: This is wrong, but it works.
-		foreach (array_filter($nodes, function($n) use ($state_machine_process_id) {
+		foreach (array_filter($graph->getNodes(), function(Node $n) use ($state_machine_process_id) {
 				return $n['type'] == 'task' && $n['process'] == $state_machine_process_id;
 			}) as $start_node) {
-			$start_arrows = $g->getArrowsByNode($start_node);
-			$next_start_nodes = array_map(function($a) { return $a['target']; }, $start_arrows);
-			$next_start_nodes_inv = array_flip($next_start_nodes);
-			GraphSearch::DFS($g)
-				->onArrow(function(& $cur_node, & $arrow, & $next_node, $seen) use ($g, & $arrows, $state_machine_process_id, $start_node, $next_start_nodes_inv) {
+			/** @var Node $start_node */
+			$start_arrows = $start_node->getConnectedEdges();
+
+			$next_start_nodes = [];
+			$next_start_nodes_inv = [];
+			foreach ($start_arrows as $a) {
+				$a_target = $a->getEnd();
+				$next_start_nodes[] = $a_target;
+				$next_start_nodes_inv[$a_target->getId()] = true;
+			}
+
+			GraphSearch::DFS($graph)
+				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use ($graph, $state_machine_process_id, $start_node, $next_start_nodes_inv) {
 					// Ignore state machine's own arrows
 					if ($cur_node['process'] == $state_machine_process_id && $next_node['process'] == $state_machine_process_id) {
 						return false;
 					}
 
 					// Don't pass through invoking nodes, except messageFlow
-					if (!isset($next_start_nodes_inv[$cur_node['id']]) && $cur_node['_invoking'] && $arrow['type'] == 'sequenceFlow') {
+					if (!isset($next_start_nodes_inv[$cur_node->getId()]) && $cur_node['_invoking'] && $edge['type'] == 'sequenceFlow') {
 						return false;
 					}
 
 					// If we returned to state machine process
-					if ($next_node['process'] == $state_machine_process_id && $start_node['id'] != $next_node['id']) {
+					if ($next_node['process'] == $state_machine_process_id && $start_node !== $next_node) {
 						// link the next node to starting node
-						$new_id = 'x_'.$start_node['id'].'_'.$next_node['id'];
-						$arrows[$new_id] = [
+						$new_id = 'x_'.$start_node->getId().'_'.$next_node->getId();
+						$graph->createEdge($new_id, $start_node, $next_node, [
 							'id' => $new_id,
 							'type' => 'sequenceFlow',
-							'source' => $start_node['id'],
-							'target' => $next_node['id'],
 							'name' => null,
 							'_transition' => false,
 							'_state' => false,
 							'_generated' => true,
 							'_dependency_only' => true,
-						];
+						]);
+						return true;
+					} else {
+						return false;
 					}
 
-					return true;
 				})
 				->start($next_start_nodes);
 		}
-		$g->recalculateGraph();
 
 		// Store results in the state machine definition
-		$extra_vars = [];
 		$machine_def['states'] = $states;
 		$machine_def['actions'] = empty($errors) ? $actions : [];  // no actions if there are errors
-		return [ $machine_def, $errors, $extra_vars ];
+		return [ $machine_def, $errors ];
 	}
 
 
-	protected static function renderBpmn($prefix, $fragment_file, $fragment, $errors, $extra_vars)
+	protected static function renderBpmn($prefix, $fragment_file, $fragment, $errors)
 	{
+		/** @var Graph $graph */
+		$graph = $fragment['graph'];
+
 		$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN:\\n".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
 
 		// Draw arrows
-		foreach ($fragment['arrows'] as $id => $a) {
-			$source = AbstractMachine::exportDotIdentifier($a['source'], $prefix);
-			$target = AbstractMachine::exportDotIdentifier($a['target'], $prefix); 
-			if (!$a['source'] || !$a['target']) {
+		foreach ($graph->getEdges() as $id => $a) {
+			$sourceNode = $a->getStart();
+			$targetNode = $a->getEnd();
+			$sourceId = $sourceNode->getId();
+			$targetId = $targetNode->getId();
+			$source = AbstractMachine::exportDotIdentifier($sourceId, $prefix);
+			$target = AbstractMachine::exportDotIdentifier($targetId, $prefix);
+			if (!$sourceId || !$targetId) {
 				var_dump($id);
 				var_dump($a);
 			}
-			$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
-					&& $fragment['nodes'][$a['target']]['_distance'];
+			$backwards = ($sourceNode['_distance'] >= $targetNode['_distance'])
+					&& $targetNode['_distance'];
 			$label = $a['name'];
 			if ($a['_generated'] && $label != '') {
 				$label = "($label)";
 			}
-			$tooltip = json_encode($a, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+			$tooltip = json_encode($a->getAttributes(), JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 
 			$diagram .= "\t\t" . $source . ' -> ' . $target
 				. " [id=\"" . addcslashes($prefix.$id, "\"") . "\""
@@ -949,38 +959,26 @@ class BpmnReader implements IMachineDefinitionReader
 					//$diagram .= ',constraint=0';	// Workaround
 					$w = 0;				// Another workaround
 					break;
-				default: $color = '#ff0000'; break;
+				default:
+					$color = '#ff0000';
+					$w = 1;
+					break;
 			}
 
 			$diagram .= ",color=\"$color$alpha\",fontcolor=\"#aaaaaa$alpha\"";
 			$diagram .= ",weight=$w";
 			$diagram .= "];\n";
 
-			$nodes[$source] = $a['source'];
-			$nodes[$target] = $a['target'];
+			$nodes[$source] = $sourceId;
+			$nodes[$target] = $targetId;
 		}
 
 		$diagram .= "\n";
 
 		// Draw nodes
 		$hidden_nodes = [];
-		foreach ($fragment['nodes'] as $id => $n) {
+		foreach ($graph->getNodes() as $id => $n) {
 			$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
-
-			// Skip unconnected participants
-			if ($n['type'] == 'participant') {
-				$has_connection = false;
-				foreach ($fragment['arrows'] as $a) {
-					if ($a['target'] == $n['id'] || $a['source'] == $n['id']) {
-						$has_connection = true;
-						break;
-					}
-				}
-				if (!$has_connection) {
-					$hidden_nodes[$id] = true;
-					continue;
-				}
-			}
 
 			// Render node
 			$label = trim($n['name']);
@@ -988,7 +986,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$label = "($label)";
 			}
 			$alpha = ($n['_generated'] ? '66' : '');
-			$tooltip = json_encode($n, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+			$tooltip = json_encode($n->getAttributes(), JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 			$diagram .= "\t\t" . $graph_id
 				. " [id=\"" . addcslashes($prefix.$id, "\"\n") . "\""
 				. ",tooltip=\"".addcslashes($tooltip, "\"")."\"";
@@ -1058,7 +1056,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Draw annotation associations
 			if (!empty($n['annotations'])) {
-				foreach ($n['annotations'] as $ann_node_id) {
+				foreach ($n['annotations'] as $ann_node_id => $ann_node) {
 					$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
 					$diagram .= "\t\t" . $graph_id . " -> " . $ann_graph_id
 						. " [id=\"" . addcslashes($prefix.$ann_node_id.'__line', "\"\n") . "\""
@@ -1095,7 +1093,8 @@ class BpmnReader implements IMachineDefinitionReader
 			$m = AbstractMachine::exportDotIdentifier('error_'.md5($err['text']), $prefix);
 			$diagram .= "\t\t\"$m\" [color=\"#ff0000\",fillcolor=\"#ffeeee\",label=\"".addcslashes($err['text'], "\n\"")."\"];\n";
 			foreach ($err['nodes'] as $n) {
-				$nn = AbstractMachine::exportDotIdentifier(is_array($n) ? $n['id'] : $n, $prefix);
+				/** @var Node $n */
+				$nn = AbstractMachine::exportDotIdentifier($n->getId(), $prefix);
 				$diagram .= "\t\t$nn -> \"$m\":n [color=\"#ffaaaa\",style=dashed,arrowhead=none];\n";
 			}
 		}
@@ -1109,7 +1108,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 
 	// TODO: Refactor this.
-	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors, $extra_vars)
+	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors)
 	{
 		// Initialize node for the BPMN fragment
 		$diagram_node = [
@@ -1125,6 +1124,9 @@ class BpmnReader implements IMachineDefinitionReader
 				'edges' => [],
 			],
 		];
+
+		/** @var Graph $graph */
+		$graph = $fragment['graph'];
 
 		$nodes_by_id = [];
 		$arrows_by_id = [];
@@ -1170,13 +1172,12 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Draw arrows
-		foreach ($fragment['arrows'] as $id => $a) {
-			$source_id = $prefix.$a['source'];
-			$target_id = $prefix.$a['target']; 
-			$source = $fragment['nodes'][$a['source']];
-			$target = $fragment['nodes'][$a['target']];
-			$backwards = ($fragment['nodes'][$a['source']]['_distance'] >= $fragment['nodes'][$a['target']]['_distance'])
-					&& $fragment['nodes'][$a['target']]['_distance'];
+		foreach ($graph->getEdges() as $id => $a) {
+			$source = $a->getStart();
+			$target = $a->getEnd();
+			$source_id = $prefix . $source->getId();
+			$target_id = $prefix . $target->getId();
+
 			$label = trim($a['name']);
 			if ($a['_generated'] && $label != '') {
 				$label = "($label)";
@@ -1186,7 +1187,7 @@ class BpmnReader implements IMachineDefinitionReader
 				'start' => $source_id,
 				'end' => $target_id,
 				'label' => $label,
-				'tooltip' => json_encode($a, JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
+				'tooltip' => json_encode($a->getAttributes(), JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
 			];
 
 			// Low opacity for generated or removed edges
@@ -1230,8 +1231,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Draw nodes
-		$hidden_nodes = [];
-		foreach ($fragment['nodes'] as $id => $n) {
+		foreach ($graph->getNodes() as $id => $n) {
 			$node = [
 				'id' => $prefix . $id,
 				'fill' => "#fff",
@@ -1248,7 +1248,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$label = "($label)";
 			}
 			$node['label'] = $label;
-			$node['tooltip'] = json_encode($n, JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+			$node['tooltip'] = json_encode($n->getAttributes(), JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
 			// Node type (symbol)
 			switch ($n['type']) {
@@ -1356,12 +1356,14 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 
 			// Add node to graph
-			$nodes_by_id[$n['id']] = & $process_nodes[$n['process']]['graph']['nodes'][];
-			$nodes_by_id[$n['id']] = $node;
+			$nodes_by_id[$n->getId()] = & $process_nodes[$n['process']]['graph']['nodes'][];
+			$nodes_by_id[$n->getId()] = $node;
 
 			// Draw annotation associations
 			if (!empty($n['annotations'])) {
-				foreach ($n['annotations'] as $ann_node_id) {
+				foreach ($n['annotations'] as $ann_node) {
+					/** @var Node $ann_node */
+					$ann_node_id = $ann_node->getId();
 					$process_nodes[$n['process']]['graph']['edges'][] = [
 						'id' => $prefix . $ann_node_id . '__line',
 						'start' => $node['id'],
@@ -1378,7 +1380,7 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($errors as $err) {
 			$err_node_id = $prefix.'error_'.md5($err['text']);
 			$first_err_node = reset($err['nodes']);
-			$err_process = (is_array($first_err_node) ? $first_err_node['process'] : $fragment['nodes'][$first_err_node]['process']);
+			$err_process = $first_err_node['process'];
 			$process_nodes[$err_process]['graph']['nodes'][] = $node = [
 				'id' => $err_node_id,
 				'color' => "#f00",
@@ -1386,7 +1388,8 @@ class BpmnReader implements IMachineDefinitionReader
 				'label' => 'Error: '.$err['text'],
 			];
 			foreach ($err['nodes'] as $n) {
-				$n_id = (is_array($n) ? $n['id'] : $n);
+				/** @var Node $n */
+				$n_id = $n->getId();
 				$process_nodes[$err_process]['graph']['edges'][] = [
 					'id' => $err_node_id . '__line_' . $n_id,
 					'start' => $prefix . $n_id,
@@ -1460,7 +1463,8 @@ class BpmnReader implements IMachineDefinitionReader
 					'label' => 'Error: '.$err['text'],
 				];
 				foreach ($err['nodes'] as $n) {
-					$n_id = (is_array($n) ? $n['id'] : $n);
+					/** @var Node $n */
+					$n_id = $n->getId();
 					$svg_style .= ".djs-element[data-element-id=$n_id] > .djs-outline {"
 						. " fill: rgba(255, 0, 0, 0.05) !important;"
 						. " stroke: #f00 !important;"
@@ -1512,7 +1516,6 @@ class BpmnReader implements IMachineDefinitionReader
 				],
 				];
 		}
-
 	}
 
 }

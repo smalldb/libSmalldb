@@ -18,9 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\Utils\Graph;
-use Smalldb\StateMachine\Utils\GraphSearch;
-use Smalldb\StateMachine\Utils\Utils;
+use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Graph\Node;
+use Smalldb\StateMachine\Graph\GraphSearch;
 
 
 /**
@@ -815,41 +815,32 @@ abstract class AbstractMachine
 	 */
 	public function findUnreachableStates(): array
 	{
-		$nodes = [
-			'' => [
-				'id' => '',
-				'unreachable' => false,
-			]
-		];
+		$g = new Graph();
+		$g->createNodeAttrIndex('unreachable');
+
+		$g->createNode('', ['unreachable' => false]);
 		foreach ($this->states as $s => $state) {
-			$nodes[$s] = [
-				'id' => $s,
-				'unreachable' => true,
-			];
+			if ($s !== '') {
+				$g->createNode($s, ['unreachable' => true]);
+			}
 		}
 
-		$arrows = [];
 		foreach ($this->actions as $a => $action) {
 			foreach ($action['transitions'] ?? [] as $source => $transition) {
 				foreach ($transition['targets'] ?? [] as $target) {
-					$arrows[] = [
-						'source' => $source,
-						'target' => $target,
-					];
+					$g->createEdge(null, $g->getNode($source), $g->getNode($target), []);
 				}
 			}
 		}
 
-		$g = new Graph($nodes, $arrows, ['unreachable'], []);
-		$g->tagNode('', 'unreachable', false);
 		GraphSearch::DFS($g)
-			->onNode(function ($node) use ($g) {
-				$g->tagNode($node, 'unreachable', false);
+			->onNode(function (Node $node) use ($g) {
+				$node->setAttr('unreachable', false);
 				return true;
 			})
-			->start(['']);
+			->start([$g->getNode('')]);
 
-		return array_keys($g->getNodesByTag('unreachable'));
+		return array_map(function(Node $n) { return $n->getId(); }, $g->getNodesByAttr('unreachable', true));
 	}
 
 

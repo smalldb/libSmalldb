@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils;
+namespace Smalldb\StateMachine\Graph;
 
 use Smalldb\StateMachine\InvalidArgumentException;
 
@@ -31,7 +31,7 @@ class GraphSearch
 	private $processNodeCb;
 	private $processNodeCbDefault;
 
-	private $checkArrowCb;
+	private $checkEdgeCb;
 	private $checkArrowCbDefault;
 
 	private $strategy;
@@ -49,11 +49,11 @@ class GraphSearch
 
 		$this->processNodeCb
 			= $this->processNodeCbDefault
-			= function(& $current_node) { return true; };
+			= function(Node $current_node) { return true; };
 
-		$this->checkArrowCb
+		$this->checkEdgeCb
 			= $this->checkArrowCbDefault
-			= function(& $current_node, & $arrow, & $next_node, $next_node_seen) { return true; };
+			= function(Node $current_node, Edge $edge, Node $next_node, bool $next_node_seen) { return true; };
 	}
 
 
@@ -76,7 +76,7 @@ class GraphSearch
 	/**
 	 * Call $func when entering the node.
 	 *
-	 * @param callable $callback function($current_node_id)
+	 * @param callable $callback function(Node $current_node)
 	 */
 	public function onNode(callable $callback): self
 	{
@@ -90,11 +90,11 @@ class GraphSearch
 	 * Nodes are inspected always, even when they have been seen before,
 	 * but once seen nodes are not enqueued again.
 	 *
-	 * @param callable $callback function($current_node_id, $next_node_id, $next_node_seen, $arrow_id)
+	 * @param callable $callback function(Node $current_node, Edge $edge, Node $next_node, bool $next_node_seen)
 	 */
-	public function onArrow(callable $callback): self
+	public function onEdge(callable $callback): self
 	{
-		$this->checkArrowCb = $callback ? : $this->checkArrowCb;
+		$this->checkEdgeCb = $callback ? : $this->checkEdgeCb;
 		return $this;
 	}
 
@@ -102,7 +102,7 @@ class GraphSearch
 	/**
 	 * Start DFS from $startNodes.
 	 *
-	 * @param array $startNodes List of starting nodes or their IDs.
+	 * @param Node[] $startNodes List of starting nodes or their IDs.
 	 */
 	public function start(array $startNodes)
 	{
@@ -110,46 +110,56 @@ class GraphSearch
 		$seen = [];
 
 		$processNodeCb = $this->processNodeCb;
-		$checkArrowCb = $this->checkArrowCb;
+		$checkEdgeCb = $this->checkEdgeCb;
 
 		// Enqueue nodes as mark them seen
-		foreach ($startNodes as $node) {
-			$id = is_scalar($node) ? $node : $node['id'];
-			$seen[$id] = true;
-			$queue[] = $id;
+		foreach ($startNodes as $i => $node) {
+			if ($node instanceof Node) {
+				$id = $node->getId();
+				$seen[$id] = true;
+				$queue[] = $node;
+			} else {
+				throw new \InvalidArgumentException("Start node ".var_export($i)." is not instance of Node.");
+			}
 		}
 
 		// Process queue
 		while (!empty($queue)) {
+			/** @var Node $currentNode */
 			// get next node
 			switch ($this->strategy) {
 				case self::DFS_STRATEGY:
-					$currentNodeId = array_pop($queue);
+					$currentNode = array_pop($queue);
 					break;
 				case self::BFS_STRATEGY:
-					$currentNodeId = array_shift($queue);
+					$currentNode = array_shift($queue);
 					break;
 				default:
 					throw new InvalidArgumentException('Invalid strategy.');
 			}
-			$seen[$currentNodeId] = true;
+			$seen[$currentNode->getId()] = true;
 
 			// Process node
-			if (!$processNodeCb($this->graph->getNode($currentNodeId))) {
+			if (!$processNodeCb($currentNode)) {
 				continue;
 			}
 
 			// add next nodes to queue
-			$arrows = $this->graph->getArrowsByNode($currentNodeId);
+			$edges = $currentNode->getConnectedEdges();
 
-			foreach ($arrows as $arrow) {
-				$nextNodeId = $arrow['target'];
+			foreach ($edges as $edge) {
+				if ($edge->getStart() !== $currentNode) {
+					// Ignore edges which don't start in $currentNode.
+					continue;
+				}
+				$nextNode = $edge->getEnd();
+				$nextNodeId = $nextNode->getId();
 
 				// Check next node whether it is worth processing
 				$next_node_seen = !empty($seen[$nextNodeId]);
-				if ($checkArrowCb($this->graph->getNode($currentNodeId), $arrow, $this->graph->getNode($nextNodeId), $next_node_seen)) {
+				if ($checkEdgeCb($currentNode, $edge, $nextNode, $next_node_seen)) {
 					if (!$next_node_seen) {
-						$queue[] = $nextNodeId;
+						$queue[] = $nextNode;
 					}
 				}
 				$seen[$nextNodeId] = true;
