@@ -816,7 +816,7 @@ abstract class AbstractMachine
 	public function findUnreachableStates(): array
 	{
 		$g = new Graph();
-		$g->createNodeAttrIndex('unreachable');
+		$g->indexNodeAttr('unreachable');
 
 		$g->createNode('', ['unreachable' => false]);
 		foreach ($this->states as $s => $state) {
