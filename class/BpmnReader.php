@@ -19,11 +19,13 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Graph\Edge;
+use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Graph\GraphExportGrafovatko;
+use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\MissingElementException;
+use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 use Smalldb\StateMachine\Utils\UnionFind;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\GraphSearch;
 
 
 /**
@@ -76,12 +78,15 @@ class BpmnReader implements IMachineDefinitionReader
 		$state_machine_process_id = $participant_el->getAttribute('processRef') ? : '#';
 
 		// Lets collect arrows, events and tasks (still in BPMN semantics)
-		$groups = [];
+		$processes = [];
 		$participants = [];
 		$graph = new Graph();
-		$graph->createNodeAttrIndex('type');
-		$graph->createEdgeAttrIndex('type');
-		$graph->createNodeAttrIndex('group');
+		$graph->indexNodeAttr('type');
+		$graph->indexEdgeAttr('type');
+		$graph->indexNodeAttr('group');
+
+		/** @var Graph[] $processNestedGraphs */
+		$processNestedGraphs = [];
 
 		// Get processes (groups)
 		foreach($xpath->query('//bpmn:process[@id]') as $el) {
@@ -89,10 +94,11 @@ class BpmnReader implements IMachineDefinitionReader
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
 
-			$groups[$id] = [
+			$processes[$id] = [
 				'id' => $id,
 				'name' => $name,
 				'participant' => null,
+				'nodes' => [],
 				'_generated' => false,
 			];
 		}
@@ -103,7 +109,18 @@ class BpmnReader implements IMachineDefinitionReader
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
 			$is_state_machine = ($id == $state_machine_participant_id);
-			$process_id = $el->getAttribute('processRef') ? : ($is_state_machine ? '#' : 'x_'.$id.'_process');
+			$process_id = $el->getAttribute('processRef');
+
+			if ($process_id === "" && $is_state_machine) {
+				$process_id = "#";
+				$processes[$process_id] = [
+					'id' => $process_id,
+					'name' => $name,
+					'participant' => $id,
+					'nodes' => [$id],
+					'_generated' => true,
+				];
+			}
 
 			$participants[$id] = [
 				'name' => $name,
@@ -111,13 +128,13 @@ class BpmnReader implements IMachineDefinitionReader
 				'_state_machine' => $is_state_machine,
 			];
 
-			if (isset($groups[$process_id])) {
-				$groups[$process_id]['participant'] = $id;
+			if (isset($processes[$process_id])) {
+				$processes[$process_id]['participant'] = $id;
 				if ($name != '') {
-					$groups[$process_id]['name'] = $name;
+					$processes[$process_id]['name'] = $name;
 				}
 			} else {
-				$groups[$process_id] = [
+				$processes[$process_id] = [
 					'id' => $process_id,
 					'name' => $name,
 					'nodes' => [$id],
@@ -125,10 +142,24 @@ class BpmnReader implements IMachineDefinitionReader
 					'_generated' => true,
 				];
 			}
+
+			$node = $graph->createNode($id, [
+				'id' => $id,
+				'name' => $name,
+				'type' => 'participant',
+				'process' => $process_id,
+				'features' => [],
+				'_is_state_machine' => $is_state_machine,
+				'_generated' => false,
+			]);
+
+			if ($process_id) {
+				$processNestedGraphs[$process_id] = $node->getNestedGraph();
+			}
 		}
 
 		// Get nodes
-		foreach (['participant', 'startEvent', 'task', 'sendTask', 'receiveTask', 'userTask', 'serviceTask',
+		foreach (['startEvent', 'task', 'sendTask', 'receiveTask', 'userTask', 'serviceTask',
 			'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
 			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway',
 			'textAnnotation'] as $type)
@@ -146,13 +177,11 @@ class BpmnReader implements IMachineDefinitionReader
 					$process_id = $processRef;
 				} else if (($process_element = $el->parentNode) && $process_element->tagName == 'bpmn:process') {
 					$process_id = trim($process_element->getAttribute('id'));
-				} else if ($type == 'participant' && isset($participants[$id])) {
-					$process_id = $participants[$id]['process'];
 				} else {
 					$process_id = null;
 				}
 				if ($process_id) {
-					$groups[$process_id]['nodes'][] = $id;
+					$processes[$process_id]['nodes'][] = $id;
 				}
 
 				// Detect special features of intermediateCatchEvent and similar nodes
@@ -164,13 +193,17 @@ class BpmnReader implements IMachineDefinitionReader
 					$features['messageEventDefinition'] = true;
 				}
 
-				$node = $graph->createNode($id, [
+				if (!isset($processNestedGraphs[$process_id])) {
+					throw new RuntimeException("Process graph \"$process_id\" not found for node \"$id\".");
+				}
+
+				$nodeGraph = $processNestedGraphs[$process_id];
+				$node = $nodeGraph->createNode($id, [
 					'id' => $id,
 					'name' => $name,
 					'type' => $type,
 					'process' => $process_id,
 					'features' => $features,
-					'_distance' => null,
 					'_invoking' => false,
 					'_receiving' => false,
 					'_possibly_receiving' => false,
@@ -201,8 +234,16 @@ class BpmnReader implements IMachineDefinitionReader
 				$sourceRef = trim($el->getAttribute('sourceRef'));
 				$targetRef = trim($el->getAttribute('targetRef'));
 
+				$source = $graph->getNodeById($sourceRef);
+				$target = $graph->getNodeById($targetRef);
+
+				$sourceGraph = $source->getGraph();
+				$targetGraph = $target->getGraph();
+
+				$edgeGraph = ($sourceGraph === $targetGraph ? $sourceGraph : $graph);
+
 				// Store arrow
-				$graph->createEdge($id, $graph->getNode($sourceRef), $graph->getNode($targetRef), [
+				$edgeGraph->createEdge($id, $source, $target, [
 					'id' => $id,
 					'type' => $type,
 					'name' => $name,
@@ -219,8 +260,8 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach($xpath->query('//bpmn:association[@id]') as $el) {
 			/** @var \DomElement $el */
 			try {
-				$source = $graph->getNode(trim($el->getAttribute('sourceRef')));
-				$target = $graph->getNode(trim($el->getAttribute('targetRef')));
+				$source = $graph->getNodeById(trim($el->getAttribute('sourceRef')));
+				$target = $graph->getNodeById(trim($el->getAttribute('targetRef')));
 			}
 			catch (MissingElementException $ex) {
 				continue;
@@ -229,13 +270,23 @@ class BpmnReader implements IMachineDefinitionReader
 			$sourceType = $source->getAttr('type');
 			$targetType = $target->getAttr('type');
 
+			$edgeGraph = ($source->getGraph() === $target->getGraph() ? $source->getGraph() : $graph);
+
 			if ($sourceType == 'textAnnotation' && $targetType != 'textAnnotation') {
 				$source['associations'][] = $target;
 				$target['annotations'][] = $source;
+
+				$edgeGraph->createEdge(null, $target, $source, [
+					'type' => 'association',
+				]);
 			}
 			if ($targetType == 'textAnnotation' && $sourceType != 'textAnnotation') {
 				$target['associations'][] = $source;
 				$source['annotations'][] = $target;
+
+				$edgeGraph->createEdge(null, $source, $target, [
+					'type' => 'association',
+				]);
 			}
 		}
 
@@ -257,7 +308,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'state_machine_participant_id' => $state_machine_participant_id,
 					'state_machine_process_id' => $state_machine_process_id,
 					'graph' => $graph,
-					'groups' => $groups,
+					'groups' => $processes,
 					'participants' => $participants,
 					'svg_file_name' => $svg_file_name,
 					'svg_file_contents' => $svg_file_contents,
@@ -301,6 +352,38 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
+	/**
+	 * Add error to the graph
+	 *
+	 * @param array $errors
+	 * @param string $message
+	 * @param Node[] $nodes
+	 */
+	private static function addError(array & $errors, string $message, array $nodes)
+	{
+		$errors[] = ['text' => $message, 'nodes' => $nodes];
+
+		$errorGraph = null;
+		foreach ($nodes as $node) {
+			if ($errorGraph === null) {
+				$errorGraph = $node->getGraph();
+			} else {
+				$nodeGraph = $node->getGraph();
+				if ($nodeGraph !== $errorGraph) {
+					$errorGraph = $node->getRootGraph();
+					break;
+				}
+			}
+		}
+
+		$errorNodeId = '_error_'.md5($message);
+		$errorNode = $errorGraph->createNode($errorNodeId, ['label' => $message, 'type' => 'error']);
+		foreach ($nodes as $node) {
+			$errorGraph->createEdge(null, $errorNode, $node, ['type' => 'error']);
+		}
+	}
+
+
 	protected static function inferStateMachine(& $fragment, & $errors)
 	{
 		// Results
@@ -309,21 +392,21 @@ class BpmnReader implements IMachineDefinitionReader
 		// Get BPMN graph and setup additional inidices
 		/** @var Graph $graph */
 		$graph = $fragment['graph'];
-		$graph->createNodeAttrIndex('_invoking');
-		$graph->createNodeAttrIndex('_receiving');
-		$graph->createNodeAttrIndex('_possibly_receiving');
-		$graph->createEdgeAttrIndex('_transition');
-		$graph->createEdgeAttrIndex('_state');
+		$graph->indexNodeAttr('_invoking');
+		$graph->indexNodeAttr('_receiving');
+		$graph->indexNodeAttr('_possibly_receiving');
+		$graph->indexEdgeAttr('_transition');
+		$graph->indexEdgeAttr('_state');
 
 		// Shortcuts
 		$state_machine_process_id = & $fragment['state_machine_process_id'];
 		$state_machine_participant_id = & $fragment['state_machine_participant_id'];
-		$state_machine_participant_node = $graph->getNode($state_machine_participant_id);
+		$state_machine_participant_node = $graph->getNodeById($state_machine_participant_id);
 
 
 		// Stage 1: Find message flows to state machine participant, identify
 		// invoking and potential receiving nodes
-		foreach ($graph->getEdges() as $edgeId => $a) {
+		foreach ($graph->getAllEdges() as $edgeId => $a) {
 			if ($a['type'] != 'messageFlow') {
 				continue;
 			}
@@ -335,7 +418,7 @@ class BpmnReader implements IMachineDefinitionReader
 			if ($source['process'] != $state_machine_process_id && ($target['process'] == $state_machine_process_id)) {
 				$source->setAttr('_invoking', true);
 				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
-					$errors[] = ['text' => 'Multiple actions invoked by a single task.', 'nodes' => [$source]];
+					static::addError($errors, 'Multiple actions invoked by a single task.', [$source]);
 				} else {
 					$source['_action_name'] = $a->getId();
 				}
@@ -346,7 +429,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$target->setAttr('_receiving', true);
 				$target->setAttr('_possibly_receiving', true);
 				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
-					$errors[] = ['text' => 'Multiple actions invoked by a single task.', 'nodes' => [$target]];
+					static::addError($errors, 'Multiple actions invoked by a single task.', [$target]);
 				} else {
 					$target['_action_name'] = $a->getId();
 				}
@@ -354,20 +437,20 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
-		foreach ($graph->getEdges() as $edge) {
+		foreach ($graph->getAllEdges() as $edge) {
 			if ($edge['type'] != 'messageFlow') {
 				continue;
 			}
 
 			if ($edge->getEnd()->getId() == $state_machine_participant_id) {
+				$state_machine_graph = $edge->getEnd()->getNestedGraph();
 				$new_node_id = 'x_' . $edge->getId() . '_target';
-				$new_node = $graph->createNode($new_node_id, [
+				$new_node = $state_machine_graph->createNode($new_node_id, [
 					'id' => $new_node_id,
 					'name' => $edge['name'],
 					'type' => 'task',
 					'process' => $fragment['state_machine_process_id'],
 					'features' => [],
-					'_distance' => null,
 					'_invoking' => false,
 					'_receiving' => false,
 					'_possibly_receiving' => false,
@@ -435,10 +518,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$target = $e->getEnd();
 					if ($target['process'] == $state_machine_process_id) {
 						if (isset($invoking_arrow)) {
-							$errors[] = [
-								'text' => 'Multiple invoking arrows.',
-								'nodes' => [$invoking_node],
-							];
+							static::addError($errors, 'Multiple invoking arrows.', [$invoking_node]);
 							break;
 						} else {
 							$invoking_arrow = $e;
@@ -474,17 +554,14 @@ class BpmnReader implements IMachineDefinitionReader
 							continue;
 						}
 						if (isset($rcv_arrow)) {
-							$errors[] = [
-								'text' => 'Multiple receiving arrows.',
-								'nodes' => [$rcv_node],
-							];
+							static::addError($errors, 'Multiple receiving arrows.', [$rcv_node]);
 							break;
 						} else {
 							$rcv_arrow = $a;
 						}
 					}
 
-					if ($rcv_arrow && $rcv_arrow->getStart() == $state_machine_participant_id) {
+					if ($rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
 						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
 
@@ -521,7 +598,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Stage 1: (M_S) Find elements which are part of a state
-		foreach ($graph->getNodes() as $node) {
+		foreach ($graph->getAllNodes() as $node) {
 			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
 				&& $node['process'] != $state_machine_process_id
 				&& !$node['_transition'] && !$node['_invoking'] && !$node['_receiving'])
@@ -529,7 +606,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$node->setAttr('_state', true);
 			}
 		}
-		foreach ($graph->getEdges() as $edge) {
+		foreach ($graph->getAllEdges() as $edge) {
 			$source = $edge->getStart();
 			$target = $edge->getEnd();
 			if ($edge['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
@@ -541,7 +618,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 2: (s) State detection -- Merge green arrows and nodes into states
 		$uf = new UnionFind();
-		foreach ($graph->getNodes() as $id => $node) {
+		foreach ($graph->getAllNodes() as $id => $node) {
 			if ($node['_invoking']) {
 				$uf->add('Qin_'.$id);
 			}
@@ -549,7 +626,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$uf->add('Qout_'.$id);
 			}
 		}
-		foreach ($graph->getEdges() as $id => $edge) {
+		foreach ($graph->getAllEdges() as $id => $edge) {
 			if ($edge['_state']) {
 				$sourceId = $edge->getStart()->getId();
 				$targetId = $edge->getEnd()->getId();
@@ -564,7 +641,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$uf->union($id, 'Qin_'.$targetId);
 			}
 		}
-		foreach ($graph->getNodes() as $id => $node) {
+		foreach ($graph->getAllNodes() as $id => $node) {
 			if ($node['_state']) {
 				// Connect input with output as this node is pass-through, unless it is a receiving node
 				$uf->add('Qout_'.$id);
@@ -581,7 +658,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 2: State propagation -- all message flows from a single task
 		// in the state machine process end in the same state.
-		foreach ($graph->getNodes() as $id => $node) {
+		foreach ($graph->getAllNodes() as $id => $node) {
 			if ($node['process'] == $state_machine_process_id && $node['type'] == 'task') {
 				// Collect nodes to which message flows flow
 				/** @var Node[] $receiving_nodes */
@@ -639,7 +716,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
-		foreach ($graph->getNodes() as $n_id => $node) {
+		foreach ($graph->getAllNodes() as $n_id => $node) {
 			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
 				continue;
 			}
@@ -691,13 +768,13 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($custom_state_names as $state => $node_ids) {
 			$uf->addUnique($state);
 			foreach ($node_ids as $node_id) {
-				$node = $graph->getNode($node_id);
+				$node = $graph->getNodeById($node_id);
 				if ($node['_state'] || $node['_receiving'] || $node['type'] == 'startEvent') {
 					$uf->union($state, 'Qout_'.$node_id);
 				} else if ($node['_invoking'] || $node['type'] == 'endEvent') {
 					$uf->union($state, 'Qin_'.$node_id);
 				} else {
-					$errors[] = ['text' => 'Unused annotation.', 'nodes' => [$node_id]];
+					static::addError($errors, 'Unused annotation.', [$node_id]);
 				}
 			}
 		}
@@ -721,7 +798,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$used_s[$s] = true;
 			}
 		}
-		foreach ($graph->getNodes() as $n_id => $node) {
+		foreach ($graph->getAllNodes() as $n_id => $node) {
 			if ($node['_state'] && $uf->has($n_id)) {
 				$s = $uf->find($n_id);
 				if (empty($used_s[$s])) {
@@ -729,7 +806,7 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			}
 		}
-		foreach ($graph->getEdges() as $edgeId => $edge) {
+		foreach ($graph->getAllEdges() as $edgeId => $edge) {
 			// No need to check the target node, because the source would have to be a receiving node.
 			$n_id = $edge->getStart()->getId();
 			if ($edge['_state'] && $uf->has($n_id)) {
@@ -766,10 +843,7 @@ class BpmnReader implements IMachineDefinitionReader
 				if ($a !== $b && $uf->find($a) === $uf->find($b)) {
 					$n = array_merge($na, $nb);
 					sort($n);
-					$errors[] = [
-						'text' => 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]),
-						'nodes' => $n,
-					];
+					static::addError($errors, 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]), $n);
 					break 2;
 				}
 			}
@@ -794,7 +868,7 @@ class BpmnReader implements IMachineDefinitionReader
 				continue;
 			}
 			// Get action
-			$a_arrow = $graph->getEdge($node['_action_name']);
+			$a_arrow = $graph->getEdgeById($node['_action_name']);
 			$a_node = $a_arrow->getEnd();
 			$action = $a_node['name'];
 
@@ -807,12 +881,12 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Stage 4: [debug] At this point the state machine is complete, so let's assign states and transitions to BPMN nodes.
-		foreach ($graph->getNodes() as $id => $node) {
+		foreach ($graph->getAllNodes() as $id => $node) {
 			if ($node['_state']) {
 				$node['_state_name'] = $uf->find($id);
 			}
 		}
-		foreach ($graph->getEdges() as $id => $edge) {
+		foreach ($graph->getAllEdges() as $id => $edge) {
 			if ($edge['_state']) {
 				$edge['_state_name'] = $uf->find($id);
 			}
@@ -842,7 +916,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// [visualization] Detect connections between generated nodes
 		// in state machine process to arrange them nicely
 		// FIXME: This is wrong, but it works.
-		foreach (array_filter($graph->getNodes(), function(Node $n) use ($state_machine_process_id) {
+		foreach (array_filter($graph->getAllNodes(), function(Node $n) use ($state_machine_process_id) {
 				return $n['type'] == 'task' && $n['process'] == $state_machine_process_id;
 			}) as $start_node) {
 			/** @var Node $start_node */
@@ -905,7 +979,7 @@ class BpmnReader implements IMachineDefinitionReader
 		$diagram = "\tsubgraph cluster_$prefix {\n\t\tlabel= \"BPMN:\\n".basename($fragment_file)."\"; color=\"#5373B4\";\n\n";
 
 		// Draw arrows
-		foreach ($graph->getEdges() as $id => $a) {
+		foreach ($graph->getAllEdges() as $id => $a) {
 			$sourceNode = $a->getStart();
 			$targetNode = $a->getEnd();
 			$sourceId = $sourceNode->getId();
@@ -977,7 +1051,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Draw nodes
 		$hidden_nodes = [];
-		foreach ($graph->getNodes() as $id => $n) {
+		foreach ($graph->getAllNodes() as $id => $n) {
 			$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
 
 			// Render node
@@ -1107,13 +1181,42 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	// TODO: Refactor this.
 	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors)
 	{
+		/** @var Graph $graph */
+		$graph = $fragment['graph'];
+
+		// [visualization] Calculate distance of each node from nearest start
+		// event to detect backward arrows and make diagrams look much better
+		$distance = 0;
+		GraphSearch::BFS($graph)
+			->onNode(function(Node $cur_node) use (& $distance) {
+				if (!isset($cur_node['_distance'])) {
+					$cur_node['_distance'] = 0;
+				}
+				$distance = $cur_node['_distance'] + 1;
+				return true;
+			})
+			->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use (& $distance) {
+				if ($edge['type'] == 'messageFlow') {
+					$nextNodeDistance = $next_node->getAttr('_distance', INF);
+					if ($nextNodeDistance > $distance) {
+						$next_node->setAttr('_distance', $distance);
+					}
+					return false;
+				} else if ($edge['type'] == 'sequenceFlow' && !$seen) {
+					$next_node->setAttr('_distance', $distance);
+					return true;
+				} else {
+					return false;
+				}
+			})
+			->start($graph->getNodesByAttr('type', 'startEvent'));
+
 		// Initialize node for the BPMN fragment
 		$diagram_node = [
 			'id' => $prefix,
-			'label' => "BPMN: ".basename($fragment_file),
+			'label' => "BPMN: " . basename($fragment_file),
 			'color' => "#5373B4",
 			'graph' => [
 				'layout' => 'column',
@@ -1125,311 +1228,39 @@ class BpmnReader implements IMachineDefinitionReader
 			],
 		];
 
-		/** @var Graph $graph */
-		$graph = $fragment['graph'];
-
-		$nodes_by_id = [];
-		$arrows_by_id = [];
-
-		// TODO: Draw nested graphs for participants
-		$process_nodes = [];
-		foreach ($fragment['participants'] as $id => $p) {
-			// TODO: Add lanes
-			if ($p['_state_machine']) {
-				$process_nodes[$p['process']] = [
-					'id' => $prefix.$id,
-					'label' => $p['name'],
-					'color' => '#280',
-					'fill' => '#f8f8f8',
-					'graph' => [
-						'layout' => 'row',
-						'layoutOptions' => [
-							'sortNodes' => 'topological',
-							'arcEdges' => false,
-						],
-						'nodes' => [],
-						'edges' => [],
-					],
-				];
-			} else {
-				$process_nodes[$p['process']] = [
-					'id' => $prefix.$id,
-					'label' => $p['name'],
-					'color' => '#888',
-					'fill' => '#fff',
-					'graph' => [
-						'layout' => 'dagre',
-						'layoutOptions' => [
-							'rankdir' => 'LR',
-						],
-						'nodes' => [],
-						'edges' => [],
-					],
-				];
-			}
-			$diagram_node['graph']['nodes'][] = & $process_nodes[$p['process']];
-			$nodes_by_id[$id] = & $diagram_node['graph']['nodes'][count($diagram_node['graph']['nodes']) - 1];
-		}
-
-		// Draw arrows
-		foreach ($graph->getEdges() as $id => $a) {
-			$source = $a->getStart();
-			$target = $a->getEnd();
-			$source_id = $prefix . $source->getId();
-			$target_id = $prefix . $target->getId();
-
-			$label = trim($a['name']);
-			if ($a['_generated'] && $label != '') {
-				$label = "($label)";
-			}
-			$edge = [
-				'id' => $prefix.$id,
-				'start' => $source_id,
-				'end' => $target_id,
-				'label' => $label,
-				'tooltip' => json_encode($a->getAttributes(), JSON_NUMERIC_CHECK|JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE),
-			];
-
-			// Low opacity for generated or removed edges
-			if ($a['_generated'] || !empty($a['_unused'])) {
-				$edge['opacity'] = '0.4';
-			}
-
-			// Edge color
-			if ($a['_transition']) {
-				$edge['color'] = "#2266cc";
-			} else if ($a['_state']) {
-				$edge['color'] = "#66aa22";
-			} else {
-				$edge['color'] = "#666666";
-			}
-
-			// Edge style
-			switch ($a['type']) {
-				case 'sequenceFlow':
-					if ($a['_dependency_only']) {
-						$edge['hidden'] = true;
-					}
-					break;
-				case 'messageFlow':
-					$edge['stroke_dasharray'] = '5,4';
-					$edge['arrowHead'] = 'empty';
-					$edge['arrowTail'] = 'odot';
-					break;
-				default:
-					$edge['color'] = '#ff0000';
-					break;
-			}
-
-			// Add edge to graph
-			if ($source['process'] == $target['process']) {
-				$arrows_by_id[$id] = & $process_nodes[$source['process']]['graph']['edges'][];
-			} else {
-				$arrows_by_id[$id] = & $diagram_node['graph']['edges'][];
-			}
-			$arrows_by_id[$id] = $edge;
-		}
-
-		// Draw nodes
-		foreach ($graph->getNodes() as $id => $n) {
-			$node = [
-				'id' => $prefix . $id,
-				'fill' => "#fff",
-			];
-
-			// Skip participants
-			if ($n['type'] == 'participant') {
-				continue;
-			}
-
-			// Node label
-			$label = trim($n['name']);
-			if ($n['_generated'] && $label != '') {
-				$label = "($label)";
-			}
-			$node['label'] = $label;
-			$node['tooltip'] = json_encode($n->getAttributes(), JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-			// Node type (symbol)
-			switch ($n['type']) {
-				case 'task':
-				case 'sendTask':
-				case 'receiveTask':
-				case 'userTask':
-				case 'serviceTask':
-					$node['shape'] = 'bpmn.task';
-					break;
-
-				case 'participant':
-					break;
-
-				case 'startEvent':
-				case 'intermediateCatchEvent':
-				case 'intermediateThrowEvent':
-				case 'endEvent':
-					$node['shape'] = 'bpmn.event';
-					$node['event_type'] = ['startEvent' => 'start', 'endEvent' => 'end'][$n['type']] ?? 'intermediate';
-					$node['event_is_throwing'] = ($n['type'] == 'intermediateThrowEvent');
-					if (isset($n['features']['timerEventDefinition'])) {
-						$node['event_symbol'] = 'timer';
-					} else {
-						if (isset($n['features']['messageEventDefinition'])) {
-							$node['event_symbol'] = 'message';
-						}
-					}
-					break;
-
-				case 'exclusiveGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'exclusive';
-					break;
-
-				case 'eventBasedGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'event';
-					break;
-
-				case 'parallelEventBasedGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'parallel_event';
-					break;
-
-				case 'inclusiveGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'inclusive';
-					break;
-
-				case 'complexGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'complex';
-					break;
-
-				case 'parallelGateway':
-					$node['shape'] = 'bpmn.gateway';
-					$node['gateway_type'] = 'parallel';
-					break;
-
-				case 'textAnnotation':
-					$node['shape'] = 'note';
-					$node['label'] = $n['text'];
-					$node['color'] = '#aaaaaa';
-					break;
-			}
-
-			// Low opacity for generated and removed nodes
-			if ($n['_generated'] || !empty($n['_unused'])) {
-				$node['opacity'] = '0.4';
-			}
-
-			// Node color
-			if ($n['_transition']) {
-				$node['color'] = '#2266cc';
-			} else {
-				if ($n['_state']) {
-					$node['color'] = '#66aa22';
-				} else {
-					if ($n['type'] == 'textAnnotation') {
-						$node['color'] = '#aaaaaa';
-					} else {
-						$node['color'] = '#000000';
-					}
-				}
-			}
-
-			// Receiving/invoking background
-			// TODO: Gradients for inv+rcv and possibly rcv nodes
-			if ($n['_invoking'] && $n['_receiving']) {
-				$node['fill'] = 'url(#'.$prefix.'_gradient_rcv_inv)';
-			} else {
-				if ($n['_invoking']) {
-					$node['fill'] = '#ffff88';
-				} else {
-					if ($n['_receiving']) {
-						$node['fill'] = '#aaddff';
-					} else {
-						if ($n['_possibly_receiving']) {
-							$node['fill'] = '#eeeeff';
-							$node['fill'] = 'url(#'.$prefix.'_gradient_pos_rcv)';
-						}
-					}
-				}
-			}
-
-			// Add node to graph
-			$nodes_by_id[$n->getId()] = & $process_nodes[$n['process']]['graph']['nodes'][];
-			$nodes_by_id[$n->getId()] = $node;
-
-			// Draw annotation associations
-			if (!empty($n['annotations'])) {
-				foreach ($n['annotations'] as $ann_node) {
-					/** @var Node $ann_node */
-					$ann_node_id = $ann_node->getId();
-					$process_nodes[$n['process']]['graph']['edges'][] = [
-						'id' => $prefix . $ann_node_id . '__line',
-						'start' => $node['id'],
-						'end' => $prefix . $ann_node_id,
-						'stroke_dasharray' => '5,4',
-						'color' => '#aaaaaa',
-						'arrowHead' => 'none',
-					];
-				}
-			}
-		}
-
-		// Render errors
-		foreach ($errors as $err) {
-			$err_node_id = $prefix.'error_'.md5($err['text']);
-			$first_err_node = reset($err['nodes']);
-			$err_process = $first_err_node['process'];
-			$process_nodes[$err_process]['graph']['nodes'][] = $node = [
-				'id' => $err_node_id,
-				'color' => "#f00",
-				'fill' => "#fee",
-				'label' => 'Error: '.$err['text'],
-			];
-			foreach ($err['nodes'] as $n) {
-				/** @var Node $n */
-				$n_id = $n->getId();
-				$process_nodes[$err_process]['graph']['edges'][] = [
-					'id' => $err_node_id . '__line_' . $n_id,
-					'start' => $prefix . $n_id,
-					'end' => $err_node_id,
-					'stroke_dasharray' => '5,4',
-					'color' => '#ffaaaa',
-					'arrowHead' => 'none',
-				];
-			}
-		}
-
 		// Draw provided SVG file as a node (for SVG export from Camunda Modeler)
 		if (isset($fragment['svg_file_contents'])) {
 			$svg_style = '';
 
 			// Style nodes
-			foreach ($nodes_by_id as $id => $node) {
+			foreach ($graph->getAllNodes() as $id => $node) {
+				$nodeAttrs = static::renderBpmnProcessNodeAttrs($node, [], $prefix);
+
 				// Don't style annotations
-				if (isset($node['shape']) && $node['shape'] == 'note') {
+				if (isset($nodeAttrs['shape']) && $nodeAttrs['shape'] == 'note') {
 					continue;
 				}
 				// Top-level shape
 				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual > *:first-child {";
-				if (isset($node['fill'])) {
-					$svg_style .= " fill:" . $node['fill'] . " !important;";
+				if (isset($nodeAttrs['fill'])) {
+					$svg_style .= " fill:" . $nodeAttrs['fill'] . " !important;";
 				}
 				$svg_style .= " }\n";
 				// All shapes
 				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual > * {";
-				if (isset($node['color'])) {
-					$svg_style .= " stroke:" . $node['color'] . " !important;";
+				if (isset($nodeAttrs['color'])) {
+					$svg_style .= " stroke:" . $nodeAttrs['color'] . " !important;";
 				}
 				$svg_style .= " }\n";
 			}
 
 			// Style arrows
-			foreach ($arrows_by_id as $id => $arrow) {
+			foreach ($graph->getAllEdges() as $id => $edge) {
+				$edgeAttrs = static::renderBpmnProcessEdgeAttrs($edge, [], $prefix);
+
 				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual * {";
-				if (isset($arrow['color'])) {
-					$svg_style .= " stroke:" . $arrow['color'] . " !important;";
+				if (isset($edgeAttrs['color'])) {
+					$svg_style .= " stroke:" . $edgeAttrs['color'] . " !important;";
 				}
 				$svg_style .= " }\n";
 			}
@@ -1455,12 +1286,12 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Render errors (somehow)
 			foreach ($errors as $err) {
-				$err_node_id = $prefix.'__svg_error_'.md5($err['text']);
+				$err_node_id = $prefix . '__svg_error_' . md5($err['text']);
 				$svg_diagram_node['graph']['nodes'][] = [
 					'id' => $err_node_id,
 					'color' => "#f00",
 					'fill' => "#fee",
-					'label' => 'Error: '.$err['text'],
+					'label' => 'Error: ' . $err['text'],
 				];
 				foreach ($err['nodes'] as $n) {
 					/** @var Node $n */
@@ -1502,20 +1333,241 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Append extras to machine definition
 		if (!isset($fragment['svg_file_contents'])) {
-			$machine_def['state_diagram_extras_json']['nodes'][] = $diagram_node;
-			$machine_def['state_diagram_extras_json']['extraSvg'][] =
-				['defs', [], [
-					['linearGradient', ['id' => $prefix . '_gradient_rcv_inv'], [
-						['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
-						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
-					]],
-					['linearGradient', ['id' => $prefix . '_gradient_pos_rcv'], [
-						['stop', ['offset' => '50%', 'stop-color' => '#fff']],
-						['stop', ['offset' => '50%', 'stop-color' => '#adf']],
-					]],
-				],
-				];
+			$grafovatkoExport = (new GraphExportGrafovatko($graph))
+				->setPrefix($prefix)
+				->setGraphProcessor(function (NestedGraph $nestedGraph, array $exportedGraph) use ($graph, $prefix) {
+					if ($nestedGraph === $graph) {
+						$exportedGraph['layout'] = 'column';
+						$exportedGraph['layoutOptions'] = [
+							'sortNodes' => true,
+						];
+					} else {
+						if ($nestedGraph->getParentNode()->getAttr('_is_state_machine', false)) {
+							$exportedGraph['layout'] = 'row';
+							$exportedGraph['layoutOptions'] = [
+								'sortNodes' => 'attr',
+								'sortAttr' => '_distance',
+								'arcEdges' => false,
+							];
+						} else {
+							$exportedGraph['layout'] = 'dagre';
+							$exportedGraph['layoutOptions'] = [
+								'rankdir' => 'LR',
+							];
+						}
+					}
+					return $exportedGraph;
+				})
+				->setNodeAttrsProcessor(function (Node $node, array $exportedNode) use ($prefix) {
+					return static::renderBpmnProcessNodeAttrs($node, $exportedNode, $prefix);
+				})
+				->setEdgeAttrsProcessor(function (Edge $edge, array $exportedEdge) use ($prefix) {
+					return static::renderBpmnProcessEdgeAttrs($edge, $exportedEdge, $prefix);
+				});
+
+			$machine_def['state_diagram_extras_json']['nodes'][] = [
+				'id' => $prefix . '_extra_graph',
+				'label' => "BPMN: " . basename($fragment_file),
+				'color' => "#5373B4",
+				'graph' => $grafovatkoExport->export(),
+			];
+			$machine_def['state_diagram_extras_json']['extraSvg'][] = ['defs', [], [
+				['linearGradient', ['id' => $prefix . '_gradient_rcv_inv'], [
+					['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
+					['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+				]],
+				['linearGradient', ['id' => $prefix . '_gradient_pos_rcv'], [
+					['stop', ['offset' => '50%', 'stop-color' => '#fff']],
+					['stop', ['offset' => '50%', 'stop-color' => '#adf']],
+				]],
+			]];
 		}
+	}
+
+
+	static private function renderBpmnProcessNodeAttrs(Node $node, array $exportedNode, string $prefix)
+	{
+		$exportedNode['fill'] = "#fff";
+
+		// Node label
+		$label = trim($node['name']);
+		if ($node['_generated'] && $label != '') {
+			$label = "($label)";
+		}
+		$exportedNode['label'] = $label;
+
+		if ($node['type'] != 'participant') {
+			$exportedNode['tooltip'] = json_encode($node->getAttributes(), JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		}
+
+		// Node type (symbol)
+		switch ($node['type']) {
+			case 'task':
+			case 'sendTask':
+			case 'receiveTask':
+			case 'userTask':
+			case 'serviceTask':
+				$exportedNode['shape'] = 'bpmn.task';
+				break;
+
+			case 'participant':
+				break;
+
+			case 'startEvent':
+			case 'intermediateCatchEvent':
+			case 'intermediateThrowEvent':
+			case 'endEvent':
+				$exportedNode['shape'] = 'bpmn.event';
+				$exportedNode['event_type'] = ['startEvent' => 'start', 'endEvent' => 'end'][$node['type']] ?? 'intermediate';
+				$exportedNode['event_is_throwing'] = ($node['type'] == 'intermediateThrowEvent');
+				if (isset($node['features']['timerEventDefinition'])) {
+					$exportedNode['event_symbol'] = 'timer';
+				} else {
+					if (isset($node['features']['messageEventDefinition'])) {
+						$exportedNode['event_symbol'] = 'message';
+					}
+				}
+				break;
+
+			case 'exclusiveGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'exclusive';
+				break;
+
+			case 'eventBasedGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'event';
+				break;
+
+			case 'parallelEventBasedGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'parallel_event';
+				break;
+
+			case 'inclusiveGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'inclusive';
+				break;
+
+			case 'complexGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'complex';
+				break;
+
+			case 'parallelGateway':
+				$exportedNode['shape'] = 'bpmn.gateway';
+				$exportedNode['gateway_type'] = 'parallel';
+				break;
+
+			case 'textAnnotation':
+				$exportedNode['shape'] = 'note';
+				$exportedNode['label'] = $node['text'];
+				$exportedNode['color'] = '#aaaaaa';
+				break;
+
+			case 'error':
+				$exportedNode['shape'] = 'rect';
+				$exportedNode['label'] = $node['text'];
+				$exportedNode['color'] = '#ff0000';
+				$exportedNode['fill'] = '#ffeeee';
+				break;
+		}
+
+		// Low opacity for generated and removed nodes
+		if ($node['_generated'] || !empty($node['_unused'])) {
+			$exportedNode['opacity'] = '0.4';
+		}
+
+		// Node color
+		if ($node['_transition']) {
+			$exportedNode['color'] = '#2266cc';
+		} else {
+			if ($node['_state']) {
+				$exportedNode['color'] = '#66aa22';
+			} else {
+				if ($node['type'] == 'textAnnotation') {
+					$exportedNode['color'] = '#aaaaaa';
+				} else {
+					$exportedNode['color'] = '#000000';
+				}
+			}
+		}
+
+		// Receiving/invoking background
+		if ($node['_invoking'] && $node['_receiving']) {
+			$exportedNode['fill'] = 'url(#' . $prefix . '_gradient_rcv_inv)';
+		} else {
+			if ($node['_invoking']) {
+				$exportedNode['fill'] = '#ffff88';
+			} else {
+				if ($node['_receiving']) {
+					$exportedNode['fill'] = '#aaddff';
+				} else {
+					if ($node['_possibly_receiving']) {
+						$exportedNode['fill'] = '#eeeeff';
+						$exportedNode['fill'] = 'url(#' . $prefix . '_gradient_pos_rcv)';
+					}
+				}
+			}
+		}
+		return $exportedNode;
+	}
+
+
+	private static function renderBpmnProcessEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix)
+	{
+		$label = trim($edge['name']);
+		if ($edge['_generated'] && $label != '') {
+			$label = "($label)";
+		}
+
+		$exportedEdge['label'] = $label;
+		$exportedEdge['tooltip'] = json_encode($edge->getAttributes(), JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+		// Low opacity for generated or removed edges
+		if ($edge['_generated'] || !empty($edge['_unused'])) {
+			$exportedEdge['opacity'] = '0.4';
+		}
+
+		// Edge color
+		if ($edge['_transition']) {
+			$exportedEdge['color'] = "#2266cc";
+		} else {
+			if ($edge['_state']) {
+				$exportedEdge['color'] = "#66aa22";
+			} else {
+				$exportedEdge['color'] = "#666666";
+			}
+		}
+
+		// Edge style
+		switch ($edge['type']) {
+			case 'sequenceFlow':
+				if ($edge['_dependency_only']) {
+					$exportedEdge['hidden'] = true;
+				}
+				break;
+			case 'messageFlow':
+				$exportedEdge['stroke_dasharray'] = '5,4';
+				$exportedEdge['arrowHead'] = 'empty';
+				$exportedEdge['arrowTail'] = 'odot';
+				break;
+			case 'association':
+				$exportedEdge['color'] = '#aaaaaa';
+				$exportedEdge['stroke_dasharray'] = '5,4';
+				$exportedEdge['arrowHead'] = 'none';
+				break;
+			case 'error':
+				$exportedEdge['color'] = '#ff0000';
+				$exportedEdge['stroke_dasharray'] = '5,4';
+				$exportedEdge['arrowHead'] = 'none';
+				break;
+			default:
+				$exportedEdge['color'] = '#ff0000';
+				break;
+		}
+
+		return $exportedEdge;
 	}
 
 }
