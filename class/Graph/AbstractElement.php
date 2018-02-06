@@ -28,7 +28,7 @@ abstract class AbstractElement implements \ArrayAccess
 	private $id;
 
 	/**
-	 * @var Graph
+	 * @var NestedGraph
 	 */
 	private $graph;
 
@@ -38,7 +38,7 @@ abstract class AbstractElement implements \ArrayAccess
 	private $attrs;
 
 
-	public function __construct(Graph $graph, string $id, array $attrs)
+	public function __construct(NestedGraph $graph, string $id, array $attrs)
 	{
 		$this->graph = $graph;
 		$this->id = $id;
@@ -52,9 +52,15 @@ abstract class AbstractElement implements \ArrayAccess
 	}
 
 
-	public function getGraph(): Graph
+	public function getGraph(): NestedGraph
 	{
 		return $this->graph;
+	}
+
+
+	public function getRootGraph(): Graph
+	{
+		return $this->graph->getRootGraph();
 	}
 
 

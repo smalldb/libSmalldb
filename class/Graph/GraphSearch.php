@@ -43,7 +43,7 @@ class GraphSearch
 	/**
 	 * Constructor.
 	 */
-	private function __construct(Graph $g)
+	private function __construct(NestedGraph $g)
 	{
 		$this->graph = $g;
 
@@ -57,7 +57,7 @@ class GraphSearch
 	}
 
 
-	public static function DFS(Graph $g): self
+	public static function DFS(NestedGraph $g): self
 	{
 		$gs = new self($g);
 		$gs->strategy = self::DFS_STRATEGY;
@@ -65,7 +65,7 @@ class GraphSearch
 	}
 
 
-	public static function BFS(Graph $g): self
+	public static function BFS(NestedGraph $g): self
 	{
 		$gs = new self($g);
 		$gs->strategy = self::BFS_STRATEGY;

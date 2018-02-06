@@ -33,8 +33,15 @@ class Node extends AbstractElement
 	 */
 	private $connectedEdges = [];
 
+	/**
+	 * Nested graph.
+	 *
+	 * @var NestedGraph|null
+	 */
+	private $nestedGraph = null;
 
-	public function __construct(Graph $graph, string $id, array $attrs)
+
+	public function __construct(NestedGraph $graph, string $id, array $attrs)
 	{
 		parent::__construct($graph, $id, $attrs);
 
@@ -83,6 +90,28 @@ class Node extends AbstractElement
 	public function getConnectedEdges(): array
 	{
 		return $this->connectedEdges;
+	}
+
+
+	/**
+	 * Get nested graph of this node. The graph is created if the node does not have any.
+	 *
+	 * @return NestedGraph
+	 */
+	public function getNestedGraph(): NestedGraph
+	{
+		return $this->nestedGraph !== null
+			? $this->nestedGraph
+			: ($this->nestedGraph = $this->getRootGraph()->createNestedGraph($this));
+	}
+
+
+	/**
+	 * Does the node have a nested graph?
+	 */
+	public function hasNestedGraph(): bool
+	{
+		return $this->nestedGraph !== null;
 	}
 
 

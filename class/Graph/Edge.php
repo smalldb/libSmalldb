@@ -33,7 +33,7 @@ class Edge extends AbstractElement
 	private $end;
 
 
-	public function __construct(Graph $graph, string $id, Node $start, Node $end, array $attrs)
+	public function __construct(NestedGraph $graph, string $id, Node $start, Node $end, array $attrs)
 	{
 		parent::__construct($graph, $id, $attrs);
 		$this->start = $start;
