@@ -35,9 +35,14 @@ class GraphSearch
 	private $checkArrowCbDefault;
 
 	private $strategy;
+	private $direction = self::DIR_FORWARD;
 
-	const DFS_STRATEGY = 1;
-	const BFS_STRATEGY = 2;
+	const DFS_STRATEGY = 0x01;
+	const BFS_STRATEGY = 0x02;
+
+	const DIR_FORWARD = 0x10;
+	const DIR_BACKWARD = 0x20;
+	const DIR_BOTH = 0x30;
 
 
 	/**
@@ -70,6 +75,27 @@ class GraphSearch
 		$gs = new self($g);
 		$gs->strategy = self::BFS_STRATEGY;
 		return $gs;
+	}
+
+
+	public function runForward(): self
+	{
+		$this->direction = self::DIR_FORWARD;
+		return $this;
+	}
+
+
+	public function runBackward(): self
+	{
+		$this->direction = self::DIR_BACKWARD;
+		return $this;
+	}
+
+
+	public function runBothWays(): self
+	{
+		$this->direction = self::DIR_BOTH;
+		return $this;
 	}
 
 
@@ -148,11 +174,17 @@ class GraphSearch
 			$edges = $currentNode->getConnectedEdges();
 
 			foreach ($edges as $edge) {
-				if ($edge->getStart() !== $currentNode) {
-					// Ignore edges which don't start in $currentNode.
+				if (($this->direction & self::DIR_FORWARD) && $edge->getStart() === $currentNode) {
+					// Forward edges
+					$nextNode = $edge->getEnd();
+				} else if (($this->direction & self::DIR_BACKWARD) && $edge->getEnd() === $currentNode) {
+					// Backward edges
+					$nextNode = $edge->getStart();
+				} else {
+					// Ignore edges of undesired direction.
 					continue;
 				}
-				$nextNode = $edge->getEnd();
+
 				$nextNodeId = $nextNode->getId();
 
 				// Check next node whether it is worth processing

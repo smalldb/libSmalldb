@@ -83,7 +83,6 @@ class BpmnReader implements IMachineDefinitionReader
 		$graph = new Graph();
 		$graph->indexNodeAttr('type');
 		$graph->indexEdgeAttr('type');
-		$graph->indexNodeAttr('group');
 
 		/** @var Graph[] $processNestedGraphs */
 		$processNestedGraphs = [];
@@ -150,6 +149,9 @@ class BpmnReader implements IMachineDefinitionReader
 				'process' => $process_id,
 				'features' => [],
 				'_is_state_machine' => $is_state_machine,
+				'_invoking' => false,
+				'_receiving' => false,
+				'_possibly_receiving' => false,
 				'_generated' => false,
 			]);
 
@@ -207,11 +209,6 @@ class BpmnReader implements IMachineDefinitionReader
 					'_invoking' => false,
 					'_receiving' => false,
 					'_possibly_receiving' => false,
-					'_receiving_nodes' => null,
-					'_action_name' => null,
-					'_transition' => null,
-					'_state' => null,
-					'_state_name' => null,
 					'_generated' => false,
 				]);
 
@@ -247,11 +244,6 @@ class BpmnReader implements IMachineDefinitionReader
 					'id' => $id,
 					'type' => $type,
 					'name' => $name,
-					'_transition' => false,
-					'_state' => false,
-					'_state_name' => null,
-					'_generated' => false,
-					'_dependency_only' => false,
 				]);
 			}
 		}
@@ -273,16 +265,16 @@ class BpmnReader implements IMachineDefinitionReader
 			$edgeGraph = ($source->getGraph() === $target->getGraph() ? $source->getGraph() : $graph);
 
 			if ($sourceType == 'textAnnotation' && $targetType != 'textAnnotation') {
-				$source['associations'][] = $target;
-				$target['annotations'][] = $source;
+				$source['associations'][$target->getId()] = $target;
+				$target['annotations'][$source->getId()] = $source;
 
 				$edgeGraph->createEdge(null, $target, $source, [
 					'type' => 'association',
 				]);
 			}
 			if ($targetType == 'textAnnotation' && $sourceType != 'textAnnotation') {
-				$target['associations'][] = $source;
-				$source['annotations'][] = $target;
+				$target['associations'][$source->getId()] = $source;
+				$source['annotations'][$target->getId()] = $target;
 
 				$edgeGraph->createEdge(null, $source, $target, [
 					'type' => 'association',
@@ -395,8 +387,6 @@ class BpmnReader implements IMachineDefinitionReader
 		$graph->indexNodeAttr('_invoking');
 		$graph->indexNodeAttr('_receiving');
 		$graph->indexNodeAttr('_possibly_receiving');
-		$graph->indexEdgeAttr('_transition');
-		$graph->indexEdgeAttr('_state');
 
 		// Shortcuts
 		$state_machine_process_id = & $fragment['state_machine_process_id'];
@@ -451,13 +441,6 @@ class BpmnReader implements IMachineDefinitionReader
 					'type' => 'task',
 					'process' => $fragment['state_machine_process_id'],
 					'features' => [],
-					'_invoking' => false,
-					'_receiving' => false,
-					'_possibly_receiving' => false,
-					'_receiving_nodes' => null,
-					'_action_name' => null,
-					'_transition' => null,
-					'_state' => null,
 					'_generated' => true,
 				]);
 				$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
@@ -597,13 +580,139 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Stage 1: (M_S) Find elements which are part of a state
+		// Stage 3: Detect state machine annotation symbol
+		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $state_machine_participant_node['name'], $m)) {
+			$state_machine_annotation_symbol = $m[1];
+		} else {
+			$state_machine_annotation_symbol = '@';
+		}
+
+		// Stage 3: Collect name states from annotations
+		$custom_state_names = [];
+		foreach ($graph->getAllNodes() as $n_id => $node) {
+			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
+				continue;
+			}
+
+			// Collect annotation texts
+			$texts = [];
+			foreach (explode("\n", $node['name']) as $t) {
+				$texts[] = trim($t);
+			}
+			if (!empty($node['annotations'])) {
+				foreach ($node['annotations'] as $ann_id => $ann_node) {
+					foreach (explode("\n", $ann_node['text']) as $t) {
+						$texts[] = trim($t);
+					}
+				}
+			}
+
+			// Parse annotation texts
+			$ann_state_names = [];
+			foreach ($texts as $t) {
+				$custom_state_name = null;
+
+				if ($state_machine_annotation_symbol == '@') {
+					if (preg_match('/^@([^\s]+)$/', $t, $m)) {
+						$custom_state_name = $m[1];
+					}
+				} else {
+					if (preg_match('/^\s*(@[^:\s]+)[: ]\s*(.+)$/', $t, $m) && $m[1] == $state_machine_annotation_symbol) {
+						$custom_state_name = $m[2];
+					}
+				}
+
+				if ($custom_state_name !== null) {
+					$ann_state_names[] = ($custom_state_name == '-' ? '' : $custom_state_name);
+				}
+			}
+
+			// Check if there is only one state specified
+			$c = count($ann_state_names);
+			if ($c == 1) {
+				$annotation_state_name = reset($ann_state_names);
+				$node['_annotation_state'] = $annotation_state_name;
+				$custom_state_names[$annotation_state_name][] = $n_id;
+			} else if ($c > 1) {
+				throw new BpmnAnnotationException('Annotations define multiple names for a single state (found when searching): '
+					.join(', ', $ann_state_names));
+			}
+		}
+
+		// Stage 2: State relation
+		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_possibly_receiving'))  as $receiving_node_id => $receiving_node) {
+			/** @var Node $receiving_node */
+			/** @var Node[] $next_invoking_nodes */
+			$next_invoking_nodes = [];
+			$annotations = [];
+
+			GraphSearch::DFS($graph)
+				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
+					use ($graph, $state_machine_process_id, $receiving_node_id, $receiving_node, & $next_invoking_nodes)
+				{
+					// Don't follow message flows. Don't enter state machine participant.
+					if ($edge['type'] == 'messageFlow' || $next_node['process'] == $state_machine_process_id) {
+						return false;
+					}
+
+					$edge['_state_from'][$receiving_node_id] = false;
+					$next_node['_state_from'][$receiving_node_id] = false;
+
+					if ($next_node['_invoking'] || $next_node['type'] == 'endEvent') {
+						// Found a target
+						$next_invoking_nodes[$next_node->getId()] = $next_node;
+						return false;
+					}
+
+					return true;
+				})
+				->start([$receiving_node]);
+
+			// We know all invoking nodes following the receiving node
+			$receiving_node->setAttr('_next_invoking_nodes', $next_invoking_nodes);
+
+			GraphSearch::DFS($graph)
+				->runBackward()
+				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
+					use ($graph, $receiving_node_id, $receiving_node, & $next_invoking_nodes, & $annotations)
+				{
+					if (!isset($edge['_state_from'][$receiving_node_id]) || $edge['_state_from'][$receiving_node_id] !== false) {
+						// Visit only what we visited on the forward run
+						return false;
+					}
+
+					$edge['_state_from'][$receiving_node_id] = true;
+					$cur_node['_state_from'][$receiving_node_id] = true;
+
+					// Collect annotations on all paths from R+ to I
+					if (isset($cur_node['_annotation_state']) && !$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
+						$annotations[$cur_node['_annotation_state']] = true;
+					}
+					if (isset($next_node['_annotation_state'])) {
+						$annotations[$next_node['_annotation_state']] = true;
+					}
+
+					return true;
+				})
+				->start($next_invoking_nodes);
+
+			$receiving_node->setAttr('_next_annotations', array_keys($annotations));
+		}
+
+		// Stage 1: (M_S) Find elements which are part of a state [deprecated]
 		foreach ($graph->getAllNodes() as $node) {
 			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
 				&& $node['process'] != $state_machine_process_id
 				&& !$node['_transition'] && !$node['_invoking'] && !$node['_receiving'])
 			{
-				$node->setAttr('_state', true);
+				if (isset($node['_state_from'])) {
+					foreach ($node['_state_from'] as $receiving_node_id => $is_on_path) {
+						if ($is_on_path) {
+							$node->setAttr('_state', true);
+							break;
+						}
+					}
+				}
 			}
 		}
 		foreach ($graph->getAllEdges() as $edge) {
@@ -612,7 +721,14 @@ class BpmnReader implements IMachineDefinitionReader
 			if ($edge['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
 				&& $target['process'] != $state_machine_process_id && !$target['_transition'])
 			{
-				$edge->setAttr('_state', true);
+				if (isset($edge['_state_from'])) {
+					foreach ($edge['_state_from'] as $receiving_node_id => $is_on_path) {
+						if ($is_on_path) {
+							$edge->setAttr('_state', true);
+							break;
+						}
+					}
+				}
 			}
 		}
 
@@ -704,63 +820,6 @@ class BpmnReader implements IMachineDefinitionReader
 						$uf->union('Qout_'.$rcvId, $e);
 					}
 				}
-			}
-		}
-
-		// Stage 3: Detect state machine annotation symbol
-		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $state_machine_participant_node['name'], $m)) {
-			$state_machine_annotation_symbol = $m[1];
-		} else {
-			$state_machine_annotation_symbol = '@';
-		}
-
-		// Stage 3: Collect name states from annotations
-		$custom_state_names = [];
-		foreach ($graph->getAllNodes() as $n_id => $node) {
-			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
-				continue;
-			}
-
-			// Collect annotation texts
-			$texts = [];
-			foreach (explode("\n", $node['name']) as $t) {
-				$texts[] = trim($t);
-			}
-			if (!empty($node['annotations'])) {
-				foreach ($node['annotations'] as $ann_id => $ann_node) {
-					foreach (explode("\n", $ann_node['text']) as $t) {
-						$texts[] = trim($t);
-					}
-				}
-			}
-
-			// Parse annotation texts
-			$ann_state_names = [];
-			foreach ($texts as $t) {
-				$custom_state_name = null;
-
-				if ($state_machine_annotation_symbol == '@') {
-					if (preg_match('/^@([^\s]+)$/', $t, $m)) {
-						$custom_state_name = $m[1];
-					}
-				} else {
-					if (preg_match('/^\s*(@[^:\s]+)[: ]\s*(.+)$/', $t, $m) && $m[1] == $state_machine_annotation_symbol) {
-						$custom_state_name = $m[2];
-					}
-				}
-
-				if ($custom_state_name !== null) {
-					$ann_state_names[] = ($custom_state_name == '-' ? '' : $custom_state_name);
-				}
-			}
-
-			// Check if there is only one state specified
-			$c = count($ann_state_names);
-			if ($c == 1) {
-				$custom_state_names[reset($ann_state_names)][] = $n_id;
-			} else if ($c > 1) {
-				throw new BpmnAnnotationException('Annotations define multiple names for a single state (found when searching): '
-					.join(', ', $ann_state_names));
 			}
 		}
 
@@ -893,7 +952,8 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// [visualization] Calculate distance of each node from nearest start
-		// event to detect backward arrows and make diagrams look much better
+		// event to detect backward arrows and sort nodes in state machine, so
+		// the diagrams look much better
 		$distance = 0;
 		GraphSearch::BFS($graph)
 			->onNode(function(Node $cur_node) use (& $distance) {
@@ -912,57 +972,6 @@ class BpmnReader implements IMachineDefinitionReader
 				}
 			})
 			->start($graph->getNodesByAttr('type', 'startEvent'));
-
-		// [visualization] Detect connections between generated nodes
-		// in state machine process to arrange them nicely
-		// FIXME: This is wrong, but it works.
-		foreach (array_filter($graph->getAllNodes(), function(Node $n) use ($state_machine_process_id) {
-				return $n['type'] == 'task' && $n['process'] == $state_machine_process_id;
-			}) as $start_node) {
-			/** @var Node $start_node */
-			$start_arrows = $start_node->getConnectedEdges();
-
-			$next_start_nodes = [];
-			$next_start_nodes_inv = [];
-			foreach ($start_arrows as $a) {
-				$a_target = $a->getEnd();
-				$next_start_nodes[] = $a_target;
-				$next_start_nodes_inv[$a_target->getId()] = true;
-			}
-
-			GraphSearch::DFS($graph)
-				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use ($graph, $state_machine_process_id, $start_node, $next_start_nodes_inv) {
-					// Ignore state machine's own arrows
-					if ($cur_node['process'] == $state_machine_process_id && $next_node['process'] == $state_machine_process_id) {
-						return false;
-					}
-
-					// Don't pass through invoking nodes, except messageFlow
-					if (!isset($next_start_nodes_inv[$cur_node->getId()]) && $cur_node['_invoking'] && $edge['type'] == 'sequenceFlow') {
-						return false;
-					}
-
-					// If we returned to state machine process
-					if ($next_node['process'] == $state_machine_process_id && $start_node !== $next_node) {
-						// link the next node to starting node
-						$new_id = 'x_'.$start_node->getId().'_'.$next_node->getId();
-						$graph->createEdge($new_id, $start_node, $next_node, [
-							'id' => $new_id,
-							'type' => 'sequenceFlow',
-							'name' => null,
-							'_transition' => false,
-							'_state' => false,
-							'_generated' => true,
-							'_dependency_only' => true,
-						]);
-						return true;
-					} else {
-						return false;
-					}
-
-				})
-				->start($next_start_nodes);
-		}
 
 		// Store results in the state machine definition
 		$machine_def['states'] = $states;
