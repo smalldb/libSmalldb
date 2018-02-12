@@ -115,18 +115,16 @@ class JsonDirReader
 			// Load all JSON files
 			if (preg_match('/^(.*)\.json(\.php)?$/i', $file, $m)) {
 				$machine_type = $m[1];
-				$file_name = $this->base_dir.$file;
+				$machine_def = [];
 
-				$machine_def = $this->parseFile($machine_type, $file_name, []);
-				$includes = $machine_def['include'] ?? [];
-				// TODO: Recursively process includes of includes
+				$include_queue = [$file];
+				$included_files = [];
 
-				$machine_success = true;
-				$errors = [];
 				$postprocess_list = []; /** @var IMachineDefinitionReader[] $postprocess_list*/
+				$errors = [];
 
 				// Load files using readers
-				foreach ($includes as $include) {
+				while (($include = array_shift($include_queue)) !== null) {
 					// String is filename
 					if (!is_array($include)) {
 						$include_file = $include;
@@ -136,13 +134,30 @@ class JsonDirReader
 						$include_opts = $include;
 					}
 
+					// Check for cycles
+					if (!empty($included_files[$include_file])) {
+						throw new RuntimeException("Cyclic dependency found when including \"$include_file\".");
+					} else {
+						$included_files[$include_file] = true;
+					}
+
 					// Relative path is relative to base directory
 					if ($include_file[0] != '/') {
 						$include_file = $this->base_dir.$include_file;
 					}
 
+					// Load & parse content of the file
 					$reader = null;
 					$parsed_content = $this->parseFile($machine_type, $include_file, $include_opts, $reader);
+
+					// Enqueue includes
+					if (!empty($parsed_content['include'])) {
+						foreach ($parsed_content['include'] as $new_include) {
+							$include_queue[] =  $new_include;
+						}
+					}
+
+					// Update machine definition
 					$machine_def = array_replace_recursive($parsed_content, $machine_def);
 
 					if ($reader) {
@@ -155,6 +170,7 @@ class JsonDirReader
 					$postprocessor->postprocessDefinition($machine_type, $machine_def, $errors);
 				}
 
+				// Store errors in machine definition so we can show them nicely
 				if (!empty($errors)) {
 					// TODO: Replace simple array with a ErrorListener which preserves context of the error.
 					$machine_def['errors'] = $errors;
