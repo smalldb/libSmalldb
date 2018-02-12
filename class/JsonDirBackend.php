@@ -82,7 +82,7 @@ class JsonDirBackend extends SimpleBackend
 		}
 
 		// Prepare configuration reader
-		$config_reader = new JsonDirReader($base_dir, $config['file_readers'] ?? [], $config['machine_global_config'] ?? []);
+		$config_reader = new JsonDirReader($base_dir, $config['machine_global_config'] ?? []);
 		$config_reader->detectConfiguration();
 		$latest_mtime = $config_reader->getLatestMTime();
 
@@ -96,7 +96,7 @@ class JsonDirBackend extends SimpleBackend
 			}
 		}
 
-		if ($machine_type_table) {
+		if ($machine_type_table !== null) {
 			$this->registerAllMachineTypes($machine_type_table);
 		} else {
 			throw new RuntimeException("Caching logic failed when loading backend configuration.");

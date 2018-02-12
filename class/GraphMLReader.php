@@ -33,8 +33,15 @@ namespace Smalldb\StateMachine;
 class GraphMLReader implements IMachineDefinitionReader
 {
 
+	/// @copydoc IMachineDefinitionReader::isSupported
+	public function isSupported(string $file_extension): bool
+	{
+		return $file_extension == '.graphml';
+	}
+
+
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($machine_type, $data_string, $options = array(), $filename = null)
+	public function loadString(string $machine_type, string $data_string, array $options = [], string $filename = null)
 	{
 		// Options
 		$graphml_group_name = isset($options['group']) ? $options['group'] : null;
@@ -96,7 +103,7 @@ class GraphMLReader implements IMachineDefinitionReader
 					}
 					$graph_props['properties'] = $properties;
 				} else {
-					$graph_props[static::str2key($keys[$k])] = trim($data_el->textContent);
+					$graph_props[$this->str2key($keys[$k])] = trim($data_el->textContent);
 				}
 			}
 		}
@@ -109,7 +116,7 @@ class GraphMLReader implements IMachineDefinitionReader
 			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
 				$k = $data_el->attributes->getNamedItem('key')->value;
 				if (isset($keys[$k])) {
-					$node_props[static::str2key($keys[$k])] = $data_el->textContent;
+					$node_props[$this->str2key($keys[$k])] = $data_el->textContent;
 				}
 			}
 			$label = $xpath->query('.//y:NodeLabel', $el)->item(0)->textContent;
@@ -137,7 +144,7 @@ class GraphMLReader implements IMachineDefinitionReader
 			foreach($xpath->query('.//g:data[@key]', $el) as $data_el) {
 				$k = $data_el->attributes->getNamedItem('key')->value;
 				if (isset($keys[$k])) {
-					$edge_props[static::str2key($keys[$k])] = $data_el->textContent;
+					$edge_props[$this->str2key($keys[$k])] = $data_el->textContent;
 				}
 			}
 			$label_query_result = $xpath->query('.//y:EdgeLabel', $el)->item(0);
@@ -226,7 +233,7 @@ class GraphMLReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
+	public function postprocessDefinition(string $machine_type, array & $machine_def, array & $errors)
 	{
 		// NOP.
 	}
@@ -235,7 +242,7 @@ class GraphMLReader implements IMachineDefinitionReader
 	/**
 	 * Convert some nice property name to key suitable for JSON file.
 	 */
-	private static function str2key($str)
+	private function str2key($str)
 	{
 		return strtr(mb_strtolower($str), ' ', '_');
 	}

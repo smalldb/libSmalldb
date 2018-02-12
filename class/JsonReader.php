@@ -27,15 +27,22 @@ use Smalldb\StateMachine\Utils\Utils;
 class JsonReader implements IMachineDefinitionReader
 {
 
+	/// @copydoc IMachineDefinitionReader::isSupported
+	public function isSupported(string $file_extension): bool
+	{
+		return $file_extension == '.json' || $file_extension == '.json.php';
+	}
+
+
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($machine_type, $data_string, $options = array(), $filename = null)
+	public function loadString(string $machine_type, string $data_string, array $options = [], string $filename = null)
 	{
 		return Utils::parse_json_string($data_string, $filename);
 	}
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
+	public function postprocessDefinition(string $machine_type, array & $machine_def, array & $errors)
 	{
 		// Make sure the names are always set
 		if (!empty($machine_def['properties'])) {

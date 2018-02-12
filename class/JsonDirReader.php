@@ -25,52 +25,59 @@ class JsonDirReader
 
 	protected $base_dir;
 	protected $file_list = null;
-	protected $file_readers;
-	protected $postprocess_list;
+	protected $file_readers = [];
 	protected $machine_global_config;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param string $base_dir Directory where JSON files are located.
-	 * @param array $custom_file_readers Map file name regexp => file loader class name.
 	 * @param array $machine_global_config  Configuration added to each machine configuration.
 	 */
-	public function __construct(string $base_dir, array $custom_file_readers = [], array $machine_global_config = [])
+	public function __construct(string $base_dir, array $machine_global_config = [])
 	{
 		$this->base_dir = rtrim($base_dir, '/').'/';
-
-		// File readers
-		// TODO: Inject readers from DI container
-		$file_readers = [
-			'/\.json\(\.php\)\?$/i' => JsonReader::class,
-			'/\.graphml$/i' => GraphMLReader::class,
-			'/\.bpmn$/i' => BpmnReader::class,
-		];
-		$this->file_readers = empty($custom_file_readers) ? $file_readers : array_merge($file_readers, $custom_file_readers);
-		$this->postprocess_list = array_fill_keys(array_reverse($file_readers), false);
-
 		$this->machine_global_config = $machine_global_config;
+	}
+
+
+	public function registerFileReader(IMachineDefinitionReader $file_reader): self
+	{
+		$this->file_readers[] = $file_reader;
+		return $this;
 	}
 
 
 	/**
 	 * Scan for the configuration and build list of files, but do not load the files.
+	 *
+	 * This method may be called many times, but it will detect the configuration only once.
 	 */
 	public function detectConfiguration()
 	{
+		// Use default file readers if none provided
+		if (empty($this->file_readers)) {
+			$this->file_readers = [
+				new JsonReader(),
+				new GraphMLReader(),
+				new BpmnReader(),
+			];
+		}
+
 		// Scan base dir for machines and find youngest file
-		$dh = opendir($this->base_dir);
-		if (!$dh) {
-			throw new RuntimeException('Cannot open base dir: '.$this->base_dir);
-		}
-		$this->file_list = [];
-		while (($file = readdir($dh)) !== false) {
-			if ($file[0] != '.') {
-				$this->file_list[] = $file;
+		if ($this->file_list === null) {
+			$dh = opendir($this->base_dir);
+			if (!$dh) {
+				throw new RuntimeException('Cannot open base dir: ' . $this->base_dir);
 			}
+			$this->file_list = [];
+			while (($file = readdir($dh)) !== false) {
+				if ($file[0] != '.') {
+					$this->file_list[] = $file;
+				}
+			}
+			closedir($dh);
 		}
-		closedir($dh);
 	}
 
 
@@ -79,9 +86,7 @@ class JsonDirReader
 	 */
 	public function getLatestMTime(): int
 	{
-		if ($this->file_list === null) {
-			$this->detectConfiguration();
-		}
+		$this->detectConfiguration();
 
 		$latest_mtime = filemtime(__FILE__);  // Make sure cache gets regenerated when this file is changed
 
@@ -101,86 +106,88 @@ class JsonDirReader
 	 */
 	public function loadConfiguration(): array
 	{
-		if ($this->file_list === null) {
-			$this->detectConfiguration();
-		}
+		$this->detectConfiguration();
 
 		$machine_type_table = [];
 
 		// Find all machine types
 		foreach ($this->file_list as $file) {
-			@ list($machine_type, $ext) = explode('.', $file, 2);
-			switch ($ext) {
-				case 'json':
-				case 'json.php':
-					$filename = $this->base_dir.$file;
-					$machine_type_table[$machine_type] = JsonReader::loadString($machine_type, file_get_contents($filename), [], $filename);
-					$this->postprocess_list[JsonReader::class] = true;
-					break;
-			}
-		}
-		ksort($machine_type_table);
+			// Load all JSON files
+			if (preg_match('/^(.*)\.json(\.php)?$/i', $file, $m)) {
+				$machine_type = $m[1];
+				$file_name = $this->base_dir.$file;
 
-		// Load all included files
-		// TODO: Recursively process includes of includes
-		foreach ($machine_type_table as $machine_type => $json_config) {
-			$machine_def = $machine_type_table[$machine_type];
-			$machine_success = true;
-			$errors = [];
+				$machine_def = $this->parseFile($machine_type, $file_name, []);
+				$includes = $machine_def['include'] ?? [];
+				// TODO: Recursively process includes of includes
 
-			foreach ((array) ($json_config['include'] ?? []) as $include) {
-				// String is filename
-				if (!is_array($include)) {
-					$include_file = $include;
-					$include_opts = [];
-				} else {
-					$include_file = $include['file'];
-					$include_opts = $include;
-				}
+				$machine_success = true;
+				$errors = [];
+				$postprocess_list = []; /** @var IMachineDefinitionReader[] $postprocess_list*/
 
-				// Relative path is relative to base directory
-				if ($include_file[0] != '/') {
-					$include_file = $this->base_dir.$include_file;
-				}
+				// Load files using readers
+				foreach ($includes as $include) {
+					// String is filename
+					if (!is_array($include)) {
+						$include_file = $include;
+						$include_opts = [];
+					} else {
+						$include_file = $include['file'];
+						$include_opts = $include;
+					}
 
-				// Detect file type and use proper loader
-				$reader_matched = false;
-				foreach ($this->file_readers as $pattern => $reader) {
-					if (preg_match($pattern, $include_file)) {
-						$machine_def = array_replace_recursive(
-							$reader::loadString($machine_type, file_get_contents($include_file), $include_opts, $include_file),
-							$machine_def);
+					// Relative path is relative to base directory
+					if ($include_file[0] != '/') {
+						$include_file = $this->base_dir.$include_file;
+					}
 
-						$reader_matched = true;
-						$this->postprocess_list[$reader] = true;
-						break;
+					$reader = null;
+					$parsed_content = $this->parseFile($machine_type, $include_file, $include_opts, $reader);
+					$machine_def = array_replace_recursive($parsed_content, $machine_def);
+
+					if ($reader) {
+						$postprocess_list[spl_object_hash($reader)] = $reader;
 					}
 				}
-				if (!$reader_matched) {
-					throw new RuntimeException('Unknown file format: '.$include_file);
+
+				// Postprocess the definition by the readers (each reader gets called only once)
+				foreach ($postprocess_list as $postprocessor) {
+					$postprocessor->postprocessDefinition($machine_type, $machine_def, $errors);
 				}
-			}
 
-			// Run post-processing of each reader
-			foreach ($this->postprocess_list as $reader => $used) {
-				if ($used) {
-					$machine_success &= $reader::postprocessDefinition($machine_type, $machine_def, $errors);
+				if (!empty($errors)) {
+					// TODO: Replace simple array with a ErrorListener which preserves context of the error.
+					$machine_def['errors'] = $errors;
 				}
+
+				// Add global defaults (don't override)
+				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
+
+				// Store the final machine definition
+				$machine_type_table[$machine_type] = $machine_def;
 			}
-
-			// Add global defaults (don't override)
-			$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
-
-			// Store errors in definition
-			// TODO: Replace simple array with a ErrorListener which preserves context of the error.
-			$machine_def['errors'] = $errors;
-
-			// TODO: Use $machine_machine_success somehow?
-
-			$machine_type_table[$machine_type] = $machine_def;
 		}
 
+		// Sort machines by name
+		ksort($machine_type_table);
+
 		return $machine_type_table;
+	}
+
+
+	private function parseFile(string $machine_type, string $file_name, array $include_opts, IMachineDefinitionReader & $used_reader = null): array
+	{
+		foreach ($this->file_readers as $pattern => $reader) {
+			$file_extension = '.' . pathinfo($file_name, PATHINFO_EXTENSION);
+
+			if ($reader->isSupported($file_extension)) {
+				$file_contents = file_get_contents($file_name);
+				$parsed_content = $reader->loadString($machine_type, $file_contents, $include_opts, $file_name);
+				$used_reader = $reader;
+				return $parsed_content;
+			}
+		}
+		throw new RuntimeException('Unknown file format: '.$file_name);
 	}
 
 }

@@ -50,10 +50,18 @@ use Smalldb\StateMachine\Utils\UnionFind;
 class BpmnReader implements IMachineDefinitionReader
 {
 	// TODO: Instantiate readers and make them configurable
-	static public $disableSvgFile = false;
+	public static $disableSvgFile = false;
+
+
+	/// @copydoc IMachineDefinitionReader::isSupported
+	public function isSupported(string $file_extension): bool
+	{
+		return $file_extension == '.bpmn';
+	}
+
 
 	/// @copydoc IMachineDefinitionReader::loadString
-	public static function loadString($machine_type, $data_string, $options = [], $filename = null)
+	public function loadString(string $machine_type, string $data_string, array $options = [], string $filename = null)
 	{
 		// Options
 		$state_machine_participant_id = isset($options['state_machine_participant_id']) ? $options['state_machine_participant_id'] : null;
@@ -312,7 +320,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public static function postprocessDefinition($machine_type, & $machine_def, & $errors)
+	public function postprocessDefinition(string $machine_type, array & $machine_def, array & $errors)
 	{
 		if (!isset($machine_def['bpmn_fragments'])) {
 			return true;
@@ -325,7 +333,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_name => $fragment) {
 			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors) = static::inferStateMachine($fragment, $errors);
+			list($fragment_machine_def, $fragment_errors) = $this->inferStateMachine($fragment, $errors);
 
 			// Update the definition
 			if (empty($fragment_errors)) {
@@ -336,8 +344,8 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Add BPMN diagram to state diagram
 			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
-			$machine_def['state_diagram_extras'][] = static::renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors);
-			static::renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors);
+			$machine_def['state_diagram_extras'][] = $this->renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors);
+			$this->renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors);
 		}
 
 		return $success;
@@ -351,7 +359,7 @@ class BpmnReader implements IMachineDefinitionReader
 	 * @param string $message
 	 * @param Node[] $nodes
 	 */
-	private static function addError(array & $errors, string $message, array $nodes)
+	private function addError(array & $errors, string $message, array $nodes)
 	{
 		$errors[] = ['text' => $message, 'nodes' => $nodes];
 
@@ -376,7 +384,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected static function inferStateMachine(& $fragment, & $errors)
+	protected function inferStateMachine(& $fragment, & $errors)
 	{
 		// Results
 		$machine_def = [];
@@ -408,7 +416,7 @@ class BpmnReader implements IMachineDefinitionReader
 			if ($source['process'] != $state_machine_process_id && ($target['process'] == $state_machine_process_id)) {
 				$source->setAttr('_invoking', true);
 				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
-					static::addError($errors, 'Multiple actions invoked by a single task.', [$source]);
+					$this->addError($errors, 'Multiple actions invoked by a single task.', [$source]);
 				} else {
 					$source['_action_name'] = $a->getId();
 				}
@@ -419,7 +427,7 @@ class BpmnReader implements IMachineDefinitionReader
 				$target->setAttr('_receiving', true);
 				$target->setAttr('_possibly_receiving', true);
 				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
-					static::addError($errors, 'Multiple actions invoked by a single task.', [$target]);
+					$this->addError($errors, 'Multiple actions invoked by a single task.', [$target]);
 				} else {
 					$target['_action_name'] = $a->getId();
 				}
@@ -501,7 +509,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$target = $e->getEnd();
 					if ($target['process'] == $state_machine_process_id) {
 						if (isset($invoking_arrow)) {
-							static::addError($errors, 'Multiple invoking arrows.', [$invoking_node]);
+							$this->addError($errors, 'Multiple invoking arrows.', [$invoking_node]);
 							break;
 						} else {
 							$invoking_arrow = $e;
@@ -537,7 +545,7 @@ class BpmnReader implements IMachineDefinitionReader
 							continue;
 						}
 						if (isset($rcv_arrow)) {
-							static::addError($errors, 'Multiple receiving arrows.', [$rcv_node]);
+							$this->addError($errors, 'Multiple receiving arrows.', [$rcv_node]);
 							break;
 						} else {
 							$rcv_arrow = $a;
@@ -833,7 +841,7 @@ class BpmnReader implements IMachineDefinitionReader
 				} else if ($node['_invoking'] || $node['type'] == 'endEvent') {
 					$uf->union($state, 'Qin_'.$node_id);
 				} else {
-					static::addError($errors, 'Unused annotation.', [$node_id]);
+					$this->addError($errors, 'Unused annotation.', [$node_id]);
 				}
 			}
 		}
@@ -902,7 +910,7 @@ class BpmnReader implements IMachineDefinitionReader
 				if ($a !== $b && $uf->find($a) === $uf->find($b)) {
 					$n = array_merge($na, $nb);
 					sort($n);
-					static::addError($errors, 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]), $n);
+					$this->addError($errors, 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]), $n);
 					break 2;
 				}
 			}
@@ -980,7 +988,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected static function renderBpmn($prefix, $fragment_file, $fragment, $errors)
+	protected function renderBpmn($prefix, $fragment_file, $fragment, $errors)
 	{
 		/** @var Graph $graph */
 		$graph = $fragment['graph'];
@@ -1190,7 +1198,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected static function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors)
+	protected function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors)
 	{
 		/** @var Graph $graph */
 		$graph = $fragment['graph'];
@@ -1243,7 +1251,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Style nodes
 			foreach ($graph->getAllNodes() as $id => $node) {
-				$nodeAttrs = static::renderBpmnProcessNodeAttrs($node, [], $prefix);
+				$nodeAttrs = $this->renderBpmnProcessNodeAttrs($node, [], $prefix);
 
 				// Don't style annotations
 				if (isset($nodeAttrs['shape']) && $nodeAttrs['shape'] == 'note') {
@@ -1265,7 +1273,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Style arrows
 			foreach ($graph->getAllEdges() as $id => $edge) {
-				$edgeAttrs = static::renderBpmnProcessEdgeAttrs($edge, [], $prefix);
+				$edgeAttrs = $this->renderBpmnProcessEdgeAttrs($edge, [], $prefix);
 
 				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual * {";
 				if (isset($edgeAttrs['color'])) {
@@ -1368,10 +1376,10 @@ class BpmnReader implements IMachineDefinitionReader
 					return $exportedGraph;
 				})
 				->setNodeAttrsProcessor(function (Node $node, array $exportedNode) use ($prefix) {
-					return static::renderBpmnProcessNodeAttrs($node, $exportedNode, $prefix);
+					return $this->renderBpmnProcessNodeAttrs($node, $exportedNode, $prefix);
 				})
 				->setEdgeAttrsProcessor(function (Edge $edge, array $exportedEdge) use ($prefix) {
-					return static::renderBpmnProcessEdgeAttrs($edge, $exportedEdge, $prefix);
+					return $this->renderBpmnProcessEdgeAttrs($edge, $exportedEdge, $prefix);
 				});
 
 			$machine_def['state_diagram_extras_json']['nodes'][] = [
@@ -1394,7 +1402,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	static private function renderBpmnProcessNodeAttrs(Node $node, array $exportedNode, string $prefix)
+	private function renderBpmnProcessNodeAttrs(Node $node, array $exportedNode, string $prefix)
 	{
 		$exportedNode['fill'] = "#fff";
 
@@ -1523,7 +1531,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	private static function renderBpmnProcessEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix)
+	private function renderBpmnProcessEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix)
 	{
 		$label = trim($edge['name']);
 		if ($edge['_generated'] && $label != '') {

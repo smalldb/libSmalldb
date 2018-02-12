@@ -24,17 +24,26 @@ namespace Smalldb\StateMachine;
  */
 interface IMachineDefinitionReader
 {
+
+	/**
+	 * Return true if the file looks parsable by this reader.
+	 *
+	 * @param string $file_extension File extension including leading dot (e.g. ".json")
+	 * @return bool
+	 */
+	public function isSupported(string $file_extension): bool;
+
 	/**
 	 * Parse string and return fragment of state machine definition.
 	 *
-	 * @param $machine_type - Name of state machine (for better error messages)
-	 * @param $data_string - Data to parse.
-	 * @param $options - Additional options specified in master definition.
-	 * @param $filename - Name of the file (or similar identifier) - only for
+	 * @param string $machine_type  Name of state machine (for better error messages)
+	 * @param string $data_string  Data to parse.
+	 * @param array $options  Additional options specified in master definition.
+	 * @param string $filename  Name of the file (or similar identifier) - only for
 	 * 	debug messages.
 	 * @return array - Fragment of machine definition.
 	 */
-	public static function loadString($machine_type, $data_string, $options = array(), $filename = null);
+	public function loadString(string $machine_type, string $data_string, array $options = [], string $filename = null);
 
 	/**
 	 * If reader was invoked, it may need to postprocess the definition
@@ -43,13 +52,13 @@ interface IMachineDefinitionReader
 	 * Postprocessing is invoked only once, even when loadString has been
 	 * invoked multiple times.
 	 *
-	 * @param $machine_type - Name of state machine (for better error messages)
-	 * @param $machine_def - Machine definition to be processed in place.
-	 * @param $errors - List of errors in state machine definition. Errors
+	 * @param string $machine_type  Name of state machine (for better error messages)
+	 * @param array $machine_def  Machine definition to be processed in place.
+	 * @param array $errors  List of errors in state machine definition. Errors
 	 * 	may be specified in the diagram as well.
 	 *
 	 * @return bool True when machine is successfully loaded, false otherwise.
 	 */
-	public static function postprocessDefinition($machine_type, & $machine_def, & $errors);
-}
+	public function postprocessDefinition(string $machine_type, array & $machine_def, array & $errors);
 
+}
