@@ -732,6 +732,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
+if (false) {
 		// Stage 2: (s) State detection -- Merge green arrows and nodes into states
 		$uf = new UnionFind();
 		foreach ($graph->getAllNodes() as $id => $node) {
@@ -950,28 +951,8 @@ class BpmnReader implements IMachineDefinitionReader
 				$edge['_state_name'] = $uf->find($id);
 			}
 		}
+}
 
-		// [visualization] Calculate distance of each node from nearest start
-		// event to detect backward arrows and sort nodes in state machine, so
-		// the diagrams look much better
-		$distance = 0;
-		GraphSearch::BFS($graph)
-			->onNode(function(Node $cur_node) use (& $distance) {
-				if (!isset($cur_node['_distance'])) {
-					$cur_node['_distance'] = 0;
-				}
-				$distance = $cur_node['_distance'] + 1;
-				return true;
-			})
-			->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use (& $distance) {
-				if ($edge['type'] == 'sequenceFlow' && !$seen) {
-					$next_node['_distance'] = $distance;
-					return true;
-				} else {
-					return false;
-				}
-			})
-			->start($graph->getNodesByAttr('type', 'startEvent'));
 
 		// Collect the results into the state machine definition
 		$machine_def = [
