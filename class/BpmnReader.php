@@ -49,8 +49,7 @@ use Smalldb\StateMachine\Utils\UnionFind;
  */
 class BpmnReader implements IMachineDefinitionReader
 {
-	// TODO: Instantiate readers and make them configurable
-	public static $disableSvgFile = false;
+	public $disableSvgFile = false;
 
 
 	/// @copydoc IMachineDefinitionReader::isSupported
@@ -291,7 +290,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Load SVG file with rendered BPMN diagram, so we can colorize it
-		if (!static::$disableSvgFile && isset($options['svg_file'])) {
+		if (!$this->disableSvgFile && isset($options['svg_file'])) {
 			$dir = dirname($filename);
 			$svg_file_name = ($dir == "" ? "./" : $dir . "/") . $options['svg_file'];
 			$svg_file_contents = file_get_contents($svg_file_name);

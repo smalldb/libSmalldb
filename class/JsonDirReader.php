@@ -22,29 +22,62 @@ namespace Smalldb\StateMachine;
 
 class JsonDirReader
 {
+	private $base_dir;
 
-	protected $base_dir;
-	protected $file_list = null;
-	protected $file_readers = [];
-	protected $machine_global_config;
+	/**
+	 * List of files found in the $base_dir
+	 *
+	 * @var string[]
+	 */
+	private $file_list = null;
+
+	/**
+	 * List of registered file readers
+	 *
+	 * @var IMachineDefinitionReader[]
+	 */
+	private $file_readers = [];
+
 
 	/**
 	 * Constructor.
 	 *
 	 * @param string $base_dir Directory where JSON files are located.
-	 * @param array $machine_global_config  Configuration added to each machine configuration.
 	 */
-	public function __construct(string $base_dir, array $machine_global_config = [])
+	public function __construct(string $base_dir)
 	{
 		$this->base_dir = rtrim($base_dir, '/').'/';
-		$this->machine_global_config = $machine_global_config;
 	}
 
 
+	/**
+	 * Get base directory
+	 */
+	public function getBaseDir(): string
+	{
+		return $this->base_dir;
+	}
+
+
+	/**
+	 * Register a file reader which will be used to parse the files as they are loaded.
+	 */
 	public function registerFileReader(IMachineDefinitionReader $file_reader): self
 	{
 		$this->file_readers[] = $file_reader;
 		return $this;
+	}
+
+
+	/**
+	 * Get list of registered file readers
+	 *
+	 * @return IMachineDefinitionReader[]
+	 */
+	public function getFileReaders(): array
+	{
+		$this->detectConfiguration();
+		return $this->file_readers;
 	}
 
 
@@ -58,9 +91,9 @@ class JsonDirReader
 		// Use default file readers if none provided
 		if (empty($this->file_readers)) {
 			$this->file_readers = [
-				new JsonReader(),
-				new GraphMLReader(),
-				new BpmnReader(),
+				JsonReader::class => new JsonReader(),
+				GraphMLReader::class => new GraphMLReader(),
+				BpmnReader::class => new BpmnReader(),
 			];
 		}
 
@@ -176,9 +209,6 @@ class JsonDirReader
 					$machine_def['errors'] = $errors;
 				}
 
-				// Add global defaults (don't override)
-				$machine_def = array_replace_recursive($machine_def, $this->machine_global_config);
-
 				// Store the final machine definition
 				$machine_type_table[$machine_type] = $machine_def;
 			}
@@ -205,5 +235,6 @@ class JsonDirReader
 		}
 		throw new RuntimeException('Unknown file format: '.$file_name);
 	}
+
 
 }

@@ -44,23 +44,21 @@ class JsonDirBackend extends SimpleBackend
 
 	/**
 	 * Constructor.
-	 *
-	 * @param ContainerInterface $container  Container from which to instantiate state machines.
-	 * @param array $config  Backend configuration.
-	 *
 	 * Options:
-	 * 
 	 *   - `machine_global_config`: Config wich will be merged into all state machines
 	 *   - `cache_disabled`: Don't use caching
 	 *   - `file_readers`: File readers map (regexp -> class name)
 	 *
+	 * @param array $config Backend configuration.
+	 * @param JsonDirReader|null $custom_json_dir_reader
 	 */
-	public function initializeBackend(array $config)
+	public function initializeBackend(array $config, JsonDirReader $custom_json_dir_reader = null)
 	{
 		parent::initializeBackend($config);
 
 		// Get base dir (constants are available)
-		$base_dir = Utils::filename_format($config['base_dir'], array());
+		$base_dir = $custom_json_dir_reader ? $custom_json_dir_reader->getBaseDir()
+			: Utils::filename_format($config['base_dir'], array());
 
 		$machine_type_table = null;
 
@@ -82,7 +80,7 @@ class JsonDirBackend extends SimpleBackend
 		}
 
 		// Prepare configuration reader
-		$config_reader = new JsonDirReader($base_dir, $config['machine_global_config'] ?? []);
+		$config_reader = $custom_json_dir_reader ?? new JsonDirReader($base_dir);
 		$config_reader->detectConfiguration();
 		$latest_mtime = $config_reader->getLatestMTime();
 
