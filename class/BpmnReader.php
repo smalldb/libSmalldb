@@ -332,7 +332,8 @@ class BpmnReader implements IMachineDefinitionReader
 		// Each included BPMN file provided one fragment
 		foreach ($bpmn_fragments as $fragment_name => $fragment) {
 			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors) = $this->inferStateMachine($fragment, $errors);
+			list($fragment_machine_def, $fragment_errors) = $this->inferStateMachine($fragment['graph'],
+					$fragment['state_machine_participant_id'], $fragment['state_machine_process_id']);
 
 			// Update the definition
 			if (empty($fragment_errors)) {
@@ -383,23 +384,14 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	protected function inferStateMachine(& $fragment, & $errors)
+	protected function inferStateMachine(Graph $graph, string $state_machine_participant_id, string $state_machine_process_id)
 	{
-		// Results
-		$machine_def = [];
+		$errors = [];
 
-		// Get BPMN graph and setup additional inidices
-		/** @var Graph $graph */
-		$graph = $fragment['graph'];
+		// Add few more indices
 		$graph->indexNodeAttr('_invoking');
 		$graph->indexNodeAttr('_receiving');
 		$graph->indexNodeAttr('_possibly_receiving');
-
-		// Shortcuts
-		$state_machine_process_id = & $fragment['state_machine_process_id'];
-		$state_machine_participant_id = & $fragment['state_machine_participant_id'];
-		$state_machine_participant_node = $graph->getNodeById($state_machine_participant_id);
-
 
 		// Stage 1: Find message flows to state machine participant, identify
 		// invoking and potential receiving nodes
@@ -446,7 +438,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'id' => $new_node_id,
 					'name' => $edge['name'],
 					'type' => 'task',
-					'process' => $fragment['state_machine_process_id'],
+					'process' => $state_machine_process_id,
 					'features' => [],
 					'_generated' => true,
 				]);
@@ -588,6 +580,7 @@ class BpmnReader implements IMachineDefinitionReader
 		}
 
 		// Stage 3: Detect state machine annotation symbol
+		$state_machine_participant_node = $graph->getNodeById($state_machine_participant_id);
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $state_machine_participant_node['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
 		} else {
@@ -980,9 +973,11 @@ class BpmnReader implements IMachineDefinitionReader
 			})
 			->start($graph->getNodesByAttr('type', 'startEvent'));
 
-		// Store results in the state machine definition
-		$machine_def['states'] = $states;
-		$machine_def['actions'] = empty($errors) ? $actions : [];  // no actions if there are errors
+		// Collect the results into the state machine definition
+		$machine_def = [
+			'states' => $states,
+			'actions' => empty($errors) ? $actions : [],  // no actions if there are errors
+		];
 		return [ $machine_def, $errors ];
 	}
 
@@ -1229,21 +1224,6 @@ class BpmnReader implements IMachineDefinitionReader
 			})
 			->start($graph->getNodesByAttr('type', 'startEvent'));
 
-		// Initialize node for the BPMN fragment
-		$diagram_node = [
-			'id' => $prefix,
-			'label' => "BPMN: " . basename($fragment_file),
-			'color' => "#5373B4",
-			'graph' => [
-				'layout' => 'column',
-				'layoutOptions' => [
-					'sortNodes' => true,
-				],
-				'nodes' => [],
-				'edges' => [],
-			],
-		];
-
 		// Draw provided SVG file as a node (for SVG export from Camunda Modeler)
 		if (isset($fragment['svg_file_contents'])) {
 			$svg_style = '';
@@ -1272,7 +1252,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// Style arrows
 			foreach ($graph->getAllEdges() as $id => $edge) {
-				$edgeAttrs = $this->renderBpmnProcessEdgeAttrs($edge, [], $prefix);
+				$edgeAttrs = $this->renderBpmnProcessEdgeAttrs($edge, []);
 
 				$svg_style .= ".djs-element[data-element-id=$id] .djs-visual * {";
 				if (isset($edgeAttrs['color'])) {
@@ -1378,7 +1358,7 @@ class BpmnReader implements IMachineDefinitionReader
 					return $this->renderBpmnProcessNodeAttrs($node, $exportedNode, $prefix);
 				})
 				->setEdgeAttrsProcessor(function (Edge $edge, array $exportedEdge) use ($prefix) {
-					return $this->renderBpmnProcessEdgeAttrs($edge, $exportedEdge, $prefix);
+					return $this->renderBpmnProcessEdgeAttrs($edge, $exportedEdge);
 				});
 
 			$machine_def['state_diagram_extras_json']['nodes'][] = [
@@ -1530,7 +1510,7 @@ class BpmnReader implements IMachineDefinitionReader
 	}
 
 
-	private function renderBpmnProcessEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix)
+	private function renderBpmnProcessEdgeAttrs(Edge $edge, array $exportedEdge)
 	{
 		$label = trim($edge['name']);
 		if ($edge['_generated'] && $label != '') {
