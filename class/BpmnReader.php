@@ -1044,6 +1044,14 @@ class BpmnReader implements IMachineDefinitionReader
 					//$diagram .= ',constraint=0';	// Workaround
 					$w = 0;				// Another workaround
 					break;
+				case 'association':
+					$color = '#aaaaaa';
+					$diagram .= ',style="dashed",arrowhead=none';
+					break;
+				case 'error':
+					$color = '#ff0000';
+					$diagram .= ',style="dashed",arrowhead=none';
+					break;
 				default:
 					$color = '#ff0000';
 					$w = 1;
@@ -1138,16 +1146,6 @@ class BpmnReader implements IMachineDefinitionReader
 
 			// End of node.
 			$diagram .= "];\n";
-
-			// Draw annotation associations
-			if (!empty($n['annotations'])) {
-				foreach ($n['annotations'] as $ann_node_id => $ann_node) {
-					$ann_graph_id = AbstractMachine::exportDotIdentifier($ann_node_id, $prefix);
-					$diagram .= "\t\t" . $graph_id . " -> " . $ann_graph_id
-						. " [id=\"" . addcslashes($prefix.$ann_node_id.'__line', "\"\n") . "\""
-						.",style=dashed,color=\"#aaaaaa$alpha\",arrowhead=none];\n";
-				}
-			}
 		}
 
 		// Draw groups
