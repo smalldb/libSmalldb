@@ -639,6 +639,56 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
+		// Stage 2: State propagation -- all message flows from a single task
+		// in the state machine process end in the same state.
+		foreach ($graph->getNodesByAttr('_possibly_receiving') as $id => $node) {
+			if (!$node->getAttr('_receiving')) {
+				// Find the task node for this possibly receiving node
+				$incoming_message_flows = [];
+				$task_node = null;
+				foreach ($node->getConnectedEdges() as $edge) {
+					$start = $edge->getStart();
+					$end = $edge->getEnd();
+					if ($edge->getAttr('type') == 'messageFlow' && $end === $node && $start->getAttr('process') == $state_machine_process_id) {
+						if (!$task_node) {
+							$task_node = $start;
+						} else {
+							// More than one incoming message flow from the state machine.
+							continue 2;
+						}
+					}
+				}
+				if (!$task_node) {
+					continue;
+				}
+
+				// Find the receiving node
+				$receiving_node = null;
+				foreach ($task_node->getConnectedEdges() as $edge) {
+					$end = $edge->getEnd();
+					if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $task_node && $end->getAttr('_receiving')) {
+						if (!$receiving_node) {
+							$receiving_node = $end;
+						} else {
+							// Found more than one receiving node.
+							continue 2;
+						}
+					}
+				}
+				if (!$receiving_node) {
+					continue;
+				}
+
+				// Propagate state annotations from the receiving node to all possibly receiving nodes
+				foreach ($task_node->getConnectedEdges() as $edge) {
+					$end = $edge->getEnd();
+					if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $task_node && $end->getAttr('_possibly_receiving') && !$end->getAttr('_receiving')) {
+						$receiving_node['_next_annotations_propagate'][$end->getId()] = $end;
+					}
+				}
+			}
+		}
+
 		// Stage 2: State relation
 		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_possibly_receiving'))  as $receiving_node_id => $receiving_node) {
 			/** @var Node $receiving_node */
@@ -696,10 +746,14 @@ class BpmnReader implements IMachineDefinitionReader
 				})
 				->start($next_invoking_nodes);
 
-			$receiving_node->setAttr('_next_annotations', array_keys($next_annotations));
-
+			// Store reachable annotations and propagate the annotations
+			$next_annotations_attr = array_keys($next_annotations);
+			$receiving_node->setAttr('_next_annotations', $next_annotations_attr);
+			foreach ($receiving_node->getAttr('_next_annotations_propagate', []) as $node) {
+				$node->setAttr('_next_annotations', $next_annotations_attr);
+			}
 			if (count($next_annotations) > 1) {
-				$this->addError($errors, 'Multiple annotations: ' . join(', ', array_keys($next_annotations)), [$receiving_node]);
+				$this->addError($errors, 'Multiple annotations: ' . join(', ', $next_annotations_attr), [$receiving_node]);
 			}
 		}
 
