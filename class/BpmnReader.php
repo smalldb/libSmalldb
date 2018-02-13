@@ -847,6 +847,8 @@ class BpmnReader implements IMachineDefinitionReader
 					foreach ($t_targets as $t_target) {
 						/** @var Node $t_target */
 						list($ts_source, $ts_target, $ts_state_name) = $state_relation[$t_target->getId()];
+
+						// Define the transition. The same transition may be created multiple times.
 						$actions[$t_action_name]['transitions'][$s_state_name]['targets'][$ts_state_name] = $ts_state_name;
 					}
 				}
