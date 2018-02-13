@@ -294,9 +294,11 @@ class BpmnReader implements IMachineDefinitionReader
 			$dir = dirname($filename);
 			$svg_file_name = ($dir == "" ? "./" : $dir . "/") . $options['svg_file'];
 			$svg_file_contents = file_get_contents($svg_file_name);
+			$svg_file_is_obsolete = (filemtime($filename) > filemtime($svg_file_name));
 		} else {
 			$svg_file_name = null;
 			$svg_file_contents = null;
+			$svg_file_is_obsolete = null;
 		}
 
 		// Store fragment in state machine definition
@@ -311,6 +313,7 @@ class BpmnReader implements IMachineDefinitionReader
 					'participants' => $participants,
 					'svg_file_name' => $svg_file_name,
 					'svg_file_contents' => $svg_file_contents,
+					'svg_file_is_obsolete' => $svg_file_is_obsolete,
 				],
 			],
 		];
@@ -1193,12 +1196,23 @@ class BpmnReader implements IMachineDefinitionReader
 			$svg_end_pos = strrpos($svg_file_contents, '</svg>');
 			$svg_contents_with_style = substr_replace($svg_file_contents, $svg_style_el . $svg_def_el, $svg_end_pos, 0);
 
+			// Warn if SVG file is obsolete
+			if ($fragment['svg_file_is_obsolete']) {
+				$svg_diagram_node['graph']['nodes'][] = [
+					'id' => $prefix . '__svg_img_obsolete_warning',
+					'shape' => 'label',
+					'label' => 'Warning: Exported SVG file is older than source BPMN file.',
+					'color' => '#aa2200',
+				];
+			}
+
 			// Create image node
 			$svg_diagram_node['graph']['nodes'][] = [
 				'id' => $prefix . '__svg_img',
 				'shape' => 'svg',
 				'svg' => $svg_contents_with_style,
 			];
+
 			$machine_def['state_diagram_extras_json']['nodes'][] = $svg_diagram_node;
 		}
 
