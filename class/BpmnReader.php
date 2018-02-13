@@ -858,7 +858,28 @@ class BpmnReader implements IMachineDefinitionReader
 			'states' => $states,
 			'actions' => empty($errors) ? $actions : [],  // no actions if there are errors
 		];
+
+		// Sort the result, so all diagrams, menus, and other stuff does not get rearranged with every little change
+		$this->ksortRecursive($machine_def);
+
 		return [ $machine_def, $errors ];
+	}
+
+
+	/**
+	 * Recursive implementation of ksort
+	 *
+	 * The $array is sorted in-place.
+	 */
+	private function ksortRecursive(array & $array): array
+	{
+		ksort($array);
+		foreach ($array as & $item) {
+			if (is_array($item)) {
+				$this->ksortRecursive($item);
+			}
+		}
+		return $array;
 	}
 
 
