@@ -376,7 +376,7 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		$errorNodeId = '_error_'.md5($message);
+		$errorNodeId = '_error_'.md5($message).'_'.count($errors);
 		$errorNode = $errorGraph->createNode($errorNodeId, ['label' => $message, 'type' => 'error']);
 		foreach ($nodes as $node) {
 			$errorGraph->createEdge(null, $errorNode, $node, ['type' => 'error']);
@@ -392,38 +392,6 @@ class BpmnReader implements IMachineDefinitionReader
 		$graph->indexNodeAttr('_invoking');
 		$graph->indexNodeAttr('_receiving');
 		$graph->indexNodeAttr('_possibly_receiving');
-
-		// Stage 1: Find message flows to state machine participant, identify
-		// invoking and potential receiving nodes
-		foreach ($graph->getAllEdges() as $edgeId => $a) {
-			if ($a['type'] != 'messageFlow') {
-				continue;
-			}
-
-			$source = $a->getStart();
-			$target = $a->getEnd();
-
-			// Invoking message flow
-			if ($source['process'] != $state_machine_process_id && ($target['process'] == $state_machine_process_id)) {
-				$source->setAttr('_invoking', true);
-				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
-					$this->addError($errors, 'Multiple actions invoked by a single task.', [$source]);
-				} else {
-					$source['_action_name'] = $a->getId();
-				}
-			}
-
-			// Receiving message flow
-			if ($target['process'] != $state_machine_process_id && ($source['process'] == $state_machine_process_id)) {
-				$target->setAttr('_receiving', true);
-				$target->setAttr('_possibly_receiving', true);
-				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
-					$this->addError($errors, 'Multiple actions invoked by a single task.', [$target]);
-				} else {
-					$target['_action_name'] = $a->getId();
-				}
-			}
-		}
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
 		foreach ($graph->getAllEdges() as $edge) {
@@ -444,6 +412,38 @@ class BpmnReader implements IMachineDefinitionReader
 				]);
 				$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
 				$edge->setEnd($new_node);
+			}
+		}
+
+		// Stage 1: Find message flows to state machine participant, identify
+		// invoking and potential receiving nodes
+		foreach ($graph->getAllEdges() as $edgeId => $a) {
+			if ($a['type'] != 'messageFlow') {
+				continue;
+			}
+
+			$source = $a->getStart();
+			$target = $a->getEnd();
+
+			// Invoking message flow
+			if ($source['process'] != $state_machine_process_id && ($target['process'] == $state_machine_process_id)) {
+				$source->setAttr('_invoking', true);
+				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
+					$this->addError($errors, 'Multiple actions invoked by a single task.', [$source]);
+				} else {
+					$source['_action_name'] = $target->getAttr('name');
+				}
+			}
+
+			// Receiving message flow
+			if ($target['process'] != $state_machine_process_id && ($source['process'] == $state_machine_process_id)) {
+				$target->setAttr('_receiving', true);
+				$target->setAttr('_possibly_receiving', true);
+				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
+					$this->addError($errors, 'Multiple actions invoked by a single task.', [$target]);
+				} else {
+					$target['_action_name'] = $source->getAttr('name');
+				}
 			}
 		}
 
@@ -644,7 +644,7 @@ class BpmnReader implements IMachineDefinitionReader
 			/** @var Node $receiving_node */
 			/** @var Node[] $next_invoking_nodes */
 			$next_invoking_nodes = [];
-			$annotations = [];
+			$next_annotations = [];
 
 			GraphSearch::DFS($graph)
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
@@ -658,7 +658,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$edge['_state_from'][$receiving_node_id] = false;
 					$next_node['_state_from'][$receiving_node_id] = false;
 
-					if ($next_node['_invoking'] || $next_node['type'] == 'endEvent') {
+					if ($next_node['_invoking'] || $next_node['_possibly_receiving'] || $next_node['type'] == 'endEvent') {
 						// Found a target
 						$next_invoking_nodes[$next_node->getId()] = $next_node;
 						return false;
@@ -674,7 +674,7 @@ class BpmnReader implements IMachineDefinitionReader
 			GraphSearch::DFS($graph)
 				->runBackward()
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
-					use ($graph, $receiving_node_id, $receiving_node, & $next_invoking_nodes, & $annotations)
+					use ($graph, $receiving_node_id, $receiving_node, & $next_invoking_nodes, & $next_annotations)
 				{
 					if (!isset($edge['_state_from'][$receiving_node_id]) || $edge['_state_from'][$receiving_node_id] !== false) {
 						// Visit only what we visited on the forward run
@@ -686,20 +686,24 @@ class BpmnReader implements IMachineDefinitionReader
 
 					// Collect annotations on all paths from R+ to I
 					if (isset($cur_node['_annotation_state']) && !$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
-						$annotations[$cur_node['_annotation_state']] = true;
+						$next_annotations[$cur_node['_annotation_state']] = true;
 					}
 					if (isset($next_node['_annotation_state'])) {
-						$annotations[$next_node['_annotation_state']] = true;
+						$next_annotations[$next_node['_annotation_state']] = true;
 					}
 
 					return true;
 				})
 				->start($next_invoking_nodes);
 
-			$receiving_node->setAttr('_next_annotations', array_keys($annotations));
+			$receiving_node->setAttr('_next_annotations', array_keys($next_annotations));
+
+			if (count($next_annotations) > 1) {
+				$this->addError($errors, 'Multiple annotations: ' . join(', ', array_keys($next_annotations)), [$receiving_node]);
+			}
 		}
 
-		// Stage 1: (M_S) Find elements which are part of a state [deprecated]
+		// Mark nodes and edges on any path from R+ to I
 		foreach ($graph->getAllNodes() as $node) {
 			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
 				&& $node['process'] != $state_machine_process_id
@@ -732,227 +736,65 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-if (false) {
-		// Stage 2: (s) State detection -- Merge green arrows and nodes into states
-		$uf = new UnionFind();
-		foreach ($graph->getAllNodes() as $id => $node) {
-			if ($node['_invoking']) {
-				$uf->add('Qin_'.$id);
-			}
-			if ($node['_receiving']) {
-				$uf->add('Qout_'.$id);
-			}
-		}
-		foreach ($graph->getAllEdges() as $id => $edge) {
-			if ($edge['_state']) {
-				$sourceId = $edge->getStart()->getId();
-				$targetId = $edge->getEnd()->getId();
-
-				// Add entry and exit points
-				$uf->add('Qout_'.$sourceId);
-				$uf->add('Qin_'.$targetId);
-				$uf->union('Qout_'.$sourceId, 'Qin_'.$targetId);
-
-				// Add the arrow itself, so we can find to which state it belongs
-				$uf->addUnique($id);
-				$uf->union($id, 'Qin_'.$targetId);
-			}
-		}
-		foreach ($graph->getAllNodes() as $id => $node) {
-			if ($node['_state']) {
-				// Connect input with output as this node is pass-through, unless it is a receiving node
-				$uf->add('Qout_'.$id);
-				if (!$node['_possibly_receiving']) {
-					$uf->add('Qin_'.$id);
-					$uf->union('Qin_'.$id, 'Qout_'.$id);
-				}
-
-				// Add the node itself, so we can find to which state it belongs
-				$uf->addUnique($id);
-				$uf->union($id, 'Qout_'.$id);
-			}
-		}
-
-		// Stage 2: State propagation -- all message flows from a single task
-		// in the state machine process end in the same state.
-		foreach ($graph->getAllNodes() as $id => $node) {
-			if ($node['process'] == $state_machine_process_id && $node['type'] == 'task') {
-				// Collect nodes to which message flows flow
-				/** @var Node[] $receiving_nodes */
-				$receiving_nodes = [];
-				/** @var Node[] $targets */
-				$targets = [];
-				/** @var Edge[] $state_arrows */
-				$state_arrows = [];
-				foreach ($node->getConnectedEdges() as $edgeId => $edge) {
-					if ($edge->getStart() === $node) {
-						if ($edge['type'] == 'messageFlow') {
-							$target = $edge->getEnd();
-							if ($target['_receiving']) {
-								// There should be one receiving node ...
-								$receiving_nodes[$target->getId()] = $target;
-							} else {
-								// ... and multiple other targets
-								$targets[$target->getId()] = $target;
-							}
-							$state_arrows[$edge->getId()] = $edge;
-						}
+		// Collect state relation
+		$state_relation = [];
+		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_possibly_receiving')) as $node) {
+			$next_annotations = $node->getAttr('_next_annotations');
+			$next_invoking_nodes = $node->getAttr('_next_invoking_nodes');
+			if (count($next_annotations) == 1) {
+				// Use state specified by an annotation.
+				$state_name = reset($next_annotations);
+			} else if ($node->getAttr('type') == 'startEvent' && !$node->getAttr('_possibly_receiving')) {
+				// Implicit labeling because of the start event.
+				$state_name = '';
+			} else {
+				// Check if an end event is reachable from this node
+				$is_end_event_reachable = false;
+				foreach ($next_invoking_nodes as $next_node) {
+					if ($next_node->getAttr('type') == 'endEvent') {
+						$is_end_event_reachable = true;
+						break;
 					}
 				}
-
-				if (!empty($targets) && count($receiving_nodes) == 1) {
-					// If there are targets, define the state equivalence
-					$rcv = reset($receiving_nodes);
-					$rcvId = $rcv->getId();
-					$uf->add('Qout_'.$rcvId);
-					foreach ($targets as $t => $target) {
-						$uf->add('Qout_'.$t);
-						$uf->union('Qout_'.$rcvId, 'Qout_'.$t);
-
-						// Assign state to the target node
-						$target->setAttr('_state', true);
-						$uf->add($t);
-						$uf->union('Qout_'.$t, $t);
-					}
-					foreach ($state_arrows as $e => $edge) {
-						// Assign state to the arrow
-						$edge->setAttr('_state', true);
-						$uf->add($e);
-						$uf->union('Qout_'.$rcvId, $e);
-					}
-				}
-			}
-		}
-
-		// Stage 3: Assign state names to states (UnionFind will use them as they are added last)
-		foreach ($custom_state_names as $state => $node_ids) {
-			$uf->addUnique($state);
-			foreach ($node_ids as $node_id) {
-				$node = $graph->getNodeById($node_id);
-				if ($node['_state'] || $node['_receiving'] || $node['type'] == 'startEvent') {
-					$uf->union($state, 'Qout_'.$node_id);
-				} else if ($node['_invoking'] || $node['type'] == 'endEvent') {
-					$uf->union($state, 'Qin_'.$node_id);
+				if ($is_end_event_reachable) {
+					// Implicit labeling because of the end event.
+					$state_name = '';
 				} else {
-					$this->addError($errors, 'Unused annotation.', [$node_id]);
+					// No state label, generate something "random"
+					$state_name = 'Q_' . $node->getId();
 				}
 			}
+			$state_relation[$node->getId()] = [$node, $next_invoking_nodes, $state_name];
 		}
 
-		// Stage 4: Mark unused states (no invoking nor receiving nodes)
-		// These states are created from unreachable portions of the diagram.
-		// We do this before the implicit labeling to mark unused branches
-		// in BPMN diagram, but then we ignore such removals.
-		$used_s = [];
-		foreach ($graph->getNodesByAttr('_invoking', true) as $n_id => $node) {
-			$n_in = 'Qin_'.$n_id;
-			if ($uf->has($n_in)) {
-				$s = $uf->find($n_in);
-				$used_s[$s] = true;
-			}
-		}
-		foreach ($graph->getNodesByAttr('_receiving', true) as $n_id => $node) {
-			$n_out = 'Qout_'.$n_id;
-			if ($uf->has($n_out)) {
-				$s = $uf->find($n_out);
-				$used_s[$s] = true;
-			}
-		}
-		foreach ($graph->getAllNodes() as $n_id => $node) {
-			if ($node['_state'] && $uf->has($n_id)) {
-				$s = $uf->find($n_id);
-				if (empty($used_s[$s])) {
-					$node->setAttr('_unused', true);
-				}
-			}
-		}
-		foreach ($graph->getAllEdges() as $edgeId => $edge) {
-			// No need to check the target node, because the source would have to be a receiving node.
-			$n_id = $edge->getStart()->getId();
-			if ($edge['_state'] && $uf->has($n_id)) {
-				$s = $uf->find($n_id);
-				if (empty($used_s[$s])) {
-					$edge->setAttr('_unused', true);
-				}
-			}
+		// Collect transition relation
+		$transition_relation = [];
+		foreach ($graph->getNodesByAttr('_invoking') as $node) {
+			$t = $transition_relation[$node->getId()] = [$node, $node->getAttr('_receiving_nodes'), $node->getAttr('_action_name')];
 		}
 
-		// Stage 3: Add implicit '' for start states
-		foreach ($graph->getNodesByAttr('type', 'startEvent') as $s_id => $s_n) {
-			$s = 'Qout_'.$s_id;
-			$uf->add($s);
-			if (!isset($custom_state_names[$uf->find($s)])) {
-				$uf->add('');
-				$uf->union('', $s);
-			}
-		}
-
-		// Stage 3: Add implicit '' for final states
-		foreach ($graph->getNodesByAttr('type', 'endEvent') as $e_id => $e_n) {
-			$s = 'Qin_'.$e_id;
-			$uf->add($s);
-			if (!isset($custom_state_names[$uf->find($s)])) {
-				$uf->add('');
-				$uf->union('', $s);
-			}
-		}
-
-		// Stage 3: Check that two custom states are not merged into one
-		foreach ($custom_state_names as $a => $na) {
-			foreach ($custom_state_names as $b => $nb) {
-				if ($a !== $b && $uf->find($a) === $uf->find($b)) {
-					$n = array_merge($na, $nb);
-					sort($n);
-					$this->addError($errors, 'Annotations define multiple names for a single state (found when merging): '.join(', ', [$a, $b]), $n);
-					break 2;
-				}
-			}
-		}
-
-		// Stage 4: Create states from s(Ih) and s(Rh)
+		// Collect states from state relation (_next_invoking_nodes)
 		$states = [];
-		foreach ($graph->getNodesByAttr('_invoking', true) as $n_id => $node) {
-			$s = $uf->find('Qin_' . $n_id);
-			$states[$s] = [];
-		}
-		foreach ($graph->getNodesByAttr('_receiving', true) as $n_id => $node) {
-			$s = $uf->find('Qout_' . $n_id);
-			$states[$s] = [];
+		foreach ($state_relation as list($s_source, $t_targets, $state_name)) {
+			$states[$state_name] = [];
 		}
 
-		// Stage 4: Find all transitions
+		// Collect actions by combining state relation with transition relation
 		$actions = [];
-		foreach ($graph->getNodesByAttr('_invoking', true) as $id => $node) {
-			if (empty($node['_action_name'])) {
-				// Skip invoking nodes without action
-				continue;
-			}
-			// Get action
-			$a_arrow = $graph->getEdgeById($node['_action_name']);
-			$a_node = $a_arrow->getEnd();
-			$action = $a_node['name'];
-
-			// Define transition
-			$state_before = $uf->find('Qin_'.$id);
-			foreach($node['_receiving_nodes'] as $rcv_node) {
-				$state_after = $uf->find('Qout_'.$rcv_node->getId());
-				$actions[$action]['transitions'][$state_before]['targets'][] = $state_after;
+		foreach ($state_relation as list($s_source, $s_targets, $s_state_name)) {
+			foreach ($s_targets as $s_target) {
+				/** @var Node $s_target */
+				$s_target_id = $s_target->getId();
+				if (isset($transition_relation[$s_target_id])) {
+					list($t_source, $t_targets, $t_action_name) = $transition_relation[$s_target_id];
+					foreach ($t_targets as $t_target) {
+						/** @var Node $t_target */
+						list($ts_source, $ts_target, $ts_state_name) = $state_relation[$t_target->getId()];
+						$actions[$t_action_name]['transitions'][$s_state_name]['targets'][$ts_state_name] = $ts_state_name;
+					}
+				}
 			}
 		}
-
-		// Stage 4: [debug] At this point the state machine is complete, so let's assign states and transitions to BPMN nodes.
-		foreach ($graph->getAllNodes() as $id => $node) {
-			if ($node['_state']) {
-				$node['_state_name'] = $uf->find($id);
-			}
-		}
-		foreach ($graph->getAllEdges() as $id => $edge) {
-			if ($edge['_state']) {
-				$edge['_state_name'] = $uf->find($id);
-			}
-		}
-}
-
 
 		// Collect the results into the state machine definition
 		$machine_def = [
@@ -1441,8 +1283,8 @@ if (false) {
 				break;
 
 			case 'error':
+				$exportedNode['label'] = $node['label'];
 				$exportedNode['shape'] = 'rect';
-				$exportedNode['label'] = $node['text'];
 				$exportedNode['color'] = '#ff0000';
 				$exportedNode['fill'] = '#ffeeee';
 				break;
