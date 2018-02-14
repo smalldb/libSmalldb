@@ -156,9 +156,6 @@ class BpmnReader implements IMachineDefinitionReader
 				'process' => $process_id,
 				'features' => [],
 				'_is_state_machine' => $is_state_machine,
-				'_invoking' => false,
-				'_receiving' => false,
-				'_possibly_receiving' => false,
 				'_generated' => false,
 			]);
 
@@ -213,9 +210,6 @@ class BpmnReader implements IMachineDefinitionReader
 					'type' => $type,
 					'process' => $process_id,
 					'features' => $features,
-					'_invoking' => false,
-					'_receiving' => false,
-					'_possibly_receiving' => false,
 					'_generated' => false,
 				]);
 
@@ -522,8 +516,6 @@ class BpmnReader implements IMachineDefinitionReader
 						'id' => $new_id,
 						'type' => 'messageFlow',
 						'name' => $invoking_arrow['name'],
-						'_transition' => false,
-						'_state' => false,
 						'_generated' => true,
 					]);
 				}
@@ -737,6 +729,12 @@ class BpmnReader implements IMachineDefinitionReader
 					$edge['_state_from'][$receiving_node_id] = true;
 					$cur_node['_state_from'][$receiving_node_id] = true;
 
+					// Mark node and edge as part of the state
+					if (!$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
+						$cur_node['_state'] = true;
+					}
+					$edge['_state'] = true;
+
 					// Collect annotations on all paths from R+ to I
 					if (isset($cur_node['_annotation_state']) && !$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
 						$next_annotations[$cur_node['_annotation_state']] = true;
@@ -757,39 +755,6 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 			if (count($next_annotations) > 1) {
 				$this->addError($errors, 'Multiple annotations: ' . join(', ', $next_annotations_attr), [$receiving_node]);
-			}
-		}
-
-		// Mark nodes and edges on any path from R+ to I
-		foreach ($graph->getAllNodes() as $node) {
-			if ($node['type'] != 'textAnnotation' && $node['type'] != 'participant'
-				&& $node['process'] != $state_machine_process_id
-				&& !$node['_transition'] && !$node['_invoking'] && !$node['_receiving'])
-			{
-				if (isset($node['_state_from'])) {
-					foreach ($node['_state_from'] as $receiving_node_id => $is_on_path) {
-						if ($is_on_path) {
-							$node->setAttr('_state', true);
-							break;
-						}
-					}
-				}
-			}
-		}
-		foreach ($graph->getAllEdges() as $edge) {
-			$source = $edge->getStart();
-			$target = $edge->getEnd();
-			if ($edge['type'] == 'sequenceFlow' && $source['process'] != $state_machine_process_id && !$source['_transition']
-				&& $target['process'] != $state_machine_process_id && !$target['_transition'])
-			{
-				if (isset($edge['_state_from'])) {
-					foreach ($edge['_state_from'] as $receiving_node_id => $is_on_path) {
-						if ($is_on_path) {
-							$edge->setAttr('_state', true);
-							break;
-						}
-					}
-				}
 			}
 		}
 
