@@ -50,6 +50,7 @@ use Smalldb\StateMachine\Utils\UnionFind;
 class BpmnReader implements IMachineDefinitionReader
 {
 	public $disableSvgFile = false;
+	public $rewriteGraph = false;
 
 
 	/// @copydoc IMachineDefinitionReader::isSupported
@@ -391,24 +392,26 @@ class BpmnReader implements IMachineDefinitionReader
 		$graph->indexNodeAttr('_possibly_receiving');
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
-		foreach ($graph->getAllEdges() as $edge) {
-			if ($edge['type'] != 'messageFlow') {
-				continue;
-			}
+		if ($this->rewriteGraph) {
+			foreach ($graph->getAllEdges() as $edge) {
+				if ($edge['type'] != 'messageFlow') {
+					continue;
+				}
 
-			if ($edge->getEnd()->getId() == $state_machine_participant_id) {
-				$state_machine_graph = $edge->getEnd()->getNestedGraph();
-				$new_node_id = 'x_' . $edge->getId() . '_target';
-				$new_node = $state_machine_graph->createNode($new_node_id, [
-					'id' => $new_node_id,
-					'name' => $edge['name'],
-					'type' => 'task',
-					'process' => $state_machine_process_id,
-					'features' => [],
-					'_generated' => true,
-				]);
-				$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
-				$edge->setEnd($new_node);
+				if ($edge->getEnd()->getId() == $state_machine_participant_id) {
+					$state_machine_graph = $edge->getEnd()->getNestedGraph();
+					$new_node_id = 'x_' . $edge->getId() . '_target';
+					$new_node = $state_machine_graph->createNode($new_node_id, [
+						'id' => $new_node_id,
+						'name' => $edge['name'],
+						'type' => 'task',
+						'process' => $state_machine_process_id,
+						'features' => [],
+						'_generated' => true,
+					]);
+					$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
+					$edge->setEnd($new_node);
+				}
 			}
 		}
 
@@ -427,8 +430,10 @@ class BpmnReader implements IMachineDefinitionReader
 				$source->setAttr('_invoking', true);
 				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
 					$this->addError($errors, 'Multiple actions invoked by a single task.', [$source]);
-				} else {
+				} else if (!$target['_is_state_machine']) {
 					$source['_action_name'] = $target->getAttr('name');
+				} else {
+					$source['_action_name'] = $a->getAttr('name');
 				}
 			}
 
@@ -436,11 +441,6 @@ class BpmnReader implements IMachineDefinitionReader
 			if ($target['process'] != $state_machine_process_id && ($source['process'] == $state_machine_process_id)) {
 				$target->setAttr('_receiving', true);
 				$target->setAttr('_possibly_receiving', true);
-				if ($target['_action_name'] !== null && $target['_action_name'] != $source->getId()) {
-					$this->addError($errors, 'Multiple actions invoked by a single task.', [$target]);
-				} else {
-					$target['_action_name'] = $source->getAttr('name');
-				}
 			}
 		}
 
@@ -508,7 +508,7 @@ class BpmnReader implements IMachineDefinitionReader
 
 			if (empty($receiving_nodes)) {
 				// If there is no receiving node, add implicit returning message flow.
-				if ($invoking_arrow) {
+				if ($this->rewriteGraph && $invoking_arrow) {
 					// Add receiving arrow only if there is invoking arrow
 					// (timer events may represent transitions without invoking arrow).
 					$new_id = 'x_'.$in_id.'_receiving';
@@ -538,7 +538,7 @@ class BpmnReader implements IMachineDefinitionReader
 						}
 					}
 
-					if ($rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
+					if ($this->rewriteGraph && $rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
 						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
 
@@ -639,7 +639,6 @@ class BpmnReader implements IMachineDefinitionReader
 		foreach ($graph->getNodesByAttr('_possibly_receiving') as $id => $node) {
 			if (!$node->getAttr('_receiving')) {
 				// Find the task node for this possibly receiving node
-				$incoming_message_flows = [];
 				$task_node = null;
 				foreach ($node->getConnectedEdges() as $edge) {
 					$start = $edge->getStart();
@@ -649,7 +648,8 @@ class BpmnReader implements IMachineDefinitionReader
 							$task_node = $start;
 						} else {
 							// More than one incoming message flow from the state machine.
-							continue 2;
+							$task_node = null;
+							break;
 						}
 					}
 				}
