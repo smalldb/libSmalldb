@@ -95,21 +95,6 @@ class BpmnReader implements IMachineDefinitionReader
 		/** @var Graph[] $processNestedGraphs */
 		$processNestedGraphs = [];
 
-		// Get processes (groups)
-		foreach($xpath->query('//bpmn:process[@id]') as $el) {
-			/** @var \DomElement $el */
-			$id = trim($el->getAttribute('id'));
-			$name = trim($el->getAttribute('name'));
-
-			$processes[$id] = [
-				'id' => $id,
-				'name' => $name,
-				'participant' => null,
-				'nodes' => [],
-				'_generated' => false,
-			];
-		}
-
 		// Get participants and their processes
 		foreach($xpath->query('//bpmn:participant[@id]') as $el) {
 			/** @var \DomElement $el */
@@ -304,7 +289,6 @@ class BpmnReader implements IMachineDefinitionReader
 					'state_machine_participant_id' => $state_machine_participant_id,
 					'state_machine_process_id' => $state_machine_process_id,
 					'graph' => $graph,
-					'groups' => $processes,
 					'participants' => $participants,
 					'svg_file_name' => $svg_file_name,
 					'svg_file_contents' => $svg_file_contents,
@@ -389,7 +373,7 @@ class BpmnReader implements IMachineDefinitionReader
 		// Add few more indices
 		$graph->indexNodeAttr('_invoking');
 		$graph->indexNodeAttr('_receiving');
-		$graph->indexNodeAttr('_possibly_receiving');
+		$graph->indexNodeAttr('_potential_receiving');
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
 		if ($this->rewriteGraph) {
@@ -409,7 +393,6 @@ class BpmnReader implements IMachineDefinitionReader
 						'features' => [],
 						'_generated' => true,
 					]);
-					$groups[$state_machine_process_id]['nodes'][] = $new_node_id;
 					$edge->setEnd($new_node);
 				}
 			}
@@ -440,7 +423,7 @@ class BpmnReader implements IMachineDefinitionReader
 			// Receiving message flow
 			if ($target['process'] != $state_machine_process_id && ($source['process'] == $state_machine_process_id)) {
 				$target->setAttr('_receiving', true);
-				$target->setAttr('_possibly_receiving', true);
+				$target->setAttr('_potential_receiving', true);
 			}
 		}
 
@@ -520,8 +503,9 @@ class BpmnReader implements IMachineDefinitionReader
 					]);
 				}
 				$invoking_node->setAttr('_receiving', true);
-				$invoking_node->setAttr('_possibly_receiving', true);
+				$invoking_node->setAttr('_potential_receiving', true);
 				$invoking_node['_receiving_nodes'][$invoking_node->getId()] = $invoking_node;
+				$invoking_node['_invoking_node'] = $invoking_node;
 			} else {
 				// If there are receiving nodes, make sure the arrows start from task, not from participant.
 				foreach ($receiving_nodes as $ri => $rcv_node) {
@@ -543,6 +527,7 @@ class BpmnReader implements IMachineDefinitionReader
 					}
 
 					$invoking_node['_receiving_nodes'][$rcv_node->getId()] = $rcv_node;
+					$rcv_node['_invoking_node'] = $invoking_node;
 				}
 
 				// (M_T) Mark visited arrows as belonging to a transition (blue arrows)
@@ -634,58 +619,8 @@ class BpmnReader implements IMachineDefinitionReader
 			}
 		}
 
-		// Stage 2: State propagation -- all message flows from a single task
-		// in the state machine process end in the same state.
-		foreach ($graph->getNodesByAttr('_possibly_receiving') as $id => $node) {
-			if (!$node->getAttr('_receiving')) {
-				// Find the task node for this possibly receiving node
-				$task_node = null;
-				foreach ($node->getConnectedEdges() as $edge) {
-					$start = $edge->getStart();
-					$end = $edge->getEnd();
-					if ($edge->getAttr('type') == 'messageFlow' && $end === $node && $start->getAttr('process') == $state_machine_process_id) {
-						if (!$task_node) {
-							$task_node = $start;
-						} else {
-							// More than one incoming message flow from the state machine.
-							$task_node = null;
-							break;
-						}
-					}
-				}
-				if (!$task_node) {
-					continue;
-				}
-
-				// Find the receiving node
-				$receiving_node = null;
-				foreach ($task_node->getConnectedEdges() as $edge) {
-					$end = $edge->getEnd();
-					if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $task_node && $end->getAttr('_receiving')) {
-						if (!$receiving_node) {
-							$receiving_node = $end;
-						} else {
-							// Found more than one receiving node.
-							continue 2;
-						}
-					}
-				}
-				if (!$receiving_node) {
-					continue;
-				}
-
-				// Propagate state annotations from the receiving node to all possibly receiving nodes
-				foreach ($task_node->getConnectedEdges() as $edge) {
-					$end = $edge->getEnd();
-					if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $task_node && $end->getAttr('_possibly_receiving') && !$end->getAttr('_receiving')) {
-						$receiving_node['_next_annotations_propagate'][$end->getId()] = $end;
-					}
-				}
-			}
-		}
-
 		// Stage 2: State relation
-		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_possibly_receiving'))  as $receiving_node_id => $receiving_node) {
+		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_potential_receiving'))  as $receiving_node_id => $receiving_node) {
 			/** @var Node $receiving_node */
 			/** @var Node[] $next_invoking_nodes */
 			$next_invoking_nodes = [];
@@ -703,7 +638,7 @@ class BpmnReader implements IMachineDefinitionReader
 					$edge['_state_from'][$receiving_node_id] = false;
 					$next_node['_state_from'][$receiving_node_id] = false;
 
-					if ($next_node['_invoking'] || $next_node['_possibly_receiving'] || $next_node['type'] == 'endEvent') {
+					if ($next_node['_invoking'] || $next_node['_potential_receiving'] || $next_node['type'] == 'endEvent') {
 						// Found a target
 						$next_invoking_nodes[$next_node->getId()] = $next_node;
 						return false;
@@ -730,13 +665,13 @@ class BpmnReader implements IMachineDefinitionReader
 					$cur_node['_state_from'][$receiving_node_id] = true;
 
 					// Mark node and edge as part of the state
-					if (!$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
+					if (!$cur_node['_potential_receiving'] && !$cur_node['_invoking']) {
 						$cur_node['_state'] = true;
 					}
 					$edge['_state'] = true;
 
 					// Collect annotations on all paths from R+ to I
-					if (isset($cur_node['_annotation_state']) && !$cur_node['_possibly_receiving'] && !$cur_node['_invoking']) {
+					if (isset($cur_node['_annotation_state']) && !$cur_node['_potential_receiving'] && !$cur_node['_invoking']) {
 						$next_annotations[$cur_node['_annotation_state']] = true;
 					}
 					if (isset($next_node['_annotation_state'])) {
@@ -750,23 +685,85 @@ class BpmnReader implements IMachineDefinitionReader
 			// Store reachable annotations and propagate the annotations
 			$next_annotations_attr = array_keys($next_annotations);
 			$receiving_node->setAttr('_next_annotations', $next_annotations_attr);
-			foreach ($receiving_node->getAttr('_next_annotations_propagate', []) as $node) {
-				$node->setAttr('_next_annotations', $next_annotations_attr);
-			}
 			if (count($next_annotations) > 1) {
 				$this->addError($errors, 'Multiple annotations: ' . join(', ', $next_annotations_attr), [$receiving_node]);
 			}
 		}
 
+		// Implicit state propagation
+		foreach ($graph->getNodesByAttr('_receiving') as $id => $receiving_node) {
+			// Get invoking node as the returning message flow may be implicit (and not drawn)
+			/** @var Node $invoking_node */
+			$invoking_node = $receiving_node['_invoking_node'];
+
+			// Find task node (there should be a single incoming message flow)
+			$task_node = null;
+			foreach ($invoking_node->getConnectedEdges() as $edge) {
+				if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $invoking_node
+					&& $edge->getEnd()->getAttr('process') == $state_machine_process_id)
+				{
+					if ($task_node === null) {
+						// Found the first incoming message flow
+						$task_node = $edge->getEnd();
+					} else {
+						// Found the second incoming message flow -- do not propagate the state
+						$task_node = null;
+						break;
+					}
+				}
+			}
+			if (!$task_node) {
+				continue;
+			}
+
+			// Get list of connected potential receiving nodes
+			$potential_receiving_nodes = [];
+			$receiving_node_count = 0;
+			$invoking_process = $invoking_node->getAttr('process');
+			foreach ($task_node->getConnectedEdges() as $edge) {
+				$end = $edge->getEnd();
+				if ($edge->getAttr('type') == 'messageFlow') {
+					if ($end->getAttr('_receiving')) {
+						if ($end->getAttr('process') == $invoking_process) {
+							// Found a receiving node
+							$receiving_node_count++;
+						} else {
+							// Receiving node in another process? WTF?
+							$this->addError($errors, 'Inconsistent receiving nodes (algorithm bug).', [$end]);
+							$potential_receiving_nodes = [];
+							break;
+						}
+					} else if ($end->getAttr('_potential_receiving')) {
+						if (empty($end->getAttr('_next_annotations'))) {
+							// The node will receive state propagation
+							$potential_receiving_nodes[$end->getId()] = $end;
+						} else {
+							// Stop if there are annotations already
+							$potential_receiving_nodes = [];
+							break;
+						}
+					}
+				}
+			}
+
+			// Propagate the state if there is at most one connected receiving node (the one from which we arrived)
+			if ($receiving_node_count <= 1 && !empty($potential_receiving_nodes)) {
+				$next_annotations = $receiving_node->getAttr('_next_annotations');
+				foreach ($potential_receiving_nodes as $potential_receiving_node) {
+					$potential_receiving_node->setAttr('_next_annotations', $next_annotations);
+				}
+			}
+		}
+
 		// Collect state relation
 		$state_relation = [];
-		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_possibly_receiving')) as $node) {
+		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_potential_receiving')) as $node) {
 			$next_annotations = $node->getAttr('_next_annotations');
 			$next_invoking_nodes = $node->getAttr('_next_invoking_nodes');
 			if (count($next_annotations) == 1) {
 				// Use state specified by an annotation.
 				$state_name = reset($next_annotations);
-			} else if ($node->getAttr('type') == 'startEvent' && !$node->getAttr('_possibly_receiving')) {
+			} else if ($node->getAttr('type') == 'startEvent' && !$node->getAttr('_potential_receiving')) {
 				// Implicit labeling because of the start event.
 				$state_name = '';
 			} else {
@@ -915,10 +912,12 @@ class BpmnReader implements IMachineDefinitionReader
 				case 'association':
 					$color = '#aaaaaa';
 					$diagram .= ',style="dashed",arrowhead=none';
+					$w = 1;
 					break;
 				case 'error':
 					$color = '#ff0000';
 					$diagram .= ',style="dashed",arrowhead=none';
+					$w = 1;
 					break;
 				default:
 					$color = '#ff0000';
@@ -1008,36 +1007,13 @@ class BpmnReader implements IMachineDefinitionReader
 				$diagram .= ",fillcolor=\"#ffff88$alpha\"";
 			} else if ($n['_receiving']) {
 				$diagram .= ",fillcolor=\"#aaddff$alpha\"";
-			} else if ($n['_possibly_receiving']) {
+			} else if ($n['_potential_receiving']) {
 				$diagram .= ",fillcolor=\"#eeeeee$alpha;0.5:#aaddff$alpha\",gradientangle=270";
 			}
 
 			// End of node.
 			$diagram .= "];\n";
 		}
-
-		// Draw groups
-		//*
-		foreach ($fragment['groups'] as $id => $g) {
-			$graph_id = AbstractMachine::exportDotIdentifier($id, $prefix);
-
-			$diagram .= "\n\t\tsubgraph cluster_$graph_id {\n\t\t\tlabel= \"".basename($g['name'])."\"; color=\"#aaaaaa\";\n\n";
-
-			if (($fragment['state_machine_process_id'] && $g['id'] == $fragment['state_machine_process_id'])
-				|| ($fragment['state_machine_participant_id'] && $g['id'] == $fragment['state_machine_participant_id']))
-			{
-				$diagram .= "\t\tcolor=\"#aadd88\"; penwidth=5; fontcolor=\"#44aa00;\"\n";
-			}
-			foreach ($g['nodes'] as $n_id) {
-				if (!empty($hidden_nodes[$n_id])) {
-					continue;
-				}
-				$graph_n_id = AbstractMachine::exportDotIdentifier($n_id, $prefix);
-				$diagram .= "\t\t\t".$graph_n_id.";\n";
-			}
-			$diagram .= "\t\t}\n";
-		}
-		// */
 
 		// Render errors
 		foreach ($errors as $err) {
@@ -1376,7 +1352,7 @@ class BpmnReader implements IMachineDefinitionReader
 				if ($node['_receiving']) {
 					$exportedNode['fill'] = '#aaddff';
 				} else {
-					if ($node['_possibly_receiving']) {
+					if ($node['_potential_receiving']) {
 						$exportedNode['fill'] = '#eeeeff';
 						$exportedNode['fill'] = 'url(#' . $prefix . '_gradient_pos_rcv)';
 					}
