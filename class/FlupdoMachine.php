@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2013-2017, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2013-2018, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\Flupdo\IFlupdo;
+use Smalldb\StateMachine\Auth\IAuth;
 
 
 /**
@@ -40,21 +41,21 @@ class FlupdoMachine extends AbstractMachine
 	/**
 	 * Database connection.
 	 *
-	 * @var Smalldb\Flupdo\IFlupdo
+	 * @var \Smalldb\Flupdo\IFlupdo
 	 */
 	protected $flupdo;
 
 	/**
 	 * Sphinx indexer connection.
 	 *
-	 * @var Smalldb\Flupdo\IFlupdo
+	 * @var \Smalldb\Flupdo\IFlupdo
 	 */
 	protected $sphinx;
 
 	/**
 	 * Authenticator (gets user id and role)
 	 *
-	 * @var Smalldb\StateMachine\Auth\IAuth
+	 * @var \Smalldb\StateMachine\Auth\IAuth
 	 */
 	protected $auth;
 
@@ -278,7 +279,8 @@ class FlupdoMachine extends AbstractMachine
 				$user_id = $this->auth->getUserId();
 				$owner_property = $access_policy['owner_property'];
 				if (isset($access_policy['session_state'])) {
-					if ($this->auth->getSessionMachine()->state != $access_policy['session_state']) {
+					$session_machine = $this->auth->getSessionMachine();
+					if (!$session_machine || $session_machine->state != $access_policy['session_state']) {
 						return false;
 					}
 				}
@@ -394,7 +396,7 @@ class FlupdoMachine extends AbstractMachine
 			// unknown policies are considered unsafe
 			default:
 				$query->where('FALSE');
-				return false;
+				return;
 		}
 
 		// This should not happen.

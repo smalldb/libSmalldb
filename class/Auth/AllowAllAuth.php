@@ -31,6 +31,13 @@ class AllowAllAuth implements IAuth
 	}
 
 
+	/// @copydoc Smalldb\StateMachine\Auth\IAuth::getSessionMachine()
+	public function getSessionMachine()
+	{
+		return null;
+	}
+
+
 	/// @copydoc Smalldb\StateMachine\Auth\IAuth::getUserId()
 	public function getUserId()
 	{

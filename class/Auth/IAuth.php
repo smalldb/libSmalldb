@@ -38,6 +38,12 @@ interface IAuth
 
 
 	/**
+	 * Get session machine which manages all stuff around login and session.
+	 */
+	public function getSessionMachine();
+
+
+	/**
 	 * Get user's ID.
 	 *
 	 * User's ID is limited to single scalar value (any integer or string).
