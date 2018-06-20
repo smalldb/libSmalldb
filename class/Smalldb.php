@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Utils\Hook;
+
+
 /**
  * The libSmalldb entry point.
  * 
@@ -26,12 +29,18 @@ namespace Smalldb\StateMachine;
  */
 class Smalldb
 {
+	/** @var IDebugLogger */
 	private $debug_logger = null;
+
+	/** @var Hook */
 	private $after_reference_created = null;
+
+	/** @var Hook */
 	private $after_listing_created = null;
 
 	/**
 	 * List of registered backends
+	 * @var AbstractBackend[]
 	 */
 	protected $backends = [];
 
@@ -132,8 +141,10 @@ class Smalldb
 	 */
 	public function ref(...$argv): Reference
 	{
+		$type = $argv[0];
+
 		// Clone if Reference is given
-		if ($argv[0] instanceof Reference) {
+		if ($type instanceof Reference) {
 			if (count($argv) != 1) {
 				throw new InvalidArgumentException('The first argument is a Reference and more than one argument given.');
 			}
@@ -149,6 +160,7 @@ class Smalldb
 
 		// Decode arguments to machine type and machine-specific ID
 		foreach ($this->backends as $b => $backend) {
+			$id = array_slice($argv, 1);
 			if ($backend->inferMachineType($argv, $type, $id)) {
 				// Create reference
 				$m = $backend->getMachine($this, $type);
@@ -187,7 +199,7 @@ class Smalldb
 
 				// Emit events
 				if ($this->debug_logger) {
-					$this->debug_logger->afterReferenceCreated($this, $ref);
+					$this->debug_logger->afterReferenceCreated($backend, $ref);
 				}
 				if ($this->after_reference_created) {
 					$this->after_reference_created->emit($ref);
@@ -207,7 +219,7 @@ class Smalldb
 	 *
 	 * @return IListing.
 	 */
-	public final function listing($query_filters, $filtering_flags = 0)
+	public final function listing($query_filters, $filtering_flags = 0): IListing
 	{
 		foreach ($this->backends as $b => $backend) {
 			$listing = $backend->listing($this, $query_filters, $filtering_flags);
@@ -232,9 +244,9 @@ class Smalldb
 	 *
 	 * This will throw various exceptions on errors.
 	 *
-	 * @return Array with results (machine type -> per-machine results).
+	 * @return array  Array with results (machine type -> per-machine results).
 	 */
-	public function performSelfCheck()
+	public function performSelfCheck(): array
 	{
 		$results = [];
 
