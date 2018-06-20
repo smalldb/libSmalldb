@@ -139,7 +139,7 @@ class FlupdoMachine extends AbstractMachine
 	protected function configureMachine(array $config)
 	{
 		// Load simple config options
-		$this->loadMachineConfig($config, ['table', 'table_alias', 'state_select']);
+		$this->loadMachineConfig($config, ['table', 'table_alias', 'state_select', 'filters']);
 
 		// Properties (unless set before)
 		if ($this->properties === null) {
