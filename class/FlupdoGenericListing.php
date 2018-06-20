@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine;
 
+use Traversable;
+
 /**
  * A very generic listing based on Flupdo::SelectBuilder
  *
@@ -622,6 +624,22 @@ class FlupdoGenericListing implements IListing
 		$this->after_query[] = function() use ($temp_table) {
 			$this->query->pdo->query("DROP TEMPORARY TABLE $temp_table");
 		};
+	}
+
+	/**
+	 * Retrieve an external iterator
+	 *
+	 * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
+	 * @return Traversable An instance of an object implementing <b>Iterator</b> or
+	 * <b>Traversable</b>
+	 * @since 5.0.0
+	 */
+	public function getIterator(): Traversable
+	{
+		if ($this->result === null) {
+			$this->query();
+		}
+		return $this->result;
 	}
 
 }

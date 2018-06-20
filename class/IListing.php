@@ -24,7 +24,7 @@ namespace Smalldb\StateMachine;
  * Listing is created by AbstractMachine::createListing method, it should not 
  * be created directly.
  */
-interface IListing
+interface IListing extends \IteratorAggregate
 {
 	const IGNORE_UNKNOWN_FILTERS = 0x0100;	///< Filtering flag: If there are unknown filters, no exception will be thrown by constructor.
 
