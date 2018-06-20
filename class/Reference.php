@@ -45,7 +45,14 @@ use Smalldb\StateMachine\Utils\Hook;
 class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 {
 	/**
+	 * Smalldb
+	 * @var Smalldb
+	 */
+	protected $smalldb;
+
+	/**
 	 * State machine.
+	 * @var AbstractMachine
 	 */
 	protected $machine;
 
@@ -131,33 +138,22 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 *
 	 * TODO: Check $id to be made of scalar values only.
 	 */
-	public function __construct(AbstractMachine $machine, $id = null)
+	public function __construct(Smalldb $smalldb, AbstractMachine $machine, ...$id)
 	{
 		$this->clearCache();
-		$args = func_get_args();
+
+		$this->smalldb = $smalldb;
 		$this->machine = $machine;
 
-		if (count($args) > 2) {
-			// composite primary key as multiple arguments
-			array_shift($args);
-			$raw_id = $args;
-		} else {
-			$raw_id = $id;
-		}
-
-		if (is_array($raw_id)) {
-			switch (count($raw_id)) {
-				case 0:
-					throw new \InvalidArgumentException('Invalid ID - empty array makes no sense.');
-				case 1:
-					list($this->id) = $raw_id;
-					break;
-				default:
-					$this->id = $raw_id;
-					break;
-			}
-		} else {
-			$this->id = $raw_id;
+		switch (count($id)) {
+			case 0:
+				throw new \InvalidArgumentException('Invalid ID - empty array makes no sense.');
+			case 1:
+				list($this->id) = $id;
+				break;
+			default:
+				$this->id = $id;
+				break;
 		}
 	}
 
@@ -188,9 +184,9 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 *
 	 * @warning This may break things a lot. Be careful.
 	 */
-	public static function createPreheatedReference($machine, $properties)
+	public static function createPreheatedReference(Smalldb $smalldb, AbstractMachine $machine, $properties)
 	{
-		$ref = new static($machine, null);
+		$ref = new static($smalldb, $machine, null);
 		$ref->properties_cache = $properties;
 		$ref->state_cache = $properties['state'];
 

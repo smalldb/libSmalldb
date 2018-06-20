@@ -313,6 +313,12 @@ abstract class AbstractMachine
 	}
 
 
+	public function getReferenceClassName(): string
+	{
+		return $this->reference_class;
+	}
+
+
 	/**
 	 * Set debug logger
 	 */
@@ -550,7 +556,7 @@ abstract class AbstractMachine
 		// Get referenced machine type
 		$ref_machine_type = $r['machine_type'];
 
-		return new Reference($this->smalldb->getMachine($ref_machine_type), $ref_machine_id);
+		return new Reference($this->smalldb, $this->smalldb->getMachine($ref_machine_type), $ref_machine_id);
 	}
 
 
@@ -743,9 +749,9 @@ abstract class AbstractMachine
 	 *
 	 * @see AbstractBackend::ref
 	 */
-	public function ref($id)
+	public function ref($id): Reference
 	{
-		$ref = new $this->reference_class($this, $id);
+		$ref = new $this->reference_class($this->smalldb, $this, $id);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
@@ -758,9 +764,9 @@ abstract class AbstractMachine
 	 *
 	 * @see AbstractBackend::nullRef
 	 */
-	public function nullRef()
+	public function nullRef(): Reference
 	{
-		$ref = new $this->reference_class($this, null);
+		$ref = new $this->reference_class($this->smalldb, $this, null);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
@@ -773,9 +779,9 @@ abstract class AbstractMachine
 	 *
 	 * @warning This may break things a lot. Be careful.
 	 */
-	public function hotRef($properties)
+	public function hotRef($properties): Reference
 	{
-		$ref = $this->reference_class::createPreheatedReference($this, $properties);
+		$ref = $this->reference_class::createPreheatedReference($this->smalldb, $this, $properties);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref, $properties);
 		}

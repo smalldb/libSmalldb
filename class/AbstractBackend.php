@@ -33,9 +33,14 @@ use Smalldb\StateMachine\Utils\Hook;
 abstract class AbstractBackend
 {
 	private $machine_type_cache = array();
+
+	/** @var IDebugLogger */
 	private $debug_logger = null;
+	/** @var Hook */
 	private $after_reference_created = null;
+	/** @var Hook */
 	private $after_listing_created = null;
+
 	private $initialized = false;
 
 
