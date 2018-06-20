@@ -190,7 +190,7 @@ class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
 	 */
 	public static function createPreheatedReference($machine, $properties)
 	{
-		$ref = new self($machine, null);
+		$ref = new static($machine, null);
 		$ref->properties_cache = $properties;
 		$ref->state_cache = $properties['state'];
 

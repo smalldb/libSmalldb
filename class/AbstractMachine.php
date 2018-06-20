@@ -65,7 +65,13 @@ abstract class AbstractMachine
 	protected $machine_type;
 
 	/**
+	 * Class name of the Reference class
+	 */
+	protected $reference_class = Reference::class;
+
+	/**
 	 * Debugger
+	 * @var IDebugLogger
 	 */
 	private $debug_logger = null;
 
@@ -334,6 +340,7 @@ abstract class AbstractMachine
 	{
 		// Load configuration
 		$this->loadMachineConfig($config, [
+			'reference_class',
 			'states', 'state_groups', 'actions', 'errors',
 			'access_policies', 'default_access_policy', 'read_access_policy', 'listing_access_policy',
 			'properties', 'views', 'references',
@@ -738,7 +745,7 @@ abstract class AbstractMachine
 	 */
 	public function ref($id)
 	{
-		$ref = new Reference($this, $id);
+		$ref = new $this->reference_class($this, $id);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
@@ -753,7 +760,7 @@ abstract class AbstractMachine
 	 */
 	public function nullRef()
 	{
-		$ref = new Reference($this, null);
+		$ref = new $this->reference_class($this, null);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref);
 		}
@@ -768,7 +775,7 @@ abstract class AbstractMachine
 	 */
 	public function hotRef($properties)
 	{
-		$ref = Reference::createPreheatedReference($this, $properties);
+		$ref = $this->reference_class::createPreheatedReference($this, $properties);
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated(null, $ref, $properties);
 		}
