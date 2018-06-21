@@ -167,7 +167,7 @@ class Smalldb
 				if ($m === null) {
 					throw new RuntimeException('Cannot create machine: '.$type);
 				}
-				$ref = new Reference($this, $m, $id);
+				$ref = $m->ref($id);
 
 				// Emit events
 				if ($this->debug_logger) {
@@ -195,7 +195,7 @@ class Smalldb
 		foreach ($this->backends as $b => $backend) {
 			$m = $backend->getMachine($this, $type);
 			if ($m !== null) {
-				$ref = new Reference($this, $m, null);
+				$ref = $m->nullRef();
 
 				// Emit events
 				if ($this->debug_logger) {

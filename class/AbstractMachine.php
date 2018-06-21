@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Node;
 use Smalldb\StateMachine\Graph\GraphSearch;
+use Smalldb\StateMachine\Utils\Utils;
 
 
 /**
@@ -67,7 +68,7 @@ abstract class AbstractMachine
 	/**
 	 * Class name of the Reference class
 	 */
-	protected $reference_class = Reference::class;
+	protected $reference_class = null;
 
 	/**
 	 * Debugger
@@ -313,7 +314,10 @@ abstract class AbstractMachine
 	}
 
 
-	public function getReferenceClassName(): string
+	/**
+	 * @return string|null
+	 */
+	public function getReferenceClassName()
 	{
 		return $this->reference_class;
 	}
@@ -534,11 +538,11 @@ abstract class AbstractMachine
 	/**
 	 * Helper function to resolve reference to another machine.
 	 *
-	 * @param $reference_name    Name of the reference in AbstractMachine::references.
-	 * @param $properties_cache  Properties of referencing machine.
+	 * @param string $reference_name    Name of the reference in AbstractMachine::references.
+	 * @param array  $properties_cache  Properties of referencing machine.
 	 * @return Reference to referred machine.
 	 */
-	protected function resolveMachineReference($reference_name, $properties_cache)
+	protected function resolveMachineReference(string $reference_name, array $properties_cache): Reference
 	{
 		if (!isset($this->references[$reference_name])) {
 			throw new \InvalidArgumentException('Unknown reference: '.$reference_name);
@@ -556,7 +560,7 @@ abstract class AbstractMachine
 		// Get referenced machine type
 		$ref_machine_type = $r['machine_type'];
 
-		return new Reference($this->smalldb, $this->smalldb->getMachine($ref_machine_type), $ref_machine_id);
+		return $this->smalldb->getMachine($ref_machine_type)->ref($ref_machine_id);
 	}
 
 

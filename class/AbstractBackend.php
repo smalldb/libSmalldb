@@ -157,6 +157,8 @@ abstract class AbstractBackend
 
 	/**
 	 * Get state machine of given type, create it if necessary.
+	 *
+	 * @return AbstractMachine|null
 	 */
 	public function getMachine(Smalldb $smalldb, string $type)
 	{
