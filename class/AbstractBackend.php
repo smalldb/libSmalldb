@@ -85,7 +85,7 @@ abstract class AbstractBackend
 	/**
 	 * Get debug logger
 	 */
-	public function getDebugLogger()
+	public function getDebugLogger(): IDebugLogger
 	{
 		return $this->debug_logger;
 	}
@@ -94,7 +94,7 @@ abstract class AbstractBackend
 	/**
 	 * Get afterReferenceCreated hook.
 	 */
-	public function afterReferenceCreated()
+	public function afterReferenceCreated(): Hook
 	{
 		return $this->after_reference_created ?? ($this->after_reference_created = new Hook());
 	}
@@ -103,7 +103,7 @@ abstract class AbstractBackend
 	/**
 	 * Get afterListingCreated hook.
 	 */
-	public function afterListingCreated()
+	public function afterListingCreated(): Hook
 	{
 		return $this->after_listing_created ?? ($this->after_listing_created = new Hook());
 	}
@@ -122,10 +122,9 @@ abstract class AbstractBackend
 	 * In simple applications ref consists of pair $type and $id, where $id
 	 * is uniquie within given $type.
 	 *
-	 * $aref is array of arguments passed to ref() or single literal if 
-	 * only one argument was passed.
-	 *
-	 * $type is string.
+	 * @param array|string|int $aref is array of arguments passed to ref() or single literal if only one argument was passed.
+	 * @param string $type is a type of the inferred machine.
+	 * @param array|string|int $id is an ID of the inferred machine.
 	 *
 	 * $id is literal or array of literals (in case of compound key).
 	 */
@@ -140,7 +139,7 @@ abstract class AbstractBackend
 	 * This creates only implementation of the machine, not concrete
 	 * instance. See AbstractMachine.
 	 *
-	 * Returns descendant of AbstractMachine or null.
+	 * @return AbstractMachine|null
 	 */
 	protected abstract function createMachine(Smalldb $smalldb, string $type);
 
@@ -246,7 +245,7 @@ abstract class AbstractBackend
 	/**
 	 * Get all known state machine types.
 	 *
-	 * Returns array of strings.
+	 * @return string[]
 	 */
 	public abstract function getKnownTypes();
 
