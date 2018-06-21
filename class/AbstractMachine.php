@@ -67,6 +67,7 @@ abstract class AbstractMachine
 
 	/**
 	 * Class name of the Reference class
+	 * @var Reference::class
 	 */
 	protected $reference_class = null;
 
@@ -383,8 +384,8 @@ abstract class AbstractMachine
 	 * variable is an array, the $config array is merged with the config,
 	 * overwriting only matching keys (using `array_replace_recursive`).
 	 *
-	 * @param $config Configuration passed to state machine
-	 * @param $keys List of feys from $config to load into member variables
+	 * @param array $config Configuration passed to state machine
+	 * @param array $keys List of feys from $config to load into member variables
 	 * 	of the same name.
 	 */
 	protected function loadMachineConfig(array $config, array $keys)
@@ -404,9 +405,9 @@ abstract class AbstractMachine
 	/**
 	 * Get errors found while loading the machine definition.
 	 *
-	 * @return List of errors.
+	 * @return array List of errors.
 	 */
-	public function getErrors()
+	public function getErrors(): array
 	{
 		return $this->errors;
 	}
@@ -505,9 +506,10 @@ abstract class AbstractMachine
 
 	/**
 	 * Calculate value of a view.
-	 *
 	 * Returned value is cached in $view_cache until a transition occurs or
 	 * the cache is invalidated.
+	 *
+	 * @return mixed
 	 */
 	protected function calculateViewValue($id, $view, & $properties_cache = null, & $view_cache = null, & $persistent_view_cache = null)
 	{
@@ -518,7 +520,7 @@ abstract class AbstractMachine
 	/**
 	 * Create URL using properties and given format.
 	 */
-	protected function urlFormat($id, $url_fmt, $properties_cache)
+	protected function urlFormat($id, $url_fmt, $properties_cache): string
 	{
 		if (isset($url_fmt)) {
 			if ($properties_cache === null) {
@@ -1224,7 +1226,6 @@ abstract class AbstractMachine
 		$missing_states = array();
 
 		// Transitions
-		$used_actions = array();
 		if (!empty($this->actions)) {
 			foreach ($this->actions as $a => $action) {
 				if (empty($action['transitions'])) {
@@ -1380,7 +1381,6 @@ abstract class AbstractMachine
 		$missing_states = array();
 
 		// Transitions
-		$used_actions = array();
 		if (!empty($this->actions)) {
 			foreach ($this->actions as $a => $action) {
 				if (empty($action['transitions'])) {
@@ -1508,7 +1508,7 @@ abstract class AbstractMachine
 	 * Writes Graphviz dot syntax to stdout (echo), output is placed just
 	 * before digraph's closing bracket.
 	 *
-	 * @param $debug_opts Machine-specific Options to configure visible
+	 * @param mixed $debug_opts Machine-specific Options to configure visible
 	 * 	debug data.
 	 */
 	protected function exportDotRenderExtras($debug_opts)
@@ -1534,11 +1534,11 @@ abstract class AbstractMachine
 	 * @see AbstractMachine::exportJson().
 	 * @see https://grafovatko.smalldb.org/
 	 *
-	 * @param $debug_opts Machine-specific Options to configure visible
+	 * @param mixed $debug_opts Machine-specific Options to configure visible
 	 * 	debug data.
-	 * @param $machine_graph Smalldb state chart wrapped in a 'smalldb' node.
+	 * @param array $machine_graph Smalldb state chart wrapped in a 'smalldb' node.
 	 */
-	protected function exportJsonAddExtras($debug_opts, $machine_graph)
+	protected function exportJsonAddExtras($debug_opts, array $machine_graph): array
 	{
 		if (!empty($this->state_diagram_extras_json)) {
 			$graph = $this->state_diagram_extras_json;
