@@ -14,7 +14,8 @@
     },
     "require": {
         "php": ">=7.0",
-        "psr/container": ">=1.0"
+        "psr/container": ">=1.0",
+        "doctrine/annotations": "~1.7"
     },
     "require-dev": {
         "smalldb/doc-tools": "dev-master"
@@ -23,4 +24,3 @@
         "smalldb/flupdo": "SQL database support"
     }
 }
-
