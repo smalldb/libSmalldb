@@ -10,15 +10,27 @@
         }
     ],
     "autoload": {
-        "psr-4": { "Smalldb\\StateMachine\\": "class/" }
+        "psr-4": {
+            "Smalldb\\StateMachine\\Test\\": "test/",
+            "Smalldb\\StateMachine\\": "class/"
+        }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jkufner/annotations"
+        }
+    ],
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.3",
+        "ext-dom": "*",
+        "ext-json": "*",
         "psr/container": ">=1.0",
-        "doctrine/annotations": "~1.7"
+        "doctrine/annotations": "dev-constants as 1.7.0"
     },
     "require-dev": {
-        "smalldb/doc-tools": "dev-master"
+        "smalldb/doc-tools": "dev-master",
+        "phpunit/phpunit": "^8.0"
     },
     "suggest": {
         "smalldb/flupdo": "SQL database support"

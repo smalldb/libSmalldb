@@ -1,10 +1,5 @@
-composer.lock
-run-tests.log
-test/*.diff
-test/*.exp
-test/*.log
-test/*.out
-test/*.php
 doc/doxygen/
 vendor/
+test/coverage/
+.phpunit.result.cache
 
