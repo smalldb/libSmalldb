@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2017, Josef Kufner  <josef@kufner.cz>
  *
@@ -113,7 +113,7 @@ class NestedGraph
 	 * @param array $attrs
 	 * @return Node
 	 */
-	public function createNode(string $id, array $attrs): Node
+	public function createNode(string $id, array $attrs = []): Node
 	{
 		return new Node($this, $id, $attrs);
 	}
@@ -191,7 +191,7 @@ class NestedGraph
 	 * @param Node $end
 	 * @return Edge
 	 */
-	public function createEdge(string $id = null, Node $start, Node $end, array $attrs): Edge
+	public function createEdge(?string $id, Node $start, Node $end, array $attrs = []): Edge
 	{
 		if ($id === null) {
 			$id = '_' . count($this->getRootGraph()->getAllEdges());

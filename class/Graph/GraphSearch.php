@@ -145,7 +145,7 @@ class GraphSearch
 				$seen[$id] = true;
 				$queue[] = $node;
 			} else {
-				throw new \InvalidArgumentException("Start node ".var_export($i)." is not instance of Node.");
+				throw new \InvalidArgumentException("Start node ".var_export($i, true)." is not instance of Node.");
 			}
 		}
 
@@ -161,7 +161,9 @@ class GraphSearch
 					$currentNode = array_shift($queue);
 					break;
 				default:
+					// @codeCoverageIgnoreStart
 					throw new InvalidArgumentException('Invalid strategy.');
+					// @codeCoverageIgnoreEnd
 			}
 			$seen[$currentNode->getId()] = true;
 

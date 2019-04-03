@@ -1,10 +1,10 @@
 all: doc test
 
 test: test-example
-	./vendor/bin/phpunit --bootstrap vendor/autoload.php  test
+	./vendor/bin/phpunit -c phpunit.xml
 
 test-coverage: test-example
-	./vendor/bin/phpunit --bootstrap vendor/autoload.php --coverage-html test/coverage --whitelist class  test
+	./vendor/bin/phpunit -c phpunit.xml --coverage-html test/coverage
 
 test-example:
 	$(MAKE) -C ./test/example --no-print-dir
