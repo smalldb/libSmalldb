@@ -19,6 +19,8 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
+
 /**
  * Smalldb State Machine Definition -- a non-deterministic persistent finite automaton.
  */
@@ -29,6 +31,9 @@ class StateMachineDefinition
 
 	/** @var TransitionDefinition[] */
 	private $transitions;
+
+	/** @var StateMachineGraph|null */
+	private $stateMachineGraph = null;
 
 
 	/**
@@ -76,6 +81,12 @@ class StateMachineDefinition
 		} else {
 			throw new UndefinedTransitionException("Undefined transition: $actionName");
 		}
+	}
+
+
+	public function getGraph(): StateMachineGraph
+	{
+		return $this->stateMachineGraph ?? ($this->stateMachineGraph = new StateMachineGraph($this));
 	}
 
 }

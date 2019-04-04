@@ -19,6 +19,9 @@
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 
 
@@ -77,6 +80,34 @@ class DefinitionTest extends TestCase
 			$this->markTestIncomplete("CRUD definition is too slow; it took $t_us µs to build.");
 		}
 		$this->assertTrue(true);
+	}
+
+	public function testGraph()
+	{
+		$stateMachine = $this->buildCrudStateMachine();
+		$g = $stateMachine->getGraph();
+		$this->assertInstanceOf(StateMachineGraph::class, $g);
+
+		$begin = $g->getNodeByState($stateMachine->getState(''), $g::NODE_SOURCE);
+		$end = $g->getNodeByState($stateMachine->getState(''), $g::NODE_TARGET);
+
+		$this->assertInstanceOf(StateMachineNode::class, $begin);
+		$this->assertInstanceOf(StateMachineNode::class, $end);
+		$this->assertNotEquals($begin, $end);
+
+		$this->assertInstanceOf(StateMachineNode::class,
+			$g->getNodeByState($stateMachine->getState('Exists'), $g::NODE_SOURCE));
+
+		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
+			$g->getEdgesByTransition($stateMachine->getTransition('', 'create')));
+		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
+			$g->getEdgesByTransition($stateMachine->getTransition('Exists', 'update')));
+		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
+			$g->getEdgesByTransition($stateMachine->getTransition('Exists', 'delete')));
+
+		$export = new \Smalldb\StateMachine\Graph\GraphExportGrafovatko($g);
+		$jsonObject = $export->export();
+		$this->assertIsArray($jsonObject);
 	}
 
 }
