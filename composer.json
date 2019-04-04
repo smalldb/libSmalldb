@@ -11,7 +11,6 @@
     ],
     "autoload": {
         "psr-4": {
-            "Smalldb\\StateMachine\\Test\\": "test/",
             "Smalldb\\StateMachine\\": "class/"
         }
     },
