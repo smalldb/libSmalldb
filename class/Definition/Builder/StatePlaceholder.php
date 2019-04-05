@@ -16,15 +16,22 @@
  *
  */
 
+namespace Smalldb\StateMachine\Definition\Builder;
 
-namespace Smalldb\StateMachine\Definition;
 
-
-class StateMachineDefinitionBuilder
+/**
+ * Class StatePlaceholder
+ *
+ * @internal
+ */
+class StatePlaceholder
 {
-	public function getStateMachineDefinition()
+	/** @var string */
+	public $name;
+
+	public function __construct(string $name)
 	{
-		// TODO
-		return new StateMachineDefinition();
+		$this->name = $name;
 	}
+
 }
