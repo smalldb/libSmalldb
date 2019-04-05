@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-class UndefinedActionException extends \DomainException
+class UndefinedActionException extends UndefinedException
 {
 	// Just an exception
 }

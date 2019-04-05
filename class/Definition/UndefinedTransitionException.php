@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-class UndefinedTransitionException extends \DomainException
+class UndefinedTransitionException extends UndefinedException
 {
 	// Just an exception.
 }
