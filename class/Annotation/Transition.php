@@ -27,24 +27,42 @@ namespace Smalldb\StateMachine\Annotation;
 class Transition
 {
 	/**
-	 * @var string
-	 * @Required
+	 * @var string|null
 	 */
-	public $source;
+	public $source = null;
 
 	/**
-	 * @var array
-	 * @Required
+	 * @var string[]
 	 */
-	public $targets;
+	public $targets = [];
+
+	/**
+	 * @var string|null
+	 */
+	public $color = null;
 
 
 	public function __construct(array $values)
 	{
-		if (count($values) !== 2) {
-			throw new \InvalidArgumentException("Transition annotation requires two arguments - a source state and a list of target states.");
+		if (!empty($values['value'])) {
+			if (is_array($values['value']) && count($values['value']) === 2
+				&& is_string($values['value'][0])
+				&& is_array($values['value'][1]) && count($values['value'][1]) > 0)
+			{
+				list($this->source, $this->targets) = $values['value'];
+			} else {
+				throw new \InvalidArgumentException("Transition annotation requires none or two arguments - a source state and a list of target states.");
+			}
 		}
 
-		list($this->source, $this->targets) = $values['value'];
+		if (isset($values['color'])) {
+			$this->color = $values['color'];
+		}
+	}
+
+
+	public function definesTransition(): bool
+	{
+		return $this->source !== null && !empty($this->targets);
 	}
 }
