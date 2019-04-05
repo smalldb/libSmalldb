@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Graph\Edge;
@@ -156,7 +157,7 @@ class GraphTest extends TestCase
 	 */
 	public function testSearchFromBadStart(Graph $g)
 	{
-		$this->expectException(InvalidArgumentException::class);
+		$this->expectException(\InvalidArgumentException::class);
 		GraphSearch::BFS($g)->start(['X']);
 	}
 

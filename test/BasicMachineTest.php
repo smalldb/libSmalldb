@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\ArrayMachine;
