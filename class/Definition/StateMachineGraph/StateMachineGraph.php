@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -81,7 +81,7 @@ class StateMachineGraph extends Graph
 			$s = new StateMachineNode($state, $this, $sId, ['state' => $state]);
 			$t = new StateMachineNode($state, $this, $tId, ['state' => $state]);
 		} else {
-			$id = $this->mapStateNameToGraphNodeId($state, true);
+			$id = $this->mapStateNameToGraphNodeId($state, self::NODE_SOURCE);
 			$s = $t = new StateMachineNode($state, $this, $id, ['state' => $state]);
 		}
 
