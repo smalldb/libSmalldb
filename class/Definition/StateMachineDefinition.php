@@ -23,11 +23,19 @@ use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 
 /**
  * Smalldb State Machine Definition -- a non-deterministic persistent finite automaton.
+ *
+ * The state machine consists of states, actions and transitions.
+ * A transition has one source state and many target states. Actions group
+ * transitions of the same name; an action name is an input symbol of
+ * the machine.
  */
 class StateMachineDefinition
 {
 	/** @var StateDefinition[] */
 	private $states;
+
+	/** @var ActionDefinition[] */
+	private $actions;
 
 	/** @var TransitionDefinition[] */
 	private $transitions;
@@ -40,10 +48,14 @@ class StateMachineDefinition
 	 * StateMachineDefinition constructor.
 	 *
 	 * @internal
+	 * @param StateDefinition[] $states
+	 * @param ActionDefinition[] $actions
+	 * @param TransitionDefinition[] $transitions
 	 */
-	public function __construct(array $states, array $transitions)
+	public function __construct(array $states, array $actions, array $transitions)
 	{
 		$this->states = $states;
+		$this->actions = $actions;
 		$this->transitions = $transitions;
 	}
 
@@ -65,6 +77,23 @@ class StateMachineDefinition
 	}
 
 	/**
+	 * @return ActionDefinition[]
+	 */
+	public function getActions(): array
+	{
+		return $this->actions;
+	}
+
+	public function getAction(string $name): ActionDefinition
+	{
+		if (isset($this->actions[$name])) {
+			return $this->actions[$name];
+		} else {
+			throw new UndefinedActionException("Undefined action: $name");
+		}
+	}
+
+	/**
 	 * @return TransitionDefinition[]
 	 */
 	public function getTransitions(): array
@@ -73,14 +102,20 @@ class StateMachineDefinition
 	}
 
 
-	public function getTransition(string $sourceState, string $actionName): TransitionDefinition
+	/**
+	 * @param string|ActionDefinition $actionName
+	 * @param string|StateDefinition $sourceStateName
+	 * @return TransitionDefinition
+	 */
+	public function getTransition($action, $sourceState): TransitionDefinition
 	{
-		// TODO: Add actions support
-		if (isset($this->transitions[$actionName])) {
-			return $this->transitions[$actionName];
-		} else {
-			throw new UndefinedTransitionException("Undefined transition: $actionName");
+		if (!($action instanceof ActionDefinition)) {
+			$action = $this->getAction($action);
 		}
+		if (!($sourceState instanceof StateDefinition)) {
+			$sourceState = $this->getState($sourceState);
+		}
+		return $action->getTransition($sourceState);
 	}
 
 

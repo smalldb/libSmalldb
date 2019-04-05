@@ -17,12 +17,16 @@
  */
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
+use Smalldb\StateMachine\Definition\UndefinedActionException;
+use Smalldb\StateMachine\Definition\UndefinedStateException;
+use Smalldb\StateMachine\Definition\UndefinedTransitionException;
 
 
 class DefinitionTest extends TestCase
@@ -38,10 +42,16 @@ class DefinitionTest extends TestCase
 		$tUpdate = new TransitionDefinition('update', $sExists, ['Exists' => $sExists]);
 		$tDelete = new TransitionDefinition('delete', $sExists, ['' => $sNotExists]);
 
+		// Actions
+		$aCreate = new ActionDefinition('create', [$tCreate->getSourceState()->getName() => $tCreate]);
+		$aUpdate = new ActionDefinition('update', [$tUpdate->getSourceState()->getName() => $tUpdate]);
+		$aDelete = new ActionDefinition('delete', [$tDelete->getSourceState()->getName() => $tDelete]);
+
 		// State machine
 		$stateMachineDefinition = new StateMachineDefinition(
 			['' => $sNotExists, 'Exists' => $sExists],
-			['create' => $tCreate, 'update' => $tUpdate, 'delete' => $tDelete]);
+			['create' => $aCreate, 'update' => $aUpdate, 'delete' => $aDelete],
+			[$tCreate, $tUpdate, $tDelete]);
 
 		return $stateMachineDefinition;
 	}
@@ -57,10 +67,51 @@ class DefinitionTest extends TestCase
 		$this->assertInstanceOf(StateDefinition::class, $sExists);
 		$this->assertEquals('Exists', $sExists->getName());
 
+		// Check actions
+		$actions = $stateMachineDefinition->getActions();
+		$this->assertCount(3, $actions);
+		$this->assertContainsOnlyInstancesOf(ActionDefinition::class, $actions);
+
+		// Check an action
+		$aCreate = $stateMachineDefinition->getAction('create');
+		$this->assertInstanceOf(ActionDefinition::class, $aCreate);
+		$this->assertEquals('create', $aCreate->getName());
+		$tCreate = $aCreate->getTransitions();
+		$this->assertCount(1, $tCreate);
+		$this->assertContainsOnlyInstancesOf(TransitionDefinition::class, $tCreate);
+
 		// Check a transition
-		$tUpdate = $stateMachineDefinition->getTransition('Exists', 'update');
+		$tUpdate = $stateMachineDefinition->getTransition('update', 'Exists');
 		$this->assertInstanceOf(TransitionDefinition::class, $tUpdate);
 		$this->assertEquals('update', $tUpdate->getName());
+	}
+
+
+	public function testDefinitionStateFail()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$this->assertInstanceOf(StateMachineDefinition::class, $stateMachineDefinition);
+
+		$this->expectException(UndefinedStateException::class);
+		$stateMachineDefinition->getState('foo');
+	}
+
+	public function testDefinitionTransitionFail()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$this->assertInstanceOf(StateMachineDefinition::class, $stateMachineDefinition);
+
+		$this->expectException(UndefinedTransitionException::class);
+		$stateMachineDefinition->getTransition('create', 'Exists');
+	}
+
+	public function testDefinitionActionFail()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$this->assertInstanceOf(StateMachineDefinition::class, $stateMachineDefinition);
+
+		$this->expectException(UndefinedActionException::class);
+		$stateMachineDefinition->getAction('foo');
 	}
 
 
@@ -99,11 +150,11 @@ class DefinitionTest extends TestCase
 			$g->getNodeByState($stateMachine->getState('Exists'), $g::NODE_SOURCE));
 
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
-			$g->getEdgesByTransition($stateMachine->getTransition('', 'create')));
+			$g->getEdgesByTransition($stateMachine->getTransition('create', '')));
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
-			$g->getEdgesByTransition($stateMachine->getTransition('Exists', 'update')));
+			$g->getEdgesByTransition($stateMachine->getTransition('update', 'Exists')));
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
-			$g->getEdgesByTransition($stateMachine->getTransition('Exists', 'delete')));
+			$g->getEdgesByTransition($stateMachine->getTransition('delete', 'Exists')));
 
 		$export = new \Smalldb\StateMachine\Graph\GraphExportGrafovatko($g);
 		$jsonObject = $export->export();
