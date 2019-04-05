@@ -116,6 +116,7 @@ class DefinitionTest extends TestCase
 	}
 
 
+	/*
 	public function testRawCrudDefinitionPerformance()
 	{
 		$iterationCount = 1e3;
@@ -133,6 +134,7 @@ class DefinitionTest extends TestCase
 		}
 		$this->assertTrue(true);
 	}
+	*/
 
 	public function testGraph()
 	{
