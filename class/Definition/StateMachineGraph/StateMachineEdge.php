@@ -19,9 +19,25 @@
 
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
+use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Graph\Edge;
+use Smalldb\StateMachine\Graph\NestedGraph;
+use Smalldb\StateMachine\Graph\Node;
 
 class StateMachineEdge extends Edge
 {
+	/** @var TransitionDefinition */
+	private $transition;
+
+	public function __construct(TransitionDefinition $transition, NestedGraph $graph, string $id, Node $start, Node $end, array $attrs)
+	{
+		parent::__construct($graph, $id, $start, $end, $attrs);
+		$this->transition = $transition;
+	}
+
+	public function getTransition(): TransitionDefinition
+	{
+		return $this->transition;
+	}
 
 }

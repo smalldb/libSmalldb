@@ -19,9 +19,24 @@
 
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
+use Smalldb\StateMachine\Definition\StateDefinition;
+use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 
 class StateMachineNode extends Node
 {
+	/** @var StateDefinition */
+	private $state;
+
+	public function __construct(StateDefinition $state, NestedGraph $graph, string $id, array $attrs)
+	{
+		parent::__construct($graph, $id, $attrs);
+		$this->state = $state;
+	}
+
+	public function getState(): StateDefinition
+	{
+		return $this->state;
+	}
 
 }

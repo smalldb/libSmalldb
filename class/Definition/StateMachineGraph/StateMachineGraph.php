@@ -78,11 +78,11 @@ class StateMachineGraph extends Graph
 		if ($stateName === '') {
 			$sId = $this->mapStateNameToGraphNodeId($state, self::NODE_SOURCE);
 			$tId = $this->mapStateNameToGraphNodeId($state, self::NODE_TARGET);
-			$s = new StateMachineNode($this, $sId, ['state' => $state]);
-			$t = new StateMachineNode($this, $tId, ['state' => $state]);
+			$s = new StateMachineNode($state, $this, $sId, ['state' => $state]);
+			$t = new StateMachineNode($state, $this, $tId, ['state' => $state]);
 		} else {
 			$id = $this->mapStateNameToGraphNodeId($state, true);
-			$s = $t = new StateMachineNode($this, $id, ['state' => $state]);
+			$s = $t = new StateMachineNode($state, $this, $id, ['state' => $state]);
 		}
 
 		return ($this->stateToNodesMap[$stateName] = [
@@ -105,7 +105,7 @@ class StateMachineGraph extends Graph
 			$sourceNode = $this->getNodeByState($transition->getSourceState(), self::NODE_SOURCE);
 			$targetNode = $this->getNodeByState($targetState, self::NODE_TARGET);
 			$edgeId = 't:' . $sourceStateName . ':' . $transitionName . ':' . $targetState->getName();
-			$edges[] = new StateMachineEdge($this, $edgeId, $sourceNode, $targetNode, ['transition' => $transition]);
+			$edges[] = new StateMachineEdge($transition, $this, $edgeId, $sourceNode, $targetNode, ['transition' => $transition]);
 		}
 
 		$this->transitionToEdgesMap[$sourceStateName][$transitionName] = $edges;
@@ -128,7 +128,7 @@ class StateMachineGraph extends Graph
 		$sourceStateName = $transition->getSourceState()->getName();
 		$transitionName = $transition->getName();
 		if (!isset($this->transitionToEdgesMap[$sourceStateName][$transitionName])) {
-			throw new InvalidArgumentException("The transition has no edges assigned.");
+			throw new InvalidArgumentException("The transition has no edges assigned."); // @codeCoverageIgnore
 		} else {
 			return $this->transitionToEdgesMap[$sourceStateName][$transitionName];
 		}
@@ -141,7 +141,7 @@ class StateMachineGraph extends Graph
 	{
 		$stateName = $state->getName();
 		if (!isset($this->stateToNodesMap[$stateName][$sourceOrTarget])) {
-			throw new InvalidArgumentException("The state has no nodes assigned.");
+			throw new InvalidArgumentException("The state has no nodes assigned."); // @codeCoverageIgnore
 		} else {
 			return $this->stateToNodesMap[$stateName][$sourceOrTarget];
 		}

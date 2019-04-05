@@ -138,9 +138,13 @@ class DefinitionTest extends TestCase
 		$stateMachine = $this->buildCrudStateMachine();
 		$g = $stateMachine->getGraph();
 		$this->assertInstanceOf(StateMachineGraph::class, $g);
+		$this->assertEquals($stateMachine, $g->getStateMachine());
 
-		$begin = $g->getNodeByState($stateMachine->getState(''), $g::NODE_SOURCE);
-		$end = $g->getNodeByState($stateMachine->getState(''), $g::NODE_TARGET);
+		$notExistsState = $stateMachine->getState('');
+		$begin = $g->getNodeByState($notExistsState, $g::NODE_SOURCE);
+		$end = $g->getNodeByState($notExistsState, $g::NODE_TARGET);
+		$this->assertEquals($notExistsState, $begin->getState());
+		$this->assertEquals($notExistsState, $end->getState());
 
 		$this->assertInstanceOf(StateMachineNode::class, $begin);
 		$this->assertInstanceOf(StateMachineNode::class, $end);
@@ -155,6 +159,12 @@ class DefinitionTest extends TestCase
 			$g->getEdgesByTransition($stateMachine->getTransition('update', 'Exists')));
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
 			$g->getEdgesByTransition($stateMachine->getTransition('delete', 'Exists')));
+
+		$tUpdate = $stateMachine->getTransition('update', 'Exists');
+		$updateEdges = $g->getEdgesByTransition($tUpdate);
+		$this->assertCount(1, $updateEdges);
+		[$edgeUpdate] = $updateEdges;
+		$this->assertEquals($tUpdate, $edgeUpdate->getTransition());
 
 		$export = new \Smalldb\StateMachine\Graph\GraphExportGrafovatko($g);
 		$jsonObject = $export->export();
