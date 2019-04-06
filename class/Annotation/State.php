@@ -18,17 +18,28 @@
 
 namespace Smalldb\StateMachine\Annotation;
 
+use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
+use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
+
 /**
  * State annotation
  *
  * @Annotation
  * @Target({"CONSTANT"})
  */
-class State
+class State implements StatePlaceholderApplyInterface
 {
+	/** @var string */
+	public $name;
+
 	/** @var string */
 	public $label;
 
 	/** @var string */
 	public $color;
+
+	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
+	{
+		// TODO: Apply attributes to the state placeholder.
+	}
 }

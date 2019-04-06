@@ -65,7 +65,7 @@ class NondeterministicDefinitionTest extends TestCase
 		$a[] = new ActionDefinition('next', $tNext);
 
 		// State machine
-		$stateMachineDefinition = new StateMachineDefinition($s, $a, $t);
+		$stateMachineDefinition = new StateMachineDefinition('dice', $s, $a, $t);
 
 		return $stateMachineDefinition;
 	}

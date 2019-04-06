@@ -31,6 +31,9 @@ use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
  */
 class StateMachineDefinition
 {
+	/** @var string */
+	private $machineType;
+
 	/** @var StateDefinition[] */
 	private $states;
 
@@ -52,8 +55,9 @@ class StateMachineDefinition
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
 	 */
-	public function __construct(array $states, array $actions, array $transitions)
+	public function __construct(string $machineType, array $states, array $actions, array $transitions)
 	{
+		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;

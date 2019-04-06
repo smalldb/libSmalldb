@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -15,26 +15,22 @@
  * limitations under the License.
  *
  */
+namespace Smalldb\StateMachine\Test;
 
-namespace Smalldb\StateMachine\Annotation;
+use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Test\Example\StateMachine\CrudItemMachine;
 
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
-/**
- * StateMachine annotation
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class StateMachine implements StateMachineBuilderApplyInterface
+class AnnotationReaderTest extends TestCase
 {
-	/** @var string */
-	public $type;
 
-	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
+	public function testCrudItem()
 	{
-		$builder->setMachineType($this->type);
+		$reader = new AnnotationReader(CrudItemMachine::class);
+		$definition = $reader->getStateMachineDefinition();
+		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 	}
 
 }

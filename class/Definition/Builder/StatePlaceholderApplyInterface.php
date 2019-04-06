@@ -16,25 +16,11 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+namespace Smalldb\StateMachine\Definition\Builder;
 
-/**
- * StateMachine annotation
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class StateMachine implements StateMachineBuilderApplyInterface
+
+interface StatePlaceholderApplyInterface
 {
-	/** @var string */
-	public $type;
-
-	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
-	{
-		$builder->setMachineType($this->type);
-	}
-
+	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void;
 }

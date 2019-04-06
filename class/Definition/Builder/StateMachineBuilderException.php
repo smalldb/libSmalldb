@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -16,25 +16,11 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+namespace Smalldb\StateMachine\Definition\Builder;
 
-/**
- * StateMachine annotation
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class StateMachine implements StateMachineBuilderApplyInterface
+
+class StateMachineBuilderException extends \RuntimeException
 {
-	/** @var string */
-	public $type;
-
-	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
-	{
-		$builder->setMachineType($this->type);
-	}
-
+	// Just an exception.
 }

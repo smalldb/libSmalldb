@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateStateException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateTransitionException;
+use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
@@ -32,6 +33,7 @@ class BuilderTest extends TestCase
 	public function testCrudBuilder()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('crud-item');
 
 		$builder->addTransition('create', '', ['Exists']);
 		$builder->addTransition('update', 'Exists', ['Exists']);
@@ -49,6 +51,7 @@ class BuilderTest extends TestCase
 		$D = 6;
 
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('dice');
 		$builder->addState('Ready');
 		$builder->addTransition('create', '', ['Ready']);
 
@@ -65,9 +68,18 @@ class BuilderTest extends TestCase
 	}
 
 
+	public function testMissingMachineType()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->addState('S');
+		$this->expectException(StateMachineBuilderException::class);
+		$builder->build();
+	}
+
 	public function testDuplicateState()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
 		$builder->addState('S');
 		$this->expectException(DuplicateStateException::class);
 		$builder->addState('S');
@@ -76,6 +88,7 @@ class BuilderTest extends TestCase
 	public function testDuplicateAction()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
 		$builder->addAction('a');
 		$this->expectException(DuplicateActionException::class);
 		$builder->addAction('a');
@@ -84,6 +97,7 @@ class BuilderTest extends TestCase
 	public function testDuplicateTransition()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B']);
 		$this->expectException(DuplicateTransitionException::class);
 		$builder->addTransition('a', 'A', ['C']);
@@ -92,6 +106,7 @@ class BuilderTest extends TestCase
 	public function testMissingSourceState()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B']);
 		$this->expectException(UndefinedStateException::class); // A is missing
 		$builder->build();
@@ -100,6 +115,7 @@ class BuilderTest extends TestCase
 	public function testMissingTargetState()
 	{
 		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B', 'C']);
 		$builder->addState('A');
 		$builder->addState('B');

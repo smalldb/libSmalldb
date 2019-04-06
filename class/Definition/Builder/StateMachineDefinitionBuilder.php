@@ -39,15 +39,26 @@ class StateMachineDefinitionBuilder
 	/** @var TransitionPlaceholder[][] */
 	private $transitionsByState = [];
 
+	/** @var string */
+	private $machineType;
+
 
 	public function __construct()
 	{
-		$this->addState('');
 	}
 
 
 	public function build(): StateMachineDefinition
 	{
+		if (empty($this->machineType)) {
+			throw new StateMachineBuilderException("Machine type not set.");
+		}
+
+		// Check if we have the Not Exists state
+		if (!isset($this->states[''])) {
+			$this->addState('');
+		}
+
 		/** @var StateDefinition[] $states */
 		$states = [];
 		foreach ($this->states as $statePlaceholder) {
@@ -74,7 +85,7 @@ class StateMachineDefinitionBuilder
 			$actions[$action->getName()] = $action;
 		}
 
-		return new StateMachineDefinition($states, $actions, $transitions);
+		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions);
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
@@ -109,29 +120,27 @@ class StateMachineDefinitionBuilder
 	}
 
 
-	public function addState(string $name)
+	public function addState(string $name): StatePlaceholder
 	{
 		if (isset($this->states[$name])) {
 			throw new DuplicateStateException("State already exists: $name");
 		} else {
-			$this->states[$name] = new StatePlaceholder($name);
+			return ($this->states[$name] = new StatePlaceholder($name));
 		}
-		return $this;
 	}
 
 
-	public function addAction(string $name)
+	public function addAction(string $name): ActionPlaceholder
 	{
 		if (isset($this->actions[$name])) {
 			throw new DuplicateActionException("Action already exists: $name");
 		} else {
-			$this->actions[$name] = new ActionPlaceholder($name);
+			return ($this->actions[$name] = new ActionPlaceholder($name));
 		}
-		return $this;
 	}
 
 
-	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames)
+	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames): TransitionPlaceholder
 	{
 		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
 			throw new DuplicateTransitionException("Transition \"$transitionName\" already exists in state \"$sourceStateName\".");
@@ -143,8 +152,13 @@ class StateMachineDefinitionBuilder
 			$placeholder = new TransitionPlaceholder($transitionName, $sourceStateName, $targetStateNames);
 			$this->transitionsByState[$sourceStateName][$transitionName] = $placeholder;
 			$this->transitions[] = $placeholder;
+			return $placeholder;
 		}
-		return $this;
+	}
+
+	public function setMachineType(string $machineType)
+	{
+		$this->machineType = $machineType;
 	}
 
 }
