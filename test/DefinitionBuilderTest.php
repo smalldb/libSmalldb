@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 
 
-class BuilderTest extends TestCase
+class DefinitionBuilderTest extends TestCase
 {
 
 	public function testCrudBuilder()
