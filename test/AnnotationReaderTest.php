@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Test\Example\StateMachine\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 
 
 class AnnotationReaderTest extends TestCase

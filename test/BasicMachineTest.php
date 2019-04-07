@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -23,6 +23,15 @@ use Smalldb\StateMachine\Reference;
 
 class BasicMachineTest extends TestCase
 {
+
+	public function testCrudMachine()
+	{
+		$this->markTestIncomplete();
+
+		$reader = new AnnotationReader(CrudItemMachine::class);
+		$definition = $reader->getStateMachineDefinition();
+		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+	}
 
 	public function testMachine()
 	{
