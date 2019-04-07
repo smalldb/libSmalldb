@@ -20,6 +20,9 @@
 namespace Smalldb\StateMachine\Definition;
 
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
+use Smalldb\StateMachine\Graph\GraphSearch;
+use Smalldb\StateMachine\Graph\Node;
 
 /**
  * Smalldb State Machine Definition -- a non-deterministic persistent finite automaton.
@@ -126,6 +129,35 @@ class StateMachineDefinition
 	public function getGraph(): StateMachineGraph
 	{
 		return $this->stateMachineGraph ?? ($this->stateMachineGraph = new StateMachineGraph($this));
+	}
+
+
+	public function findReachableStates(StateDefinition $initialState = null): array
+	{
+		$g = $this->getGraph();
+		$reachableStates = [];
+
+		if ($initialState === null) {
+			$initialState = $this->getState('');
+		}
+
+		$startNode = $g->getNodeByState($initialState, StateMachineGraph::NODE_SOURCE);
+
+		GraphSearch::DFS($g)
+			->onNode(function (Node $node) use (& $reachableStates, $startNode) {
+				if ($node instanceof StateMachineNode) {
+					if ($node !== $startNode) {
+						$state = $node->getState();
+						$reachableStates[$state->getName()] = $state;
+					}
+					return true;
+				} else {
+					return false;
+				}
+			})
+			->start([$startNode]);
+
+		return $reachableStates;
 	}
 
 }

@@ -30,6 +30,22 @@ use Smalldb\StateMachine\Definition\UndefinedStateException;
 class DefinitionBuilderTest extends TestCase
 {
 
+	/**
+	 * Assert that all states in $definition are reachable.
+	 */
+	private function assertAllStatesReachable(StateMachineDefinition $definition, int $expectedStateCount = -1)
+	{
+		$reachableStates = $definition->findReachableStates();
+		$allStates = $definition->getStates();
+		if ($expectedStateCount == -1) {
+			$expectedStateCount = count($allStates);
+		}
+		$this->assertCount($expectedStateCount, $allStates);
+		$this->assertCount($expectedStateCount, $reachableStates);
+		$this->assertEquals($allStates, $reachableStates);
+	}
+
+
 	public function testCrudBuilder()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -43,6 +59,7 @@ class DefinitionBuilderTest extends TestCase
 
 		$definition = $builder->build();
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$this->assertAllStatesReachable($definition, 2);
 	}
 
 
@@ -54,6 +71,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder->setMachineType('dice');
 		$builder->addState('Ready');
 		$builder->addTransition('create', '', ['Ready']);
+		$builder->addTransition('delete', 'Ready', ['']);
 
 		$diceStates = [];
 		for ($d = 1; $d <= $D; $d++) {
@@ -65,6 +83,7 @@ class DefinitionBuilderTest extends TestCase
 
 		$definition = $builder->build();
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$this->assertAllStatesReachable($definition, $D + 2);
 	}
 
 
