@@ -11,8 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Smalldb\\StateMachine\\": "class/",
-            "Smalldb\\StateMachine\\Test\\": "test/"
+            "Smalldb\\StateMachine\\": "class/"
         }
     },
     "repositories": [
@@ -25,11 +24,17 @@
         "php": ">=7.3",
         "ext-dom": "*",
         "ext-json": "*",
-        "psr/container": ">=1.0",
         "doctrine/annotations": "dev-constants as 1.7.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Smalldb\\StateMachine\\Test\\": "test/"
+        }
     },
     "require-dev": {
         "smalldb/doc-tools": "dev-master",
+        "psr/container": ">=1.0",
+        "symfony/dependency-injection": "~4.2",
         "phpunit/phpunit": "^8.0"
     },
     "suggest": {
