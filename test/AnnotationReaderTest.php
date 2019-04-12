@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -19,7 +19,9 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 
 
@@ -31,6 +33,11 @@ class AnnotationReaderTest extends TestCase
 		$reader = new AnnotationReader(CrudItemMachine::class);
 		$definition = $reader->getStateMachineDefinition();
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$this->assertEquals('crud-item', $definition->getMachineType());
+
+		$existsState = $definition->getState('Exists');
+		$this->assertInstanceOf(StateDefinition::class, $existsState);
+		$this->assertInstanceOf(TransitionDefinition::class, $definition->getTransition('update', $existsState));
 	}
 
 }

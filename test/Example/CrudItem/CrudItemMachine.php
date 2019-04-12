@@ -20,36 +20,34 @@ namespace Smalldb\StateMachine\Test\Example\CrudItem;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\Transition;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
  * @StateMachine("crud-item")
  */
-interface CrudItemMachine
+interface CrudItemMachine extends ReferenceInterface
 {
-    /**
-     * @State
-     */
-    const NOT_EXISTS = "";
 
-    /**
-     * @State(color = "#baf")
-     */
-    const EXISTS = "Exists";
+	/**
+	 * @State(color = "#baf")
+	 */
+	const EXISTS = "Exists";
 
-    /**
-     * @Transition("", {"Exists"})
-     */
-    public function create($itemData);
+	/**
+	 * @Transition("", {"Exists"})
+	 */
+	public function create($itemData);
 
-    /**
-     * @Transition("Exists", {"Exists"})
-     */
-    public function update($itemData);
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 */
+	public function update($itemData);
 
-    /**
-     * @Transition("Exists", {""})
-     */
-    public function delete();
+	/**
+	 * @Transition("Exists", {""})
+	 */
+	public function delete();
+
 }
 
