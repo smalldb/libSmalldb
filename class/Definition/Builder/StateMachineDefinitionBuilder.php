@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 use Smalldb\StateMachine\Definition\ActionDefinition;
+use Smalldb\StateMachine\Definition\DebugDataBag;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
@@ -41,6 +42,9 @@ class StateMachineDefinitionBuilder
 
 	/** @var string */
 	private $machineType;
+
+	/** @var DebugDataBag[] */
+	private $debugData = [];
 
 
 	public function __construct()
@@ -85,7 +89,7 @@ class StateMachineDefinitionBuilder
 			$actions[$action->getName()] = $action;
 		}
 
-		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions);
+		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->debugData);
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
@@ -159,6 +163,12 @@ class StateMachineDefinitionBuilder
 	public function setMachineType(string $machineType)
 	{
 		$this->machineType = $machineType;
+	}
+
+
+	public function addDebugDataBag(DebugDataBag $debugDataBag): void
+	{
+		$this->debugData[] = $debugDataBag;
 	}
 
 }

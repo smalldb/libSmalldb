@@ -19,13 +19,13 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Graph\Edge;
+use Smalldb\StateMachine\Graph\Grafovatko\ClosureProcessor;
 use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\GraphExportGrafovatko;
+use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\MissingElementException;
 use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
-use Smalldb\StateMachine\Utils\UnionFind;
 
 
 /**
@@ -1182,8 +1182,9 @@ class BpmnReader implements IMachineDefinitionReader
 
 		// Append extras to machine definition
 		if (!isset($fragment['svg_file_contents'])) {
-			$grafovatkoExport = (new GraphExportGrafovatko($graph))
+			$grafovatkoExport = (new GrafovatkoExporter())
 				->setPrefix($prefix)
+				->addProcessor((new ClosureProcessor())
 				->setGraphProcessor(function (NestedGraph $nestedGraph, array $exportedGraph) use ($graph, $prefix) {
 					if ($nestedGraph === $graph) {
 						$exportedGraph['layout'] = 'column';
@@ -1212,13 +1213,13 @@ class BpmnReader implements IMachineDefinitionReader
 				})
 				->setEdgeAttrsProcessor(function (Edge $edge, array $exportedEdge) use ($prefix) {
 					return $this->renderBpmnProcessEdgeAttrs($edge, $exportedEdge);
-				});
+				}));
 
 			$machine_def['state_diagram_extras_json']['nodes'][] = [
 				'id' => $prefix . '_extra_graph',
 				'label' => "BPMN: " . basename($fragment_file),
 				'color' => "#5373B4",
-				'graph' => $grafovatkoExport->export(),
+				'graph' => $grafovatkoExport->export($graph),
 			];
 			$machine_def['state_diagram_extras_json']['extraSvg'][] = ['defs', [], [
 				['linearGradient', ['id' => $prefix . '_gradient_rcv_inv'], [

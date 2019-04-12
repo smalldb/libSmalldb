@@ -28,6 +28,7 @@ use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedActionException;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 use Smalldb\StateMachine\Definition\UndefinedTransitionException;
+use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 
 
 class DefinitionTest extends TestCase
@@ -52,7 +53,7 @@ class DefinitionTest extends TestCase
 		$stateMachineDefinition = new StateMachineDefinition('crud-item',
 			['' => $sNotExists, 'Exists' => $sExists],
 			['create' => $aCreate, 'update' => $aUpdate, 'delete' => $aDelete],
-			[$tCreate, $tUpdate, $tDelete]);
+			[$tCreate, $tUpdate, $tDelete], []);
 
 		return $stateMachineDefinition;
 	}
@@ -144,8 +145,8 @@ class DefinitionTest extends TestCase
 		$this->assertEquals($stateMachine, $g->getStateMachine());
 
 		$notExistsState = $stateMachine->getState('');
-		$begin = $g->getNodeByState($notExistsState, $g::NODE_SOURCE);
-		$end = $g->getNodeByState($notExistsState, $g::NODE_TARGET);
+		$begin = $g->getNodeByState($notExistsState, StateMachineNode::SOURCE);
+		$end = $g->getNodeByState($notExistsState, StateMachineNode::TARGET);
 		$this->assertEquals($notExistsState, $begin->getState());
 		$this->assertEquals($notExistsState, $end->getState());
 
@@ -154,7 +155,7 @@ class DefinitionTest extends TestCase
 		$this->assertNotEquals($begin, $end);
 
 		$this->assertInstanceOf(StateMachineNode::class,
-			$g->getNodeByState($stateMachine->getState('Exists'), $g::NODE_SOURCE));
+			$g->getNodeByState($stateMachine->getState('Exists'), StateMachineNode::SOURCE));
 
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
 			$g->getEdgesByTransition($stateMachine->getTransition('create', '')));
@@ -169,8 +170,8 @@ class DefinitionTest extends TestCase
 		[$edgeUpdate] = $updateEdges;
 		$this->assertEquals($tUpdate, $edgeUpdate->getTransition());
 
-		$export = new \Smalldb\StateMachine\Graph\GraphExportGrafovatko($g);
-		$jsonObject = $export->export();
+		$export = new GrafovatkoExporter();
+		$jsonObject = $export->export($g);
 		$this->assertIsArray($jsonObject);
 	}
 

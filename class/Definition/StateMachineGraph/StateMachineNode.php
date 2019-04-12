@@ -25,18 +25,39 @@ use Smalldb\StateMachine\Graph\Node;
 
 class StateMachineNode extends Node
 {
+	public const SOURCE = 1;
+	public const TARGET = 2;
+	public const SOURCE_AND_TARGET = self::SOURCE | self::TARGET;
+
 	/** @var StateDefinition */
 	private $state;
 
-	public function __construct(StateDefinition $state, NestedGraph $graph, string $id, array $attrs)
+	/** @var int */
+	private $sourceOrTarget;
+
+
+	public function __construct(StateDefinition $state, int $sourceOrTarget, NestedGraph $graph, string $id, array $attrs)
 	{
 		parent::__construct($graph, $id, $attrs);
 		$this->state = $state;
+		$this->sourceOrTarget = $sourceOrTarget;
 	}
+
 
 	public function getState(): StateDefinition
 	{
 		return $this->state;
+	}
+
+
+	public function isSourceNode(): bool
+	{
+		return ($this->sourceOrTarget & self::SOURCE) === self::SOURCE;
+	}
+
+	public function isTargetNode(): bool
+	{
+		return ($this->sourceOrTarget & self::TARGET) === self::TARGET;
 	}
 
 }

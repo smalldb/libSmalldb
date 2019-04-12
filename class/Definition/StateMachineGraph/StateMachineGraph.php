@@ -26,9 +26,6 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineGraph extends Graph
 {
-	public const NODE_SOURCE = 0;
-	public const NODE_TARGET = 1;
-
 	/** @var StateMachineEdge[][][] */
 	private $transitionToEdgesMap = [];
 
@@ -62,7 +59,7 @@ class StateMachineGraph extends Graph
 		$name = $state->getName();
 
 		if ($name === '') {
-			return $sourceOrTarget == self::NODE_SOURCE ? 'n:begin' : 'n:end';
+			return ($sourceOrTarget & StateMachineNode::SOURCE) ? 'n:begin' : 'n:end';
 		} else {
 			return 's:' . $name;
 		}
@@ -76,18 +73,18 @@ class StateMachineGraph extends Graph
 	{
 		$stateName = $state->getName();
 		if ($stateName === '') {
-			$sId = $this->mapStateNameToGraphNodeId($state, self::NODE_SOURCE);
-			$tId = $this->mapStateNameToGraphNodeId($state, self::NODE_TARGET);
-			$s = new StateMachineNode($state, $this, $sId, ['state' => $state]);
-			$t = new StateMachineNode($state, $this, $tId, ['state' => $state]);
+			$sId = $this->mapStateNameToGraphNodeId($state, StateMachineNode::SOURCE);
+			$tId = $this->mapStateNameToGraphNodeId($state, StateMachineNode::TARGET);
+			$s = new StateMachineNode($state, StateMachineNode::SOURCE, $this, $sId, ['state' => $state]);
+			$t = new StateMachineNode($state, StateMachineNode::TARGET, $this, $tId, ['state' => $state]);
 		} else {
-			$id = $this->mapStateNameToGraphNodeId($state, self::NODE_SOURCE);
-			$s = $t = new StateMachineNode($state, $this, $id, ['state' => $state]);
+			$id = $this->mapStateNameToGraphNodeId($state, StateMachineNode::SOURCE_AND_TARGET);
+			$s = $t = new StateMachineNode($state, StateMachineNode::SOURCE_AND_TARGET, $this, $id, ['state' => $state]);
 		}
 
 		return ($this->stateToNodesMap[$stateName] = [
-			self::NODE_SOURCE => $s,
-			self::NODE_TARGET => $t,
+			StateMachineNode::SOURCE => $s,
+			StateMachineNode::TARGET => $t,
 		]);
 	}
 
@@ -102,8 +99,8 @@ class StateMachineGraph extends Graph
 		$transitionName = $transition->getName();
 
 		foreach ($transition->getTargetStates() as $targetState) {
-			$sourceNode = $this->getNodeByState($transition->getSourceState(), self::NODE_SOURCE);
-			$targetNode = $this->getNodeByState($targetState, self::NODE_TARGET);
+			$sourceNode = $this->getNodeByState($transition->getSourceState(), StateMachineNode::SOURCE);
+			$targetNode = $this->getNodeByState($targetState, StateMachineNode::TARGET);
 			$edgeId = 't:' . $sourceStateName . ':' . $transitionName . ':' . $targetState->getName();
 			$edges[] = new StateMachineEdge($transition, $this, $edgeId, $sourceNode, $targetNode, ['transition' => $transition]);
 		}
@@ -137,7 +134,7 @@ class StateMachineGraph extends Graph
 	/**
 	 * @return StateMachineNode
 	 */
-	public function getNodeByState(StateDefinition $state, int $sourceOrTarget = self::NODE_SOURCE): StateMachineNode
+	public function getNodeByState(StateDefinition $state, int $sourceOrTarget = StateMachineNode::SOURCE): StateMachineNode
 	{
 		$stateName = $state->getName();
 		if (!isset($this->stateToNodesMap[$stateName][$sourceOrTarget])) {

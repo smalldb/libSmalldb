@@ -1,5 +1,6 @@
 doc/doxygen/
 vendor/
 test/coverage/
+test/output/
 .phpunit.result.cache
 

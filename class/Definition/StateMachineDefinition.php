@@ -49,22 +49,38 @@ class StateMachineDefinition
 	/** @var StateMachineGraph|null */
 	private $stateMachineGraph = null;
 
+	/** @var DebugDataBag[] */
+	private $debugData;
+
 
 	/**
 	 * StateMachineDefinition constructor.
 	 *
 	 * @internal
+	 * @param string $machineType
 	 * @param StateDefinition[] $states
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
+	 * @param DebugDataBag[] $debugData
 	 */
-	public function __construct(string $machineType, array $states, array $actions, array $transitions)
+	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $debugData)
 	{
 		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;
+		$this->debugData = $debugData;
 	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getMachineType(): string
+	{
+		return $this->machineType;
+	}
+
 
 	/**
 	 * @return StateDefinition[]
@@ -132,6 +148,15 @@ class StateMachineDefinition
 	}
 
 
+	/**
+	 * @return DebugDataBag[]
+	 */
+	public function getDebugData(): array
+	{
+		return $this->debugData;
+	}
+
+
 	public function findReachableStates(StateDefinition $initialState = null): array
 	{
 		$g = $this->getGraph();
@@ -141,7 +166,7 @@ class StateMachineDefinition
 			$initialState = $this->getState('');
 		}
 
-		$startNode = $g->getNodeByState($initialState, StateMachineGraph::NODE_SOURCE);
+		$startNode = $g->getNodeByState($initialState, StateMachineNode::SOURCE);
 
 		GraphSearch::DFS($g)
 			->onNode(function (Node $node) use (& $reachableStates, $startNode) {

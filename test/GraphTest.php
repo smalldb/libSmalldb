@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\GraphExportGrafovatko;
+use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\Node;
 
@@ -167,8 +167,8 @@ class GraphTest extends TestCase
 	 */
 	public function testGrafovatkoExport(Graph $g)
 	{
-		$export = new GraphExportGrafovatko($g);
-		$jsonObject = $export->export();
+		$export = new GrafovatkoExporter();
+		$jsonObject = $export->export($g);
 
 		$this->assertNotEmpty($jsonObject['nodes']);
 		$this->assertNotEmpty($jsonObject['edges']);
