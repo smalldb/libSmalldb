@@ -142,4 +142,25 @@ class DefinitionBuilderTest extends TestCase
 		$builder->build();
 	}
 
+	public function testExtraNode()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+		$builder->addTransition('a', '', ['A']);
+		$builder->addTransition('a', 'A', ['']);
+		$builder->addTransition('b', 'A', ['B']);
+		$builder->addState('A');
+		$builder->addState('B');
+		$definition = $builder->build();
+
+		$graph = $definition->getGraph();
+		$extraNode = $graph->createNode('x');
+		$graph->createEdge(null, $graph->getNodeByState($definition->getState('A')), $extraNode);
+		$reachableStates = $definition->findReachableStates();
+		// The findReachableStates() should quietly ignore the $extraNode.
+
+		$this->assertEquals($definition->getStates(), $reachableStates);
+	}
+
+
 }
