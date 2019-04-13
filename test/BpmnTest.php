@@ -138,13 +138,9 @@ class BpmnTest extends TestCase
 		$this->assertFileExists($bpmnFilename);
 
 		$machineType = preg_replace('/\.[^.]*$/', '', basename($bpmnFilename));
-		$options = [
-			"state_machine_participant_id" => "Participant_StateMachine",
-		];
 
-		$bpmnReader = new BpmnReader();
-		$bpmnReader->loadBpmnFile($bpmnFilename, "Participant_StateMachine");
-
+		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
+		$bpmnReader->inferStateMachine("Participant_StateMachine");
 		$bpmnGraph = $bpmnReader->getBpmnGraph();
 
 		$htmlFilename = $this->outputDir . '/' . basename($bpmnFilename) . '.html';

@@ -36,7 +36,7 @@ class BpmnGrafovatkoProcessor implements ProcessorInterface
 		$parentNode = $graph->getParentNode();
 		$parentNodeType = $parentNode ? $parentNode->getAttr('type') : null;
 
-		if ($parentNodeType === 'bpmnDiagram') {
+		if (!$parentNode || $parentNodeType === 'bpmnDiagram') {
 			$exportedGraph['layout'] = 'column';
 			$exportedGraph['layoutOptions'] = [
 				'sortNodes' => true,

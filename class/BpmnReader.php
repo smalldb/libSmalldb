@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2016-2017, Josef Kufner  <josef@kufner.cz>
  *
@@ -19,12 +19,9 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Grafovatko\ClosureProcessor;
 use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\MissingElementException;
-use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 
 
@@ -47,15 +44,27 @@ class BpmnReader
 	public $disableSvgFile = false;
 	public $rewriteGraph = false;
 
-	private $bpmnGraph;
+	/** @var Graph|null */
+	private $bpmnGraph = null;
+
+	/** @var string|null */
+	private $bpmnFileName = null;
+
+	/** @var string|null */
+	private $svgFileName = null;
 
 
-	public function __construct()
+	private function __construct()
 	{
-		$this->bpmnGraph = new Graph();
+	}
 
-		$this->bpmnGraph->indexNodeAttr('type');
-		$this->bpmnGraph->indexEdgeAttr('type');
+
+	public static function readBpmnFile(string $bpmnFileName): self
+	{
+		$reader = new self();
+		$reader->bpmnGraph = $reader->parseBpmnFile($bpmnFileName);
+		$reader->bpmnFileName = $bpmnFileName;
+		return $reader;
 	}
 
 
@@ -65,7 +74,19 @@ class BpmnReader
 	}
 
 
-	public function loadBpmnFile(string $bpmnFileName, string $state_machine_participant_id, ?string $svgFileName = null)
+	public function setSvgFileName(?string $svgFileName): void
+	{
+		$this->svgFileName = $svgFileName;
+	}
+
+
+	public function getSvgFileName(): ?string
+	{
+		return $this->svgFileName;
+	}
+
+
+	private function parseBpmnFile(string $bpmnFileName): Graph
 	{
 		// Load GraphML into DOM
 		$dom = new \DOMDocument;
@@ -75,39 +96,27 @@ class BpmnReader
 		$xpath = new \DOMXpath($dom);
 		$xpath->registerNameSpace('bpmn', 'http://www.omg.org/spec/BPMN/20100524/MODEL');
 
-		// Get participant
-		if (!preg_match('/^[a-zA-Z0-9_.-]*$/', $state_machine_participant_id)) {
-			throw new BpmnException('Invalid participant ID provided (only alphanumeric characters, underscore, dot and dash are allowed): '
-				.var_export($state_machine_participant_id, true));
-		}
-		$participant_el = $xpath->query('/bpmn:definitions//bpmn:participant[@id=\''.$state_machine_participant_id.'\']')->item(0);
-		if (!$participant_el) {
-			throw new BpmnException('Participant representing the state machine not found: '.$state_machine_participant_id);
-		}
-		$state_machine_process_id = $participant_el->getAttribute('processRef') ? : '#';
+		// Create the Graph
+		$bpmnGraph = new Graph();
+		$bpmnGraph->indexNodeAttr('type');
+		$bpmnGraph->indexEdgeAttr('type');
 
 		// Lets collect arrows, events and tasks (still in BPMN semantics)
 		$processes = [];
 		$participants = [];
-		$rootNode = $this->bpmnGraph->createNode('bpmn_' . md5($bpmnFileName), [
-			'type' => 'bpmnDiagram',
-			'label' => basename($bpmnFileName),
-		]);
-		$graph = $rootNode->getNestedGraph();
 
 		/** @var Graph[] $processNestedGraphs */
 		$processNestedGraphs = [];
 
 		// Get participants and their processes
-		foreach($xpath->query('//bpmn:participant[@id]') as $el) {
+		foreach ($xpath->query('//bpmn:participant[@id]') as $el) {
 			/** @var \DomElement $el */
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
-			$is_state_machine = ($id == $state_machine_participant_id);
 			$process_id = $el->getAttribute('processRef');
 
-			if ($process_id === "" && $is_state_machine) {
-				$process_id = "#";
+			if ($process_id === "") {
+				$process_id = "#__$id-process";
 				$processes[$process_id] = [
 					'id' => $process_id,
 					'name' => $name,
@@ -120,7 +129,6 @@ class BpmnReader
 			$participants[$id] = [
 				'name' => $name,
 				'process' => $process_id,
-				'_state_machine' => $is_state_machine,
 			];
 
 			if (isset($processes[$process_id])) {
@@ -138,13 +146,12 @@ class BpmnReader
 				];
 			}
 
-			$node = $graph->createNode($id, [
+			$node = $bpmnGraph->createNode($id, [
 				'id' => $id,
 				'name' => $name,
 				'type' => 'participant',
 				'process' => $process_id,
 				'features' => [],
-				'_is_state_machine' => $is_state_machine,
 				'_generated' => false,
 			]);
 
@@ -157,9 +164,9 @@ class BpmnReader
 		foreach (['startEvent', 'task', 'sendTask', 'receiveTask', 'userTask', 'serviceTask',
 			'intermediateThrowEvent', 'intermediateCatchEvent', 'endEvent',
 			'exclusiveGateway', 'parallelGateway', 'inclusiveGateway', 'complexGateway', 'eventBasedGateway',
-			'textAnnotation'] as $type)
-		{
-			foreach($xpath->query('//bpmn:'.$type.'[@id]') as $el) {
+			'textAnnotation'] as $type
+		) {
+			foreach ($xpath->query('//bpmn:' . $type . '[@id]') as $el) {
 				/** @var \DomElement $el */
 				$id = trim($el->getAttribute('id'));
 				$name = trim($el->getAttribute('name'));
@@ -212,7 +219,7 @@ class BpmnReader
 
 		// Get arrows
 		foreach (['sequenceFlow', 'messageFlow'] as $type) {
-			foreach($xpath->query('//bpmn:'.$type.'[@id][@sourceRef][@targetRef]') as $el) {
+			foreach ($xpath->query('//bpmn:' . $type . '[@id][@sourceRef][@targetRef]') as $el) {
 				/** @var \DomElement $el */
 
 				// Arrow properties
@@ -221,13 +228,13 @@ class BpmnReader
 				$sourceRef = trim($el->getAttribute('sourceRef'));
 				$targetRef = trim($el->getAttribute('targetRef'));
 
-				$source = $graph->getRootGraph()->getNodeById($sourceRef);
-				$target = $graph->getRootGraph()->getNodeById($targetRef);
+				$source = $bpmnGraph->getNodeById($sourceRef);
+				$target = $bpmnGraph->getNodeById($targetRef);
 
 				$sourceGraph = $source->getGraph();
 				$targetGraph = $target->getGraph();
 
-				$edgeGraph = ($sourceGraph === $targetGraph ? $sourceGraph : $graph);
+				$edgeGraph = ($sourceGraph === $targetGraph ? $sourceGraph : $bpmnGraph);
 
 				// Store arrow
 				$edgeGraph->createEdge($id, $source, $target, [
@@ -239,11 +246,11 @@ class BpmnReader
 		}
 
 		// Get annotations' associations
-		foreach($xpath->query('//bpmn:association[@id]') as $el) {
+		foreach ($xpath->query('//bpmn:association[@id]') as $el) {
 			/** @var \DomElement $el */
 			try {
-				$source = $graph->getRootGraph()->getNodeById(trim($el->getAttribute('sourceRef')));
-				$target = $graph->getRootGraph()->getNodeById(trim($el->getAttribute('targetRef')));
+				$source = $bpmnGraph->getNodeById(trim($el->getAttribute('sourceRef')));
+				$target = $bpmnGraph->getNodeById(trim($el->getAttribute('targetRef')));
 			}
 			catch (MissingElementException $ex) {
 				continue;
@@ -252,7 +259,7 @@ class BpmnReader
 			$sourceType = $source->getAttr('type');
 			$targetType = $target->getAttr('type');
 
-			$edgeGraph = ($source->getGraph() === $target->getGraph() ? $source->getGraph() : $graph);
+			$edgeGraph = ($source->getGraph() === $target->getGraph() ? $source->getGraph() : $bpmnGraph);
 
 			if ($sourceType == 'textAnnotation' && $targetType != 'textAnnotation') {
 				$source['associations'][$target->getId()] = $target;
@@ -272,7 +279,10 @@ class BpmnReader
 			}
 		}
 
-		return $this->inferStateMachine($this->bpmnGraph, $state_machine_participant_id, $state_machine_process_id);
+		return $bpmnGraph;
+	}
+
+		//return $this->inferStateMachine($bpmnGraph, $state_machine_participant_id, $state_machine_process_id);
 
 		/*
 		// Load SVG file with rendered BPMN diagram, so we can colorize it
@@ -303,7 +313,6 @@ class BpmnReader
 			],
 		];
 		*/
-	}
 
 
 	/// @copydoc IMachineDefinitionReader::postprocessDefinition
@@ -371,19 +380,43 @@ class BpmnReader
 		}
 	}
 
+	private function findParticipantNode(string $state_machine_participant_id): Node
+	{
+		if (!preg_match('/^[a-zA-Z0-9_.-]*$/', $state_machine_participant_id)) {
+			throw new BpmnException('Invalid participant ID provided '
+				.'(only alphanumeric characters, underscore, dot and dash are allowed): '
+				. var_export($state_machine_participant_id, true));
+		}
 
-	protected function inferStateMachine(Graph $graph, string $state_machine_participant_id, string $state_machine_process_id)
+		try {
+			return $this->bpmnGraph->getNodeById($state_machine_participant_id);
+		}
+		catch (MissingElementException $ex) {
+			throw new BpmnException('Participant representing the state machine not found: ' . $state_machine_participant_id);
+		}
+	}
+
+
+	public function inferStateMachine(string $state_machine_participant_id)
 	{
 		$errors = [];
 
-		// Add few more indices
-		$this->bpmnGraph->indexNodeAttr('_invoking');
-		$this->bpmnGraph->indexNodeAttr('_receiving');
-		$this->bpmnGraph->indexNodeAttr('_potential_receiving');
+		if (!$this->bpmnGraph) {
+			throw new \LogicException('BPMN graph is not loaded yet.');
+		}
+
+		// Add few more indices -- define I, R, R+ sets
+		$this->bpmnGraph->indexNodeAttr('_invoking'); // I set
+		$this->bpmnGraph->indexNodeAttr('_receiving'); // R set
+		$this->bpmnGraph->indexNodeAttr('_potential_receiving'); // R+ set
+
+		// Get participant
+		$stateMachineNode = $this->findParticipantNode($state_machine_participant_id);
+		$state_machine_process_id = $stateMachineNode->getAttr('process');
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
 		if ($this->rewriteGraph) {
-			foreach ($graph->getAllEdges() as $edge) {
+			foreach ($this->bpmnGraph->getAllEdges() as $edge) {
 				if ($edge['type'] != 'messageFlow') {
 					continue;
 				}
@@ -406,7 +439,7 @@ class BpmnReader
 
 		// Stage 1: Find message flows to state machine participant, identify
 		// invoking and potential receiving nodes
-		foreach ($graph->getAllEdges() as $edgeId => $a) {
+		foreach ($this->bpmnGraph->getAllEdges() as $edgeId => $a) {
 			if ($a['type'] != 'messageFlow') {
 				continue;
 			}
@@ -419,7 +452,7 @@ class BpmnReader
 				$source->setAttr('_invoking', true);
 				if ($source['_action_name'] !== null && $source['_action_name'] != $target->getId()) {
 					$this->addError($errors, 'Multiple actions invoked by a single task.', [$source]);
-				} else if (!$target['_is_state_machine']) {
+				} else if ($target['process'] !== $state_machine_process_id) {
 					$source['_action_name'] = $target->getAttr('name');
 				} else {
 					$source['_action_name'] = $a->getAttr('name');
@@ -435,7 +468,7 @@ class BpmnReader
 
 		// Stage 1: Find receiving nodes for each invoking node
 		// (DFS to next task or event, the receiver cannot be further than that)
-		foreach ($graph->getNodesByAttr('_invoking') as $in_id => $invoking_node) {
+		foreach ($this->bpmnGraph->getNodesByAttr('_invoking') as $in_id => $invoking_node) {
 			$invoking_node->setAttr('_receiving_nodes', []);
 			$invoking_process = $invoking_node['process'];
 			/** @var Node[] $receiving_nodes */
@@ -445,8 +478,10 @@ class BpmnReader
 			/** @var Node[] $visited_nodes */
 			$visited_nodes = [];
 
-			GraphSearch::DFS($graph)
-				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen) use ($graph, $invoking_process, & $receiving_nodes, & $visited_arrows, & $visited_nodes) {
+			GraphSearch::DFS($this->bpmnGraph)
+				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
+					use ($invoking_process, & $receiving_nodes, & $visited_arrows, & $visited_nodes)
+				{
 					// The receiving node must be within the same process
 					if ($next_node['process'] != $invoking_process) {
 						return false;
@@ -501,7 +536,7 @@ class BpmnReader
 					// Add receiving arrow only if there is invoking arrow
 					// (timer events may represent transitions without invoking arrow).
 					$new_id = 'x_'.$in_id.'_receiving';
-					$graph->createEdge($new_id, $invoking_arrow->getEnd(), $invoking_arrow->getStart(), [
+					$this->bpmnGraph->createEdge($new_id, $invoking_arrow->getEnd(), $invoking_arrow->getStart(), [
 						'id' => $new_id,
 						'type' => 'messageFlow',
 						'name' => $invoking_arrow['name'],
@@ -551,14 +586,14 @@ class BpmnReader
 		// Stage 1: Remove receiving tag from nodes without action
 		/** @var Node[] $active_receiving_nodes */
 		$active_receiving_nodes = [];
-		foreach ($graph->getNodesByAttr('_invoking', true) as $id => $node) {
+		foreach ($this->bpmnGraph->getNodesByAttr('_invoking', true) as $id => $node) {
 			/** @var Node $node */
 			foreach ($node['_receiving_nodes'] as $rcv_node) {
 				/** @var Node $rcv_node */
 				$active_receiving_nodes[$rcv_node->getId()] = $rcv_node;
 			}
 		}
-		foreach ($graph->getNodesByAttr('_receiving', true) as $id => $node) {
+		foreach ($this->bpmnGraph->getNodesByAttr('_receiving', true) as $id => $node) {
 			/** @var Node $node */
 			if (empty($active_receiving_nodes[$id])) {
 				$node->setAttr('_receiving', false);
@@ -566,7 +601,7 @@ class BpmnReader
 		}
 
 		// Stage 3: Detect state machine annotation symbol
-		$state_machine_participant_node = $graph->getNodeById($state_machine_participant_id);
+		$state_machine_participant_node = $this->bpmnGraph->getNodeById($state_machine_participant_id);
 		if (preg_match('/^\s*(@[^:\s]+)(|:\s*.+)$/', $state_machine_participant_node['name'], $m)) {
 			$state_machine_annotation_symbol = $m[1];
 		} else {
@@ -575,7 +610,7 @@ class BpmnReader
 
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
-		foreach ($graph->getAllNodes() as $n_id => $node) {
+		foreach ($this->bpmnGraph->getAllNodes() as $n_id => $node) {
 			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
 				continue;
 			}
@@ -626,15 +661,15 @@ class BpmnReader
 		}
 
 		// Stage 2: State relation
-		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_potential_receiving'))  as $receiving_node_id => $receiving_node) {
+		foreach (array_merge($this->bpmnGraph->getNodesByAttr('type', 'startEvent'), $this->bpmnGraph->getNodesByAttr('_potential_receiving'))  as $receiving_node_id => $receiving_node) {
 			/** @var Node $receiving_node */
 			/** @var Node[] $next_invoking_nodes */
 			$next_invoking_nodes = [];
 			$next_annotations = [];
 
-			GraphSearch::DFS($graph)
+			GraphSearch::DFS($this->bpmnGraph)
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
-					use ($graph, $state_machine_process_id, $receiving_node_id, $receiving_node, & $next_invoking_nodes)
+					use ($state_machine_process_id, $receiving_node_id, $receiving_node, & $next_invoking_nodes)
 				{
 					// Don't follow message flows. Don't enter state machine participant.
 					if ($edge['type'] == 'messageFlow' || $next_node['process'] == $state_machine_process_id) {
@@ -657,10 +692,10 @@ class BpmnReader
 			// We know all invoking nodes following the receiving node
 			$receiving_node->setAttr('_next_invoking_nodes', $next_invoking_nodes);
 
-			GraphSearch::DFS($graph)
+			GraphSearch::DFS($this->bpmnGraph)
 				->runBackward()
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
-					use ($graph, $receiving_node_id, $receiving_node, & $next_invoking_nodes, & $next_annotations)
+					use ($receiving_node_id, $receiving_node, & $next_invoking_nodes, & $next_annotations)
 				{
 					if (!isset($edge['_state_from'][$receiving_node_id]) || $edge['_state_from'][$receiving_node_id] !== false) {
 						// Visit only what we visited on the forward run
@@ -697,7 +732,7 @@ class BpmnReader
 		}
 
 		// Implicit state propagation
-		foreach ($graph->getNodesByAttr('_receiving') as $id => $receiving_node) {
+		foreach ($this->bpmnGraph->getNodesByAttr('_receiving') as $id => $receiving_node) {
 			// Get invoking node as the returning message flow may be implicit (and not drawn)
 			/** @var Node $invoking_node */
 			$invoking_node = $receiving_node['_invoking_node'];
@@ -763,7 +798,7 @@ class BpmnReader
 
 		// Collect state relation
 		$state_relation = [];
-		foreach (array_merge($graph->getNodesByAttr('type', 'startEvent'), $graph->getNodesByAttr('_potential_receiving')) as $node) {
+		foreach (array_merge($this->bpmnGraph->getNodesByAttr('type', 'startEvent'), $this->bpmnGraph->getNodesByAttr('_potential_receiving')) as $node) {
 			$next_annotations = $node->getAttr('_next_annotations');
 			$next_invoking_nodes = $node->getAttr('_next_invoking_nodes');
 			if (count($next_annotations) == 1) {
@@ -794,8 +829,8 @@ class BpmnReader
 
 		// Collect transition relation
 		$transition_relation = [];
-		foreach ($graph->getNodesByAttr('_invoking') as $node) {
-			$t = $transition_relation[$node->getId()] = [$node, $node->getAttr('_receiving_nodes'), $node->getAttr('_action_name')];
+		foreach ($this->bpmnGraph->getNodesByAttr('_invoking') as $node) {
+			$transition_relation[$node->getId()] = [$node, $node->getAttr('_receiving_nodes'), $node->getAttr('_action_name')];
 		}
 
 		// Collect states from state relation (_next_invoking_nodes)
