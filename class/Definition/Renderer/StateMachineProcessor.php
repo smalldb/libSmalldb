@@ -22,6 +22,7 @@ use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Grafovatko\ProcessorInterface;
+use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 
@@ -32,7 +33,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph): array
+	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
 	{
 		return $exportedGraph;
 	}
@@ -41,7 +42,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode): array
+	public function processNodeAttrs(Node $node, array $exportedNode, string $prefix): array
 	{
 		if ($node instanceof StateMachineNode) {
 			$state = $node->getState();
@@ -49,10 +50,22 @@ class StateMachineProcessor implements ProcessorInterface
 			$exportedNode['label'] = $stateName;
 
 			if ($stateName === '') {
-				$exportedNode['shape'] = 'uml.initial_state';
+				if ($node->isSourceNode()) {
+					$exportedNode['shape'] = 'uml.initial_state';
+				} else if (empty($node->getConnectedEdges())) {
+					$exportedNode['shape'] = 'none';
+				} else {
+					$exportedNode['shape'] = 'uml.final_state';
+				}
 			} else {
 				$exportedNode['shape'] = 'uml.state';
 			}
+
+			// TODO: Add color support
+			$exportedNode['fill'] = "#eee";
+
+			// TODO: Highlight unreachable and undefined states
+
 		}
 		return $exportedNode;
 	}
@@ -61,7 +74,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix): array
 	{
 		if ($edge instanceof StateMachineEdge) {
 			$transition = $edge->getTransition();
@@ -70,4 +83,11 @@ class StateMachineProcessor implements ProcessorInterface
 		return $exportedEdge;
 	}
 
+	/**
+	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
+	 */
+	public function getExtraSvgElements(Graph $graph, $prefix): array
+	{
+		return [];
+	}
 }
