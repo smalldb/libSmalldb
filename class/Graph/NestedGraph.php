@@ -261,10 +261,7 @@ class NestedGraph
 	}
 
 
-	/**
-	 * @return null|Node
-	 */
-	public function getParentNode(): Node
+	public function getParentNode(): ?Node
 	{
 		return $this->parentNode;
 	}

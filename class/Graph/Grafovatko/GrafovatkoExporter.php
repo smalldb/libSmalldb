@@ -27,6 +27,8 @@ use Smalldb\StateMachine\Graph\Node;
 
 class GrafovatkoExporter
 {
+	public static $grafovatkoJsLink = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
+
 	/** @var ProcessorInterface[] */
 	private $processors = [];
 
@@ -52,7 +54,103 @@ class GrafovatkoExporter
 
 	public function export(Graph $graph): array
 	{
-		return $this->exportNestedGraph($graph);
+		$jsonObject = $this->exportNestedGraph($graph);
+
+		foreach ($this->processors as $processor) {
+			$extraSvg = $processor->getExtraSvgElements($graph, $this->prefix);
+			if (!empty($extraSvg)) {
+				foreach ($extraSvg as $el) {
+					$jsonObject['extraSvg'][] = $el;
+				}
+			}
+		}
+
+		return $jsonObject;
+	}
+
+
+	public function exportJsonString(Graph $graph, int $jsonOptions = 0): string
+	{
+		$jsonObject = $this->export($graph);
+		$jsonString = json_encode($jsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
+		return $jsonString;
+	}
+
+
+	public function exportJsonFile(Graph $graph, string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
+	{
+		$jsonString = $this->exportJsonString($graph, $jsonOptions);
+
+		if ($jsonString !== false) {
+			if (!file_put_contents($targetFileName, $jsonString)) {
+				throw new \RuntimeException('Failed to write graph.');
+			}
+		} else {
+			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
+		}
+	}
+
+
+	public function exportSvgElement(Graph $graph, array $attrs = []): string
+	{
+		$jsonString = $this->exportJsonString($graph, JSON_HEX_APOS | JSON_HEX_AMP);
+		if ($jsonString === false) {
+			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
+		}
+
+		$attrsHtml = "";
+		foreach ($attrs as $attr => $value) {
+			if ($value !== null) {
+				$attrsHtml .= " $attr=\"" . htmlspecialchars($value) . "\"";
+			}
+		}
+
+		return "<svg$attrsHtml width=\"1\" height=\"1\" data-graph='$jsonString'></svg>";
+	}
+
+
+	public function exportHtmlFile(Graph $graph, string $targetFileName, ?string $title = null): void
+	{
+		$titleHtml = htmlspecialchars($title ?? basename($targetFileName));
+		$grafovatkoJsFile = basename(static::$grafovatkoJsLink);
+		$grafovatkoJsLink = file_exists(dirname($targetFileName) . '/' . $grafovatkoJsFile)
+			? $grafovatkoJsFile : static::$grafovatkoJsLink;
+
+		$svgElement = $this->exportSvgElement($graph, ['id' => 'graph']);
+
+		$html = <<<EOF
+			<!DOCTYPE HTML>
+			<html>
+			<head>
+				<title>$titleHtml</title>
+				<meta charset="UTF-8">
+				<style type="text/css">
+					html, body {
+						display: flex;
+						align-items: center;
+						min-height: 100%;
+						margin: auto;
+						padding: 0;
+					}
+					svg#graph {
+						margin: auto;
+						padding: 1em;
+						overflow: visible;
+					}
+				</style>
+			</head>
+			<body>
+				$svgElement
+				<script type="text/javascript" src="$grafovatkoJsLink"></script>
+				<script type="text/javascript">
+					window.graphView = new G.GraphView('#graph');
+				</script>
+			</body>
+			EOF;
+
+		if (!file_put_contents($targetFileName, $html)) {
+			throw new \RuntimeException('Failed to write graph.');
+		}
 	}
 
 
@@ -72,7 +170,7 @@ class GrafovatkoExporter
 	protected function processGraph(NestedGraph $graph, array $exportedGraph): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedGraph = $processor->processGraph($graph, $exportedGraph);
+			$exportedGraph = $processor->processGraph($graph, $exportedGraph, $this->prefix);
 		}
 		return $exportedGraph;
 	}
@@ -81,7 +179,7 @@ class GrafovatkoExporter
 	protected function processNodeAttrs(Node $node, array $exportedNode): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedNode = $processor->processNodeAttrs($node, $exportedNode);
+			$exportedNode = $processor->processNodeAttrs($node, $exportedNode, $this->prefix);
 		}
 		return $exportedNode;
 	}
@@ -90,7 +188,7 @@ class GrafovatkoExporter
 	protected function processEdgeAttrs(Edge $edge, array $exportedEdge): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedEdge = $processor->processEdgeAttrs($edge, $exportedEdge);
+			$exportedEdge = $processor->processEdgeAttrs($edge, $exportedEdge, $this->prefix);
 		}
 		return $exportedEdge;
 	}

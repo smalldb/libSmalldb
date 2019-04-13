@@ -155,7 +155,7 @@ class ElementAttrIndex
 		if (isset($this->index[$key][$oldValue][$id])) {
 			unset($this->index[$key][$oldValue][$id]);
 		} else {
-			throw new MissingElementException("Old value of \"$id\" is not indexed.");
+			throw new MissingElementException("Old value of \"$id\" is not indexed. Updating an uninitialized indexed attribute?");
 		}
 
 		$this->index[$key][$newValue][$id] = $element;

@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\Definition\Renderer;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
-use Smalldb\StateMachine\RuntimeException;
 
 
 class StateMachineRenderer
@@ -42,65 +41,24 @@ class StateMachineRenderer
 
 	public function renderJsonString(StateMachineDefinition $definition, int $jsonOptions = 0): string
 	{
-		$graphJsonObject = $this->grafovatkoExport($definition);
-		$graphJsonString = json_encode($graphJsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
-		return $graphJsonString;
+		return $this->graphExporter->exportJsonString($definition->getGraph(), $jsonOptions);
 	}
 
 
-	public function renderJsonFile(StateMachineDefinition $definition, string $targetFileName): void
+	public function renderJsonFile(StateMachineDefinition $definition, string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
 	{
-		$graphJsonString = $this->renderJsonString($definition, JSON_PRETTY_PRINT);
+		$this->graphExporter->exportJsonFile($definition->getGraph(), $targetFileName, $jsonOptions);
+	}
 
-		if ($graphJsonString !== false) {
-			if (!file_put_contents($targetFileName, $graphJsonString)) {
-				throw new RuntimeException('Failed to write state machine graph.');
-			}
-		} else {
-			throw new RuntimeException('Failed to serialize state machine graph: ' . json_last_error_msg());
-		}
+
+	public function renderSvgElement(StateMachineDefinition $definition, array $attrs = []): string
+	{
+		return $this->graphExporter->exportSvgElement($definition->getGraph(), $attrs);
 	}
 
 	public function renderSimpleHtmlPage(StateMachineDefinition $definition, string $targetFileName): void
 	{
-		$graphJsonString = $this->renderJsonString($definition, JSON_HEX_APOS | JSON_HEX_AMP);
-		$title = htmlspecialchars($definition->getMachineType());
-		$grafovatkoJsLink = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
-
-		$html = <<<EOF
-			<!DOCTYPE HTML>
-			<html>
-			<head>
-				<title>$title</title>
-				<meta charset="UTF-8">
-				<style type="text/css">
-					body {
-						text-align: center;
-					}
-					h1 {
-						font-weight: normal;
-					}
-					svg#graph {
-						margin: auto;
-						overflow: visible;
-					}
-				</style>
-			</head>
-			<body>
-				<h1>$title</h1>
-	
-				<svg width="1" height="1" id="graph" data-graph='$graphJsonString'></svg>
-
-				<script type="text/javascript" src="$grafovatkoJsLink"></script>
-				<script type="text/javascript">
-					window.graphView = new G.GraphView('#graph');
-				</script>
-			</body>
-			EOF;
-
-		if (!file_put_contents($targetFileName, $html)) {
-			throw new RuntimeException('Failed to write state machine graph.');
-		}
+		$this->graphExporter->exportHtmlFile($definition->getGraph(), $targetFileName);
 	}
 
 }
