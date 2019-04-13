@@ -40,15 +40,23 @@ class Graph extends NestedGraph
 
 	public function getNodeById(string $id): Node
 	{
-		/** @noinspection PhpIncompatibleReturnTypeInspection */
-		return $this->nodeAttrIndex->getElementById($id);
+		$node = $this->nodeAttrIndex->getElementById($id);
+		if ($node instanceof Node) {
+			return $node;
+		} else {
+			throw new \LogicException("The requested element is not a node: $id");
+		}
 	}
 
 
 	public function getEdgeById(string $id): Edge
 	{
-		/** @noinspection PhpIncompatibleReturnTypeInspection */
-		return $this->edgeAttrIndex->getElementById($id);
+		$edge = $this->edgeAttrIndex->getElementById($id);
+		if ($edge instanceof Edge) {
+			return $edge;
+		} else {
+			throw new \LogicException("The requested element is not an edge: $id");
+		}
 	}
 
 	/**
