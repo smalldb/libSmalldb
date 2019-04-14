@@ -182,6 +182,11 @@ class Html
 		return static::blockPairElement('article', $attrs, $children);
 	}
 
+	public static function p(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('div', $attrs, $children);
+	}
+
 	public static function ul(array $attrs = [], ...$children): string
 	{
 		return static::blockPairElement('ul', $attrs, $children);
@@ -210,6 +215,11 @@ class Html
 	public static function svg(array $attrs = [], ...$children): string
 	{
 		return static::blockPairElement('svg', $attrs, $children);
+	}
+
+	public static function canvas(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('canvas', $attrs, $children);
 	}
 
 	public static function span(array $attrs = [], ...$children): string

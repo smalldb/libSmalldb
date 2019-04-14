@@ -94,7 +94,8 @@ class BpmnTest extends TestCase
 		$this->assertContainsOnlyInstancesOf(StateDefinition::class, $reachableStates);
 		$this->assertGreaterThanOrEqual(2, count($reachableStates), 'Failed to find at least two reachable states.');
 
-		$this->writeBpmnPage($bpmnFilename . '.html', $definition, $bpmnReader->getBpmnGraph(), basename($bpmnFilename), $svgFilename);
+		$this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), basename($bpmnFilename), $svgFilename)
+			->writeHtmlFile($bpmnFilename . '.html');
 	}
 
 	private function createBpmnUserNode(NestedGraph $userGraph, string $id, string $type, ?string $name = null, string $process = 'Process_User'): Node
@@ -198,21 +199,95 @@ class BpmnTest extends TestCase
 		return $bpmnGraph;
 	}
 
-	public function testGeneratedBpmnDiagram()
+
+	/**
+	 * @dataProvider noodleTimeProvider
+	 */
+	public function testGeneratedBpmnNoodle(int $testRunId = 0, int $N = 0)
 	{
+		// Example of the generated graph
 		$bpmnGraph = $this->generateNoodleBpmn(7);
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
 		$definitionBuilder->setMachineType('noodle');
 		$definition = $definitionBuilder->build();
-		$this->writeBpmnPage('noodle.html', $definition, $bpmnReader->getBpmnGraph(), 'Generated Noodle', null, true);
+
+		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), 'Generated Noodle', null, true);
+
+		// Run the benchmark for $N
+		if ($N > 0) {
+			$bpmnGraph = $this->generateNoodleBpmn($N);
+			$bpmnReader = BpmnReader::readGraph($bpmnGraph);
+			$tStart = getrusage();
+			$bpmnReader->inferStateMachine("Participant_StateMachine");
+			$tEnd = getrusage();
+			$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)
+				- ($tStart['ru_utime.tv_sec'] + $tStart['ru_utime.tv_usec'] / 1e6);
+			$this->storeBenchmarkResult($output, $testRunId, $N, $t_sec);
+		}
+
+		// Print statistics
+		$output->addHtml(Html::hr());
+		$output->addHtml(Html::h2([], 'Benchmark Results'));
+		$results = $this->loadBenchmarkResults($output);
+		$datasets = [
+			$testRunId => [],
+		];
+		foreach ($results as ['id' => $id, 'N' => $N, 't_sec' => $t_sec]) {
+			$datasets[$id]['data'][] = ['x' => $N, 'y' => $t_sec];
+			//$output->addHtml(Html::p([], Html::text(sprintf("[%s]: N = %d, t = %0.1f ms.", $id, $N, $t_sec))));
+		}
+		foreach ($datasets as $id => & $dataset) {
+			if ($id === $testRunId) {
+				$dataset['borderColor'] = '#5176be';
+			} else {
+				$dataset['borderColor'] = '#dddddd';
+			}
+			$dataset['lineTension'] = 0;
+			$dataset['fill'] = false;
+			if (!empty($dataset['data'])) {
+				sort($dataset['data']);
+			}
+		}
+		unset($dataset);
+
+		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.slim.min.js');
+		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js');
+			// integrity="sha256-xKeoJ50pzbUGkpQxDYHD7o7hxe0LaOGeguUidbq6vis=" crossorigin="anonymous"
+		$output->addHtml(Html::canvas(['id' => 'plot', 'class' => 'plot', 'data-set' => array_values($datasets)]));
+		$output->addJs($output->resource('plot.js'));
+
+		$output->writeHtmlFile('noodle.html');
 	}
 
-	private function writeBpmnPage(string $outputFilename, StateMachineDefinition $definition, Graph $bpmnGraph, string $title, ?string $svgFilename = null, bool $horizontalLayout = false)
+	private function storeBenchmarkResult(TestOutputTemplate $output, int $testRunId, int $N, $t_sec)
+	{
+		$filename = $output->outputPath('noodle-times.json');
+		$data = json_encode(['id' => $testRunId, 'N' => $N, 't_sec' => $t_sec], JSON_NUMERIC_CHECK) . ",\n";
+		if (file_put_contents($filename, $data, FILE_APPEND | LOCK_EX) === false) {
+			throw new \RuntimeException('Failed to store results: ' . $filename);
+		}
+	}
+
+	private function loadBenchmarkResults(TestOutputTemplate $output): array
+	{
+		$filename = $output->outputPath('noodle-times.json');
+		if (file_exists($filename)) {
+			$data = file_get_contents($filename);
+			$results = json_decode('[' . trim($data, ",\n") . ']', true);
+			return $results;
+		} else {
+			return [];
+		}
+	}
+
+	private function createBpmnPage(StateMachineDefinition $definition, Graph $bpmnGraph,
+		string $title, ?string $svgFilename = null, bool $horizontalLayout = false): TestOutputTemplate
 	{
 		// Render the infered state machine
 		$output = new TestOutputTemplate();
 		$output->setTitle($title);
+		$output->addHtml(Html::h2([], 'State Machine'));
 		$output->addStateMachineGraph($definition, $horizontalLayout);
 		$output->addHtml(Html::hr());
 
@@ -224,6 +299,7 @@ class BpmnTest extends TestCase
 			$colorizedSvgContent = $svgPainter->colorizeSvgFile($svgContent, $bpmnGraph, [], '');
 
 			$svgUrl = $output->writeResource($svgFilename, $colorizedSvgContent);
+			$output->addHtml(Html::h2([], 'Original BPMN Diagram (an SVG image with STS highlights)'));
 			$output->addHtml(Html::img(['src' => $svgUrl]));
 			$output->addHtml(Html::hr());
 		}
@@ -232,9 +308,10 @@ class BpmnTest extends TestCase
 		$renderer = new GrafovatkoExporter();
 		$renderer->addProcessor(new BpmnGrafovatkoProcessor());
 		$output->addGrafovatko();
+		$output->addHtml(Html::h2([], 'Graph of the BPMN Diagram'));
 		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));
 
-		$output->writeHtmlFile($outputFilename);
+		return $output;
 	}
 
 
@@ -249,6 +326,16 @@ class BpmnTest extends TestCase
 				file_exists($svgFilename) ? $svgFilename : null,
 				false // expect no errors
 			];
+		}
+	}
+
+
+	public function noodleTimeProvider()
+	{
+		$id = time();
+
+		for ($N = 0; $N <= 200; $N += 50) {
+			yield "N = $N" => [$id, $N];
 		}
 	}
 

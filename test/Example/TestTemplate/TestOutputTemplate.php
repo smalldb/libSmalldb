@@ -51,7 +51,7 @@ class TestOutputTemplate implements Template
 		$this->outputDir = dirname(dirname(__DIR__)) . '/output';
 	}
 
-	private function outputPath(string $basename): string
+	public function outputPath(string $basename): string
 	{
 		return $this->outputDir . '/' . basename($basename);
 	}
@@ -59,7 +59,7 @@ class TestOutputTemplate implements Template
 
 	private function resourcePath(string $basename): string
 	{
-		return dirname($this->outputDir) . '/resources/' . basename($basename);
+		return dirname($this->outputDir) . '/resources/' . $basename;
 	}
 
 
