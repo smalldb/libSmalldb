@@ -28,22 +28,14 @@ use Smalldb\StateMachine\Graph\Node;
 /**
  * BPMN reader
  *
- * Read BPMN diagram and create state machine which implements given business
- * proces. When multiple BPMN loaders used, the final state machine will
- * implement all of the business processes.
- *
- * The first step is to load all BPMN diagrams, but not to update state machine
- * definition. The second step is performed during machine definition
- * postprocessing, when all BPMN diagrams are combined together and state
- * machine definition is generated.
+ * Read a BPMN diagram and infer a state machine which implements a given
+ * participant of the business proces. When multiple BPMN loaders used,
+ * the final state machine will implement all of the business processes.
  *
  * @see https://camunda.org/bpmn/tool/
  */
 class BpmnReader
 {
-	public $disableSvgFile = false;
-	public $rewriteGraph = false;
-
 	/** @var Graph|null */
 	private $bpmnGraph = null;
 
@@ -282,8 +274,6 @@ class BpmnReader
 		return $bpmnGraph;
 	}
 
-		//return $this->inferStateMachine($bpmnGraph, $state_machine_participant_id, $state_machine_process_id);
-
 		/*
 		// Load SVG file with rendered BPMN diagram, so we can colorize it
 		if (!$this->disableSvgFile && isset($options['svg_file'])) {
@@ -313,40 +303,6 @@ class BpmnReader
 			],
 		];
 		*/
-
-
-	/// @copydoc IMachineDefinitionReader::postprocessDefinition
-	public function postprocessDefinition(string $machine_type, array & $machine_def, array & $errors)
-	{
-		if (!isset($machine_def['bpmn_fragments'])) {
-			return true;
-		}
-		$bpmn_fragments = $machine_def['bpmn_fragments'];
-		unset($machine_def['bpmn_fragments']);
-
-		$success = true;
-
-		// Each included BPMN file provided one fragment
-		foreach ($bpmn_fragments as $fragment_name => $fragment) {
-			// Infer part of state machine from the BPMN fragment
-			list($fragment_machine_def, $fragment_errors) = $this->inferStateMachine($fragment['graph'],
-					$fragment['state_machine_participant_id'], $fragment['state_machine_process_id']);
-
-			// Update the definition
-			if (empty($fragment_errors)) {
-				$machine_def = array_replace_recursive($fragment_machine_def, $machine_def);
-			} else {
-				$success = false;
-			}
-
-			// Add BPMN diagram to state diagram
-			$prefix = "bpmn_".(0xffff & crc32($fragment_name)).'_';
-			$machine_def['state_diagram_extras'][] = $this->renderBpmn($prefix, $fragment_name, $fragment, $fragment_errors);
-			$this->renderBpmnJson($machine_def, $prefix, $fragment_name, $fragment, $fragment_errors);
-		}
-
-		return $success;
-	}
 
 
 	/**
@@ -397,7 +353,7 @@ class BpmnReader
 	}
 
 
-	public function inferStateMachine(string $state_machine_participant_id)
+	public function inferStateMachine(string $state_machine_participant_id, bool $rewriteGraph = false)
 	{
 		$errors = [];
 
@@ -415,7 +371,7 @@ class BpmnReader
 		$state_machine_process_id = $stateMachineNode->getAttr('process');
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
-		if ($this->rewriteGraph) {
+		if ($rewriteGraph) {
 			foreach ($this->bpmnGraph->getAllEdges() as $edge) {
 				if ($edge['type'] != 'messageFlow') {
 					continue;
@@ -532,7 +488,7 @@ class BpmnReader
 
 			if (empty($receiving_nodes)) {
 				// If there is no receiving node, add implicit returning message flow.
-				if ($this->rewriteGraph && $invoking_arrow) {
+				if ($rewriteGraph && $invoking_arrow) {
 					// Add receiving arrow only if there is invoking arrow
 					// (timer events may represent transitions without invoking arrow).
 					$new_id = 'x_'.$in_id.'_receiving';
@@ -563,7 +519,7 @@ class BpmnReader
 						}
 					}
 
-					if ($this->rewriteGraph && $rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
+					if ($rewriteGraph && $rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
 						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
 
