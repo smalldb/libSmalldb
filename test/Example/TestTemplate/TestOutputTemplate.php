@@ -53,13 +53,13 @@ class TestOutputTemplate implements Template
 
 	private function outputPath(string $basename): string
 	{
-		return $this->outputDir . '/' . $basename;
+		return $this->outputDir . '/' . basename($basename);
 	}
 
 
 	private function resourcePath(string $basename): string
 	{
-		return dirname($this->outputDir) . '/resources/' . $basename;
+		return dirname($this->outputDir) . '/resources/' . basename($basename);
 	}
 
 
@@ -110,11 +110,11 @@ class TestOutputTemplate implements Template
 	}
 
 
-	public function addStateMachineGraph(StateMachineDefinition $definition): self
+	public function addStateMachineGraph(StateMachineDefinition $definition, bool $horizontalLayout = false): self
 	{
 		$this->addGrafovatko();
 
-		$renderer = new StateMachineRenderer();
+		$renderer = new StateMachineRenderer($horizontalLayout);
 		$this->addHtml("\n" . $renderer->renderSvgElement($definition, ['class' => 'graph']));
 		return $this;
 	}

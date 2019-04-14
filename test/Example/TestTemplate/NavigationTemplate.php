@@ -37,6 +37,7 @@ class NavigationTemplate implements Template
 		return Html::nav([],
 			Html::ul([],
 				$this->item('index.html', 'CRUD Item'),
+				$this->item('noodle.html', 'Generated Noodle'),
 				...$this->bpmnItems()
 			));
 	}

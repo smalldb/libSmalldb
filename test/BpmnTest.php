@@ -25,8 +25,11 @@ use Smalldb\StateMachine\BpmnSvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Graph\NestedGraph;
+use Smalldb\StateMachine\Graph\Node;
 use Smalldb\StateMachine\Test\Example\TestTemplate\Html;
 use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
 
@@ -59,7 +62,7 @@ class BpmnTest extends TestCase
 
 		// Render the result
 		$output = new TestOutputTemplate();
-		$output->setTitle($definition->getMachineType());
+		$output->setTitle('CRUD Item');
 		$output->addStateMachineGraph($definition);
 		$output->writeHtmlFile('index.html');
 	}
@@ -73,9 +76,6 @@ class BpmnTest extends TestCase
 		$this->assertFileExists($bpmnFilename);
 		$machineType = preg_replace('/\.[^.]*$/', '', basename($bpmnFilename));
 
-		$output = new TestOutputTemplate();
-		$output->setTitle(basename($bpmnFilename));
-
 		// Read BPMN diagram
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
 		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
@@ -88,17 +88,133 @@ class BpmnTest extends TestCase
 		} else {
 			$this->assertNotTrue($definition->hasErrors(), 'There are unexpected errors in the BPMN diagram.');
 		}
-		$output->addStateMachineGraph($definition);
-		$output->addHtml(Html::hr());
 
 		// Assert the definition has a few reachable states
 		$reachableStates = $definition->findReachableStates();
 		$this->assertContainsOnlyInstancesOf(StateDefinition::class, $reachableStates);
 		$this->assertGreaterThanOrEqual(2, count($reachableStates), 'Failed to find at least two reachable states.');
 
-		// Get BPMN graph
-		$bpmnGraph = $bpmnReader->getBpmnGraph();
-		$this->assertInstanceOf(Graph::class, $bpmnGraph);
+		$this->writeBpmnPage($bpmnFilename . '.html', $definition, $bpmnReader->getBpmnGraph(), basename($bpmnFilename), $svgFilename);
+	}
+
+	private function createBpmnUserNode(NestedGraph $userGraph, string $id, string $type, ?string $name = null, string $process = 'Process_User'): Node
+	{
+		return $userGraph->createNode($id, [
+			'id' => $id,
+			'name' => $name ?? $id,
+			'type' => $type,
+			'process' => $process,
+			'features' => [],
+			'_generated' => false,
+		]);
+	}
+
+	/**
+	 * @param string $type
+	 * @param Node $sourceNode
+	 * @param Node $targetNode
+	 * @param string|null $name
+	 * @return Edge
+	 */
+	private function createEdge(string $type, Node $sourceNode, Node $targetNode, ?string $name = null): Edge
+	{
+		// Find appropriate graph where we should place the edge
+		/** @var NestedGraph $edgeGraph */
+		$sourceGraph = $sourceNode->getGraph();
+		$targetGraph = $targetNode->getGraph();
+		$edgeGraph = ($sourceGraph === $targetGraph ? $sourceGraph : $sourceNode->getRootGraph());
+
+		// Create arrow
+		$id = $type . count($edgeGraph->getEdges());
+		return $edgeGraph->createEdge($id, $sourceNode, $targetNode, [
+			'id' => $id,
+			'type' => $type,
+			'name' => $name,
+		]);
+	}
+
+	/**
+	 * @param string|Node $sourceNode
+	 * @param string|Node $targetNode
+	 * @param string|null $name
+	 * @return Edge
+	 */
+	private function createSequenceFlow(Node $sourceNode, Node $targetNode): Edge
+	{
+		return $this->createEdge('sequenceFlow', $sourceNode, $targetNode);
+	}
+
+
+	/**
+	 * @param string|Node $sourceNode
+	 * @param string|null $name
+	 * @return Edge
+	 */
+	private function createMessageFlow(Node $sourceNode, Node $targetNode, string $transitionName): Edge
+	{
+		return $this->createEdge('messageFlow', $sourceNode, $targetNode, $transitionName);
+	}
+
+
+	private function generateNoodleBpmn(int $taskCount = 7): Graph
+	{
+		$bpmnGraph = new Graph();
+
+		$userParticipant = $bpmnGraph->createNode('Participant_User', [
+			'id' => 'Participant_User',
+			'name' => 'User',
+			'type' => 'participant',
+			'process' => 'Process_User',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$stateMachineParticipant = $bpmnGraph->createNode('Participant_StateMachine', [
+			'id' => 'Participant_StateMachine',
+			'name' => 'State Machine',
+			'type' => 'participant',
+			'process' => 'Process_StateMachine',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$userGraph = $userParticipant->getNestedGraph();
+		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
+		$endEvent = $this->createBpmnUserNode($userGraph, 'end', 'endEvent');
+
+		// Create a simple tasks
+		$prevNode = $startEvent;
+		for ($t = 0; $t < $taskCount; $t++) {
+			$taskNode = $this->createBpmnUserNode($userGraph, 'Task'.$t, 'task');
+			$this->createSequenceFlow($prevNode, $taskNode);
+			$this->createMessageFlow($taskNode, $stateMachineParticipant, 't' . $t);
+			$prevNode = $taskNode;
+		}
+		$this->createSequenceFlow($prevNode, $endEvent);
+
+		$this->assertCount($taskCount + 4, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(2 * $taskCount + 1, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+
+		return $bpmnGraph;
+	}
+
+	public function testGeneratedBpmnDiagram()
+	{
+		$bpmnGraph = $this->generateNoodleBpmn(7);
+		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
+		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
+		$definitionBuilder->setMachineType('noodle');
+		$definition = $definitionBuilder->build();
+		$this->writeBpmnPage('noodle.html', $definition, $bpmnReader->getBpmnGraph(), 'Generated Noodle', null, true);
+	}
+
+	private function writeBpmnPage(string $outputFilename, StateMachineDefinition $definition, Graph $bpmnGraph, string $title, ?string $svgFilename = null, bool $horizontalLayout = false)
+	{
+		// Render the infered state machine
+		$output = new TestOutputTemplate();
+		$output->setTitle($title);
+		$output->addStateMachineGraph($definition, $horizontalLayout);
+		$output->addHtml(Html::hr());
 
 		// Render BPMN diagram using the SVG image
 		if ($svgFilename) {
@@ -118,7 +234,7 @@ class BpmnTest extends TestCase
 		$output->addGrafovatko();
 		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));
 
-		$output->writeHtmlFile(basename($bpmnFilename) . '.html');
+		$output->writeHtmlFile($outputFilename);
 	}
 
 
