@@ -61,6 +61,14 @@ class BpmnReader
 	}
 
 
+	public static function readGraph(Graph $bpmnGraph): self
+	{
+		$reader = new self();
+		$reader->bpmnGraph = $bpmnGraph;
+		return $reader;
+	}
+
+
 	public function getBpmnGraph(): Graph
 	{
 		return $this->bpmnGraph;
@@ -91,8 +99,6 @@ class BpmnReader
 
 		// Create the Graph
 		$bpmnGraph = new Graph();
-		$bpmnGraph->indexNodeAttr('type');
-		$bpmnGraph->indexEdgeAttr('type');
 
 		// Lets collect arrows, events and tasks (still in BPMN semantics)
 		$processes = [];
@@ -275,36 +281,6 @@ class BpmnReader
 		return $bpmnGraph;
 	}
 
-		/*
-		// Load SVG file with rendered BPMN diagram, so we can colorize it
-		if (!$this->disableSvgFile && isset($options['svg_file'])) {
-			$dir = dirname($filename);
-			$svg_file_name = ($dir == "" ? "./" : $dir . "/") . $options['svg_file'];
-			$svg_file_contents = file_get_contents($svg_file_name);
-			$svg_file_is_obsolete = (filemtime($filename) > filemtime($svg_file_name));
-		} else {
-			$svg_file_name = null;
-			$svg_file_contents = null;
-			$svg_file_is_obsolete = null;
-		}
-
-		// Store fragment in state machine definition
-		return [
-			'bpmn_fragments' => [
-				$filename.'#'.$state_machine_participant_id => [
-					'file' => $filename,
-					'state_machine_participant_id' => $state_machine_participant_id,
-					'state_machine_process_id' => $state_machine_process_id,
-					'graph' => $graph,
-					'participants' => $participants,
-					'svg_file_name' => $svg_file_name,
-					'svg_file_contents' => $svg_file_contents,
-					'svg_file_is_obsolete' => $svg_file_is_obsolete,
-				],
-			],
-		];
-		*/
-
 
 	/**
 	 * Add error to the graph
@@ -361,6 +337,10 @@ class BpmnReader
 		if (!$this->bpmnGraph) {
 			throw new \LogicException('BPMN graph is not loaded yet.');
 		}
+
+		// Index node and edge type
+		$this->bpmnGraph->indexNodeAttr('type');
+		$this->bpmnGraph->indexEdgeAttr('type');
 
 		// Add few more indices -- define I, R, R+ sets
 		$this->bpmnGraph->indexNodeAttr('_invoking'); // I set
