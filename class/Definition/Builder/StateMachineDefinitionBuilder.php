@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Definition\Builder;
 
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\DebugDataBag;
+use Smalldb\StateMachine\Definition\DefinitionError;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
@@ -46,7 +47,7 @@ class StateMachineDefinitionBuilder
 	/** @var DebugDataBag[] */
 	private $debugData = [];
 
-	/** @var string[] */
+	/** @var DefinitionError[] */
 	private $errors = [];
 
 
@@ -189,9 +190,9 @@ class StateMachineDefinitionBuilder
 	}
 
 
-	public function addError(string $errorMessage)
+	public function addError(string $errorMessage): DefinitionError
 	{
-		$this->errors[] = $errorMessage;
+		return ($this->errors[] = new DefinitionError($errorMessage));
 	}
 
 	/**

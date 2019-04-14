@@ -64,6 +64,7 @@ class StateMachineDefinition
 	 * @param StateDefinition[] $states
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
+	 * @param DefinitionError[] $errors
 	 * @param DebugDataBag[] $debugData
 	 */
 	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $errors, array $debugData)
