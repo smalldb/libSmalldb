@@ -48,10 +48,28 @@ class NavigationTemplate implements Template
 			Html::text($label)));
 	}
 
+
 	private function bpmnItems()
 	{
+		$fileWeightMap = [
+			'SimpleActions.bpmn' => 10,
+			'UserDecides.bpmn' => 20,
+			'MachineDecides.bpmn' => 30,
+			'SimpleSync.bpmn' => 40,
+			'PizzaDelivery.bpmn' => 50,
+		];
+
 		$test = new BpmnTest();
-		foreach ($test->bpmnFileProvider() as [$bpmnFilename, $svgFilename]) {
+		$bpmnFiles = iterator_to_array($test->bpmnFileProvider());
+		uasort($bpmnFiles, function($a, $b) use ($fileWeightMap) {
+			$fa = basename($a[0]);
+			$fb = basename($b[0]);
+			$wa = $fileWeightMap[$fa] ?? PHP_INT_MAX;
+			$wb = $fileWeightMap[$fb] ?? PHP_INT_MAX;
+			return $wa !== $wb ? $wa - $wb : strnatcmp($fa, $fb);
+		});
+
+		foreach ($bpmnFiles as [$bpmnFilename, $svgFilename]) {
 			$basename = basename($bpmnFilename);
 			yield $this->item("$basename.html", $basename);
 		}
