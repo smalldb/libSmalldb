@@ -46,6 +46,9 @@ class StateMachineDefinitionBuilder
 	/** @var DebugDataBag[] */
 	private $debugData = [];
 
+	/** @var string[] */
+	private $errors = [];
+
 
 	public function __construct()
 	{
@@ -89,7 +92,7 @@ class StateMachineDefinitionBuilder
 			$actions[$action->getName()] = $action;
 		}
 
-		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->debugData);
+		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->errors, $this->debugData);
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
@@ -121,6 +124,20 @@ class StateMachineDefinitionBuilder
 		}
 
 		return new TransitionDefinition($transitionPlaceholder->name, $sourceState, $targetStates);
+	}
+
+
+	/**
+	 * Sort everything to make changes in generated definitions more stable when the source changes.
+	 */
+	public function sortPlaceholders()
+	{
+		ksort($this->states);
+		ksort($this->actions);
+		ksort($this->transitionsByState);
+		foreach ($this->transitionsByState as & $t) {
+			ksort($t);
+		}
 	}
 
 
@@ -169,6 +186,20 @@ class StateMachineDefinitionBuilder
 	public function addDebugDataBag(DebugDataBag $debugDataBag): void
 	{
 		$this->debugData[] = $debugDataBag;
+	}
+
+
+	public function addError(string $errorMessage)
+	{
+		$this->errors[] = $errorMessage;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getErrors(): array
+	{
+		return $this->errors;
 	}
 
 }

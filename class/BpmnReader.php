@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\GraphSearch;
@@ -353,7 +354,7 @@ class BpmnReader
 	}
 
 
-	public function inferStateMachine(string $state_machine_participant_id, bool $rewriteGraph = false)
+	public function inferStateMachine(string $state_machine_participant_id, bool $rewriteGraph = false): StateMachineDefinitionBuilder
 	{
 		$errors = [];
 
@@ -792,7 +793,7 @@ class BpmnReader
 		// Collect states from state relation (_next_invoking_nodes)
 		$states = [];
 		foreach ($state_relation as list($s_source, $t_targets, $state_name)) {
-			$states[$state_name] = [];
+			$states[$state_name] = $state_name;
 		}
 
 		// Collect actions by combining state relation with transition relation
@@ -808,39 +809,31 @@ class BpmnReader
 						list($ts_source, $ts_target, $ts_state_name) = $state_relation[$t_target->getId()];
 
 						// Define the transition. The same transition may be created multiple times.
-						$actions[$t_action_name]['transitions'][$s_state_name]['targets'][$ts_state_name] = $ts_state_name;
+						$actions[$t_action_name][$s_state_name][$ts_state_name] = $ts_state_name;
 					}
 				}
 			}
 		}
 
-		// Collect the results into the state machine definition
-		$machine_def = [
-			'states' => $states,
-			'actions' => empty($errors) ? $actions : [],  // no actions if there are errors
-		];
-
-		// Sort the result, so all diagrams, menus, and other stuff does not get rearranged with every little change
-		$this->ksortRecursive($machine_def);
-
-		return [ $machine_def, $errors ];
-	}
-
-
-	/**
-	 * Recursive implementation of ksort
-	 *
-	 * The $array is sorted in-place.
-	 */
-	private function ksortRecursive(array & $array): array
-	{
-		ksort($array);
-		foreach ($array as & $item) {
-			if (is_array($item)) {
-				$this->ksortRecursive($item);
+		// We have everything ready, time to build the state machine definition.
+		$builder = new StateMachineDefinitionBuilder();
+		foreach ($states as $state) {
+			$builder->addState($state);
+		}
+		foreach ($actions as $action_name => $action_transitions) {
+			$builder->addAction($action_name);
+			foreach ($action_transitions as $source_state => $target_states) {
+				$builder->addTransition($action_name, $source_state, $target_states);
 			}
 		}
-		return $array;
+
+		// Add errors to $builder so we won't use broken state machines
+		foreach ($errors as $error) {
+			$builder->addError($error['text']);
+		}
+
+		$builder->sortPlaceholders();
+		return $builder;
 	}
 
 

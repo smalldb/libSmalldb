@@ -49,6 +49,9 @@ class StateMachineDefinition
 	/** @var StateMachineGraph|null */
 	private $stateMachineGraph = null;
 
+	/** @var DefinitionError[] */
+	private $errors;
+
 	/** @var DebugDataBag[] */
 	private $debugData;
 
@@ -63,12 +66,13 @@ class StateMachineDefinition
 	 * @param TransitionDefinition[] $transitions
 	 * @param DebugDataBag[] $debugData
 	 */
-	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $debugData)
+	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $errors, array $debugData)
 	{
 		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;
+		$this->errors = $errors;
 		$this->debugData = $debugData;
 	}
 
@@ -154,6 +158,21 @@ class StateMachineDefinition
 	public function getDebugData(): array
 	{
 		return $this->debugData;
+	}
+
+
+	public function hasErrors(): bool
+	{
+		return empty($this->errors);
+	}
+
+
+	/**
+	 * @return DefinitionError[]
+	 */
+	public function getErrors(): array
+	{
+		return $this->errors;
 	}
 
 

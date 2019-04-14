@@ -16,7 +16,6 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
@@ -76,8 +75,13 @@ class BpmnTest extends TestCase
 		$output->setTitle(basename($bpmnFilename));
 
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
-		$bpmnReader->inferStateMachine("Participant_StateMachine");
+		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
 		$bpmnGraph = $bpmnReader->getBpmnGraph();
+
+		$definitionBuilder->setMachineType($machineType);
+		$definition = $definitionBuilder->build();
+		$output->addStateMachineGraph($definition);
+		$output->addHtml(Html::hr());
 
 		if ($svgFilename) {
 			$this->assertFileExists($svgFilename);
