@@ -202,4 +202,10 @@ class StateMachineDefinitionBuilder
 		return $this->errors;
 	}
 
+
+	public function hasErrors(): bool
+	{
+		return !empty($this->errors);
+	}
+
 }

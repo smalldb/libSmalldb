@@ -23,8 +23,10 @@ use Smalldb\StateMachine\BpmnGrafovatkoProcessor;
 use Smalldb\StateMachine\BpmnReader;
 use Smalldb\StateMachine\BpmnSvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Test\Example\TestTemplate\Html;
 use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
 
@@ -66,7 +68,7 @@ class BpmnTest extends TestCase
 	/**
 	 * @dataProvider bpmnFileProvider
 	 */
-	public function testBpmnDiagram(string $bpmnFilename, ?string $svgFilename)
+	public function testBpmnDiagram(string $bpmnFilename, ?string $svgFilename, bool $expectErrors = false)
 	{
 		$this->assertFileExists($bpmnFilename);
 		$machineType = preg_replace('/\.[^.]*$/', '', basename($bpmnFilename));
@@ -74,34 +76,48 @@ class BpmnTest extends TestCase
 		$output = new TestOutputTemplate();
 		$output->setTitle(basename($bpmnFilename));
 
+		// Read BPMN diagram
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
 		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
-		$bpmnGraph = $bpmnReader->getBpmnGraph();
-
 		$definitionBuilder->setMachineType($machineType);
+
+		// Infer the state machine
 		$definition = $definitionBuilder->build();
+		if ($expectErrors) {
+			$this->assertTrue($definition->hasErrors(), 'There should be some errors in the BPMN diagram.');
+		} else {
+			$this->assertNotTrue($definition->hasErrors(), 'There are unexpected errors in the BPMN diagram.');
+		}
 		$output->addStateMachineGraph($definition);
 		$output->addHtml(Html::hr());
 
+		// Assert the definition has a few reachable states
+		$reachableStates = $definition->findReachableStates();
+		$this->assertContainsOnlyInstancesOf(StateDefinition::class, $reachableStates);
+		$this->assertGreaterThanOrEqual(2, count($reachableStates), 'Failed to find at least two reachable states.');
+
+		// Get BPMN graph
+		$bpmnGraph = $bpmnReader->getBpmnGraph();
+		$this->assertInstanceOf(Graph::class, $bpmnGraph);
+
+		// Render BPMN diagram using the SVG image
 		if ($svgFilename) {
 			$this->assertFileExists($svgFilename);
 			$svgContent = file_get_contents($svgFilename);
 			$svgPainter = new BpmnSvgPainter();
 			$colorizedSvgContent = $svgPainter->colorizeSvgFile($svgContent, $bpmnGraph, [], '');
-			$targetSvgFilename  = $this->outputDir . '/' . basename($svgFilename);
-			file_put_contents($targetSvgFilename, $colorizedSvgContent);
-			$this->assertFileExists($targetSvgFilename);
-			$output->addHtml(Html::img(['src' => $output->resource($targetSvgFilename)]));
+
+			$svgUrl = $output->writeResource($svgFilename, $colorizedSvgContent);
+			$output->addHtml(Html::img(['src' => $svgUrl]));
 			$output->addHtml(Html::hr());
 		}
 
+		// Render BPMN diagram using Grafovatko
 		$renderer = new GrafovatkoExporter();
 		$renderer->addProcessor(new BpmnGrafovatkoProcessor());
 		$output->addGrafovatko();
 		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));
 
-
-		//$output->addStateMachineGraph($definition);
 		$output->writeHtmlFile(basename($bpmnFilename) . '.html');
 	}
 
@@ -112,7 +128,11 @@ class BpmnTest extends TestCase
 		foreach (glob($filesPattern) as $bpmnFilename) {
 			$basename = str_replace('.bpmn', '', basename($bpmnFilename));
 			$svgFilename = dirname($bpmnFilename) . '/' . $basename . '.svg';
-			yield $basename => [$bpmnFilename, file_exists($svgFilename) ? $svgFilename : null];
+			yield $basename => [
+				$bpmnFilename,
+				file_exists($svgFilename) ? $svgFilename : null,
+				false // expect no errors
+			];
 		}
 	}
 

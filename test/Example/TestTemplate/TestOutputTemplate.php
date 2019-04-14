@@ -136,6 +136,9 @@ class TestOutputTemplate implements Template
 	}
 
 
+	/**
+	 * Copy the file to the output directory and return relative URL of the file.
+	 */
 	public function resource(string $filename): string
 	{
 		$outputPath = $this->outputPath(basename($filename));
@@ -150,6 +153,23 @@ class TestOutputTemplate implements Template
 				throw new \RuntimeException('Failed to copy resource: ' . $filename);
 			}
 		}
+		return basename($outputPath);
+	}
+
+
+	/**
+	 * Write content to the file in the output directory and return relative URL of the file.
+	 *
+	 * @see file_put_contents()
+	 */
+	public function writeResource(string $filename, $content): string
+	{
+		$outputPath = $this->outputPath(basename($filename));
+
+		if (file_put_contents($outputPath, $content) === false) {
+			throw new \RuntimeException('Failed to copy resource: ' . $filename);
+		}
+
 		return basename($outputPath);
 	}
 
