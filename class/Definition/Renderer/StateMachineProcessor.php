@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Renderer;
 
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Grafovatko\ProcessorInterface;
@@ -29,12 +30,22 @@ use Smalldb\StateMachine\Graph\Node;
 
 class StateMachineProcessor implements ProcessorInterface
 {
+	private $horizontalLayout;
+
+	public function __construct(bool $horizontalLayout = false)
+	{
+		$this->horizontalLayout = $horizontalLayout;
+	}
+
 
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
 	 */
 	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
 	{
+		if ($graph instanceof StateMachineGraph) {
+			$exportedGraph['layoutOptions']['rankdir'] = $this->horizontalLayout ? 'LR' : 'TB';
+		}
 		return $exportedGraph;
 	}
 

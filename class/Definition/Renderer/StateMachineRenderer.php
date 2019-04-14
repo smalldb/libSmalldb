@@ -26,10 +26,10 @@ class StateMachineRenderer
 {
 	private $graphExporter;
 
-	public function __construct()
+	public function __construct(bool $horizontalLayout = false)
 	{
 		$this->graphExporter = new GrafovatkoExporter();
-		$this->graphExporter->addProcessor(new StateMachineProcessor());
+		$this->graphExporter->addProcessor(new StateMachineProcessor($horizontalLayout));
 	}
 
 
