@@ -25,9 +25,9 @@ use Smalldb\StateMachine\BpmnReader;
 use Smalldb\StateMachine\BpmnSvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Definition\Renderer\StateMachineRenderer;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
-use Symfony\Component\DependencyInjection\Dumper\GraphvizDumper;
+use Smalldb\StateMachine\Test\Example\TestTemplate\Html;
+use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
 
 
 class BpmnTest extends TestCase
@@ -41,72 +41,6 @@ class BpmnTest extends TestCase
 			$outputDirCreated = mkdir($this->outputDir);
 			$this->assertTrue($outputDirCreated, 'Failed to create output directory: ' . $this->outputDir);
 		}
-	}
-
-	public function tearDown(): void
-	{
-		$links = "";
-		$files = glob($this->outputDir . "/*");
-		natsort($files);
-		foreach ($files as $filename) {
-			$basename = basename($filename);
-			if ($basename !== 'index.html') {
-				$filenameHtml = htmlspecialchars(basename($filename));
-				$links .= "\t\t\t<li><a href=\"$filenameHtml\" target=\"view\">$filenameHtml</a></li>\n";
-			}
-		}
-		$firstFileHtml = htmlspecialchars('crud-item.html');
-
-		$html = <<<EOF
-				<!DOCTYPE HTML>
-				<html>
-				<head>
-					<title>Test outputs</title>
-					<meta charset="UTF-8">
-					<style type="text/css">
-						* {
-							box-sizing: border-box;
-						}
-						html, body {
-							display: flex;
-							align-content: stretch;
-							height: 100%;
-							width: 100%;
-							margin: 0;
-							padding: 0;
-						}
-						nav, iframe {
-							height: 100%;
-							display: block;
-						}
-						nav {
-							background: #eee;
-							padding: 1em;
-							border-right: 1px solid #666;
-						}
-						nav ul {
-							list-style: none;
-							margin: 0;
-							padding: 0;
-						}
-						nav ul li {
-							margin: 0.5em 0em;
-						}
-						iframe {
-							border: none;
-							flex-grow: 1;
-						}
-					</style>
-				</head>
-				<body>
-					<nav>
-						<ul>$links</ul>
-					</nav>
-					<iframe name="view" src="$firstFileHtml"></iframe>
-				</body>
-				EOF;
-
-		file_put_contents($this->outputDir . '/index.html', $html);
 	}
 
 
@@ -123,10 +57,10 @@ class BpmnTest extends TestCase
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 
 		// Render the result
-		$htmlFilename = $this->outputDir . '/' . $definition->getMachineType() . '.html';
-		$renderer = new StateMachineRenderer();
-		$renderer->renderSimpleHtmlPage($definition, $htmlFilename);
-		$this->assertFileExists($htmlFilename);
+		$output = new TestOutputTemplate();
+		$output->setTitle($definition->getMachineType());
+		$output->addStateMachineGraph($definition);
+		$output->writeHtmlFile('index.html');
 	}
 
 
@@ -136,17 +70,14 @@ class BpmnTest extends TestCase
 	public function testBpmnDiagram(string $bpmnFilename, ?string $svgFilename)
 	{
 		$this->assertFileExists($bpmnFilename);
-
 		$machineType = preg_replace('/\.[^.]*$/', '', basename($bpmnFilename));
+
+		$output = new TestOutputTemplate();
+		$output->setTitle(basename($bpmnFilename));
 
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
 		$bpmnReader->inferStateMachine("Participant_StateMachine");
 		$bpmnGraph = $bpmnReader->getBpmnGraph();
-
-		$htmlFilename = $this->outputDir . '/' . basename($bpmnFilename) . '.html';
-		$renderer = new GrafovatkoExporter();
-		$renderer->addProcessor(new BpmnGrafovatkoProcessor());
-		$renderer->exportHtmlFile($bpmnGraph, $htmlFilename);
 
 		if ($svgFilename) {
 			$this->assertFileExists($svgFilename);
@@ -156,15 +87,18 @@ class BpmnTest extends TestCase
 			$targetSvgFilename  = $this->outputDir . '/' . basename($svgFilename);
 			file_put_contents($targetSvgFilename, $colorizedSvgContent);
 			$this->assertFileExists($targetSvgFilename);
+			$output->addHtml(Html::img(['src' => $output->resource($targetSvgFilename)]));
+			$output->addHtml(Html::hr());
 		}
 
-		$this->markTestIncomplete();
+		$renderer = new GrafovatkoExporter();
+		$renderer->addProcessor(new BpmnGrafovatkoProcessor());
+		$output->addGrafovatko();
+		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));
 
-		// Render the result
-		$htmlFilename = $this->outputDir . '/' . $definition->getMachineType() . '.html';
-		$renderer = new StateMachineRenderer();
-		$renderer->renderSimpleHtmlPage($definition, $htmlFilename);
-		$this->assertFileExists($htmlFilename);
+
+		//$output->addStateMachineGraph($definition);
+		$output->writeHtmlFile(basename($bpmnFilename) . '.html');
 	}
 
 

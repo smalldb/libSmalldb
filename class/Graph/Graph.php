@@ -44,7 +44,7 @@ class Graph extends NestedGraph
 		if ($node instanceof Node) {
 			return $node;
 		} else {
-			throw new \LogicException("The requested element is not a node: $id");
+			throw new \LogicException("The requested element is not a node: $id"); //@codeCoverageIgnore
 		}
 	}
 
@@ -55,7 +55,7 @@ class Graph extends NestedGraph
 		if ($edge instanceof Edge) {
 			return $edge;
 		} else {
-			throw new \LogicException("The requested element is not an edge: $id");
+			throw new \LogicException("The requested element is not an edge: $id"); //@codeCoverageIgnore
 		}
 	}
 

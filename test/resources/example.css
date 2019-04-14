@@ -1,0 +1,89 @@
+* {
+	box-sizing: border-box;
+}
+
+html, body {
+	min-height: 100vh;
+	padding: 0;
+	margin: 0;
+	background: #fff;
+	color: #000;
+	font-family: "Noto Sans", "DejaVu Sans", Verdana, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: "URW Palladio L", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+	color: #5176be;
+	font-weight: normal;
+}
+
+
+body {
+	display: grid;
+	grid-template-columns: min-content auto;
+	grid-template-rows: auto;
+	grid-gap: 2em;
+	justify-items: stretch;
+	align-items: stretch;
+}
+
+nav {
+	grid-column: 1;
+	grid-row: 1;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	justify-content: start;
+	background: #eee;
+	min-height: 100%;
+	border-right: 1px solid #888;
+	box-shadow: 0 0 5px #aaa;
+	padding: 6rem 0rem 3rem 0rem;
+}
+
+	nav ul, nav li {
+		display: block;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	nav ul li a {
+		display: block;
+		padding: 0.5em 1em;
+		color: #555;
+		text-decoration: none;
+	}
+
+	nav ul li a:hover,
+	nav ul li a:focus,
+	nav ul li.active a {
+		background: #ddd;
+		color: #000;
+	}
+
+article {
+	grid-column: 2;
+	grid-row: 1;
+	padding-right: 2em;
+	padding-bottom: 3em;
+	min-width: 0;
+}
+
+h1 {
+	font-size: 3rem;
+	border-bottom: 1px solid #aaa;
+}
+
+svg, img {
+	overflow: visible;
+	display: block;
+	margin: 2em auto;
+	max-width: 100%;
+}
+
+hr {
+	margin: 2em 0;
+	border: none;
+	border-bottom: 1px solid #aaa;
+}
