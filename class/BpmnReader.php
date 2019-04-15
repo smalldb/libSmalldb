@@ -677,12 +677,15 @@ class BpmnReader
 			// Find task node (there should be a single incoming message flow)
 			$task_node = null;
 			foreach ($invoking_node->getConnectedEdges() as $edge) {
-				if ($edge->getAttr('type') == 'messageFlow' && $edge->getStart() === $invoking_node
-					&& $edge->getEnd()->getAttr('process') == $state_machine_process_id)
+				$edgeStart = $edge->getStart();
+				$edgeEnd = $edge->getEnd();
+				if ($edge->getAttr('type') == 'messageFlow' && $edgeStart === $invoking_node
+					&& $edgeEnd->getId() !== $state_machine_participant_id
+					&& $edgeEnd->getAttr('process') === $state_machine_process_id)
 				{
 					if ($task_node === null) {
 						// Found the first incoming message flow
-						$task_node = $edge->getEnd();
+						$task_node = $edgeEnd;
 					} else {
 						// Found the second incoming message flow -- do not propagate the state
 						$task_node = null;
