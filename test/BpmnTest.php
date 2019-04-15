@@ -219,51 +219,31 @@ class BpmnTest extends TestCase
 			$bpmnGraph = $this->generateNoodleBpmn($N);
 			$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 			$tStart = getrusage();
+			$bpmnReader->enableTimeLog();
 			$bpmnReader->inferStateMachine("Participant_StateMachine");
 			$tEnd = getrusage();
 			$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)
 				- ($tStart['ru_utime.tv_sec'] + $tStart['ru_utime.tv_usec'] / 1e6);
-			$this->storeBenchmarkResult($output, $testRunId, $N, $t_sec);
+			$timeLog = $bpmnReader->getTimeLog();
+			$this->storeBenchmarkResult($output, [
+				'id' => $testRunId,
+				'N' => $N, 't_sec' => $t_sec,
+				'mem_B' => memory_get_peak_usage(),
+				'log' => $timeLog]);
+		} else {
+			$testRunId = null;
 		}
 
 		// Print statistics
-		$output->addHtml(Html::hr());
-		$output->addHtml(Html::h2([], 'Benchmark Results'));
-		$results = $this->loadBenchmarkResults($output);
-		$datasets = [
-			$testRunId => [],
-		];
-		foreach ($results as ['id' => $id, 'N' => $N, 't_sec' => $t_sec]) {
-			$datasets[$id]['data'][] = ['x' => $N, 'y' => $t_sec];
-			//$output->addHtml(Html::p([], Html::text(sprintf("[%s]: N = %d, t = %0.1f ms.", $id, $N, $t_sec))));
-		}
-		foreach ($datasets as $id => & $dataset) {
-			if ($id === $testRunId) {
-				$dataset['borderColor'] = '#5176be';
-			} else {
-				$dataset['borderColor'] = '#dddddd';
-			}
-			$dataset['lineTension'] = 0;
-			$dataset['fill'] = false;
-			if (!empty($dataset['data'])) {
-				sort($dataset['data']);
-			}
-		}
-		unset($dataset);
-
-		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.slim.min.js');
-		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js');
-			// integrity="sha256-xKeoJ50pzbUGkpQxDYHD7o7hxe0LaOGeguUidbq6vis=" crossorigin="anonymous"
-		$output->addHtml(Html::canvas(['id' => 'plot', 'class' => 'plot', 'data-set' => array_values($datasets)]));
-		$output->addJs($output->resource('plot.js'));
+		$this->showTimeLogPlot($output, 'noodle-times.json', $testRunId);
 
 		$output->writeHtmlFile('noodle.html');
 	}
 
-	private function storeBenchmarkResult(TestOutputTemplate $output, int $testRunId, int $N, $t_sec)
+	private function storeBenchmarkResult(TestOutputTemplate $output, array $results)
 	{
 		$filename = $output->outputPath('noodle-times.json');
-		$data = json_encode(['id' => $testRunId, 'N' => $N, 't_sec' => $t_sec], JSON_NUMERIC_CHECK) . ",\n";
+		$data = json_encode($results, JSON_NUMERIC_CHECK) . ",\n";
 		if (file_put_contents($filename, $data, FILE_APPEND | LOCK_EX) === false) {
 			throw new \RuntimeException('Failed to store results: ' . $filename);
 		}
@@ -279,6 +259,63 @@ class BpmnTest extends TestCase
 		} else {
 			return [];
 		}
+	}
+
+	private function showTimeLogPlot(TestOutputTemplate $output, string $logFilename, $currentTestRunId)
+	{
+		$output->addHtml(Html::hr());
+		$output->addHtml(Html::h2([], 'Benchmark Results — Resource Usage'));
+		$results = $this->loadBenchmarkResults($output);
+		if (!$currentTestRunId) {
+			foreach ($results as $result) {
+				$id = $result['id'];
+				if (!$currentTestRunId || $id > $currentTestRunId) {
+					$currentTestRunId = $id;
+				}
+			}
+		}
+		$datasets = [
+			't'.$currentTestRunId.':' => [],
+			'm'.$currentTestRunId.':' => [],
+		];
+		if (isset($timeLog)) {
+			foreach ($timeLog as $pos => $t) {
+				$datasets['t' . $currentTestRunId . ':' . $pos] = [];
+			}
+		}
+		foreach ($results as $result) {
+			['id' => $id, 'N' => $N, 't_sec' => $t_sec, 'mem_B' => $mem_B] = $result;
+			$datasets['t'.$id.':']['data'][] = ['x' => $N, 'y' => $t_sec];
+			$datasets['m'.$id.':']['data'][] = ['x' => $N, 'y' => $mem_B/1048576];
+			if (isset($result['log'])) {
+				foreach ($result['log'] as $pos => $t) {
+					$datasets['t'.$id.':'.$pos]['data'][] = ['x' => $N, 'y' => $t];
+				}
+			}
+		}
+		foreach ($datasets as $id => & $dataset) {
+			[$r, $pos] = explode(':', $id);
+			if ($r === 't'.$currentTestRunId) {
+				$dataset['borderColor'] = ($pos !== '' ? '#889bbe' : '#5176be');
+			} else if ($r === 'm'.$currentTestRunId) {
+				$dataset['borderColor'] = ($pos !== '' ? '#79be92' : '#88be9b');
+			} else {
+				$dataset['borderColor'] = ($pos !== '' ? '#eeeeee' : '#dddddd');
+			}
+			$dataset['yAxisID'] = ($id[0] == 't' ? 'yTime' : 'yMem');
+			$dataset['lineTension'] = 0;
+			$dataset['fill'] = false;
+			if (!empty($dataset['data'])) {
+				sort($dataset['data']);
+			}
+		}
+		unset($dataset);
+
+		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.slim.min.js');
+		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js');
+		// integrity="sha256-xKeoJ50pzbUGkpQxDYHD7o7hxe0LaOGeguUidbq6vis=" crossorigin="anonymous"
+		$output->addHtml(Html::canvas(['id' => 'plot', 'class' => 'plot', 'data-set' => array_values($datasets)]));
+		$output->addJs($output->resource('plot.js'));
 	}
 
 	private function createBpmnPage(StateMachineDefinition $definition, Graph $bpmnGraph,
@@ -334,7 +371,7 @@ class BpmnTest extends TestCase
 	{
 		$id = time();
 
-		for ($N = 0; $N <= 200; $N += 50) {
+		for ($N = 100; $N <= 600; $N += (int)($N / 2)) {
 			yield "N = $N" => [$id, $N];
 		}
 	}

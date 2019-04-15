@@ -13,16 +13,40 @@ window.chart = new Chart($el[0], {
         },
         scales: {
             xAxes: [{
+                id: 'xN',
                 type: 'linear',
-                label: 'N',
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Number of tasks',
+                },
                 ticks: {
                     beginAtZero: true
                 }
             }],
             yAxes: [{
+                id: 'yTime',
                 type: 'linear',
-                label: 't',
+                scaleLabel: {
+                    display: false,
+                    labelString: 't[s]',
+                    fontColor: '#5176be',
+                },
                 ticks: {
+                    fontColor: '#5176be',
+                    callback: function(value, index, values) { return value + ' s'; },
+                    beginAtZero: true
+                }
+            }, {
+                id: 'yMem',
+                type: 'linear',
+	        scaleLabel: {
+                    display: false,
+                    labelString: 'mem[MB]',
+                    fontColor: '#51be76',
+                },
+                ticks: {
+                    fontColor: '#51be76',
+                    callback: function(value, index, values) { return value + ' MB'; },
                     beginAtZero: true
                 }
             }]

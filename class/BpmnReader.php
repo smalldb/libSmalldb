@@ -46,9 +46,51 @@ class BpmnReader
 	/** @var string|null */
 	private $svgFileName = null;
 
+	/** @var bool */
+	private $timeLogEnabled = false;
+
+	/** @var float */
+	private $timeStart;
+
+	/** @var float[] */
+	private $timeLog = [];
+
 
 	private function __construct()
 	{
+	}
+
+
+	private function logTimeStart(string $keyStart): void
+	{
+		if ($this->timeLogEnabled) {
+			$u = getrusage();
+			$t = ($u['ru_utime.tv_sec'] + $u['ru_utime.tv_usec'] / 1e6);
+			$this->timeStart = $t;
+			$this->timeLog = [$keyStart => 0];
+		}
+	}
+
+
+	private function logTime(string $key): void
+	{
+		if ($this->timeLogEnabled) {
+			$u = getrusage();
+			$t = ($u['ru_utime.tv_sec'] + $u['ru_utime.tv_usec'] / 1e6);
+			$this->timeLog[$key] = $t - $this->timeStart;
+		}
+	}
+
+
+	public function enableTimeLog(bool $enable = true)
+	{
+		$this->timeLogEnabled = $enable;
+	}
+
+
+	public function getTimeLog(): array
+	{
+		return $this->timeLog;
 	}
 
 
@@ -332,6 +374,8 @@ class BpmnReader
 
 	public function inferStateMachine(string $state_machine_participant_id, bool $rewriteGraph = false): StateMachineDefinitionBuilder
 	{
+		$this->logTimeStart('start');
+
 		$errors = [];
 
 		if (!$this->bpmnGraph) {
@@ -350,6 +394,8 @@ class BpmnReader
 		// Get participant
 		$stateMachineNode = $this->findParticipantNode($state_machine_participant_id);
 		$state_machine_process_id = $stateMachineNode->getAttr('process');
+
+		$this->logTime('init');
 
 		// Stage 1: Add implicit tasks to BPMN diagram -- invoking message flow targets
 		if ($rewriteGraph) {
@@ -372,6 +418,7 @@ class BpmnReader
 					$edge->setEnd($new_node);
 				}
 			}
+			$this->logTime('rewrite');
 		}
 
 		// Stage 1: Find message flows to state machine participant, identify
@@ -402,6 +449,7 @@ class BpmnReader
 				$target->setAttr('_potential_receiving', true);
 			}
 		}
+		$this->logTime('1-I-R+');
 
 		// Stage 1: Find receiving nodes for each invoking node
 		// (DFS to next task or event, the receiver cannot be further than that)
@@ -519,6 +567,7 @@ class BpmnReader
 				}
 			}
 		}
+		$this->logTime('1-R');
 
 		// Stage 1: Remove receiving tag from nodes without action
 		/** @var Node[] $active_receiving_nodes */
@@ -536,6 +585,7 @@ class BpmnReader
 				$node->setAttr('_receiving', false);
 			}
 		}
+		$this->logTime('1-rm');
 
 		// Stage 3: Detect state machine annotation symbol
 		$state_machine_participant_node = $this->bpmnGraph->getNodeById($state_machine_participant_id);
@@ -544,6 +594,7 @@ class BpmnReader
 		} else {
 			$state_machine_annotation_symbol = '@';
 		}
+		$this->logTime('3-ann');
 
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
@@ -596,6 +647,7 @@ class BpmnReader
 					.join(', ', $ann_state_names));
 			}
 		}
+		$this->logTime('3-ann-parse');
 
 		// Stage 2: State relation
 		foreach (array_merge($this->bpmnGraph->getNodesByAttr('type', 'startEvent'), $this->bpmnGraph->getNodesByAttr('_potential_receiving'))  as $receiving_node_id => $receiving_node) {
@@ -667,6 +719,7 @@ class BpmnReader
 				$this->addError($errors, 'Multiple annotations: ' . join(', ', $next_annotations_attr), [$receiving_node]);
 			}
 		}
+		$this->logTime('2-S');
 
 		// Implicit state propagation
 		foreach ($this->bpmnGraph->getNodesByAttr('_receiving') as $id => $receiving_node) {
@@ -735,6 +788,7 @@ class BpmnReader
 				}
 			}
 		}
+		$this->logTime('2-impl-S');
 
 		// Collect state relation
 		$state_relation = [];
@@ -766,18 +820,21 @@ class BpmnReader
 			}
 			$state_relation[$node->getId()] = [$node, $next_invoking_nodes, $state_name];
 		}
+		$this->logTime('2-S-rel');
 
 		// Collect transition relation
 		$transition_relation = [];
 		foreach ($this->bpmnGraph->getNodesByAttr('_invoking') as $node) {
 			$transition_relation[$node->getId()] = [$node, $node->getAttr('_receiving_nodes'), $node->getAttr('_action_name')];
 		}
+		$this->logTime('2-T-rel');
 
 		// Collect states from state relation (_next_invoking_nodes)
 		$states = [];
 		foreach ($state_relation as list($s_source, $t_targets, $state_name)) {
 			$states[$state_name] = $state_name;
 		}
+		$this->logTime('4-S');
 
 		// Collect actions by combining state relation with transition relation
 		$actions = [];
@@ -797,6 +854,7 @@ class BpmnReader
 				}
 			}
 		}
+		$this->logTime('4-T');
 
 		// We have everything ready, time to build the state machine definition.
 		$builder = new StateMachineDefinitionBuilder();
@@ -809,6 +867,7 @@ class BpmnReader
 				$builder->addTransition($action_name, $source_state, $target_states);
 			}
 		}
+		$this->logTime('4-def');
 
 		// Add errors to $builder so we won't use broken state machines
 		foreach ($errors as $error) {
@@ -816,6 +875,7 @@ class BpmnReader
 		}
 
 		$builder->sortPlaceholders();
+		$this->logTime('done');
 		return $builder;
 	}
 
