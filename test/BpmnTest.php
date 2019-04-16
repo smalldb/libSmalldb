@@ -199,6 +199,122 @@ class BpmnTest extends TestCase
 		return $bpmnGraph;
 	}
 
+	private function generateUserDecidesBpmn(int $taskCount = 7): Graph
+	{
+		$bpmnGraph = new Graph();
+
+		$userParticipant = $bpmnGraph->createNode('Participant_User', [
+			'id' => 'Participant_User',
+			'name' => 'User',
+			'type' => 'participant',
+			'process' => 'Process_User',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$stateMachineParticipant = $bpmnGraph->createNode('Participant_StateMachine', [
+			'id' => 'Participant_StateMachine',
+			'name' => 'State Machine',
+			'type' => 'participant',
+			'process' => 'Process_StateMachine',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$userGraph = $userParticipant->getNestedGraph();
+		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
+
+		// Create
+		$createTask = $this->createBpmnUserNode($userGraph, 'Create', 'task', 'Create issue');
+		$this->createSequenceFlow($startEvent, $createTask);
+		$this->createMessageFlow($createTask, $stateMachineParticipant, 'create');
+
+		// Do something
+		$processTask = $this->createBpmnUserNode($userGraph, 'Process', 'task', 'Process issue');
+		$this->createSequenceFlow($createTask, $processTask);
+
+		// Gateway
+		$gateway = $this->createBpmnUserNode($userGraph, 'GW', 'exclusiveGateway');
+		$this->createSequenceFlow($processTask, $gateway);
+
+		for ($n = 0; $n < $taskCount; $n++) {
+			// Store result
+			$resultTaskNode = $this->createBpmnUserNode($userGraph, 'ResultTask' . $n, 'task', 'Store result ' . $n);
+			$this->createSequenceFlow($gateway, $resultTaskNode);
+			$this->createMessageFlow($resultTaskNode, $stateMachineParticipant, 'storeResult'.$n);
+
+			// End
+			$endEvent = $this->createBpmnUserNode($userGraph, 'end'.$n, 'endEvent');
+			$this->createSequenceFlow($resultTaskNode, $endEvent);
+		}
+
+		$this->assertCount(2 * $taskCount + 6, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(3 * $taskCount + 4, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+
+		return $bpmnGraph;
+	}
+
+
+	private function generateMachineDecidesBpmn(int $taskCount = 7): Graph
+	{
+		$bpmnGraph = new Graph();
+
+		$userParticipant = $bpmnGraph->createNode('Participant_User', [
+			'id' => 'Participant_User',
+			'name' => 'User',
+			'type' => 'participant',
+			'process' => 'Process_User',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$stateMachineParticipant = $bpmnGraph->createNode('Participant_StateMachine', [
+			'id' => 'Participant_StateMachine',
+			'name' => 'State Machine',
+			'type' => 'participant',
+			'process' => 'Process_StateMachine',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$userGraph = $userParticipant->getNestedGraph();
+		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
+
+		// Create
+		$createTask = $this->createBpmnUserNode($userGraph, 'Create', 'task', 'Create issue');
+		$this->createSequenceFlow($startEvent, $createTask);
+		$this->createMessageFlow($createTask, $stateMachineParticipant, 'create');
+
+		// Do something
+		$processTask = $this->createBpmnUserNode($userGraph, 'Process', 'task', 'Process issue');
+		$this->createSequenceFlow($createTask, $processTask);
+
+		// Store result
+		$storeResultTask = $this->createBpmnUserNode($userGraph, 'ResultTask', 'task', 'Store result');
+		$this->createSequenceFlow($processTask, $storeResultTask);
+		$this->createMessageFlow($storeResultTask, $stateMachineParticipant, 'storeResult');
+
+		// Gateway
+		$gateway = $this->createBpmnUserNode($userGraph, 'GW', 'eventBasedGateway');
+		$this->createSequenceFlow($storeResultTask, $gateway);
+
+		for ($n = 0; $n < $taskCount; $n++) {
+			// Store result
+			$resultTaskNode = $this->createBpmnUserNode($userGraph, 'ReceiveResultTask' . $n, 'intermediateCatchEvent');
+			$this->createSequenceFlow($gateway, $resultTaskNode);
+			$this->createMessageFlow($stateMachineParticipant, $resultTaskNode, 'result'.$n);
+
+			// End
+			$endEvent = $this->createBpmnUserNode($userGraph, 'end'.$n, 'endEvent');
+			$this->createSequenceFlow($resultTaskNode, $endEvent);
+		}
+
+		$this->assertCount(2 * $taskCount + 7, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(3 * $taskCount + 6, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+
+		return $bpmnGraph;
+	}
+
 
 	/**
 	 * @dataProvider noodleTimeProvider
@@ -207,51 +323,89 @@ class BpmnTest extends TestCase
 	{
 		// Example of the generated graph
 		$bpmnGraph = $this->generateNoodleBpmn(7);
+		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'noodle', 'Generated Noodle', true);
+	}
+
+	/**
+	 * @dataProvider noodleTimeProvider
+	 */
+	public function testGeneratedBpmnUserDecides(int $testRunId = 0, int $N = 0)
+	{
+		// Example of the generated graph
+		$bpmnGraph = $this->generateUserDecidesBpmn(7);
+		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'user-decides', 'Generated UserDecides', false);
+	}
+
+
+	/**
+	 * @dataProvider noodleTimeProvider
+	 */
+	public function testGeneratedBpmnMachineDecides(int $testRunId = 0, int $N = 0)
+	{
+		// Example of the generated graph
+		$bpmnGraph = $this->generateMachineDecidesBpmn(7);
+		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'machine-decides', 'Generated MachineDecides', false);
+	}
+
+
+	private function runGeneratedTest(int $testRunId, int $N,
+		Graph $bpmnGraph, string $machineType, string $title, bool $horizontalLayout = false)
+	{
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
-		$definitionBuilder->setMachineType('noodle');
+		$definitionBuilder->setMachineType($machineType);
 		$definition = $definitionBuilder->build();
 
-		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), 'Generated Noodle', null, true);
+		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), $title, null, $horizontalLayout);
 
 		// Run the benchmark for $N
 		if ($N > 0) {
 			$bpmnGraph = $this->generateNoodleBpmn($N);
-			$bpmnReader = BpmnReader::readGraph($bpmnGraph);
-			$tStart = getrusage();
-			$bpmnReader->enableTimeLog();
-			$bpmnReader->inferStateMachine("Participant_StateMachine");
-			$tEnd = getrusage();
-			$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)
-				- ($tStart['ru_utime.tv_sec'] + $tStart['ru_utime.tv_usec'] / 1e6);
-			$timeLog = $bpmnReader->getTimeLog();
-			$this->storeBenchmarkResult($output, [
-				'id' => $testRunId,
-				'N' => $N, 't_sec' => $t_sec,
-				'mem_B' => memory_get_peak_usage(),
-				'log' => $timeLog]);
+			$this->runBenchmark($output, $machineType, $bpmnGraph, $testRunId, $N);
 		} else {
 			$testRunId = null;
+			$curTimeLog = null;
 		}
 
 		// Print statistics
-		$this->showTimeLogPlot($output, 'noodle-times.json', $testRunId);
+		$this->showTimeLogPlot($output, "$machineType-times.json", $testRunId);
 
-		$output->writeHtmlFile('noodle.html');
+		$output->writeHtmlFile("$machineType.html");
 	}
 
-	private function storeBenchmarkResult(TestOutputTemplate $output, array $results)
+	private function runBenchmark(TestOutputTemplate $output, string $machineType, Graph $bpmnGraph, $testRunId, int $N)
 	{
-		$filename = $output->outputPath('noodle-times.json');
+		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
+
+		$tStart = getrusage();
+
+		$bpmnReader->enableTimeLog();
+		$bpmnReader->inferStateMachine("Participant_StateMachine");
+
+		$tEnd = getrusage();
+		$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)
+			- ($tStart['ru_utime.tv_sec'] + $tStart['ru_utime.tv_usec'] / 1e6);
+		$timeLog = $bpmnReader->getTimeLog();
+
+		$this->storeBenchmarkResult($output, "$machineType-times.json", [
+			'id' => $testRunId,
+			'N' => $N, 't_sec' => $t_sec,
+			'mem_B' => memory_get_peak_usage(),
+			'log' => $timeLog]);
+	}
+
+	private function storeBenchmarkResult(TestOutputTemplate $output, string $filename, array $results)
+	{
+		$filename = $output->outputPath($filename);
 		$data = json_encode($results, JSON_NUMERIC_CHECK) . ",\n";
 		if (file_put_contents($filename, $data, FILE_APPEND | LOCK_EX) === false) {
 			throw new \RuntimeException('Failed to store results: ' . $filename);
 		}
 	}
 
-	private function loadBenchmarkResults(TestOutputTemplate $output): array
+	private function loadBenchmarkResults(TestOutputTemplate $output, $logFilename): array
 	{
-		$filename = $output->outputPath('noodle-times.json');
+		$filename = $output->outputPath($logFilename);
 		if (file_exists($filename)) {
 			$data = file_get_contents($filename);
 			$results = json_decode('[' . trim($data, ",\n") . ']', true);
@@ -261,32 +415,24 @@ class BpmnTest extends TestCase
 		}
 	}
 
-	private function showTimeLogPlot(TestOutputTemplate $output, string $logFilename, $currentTestRunId)
+	private function showTimeLogPlot(TestOutputTemplate $output, string $logFilename, $curTestRunId)
 	{
 		$output->addHtml(Html::hr());
 		$output->addHtml(Html::h2([], 'Benchmark Results — Resource Usage'));
-		$results = $this->loadBenchmarkResults($output);
-		if (!$currentTestRunId) {
+		$results = $this->loadBenchmarkResults($output, $logFilename);
+		if (!$curTestRunId) {
 			foreach ($results as $result) {
 				$id = $result['id'];
-				if (!$currentTestRunId || $id > $currentTestRunId) {
-					$currentTestRunId = $id;
+				if ($id > $curTestRunId) {
+					$curTestRunId = $id;
 				}
 			}
 		}
-		$datasets = [
-			't'.$currentTestRunId.':' => [],
-			'm'.$currentTestRunId.':' => [],
-		];
-		if (isset($timeLog)) {
-			foreach ($timeLog as $pos => $t) {
-				$datasets['t' . $currentTestRunId . ':' . $pos] = [];
-			}
-		}
+		$datasets = [];
 		foreach ($results as $result) {
 			['id' => $id, 'N' => $N, 't_sec' => $t_sec, 'mem_B' => $mem_B] = $result;
-			$datasets['t'.$id.':']['data'][] = ['x' => $N, 'y' => $t_sec];
-			$datasets['m'.$id.':']['data'][] = ['x' => $N, 'y' => $mem_B/1048576];
+			$datasets['T'.$id.':~']['data'][] = ['x' => $N, 'y' => $t_sec];
+			$datasets['m'.$id.':~']['data'][] = ['x' => $N, 'y' => $mem_B/1048576];
 			if (isset($result['log'])) {
 				foreach ($result['log'] as $pos => $t) {
 					$datasets['t'.$id.':'.$pos]['data'][] = ['x' => $N, 'y' => $t];
@@ -295,14 +441,14 @@ class BpmnTest extends TestCase
 		}
 		foreach ($datasets as $id => & $dataset) {
 			[$r, $pos] = explode(':', $id);
-			if ($r === 't'.$currentTestRunId) {
-				$dataset['borderColor'] = ($pos !== '' ? '#889bbe' : '#5176be');
-			} else if ($r === 'm'.$currentTestRunId) {
-				$dataset['borderColor'] = ($pos !== '' ? '#79be92' : '#88be9b');
+			if ($r === 'T'.$curTestRunId) {
+				$dataset['borderColor'] = ($pos !== '~' ? '#96acd1' : '#5176be');
+			} else if ($r === 'm'.$curTestRunId) {
+				$dataset['borderColor'] = ($pos !== '~' ? '#79be92' : '#88be9b');
 			} else {
-				$dataset['borderColor'] = ($pos !== '' ? '#eeeeee' : '#dddddd');
+				$dataset['borderColor'] = ($pos !== '~' ? '#eeeeee' : '#dddddd');
 			}
-			$dataset['yAxisID'] = ($id[0] == 't' ? 'yTime' : 'yMem');
+			$dataset['yAxisID'] = ($id[0] == 'T' ? 'yTime' : 'yMem');
 			$dataset['lineTension'] = 0;
 			$dataset['fill'] = false;
 			if (!empty($dataset['data'])) {
@@ -310,6 +456,8 @@ class BpmnTest extends TestCase
 			}
 		}
 		unset($dataset);
+
+		krsort($datasets);
 
 		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.0/jquery.slim.min.js');
 		$output->addJs('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js');
@@ -371,7 +519,7 @@ class BpmnTest extends TestCase
 	{
 		$id = time();
 
-		for ($N = 100; $N <= 600; $N += (int)($N / 2)) {
+		for ($N = 150; $N <= 25000; $N += (int)($N / 2)) {
 			yield "N = $N" => [$id, $N];
 		}
 	}
