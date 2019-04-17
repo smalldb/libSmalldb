@@ -305,7 +305,7 @@ class BpmnTest extends TestCase
 			$this->createMessageFlow($stateMachineParticipant, $resultReceiveNode, 'result'.$n);
 
 			// Process result
-			$resultProcessTask = $this->createBpmnUserNode($userGraph, 'ProcessResultTask' . $n, 'task', 'Process result ' . $n);
+			$resultProcessTask = $this->createBpmnUserNode($userGraph, 'ProcessResultTask' . $n, 'task', '@Result' . $n);
 			$this->createSequenceFlow($resultReceiveNode, $resultProcessTask);
 
 			// End
@@ -619,7 +619,7 @@ class BpmnTest extends TestCase
 	{
 		$id = time();
 
-		for ($N = 150; $N <= 3000; $N += (int)($N / 2)) {
+		for ($N = 150; $N <= 300; $N += (int)($N / 2)) {
 			yield "N = $N" => [$id, $N];
 		}
 	}
