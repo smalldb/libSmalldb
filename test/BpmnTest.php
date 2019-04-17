@@ -361,7 +361,8 @@ class BpmnTest extends TestCase
 		// Run the benchmark for $N
 		if ($N > 0) {
 			$bpmnGraph = $this->generateNoodleBpmn($N);
-			$this->runBenchmark($output, $machineType, $bpmnGraph, $testRunId, $N);
+			$nEV = count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges());
+			$this->runBenchmark($output, $machineType, $bpmnGraph, $testRunId, $nEV);
 		} else {
 			$testRunId = null;
 			$curTimeLog = null;
@@ -377,6 +378,7 @@ class BpmnTest extends TestCase
 	{
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 
+		gc_collect_cycles();
 		$tStart = getrusage();
 
 		$bpmnReader->enableTimeLog();
@@ -390,7 +392,7 @@ class BpmnTest extends TestCase
 		$this->storeBenchmarkResult($output, "$machineType-times.json", [
 			'id' => $testRunId,
 			'N' => $N, 't_sec' => $t_sec,
-			'mem_B' => memory_get_peak_usage(),
+			'mem_B' => memory_get_usage(false),
 			'log' => $timeLog]);
 	}
 
@@ -435,7 +437,9 @@ class BpmnTest extends TestCase
 			$datasets['m'.$id.':~']['data'][] = ['x' => $N, 'y' => $mem_B/1048576];
 			if (isset($result['log'])) {
 				foreach ($result['log'] as $pos => $t) {
-					$datasets['t'.$id.':'.$pos]['data'][] = ['x' => $N, 'y' => $t];
+					if ($t > 0 && $t < $t_sec) {
+						$datasets['T' . $id . ':' . $pos]['data'][] = ['x' => $N, 'y' => $t];
+					}
 				}
 			}
 		}
@@ -448,7 +452,7 @@ class BpmnTest extends TestCase
 			} else {
 				$dataset['borderColor'] = ($pos !== '~' ? '#eeeeee' : '#dddddd');
 			}
-			$dataset['yAxisID'] = ($id[0] == 'T' ? 'yTime' : 'yMem');
+			$dataset['yAxisID'] = ($r[0] == 'm' ? 'yMem' : 'yTime');
 			$dataset['lineTension'] = 0;
 			$dataset['fill'] = false;
 			if (!empty($dataset['data'])) {
@@ -519,7 +523,7 @@ class BpmnTest extends TestCase
 	{
 		$id = time();
 
-		for ($N = 150; $N <= 25000; $N += (int)($N / 2)) {
+		for ($N = 150; $N <= 3000; $N += (int)($N / 2)) {
 			yield "N = $N" => [$id, $N];
 		}
 	}

@@ -17,7 +17,7 @@ window.chart = new Chart($el[0], {
                 type: 'linear',
                 scaleLabel: {
                     display: true,
-                    labelString: 'Number of tasks',
+                    labelString: 'Number of nodes and edges in the BPMN graph',
                 },
                 ticks: {
                     beginAtZero: true
