@@ -36,7 +36,17 @@ use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
 
 class BpmnTest extends TestCase
 {
+	/** @var int Minimum number of tasks to generate */
+	const MIN_N = 150;
+
+	/** @var int Maximum number of tasks to generate */
+	const MAX_N = 3000;
+
+	/** @var int Fraction of N to add each step ($N += $N / N_STEP_FRACTION) */
+	const N_STEP_FRACTION = 3;
+
 	private $outputDir;
+
 
 	public function setUp(): void
 	{
@@ -98,6 +108,7 @@ class BpmnTest extends TestCase
 			->writeHtmlFile($bpmnFilename . '.html');
 	}
 
+
 	private function createBpmnUserNode(NestedGraph $userGraph, string $id, string $type, ?string $name = null, string $process = 'Process_User'): Node
 	{
 		return $userGraph->createNode($id, [
@@ -110,13 +121,7 @@ class BpmnTest extends TestCase
 		]);
 	}
 
-	/**
-	 * @param string $type
-	 * @param Node $sourceNode
-	 * @param Node $targetNode
-	 * @param string|null $name
-	 * @return Edge
-	 */
+
 	private function createEdge(string $type, Node $sourceNode, Node $targetNode, ?string $name = null): Edge
 	{
 		// Find appropriate graph where we should place the edge
@@ -134,23 +139,13 @@ class BpmnTest extends TestCase
 		]);
 	}
 
-	/**
-	 * @param string|Node $sourceNode
-	 * @param string|Node $targetNode
-	 * @param string|null $name
-	 * @return Edge
-	 */
+
 	private function createSequenceFlow(Node $sourceNode, Node $targetNode): Edge
 	{
 		return $this->createEdge('sequenceFlow', $sourceNode, $targetNode);
 	}
 
 
-	/**
-	 * @param string|Node $sourceNode
-	 * @param string|null $name
-	 * @return Edge
-	 */
 	private function createMessageFlow(Node $sourceNode, Node $targetNode, string $transitionName): Edge
 	{
 		return $this->createEdge('messageFlow', $sourceNode, $targetNode, $transitionName);
@@ -198,6 +193,7 @@ class BpmnTest extends TestCase
 
 		return $bpmnGraph;
 	}
+
 
 	private function generateUserDecidesBpmn(int $taskCount = 7): Graph
 	{
@@ -319,6 +315,7 @@ class BpmnTest extends TestCase
 		return $bpmnGraph;
 	}
 
+
 	private function generateBothDecideBpmn(int $taskCount = 9): Graph
 	{
 		$realTaskCount = (int) sqrt($taskCount);
@@ -403,50 +400,11 @@ class BpmnTest extends TestCase
 
 
 	/**
-	 * @dataProvider noodleTimeProvider
+	 * @dataProvider generatedTestProvider
 	 */
-	public function testGeneratedBpmnNoodle(int $testRunId = 0, int $N = 0)
+	public function testGeneratedBpmn(int $testRunId, int $N, callable $bpmnGraphGenerator, string $machineType, string $title, bool $horizontalLayout)
 	{
-		// Example of the generated graph
-		$bpmnGraph = $this->generateNoodleBpmn(7);
-		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'noodle', 'Generated Noodle', true);
-	}
-
-	/**
-	 * @dataProvider noodleTimeProvider
-	 */
-	public function testGeneratedBpmnUserDecides(int $testRunId = 0, int $N = 0)
-	{
-		// Example of the generated graph
-		$bpmnGraph = $this->generateUserDecidesBpmn(7);
-		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'user-decides', 'Generated UserDecides', false);
-	}
-
-
-	/**
-	 * @dataProvider noodleTimeProvider
-	 */
-	public function testGeneratedBpmnMachineDecides(int $testRunId = 0, int $N = 0)
-	{
-		// Example of the generated graph
-		$bpmnGraph = $this->generateMachineDecidesBpmn(7);
-		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'machine-decides', 'Generated MachineDecides', false);
-	}
-
-	/**
-	 * @dataProvider noodleTimeProvider
-	 */
-	public function testGeneratedBpmnBothDecide(int $testRunId = 0, int $N = 0)
-	{
-		// Example of the generated graph
-		$bpmnGraph = $this->generateBothDecideBpmn(9);
-		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'mess', 'Generated Mess', false);
-	}
-
-
-	private function runGeneratedTest(int $testRunId, int $N,
-		Graph $bpmnGraph, string $machineType, string $title, bool $horizontalLayout = false)
-	{
+		$bpmnGraph = $bpmnGraphGenerator(9);
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
 		$definitionBuilder->setMachineType($machineType);
@@ -456,7 +414,8 @@ class BpmnTest extends TestCase
 
 		// Run the benchmark for $N
 		if ($N > 0) {
-			$bpmnGraph = $this->generateNoodleBpmn($N);
+			/** @var Graph $bpmnGraph */
+			$bpmnGraph = $bpmnGraphGenerator($N);
 			$nEV = count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges());
 			$this->runBenchmark($output, $machineType, $bpmnGraph, $testRunId, $nEV);
 		} else {
@@ -469,6 +428,7 @@ class BpmnTest extends TestCase
 
 		$output->writeHtmlFile("$machineType.html");
 	}
+
 
 	private function runBenchmark(TestOutputTemplate $output, string $machineType, Graph $bpmnGraph, $testRunId, int $N)
 	{
@@ -541,6 +501,9 @@ class BpmnTest extends TestCase
 		}
 		foreach ($datasets as $id => & $dataset) {
 			[$r, $pos] = explode(':', $id);
+			$testRunId = substr($r, 1);
+			$dataset['label'] = ($r[0] == 'm' ? "Memory usage [$testRunId]"
+				: ($pos !== '~' ? "Time @ $pos [$testRunId]" : "Total time [$testRunId]"));
 			if ($r === 'T'.$curTestRunId) {
 				$dataset['borderColor'] = ($pos !== '~' ? '#96acd1' : '#5176be');
 			} else if ($r === 'm'.$curTestRunId) {
@@ -615,12 +578,21 @@ class BpmnTest extends TestCase
 	}
 
 
-	public function noodleTimeProvider()
+	public function generatedTestProvider()
 	{
+		$generatedTests = [
+			'noodle' => ['Generated Task Noodle', true, function ($N) { return $this->generateNoodleBpmn($N); }],
+			'user-decides' => ['Generated User Decides', false, function ($N) { return $this->generateUserDecidesBpmn($N); }],
+			'machine-decides' => ['Generated Machine Decides', false, function ($N) { return $this->generateMachineDecidesBpmn($N); }],
+			'both-decide' => ['Generated Both Decide', false, function ($N) { return $this->generateBothDecideBpmn($N); }],
+		];
+
 		$id = time();
 
-		for ($N = 150; $N <= 300; $N += (int)($N / 2)) {
-			yield "N = $N" => [$id, $N];
+		for ($N = min(self::MIN_N, self::MAX_N); $N <= self::MAX_N; $N += max((int)($N / self::N_STEP_FRACTION), 1)) {
+			foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator]) {
+				yield "$machineType: N = $N" => [$id, $N, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
+			}
 		}
 	}
 

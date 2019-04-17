@@ -45,7 +45,7 @@ class NavigationTemplate implements Template
 				$this->item('noodle.html', 'Generated Noodle'),
 				$this->item('user-decides.html', 'Generated User Decides'),
 				$this->item('machine-decides.html', 'Generated Machine Decides'),
-				$this->item('mess.html', 'Generated Both Decide'),
+				$this->item('both-decide.html', 'Generated Both Decide'),
 			));
 	}
 
