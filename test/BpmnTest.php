@@ -299,18 +299,104 @@ class BpmnTest extends TestCase
 		$this->createSequenceFlow($storeResultTask, $gateway);
 
 		for ($n = 0; $n < $taskCount; $n++) {
-			// Store result
-			$resultTaskNode = $this->createBpmnUserNode($userGraph, 'ReceiveResultTask' . $n, 'intermediateCatchEvent');
-			$this->createSequenceFlow($gateway, $resultTaskNode);
-			$this->createMessageFlow($stateMachineParticipant, $resultTaskNode, 'result'.$n);
+			// Receive result
+			$resultReceiveNode = $this->createBpmnUserNode($userGraph, 'ReceiveResultTask' . $n, 'intermediateCatchEvent');
+			$this->createSequenceFlow($gateway, $resultReceiveNode);
+			$this->createMessageFlow($stateMachineParticipant, $resultReceiveNode, 'result'.$n);
+
+			// Process result
+			$resultProcessTask = $this->createBpmnUserNode($userGraph, 'ProcessResultTask' . $n, 'task', 'Process result ' . $n);
+			$this->createSequenceFlow($resultReceiveNode, $resultProcessTask);
 
 			// End
 			$endEvent = $this->createBpmnUserNode($userGraph, 'end'.$n, 'endEvent');
-			$this->createSequenceFlow($resultTaskNode, $endEvent);
+			$this->createSequenceFlow($resultProcessTask, $endEvent);
 		}
 
-		$this->assertCount(2 * $taskCount + 7, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
-		$this->assertCount(3 * $taskCount + 6, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertCount(3 * $taskCount + 7, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(4 * $taskCount + 6, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+
+		return $bpmnGraph;
+	}
+
+	private function generateBothDecideBpmn(int $taskCount = 9): Graph
+	{
+		$realTaskCount = (int) sqrt($taskCount);
+
+		$bpmnGraph = new Graph();
+
+		$userParticipant = $bpmnGraph->createNode('Participant_User', [
+			'id' => 'Participant_User',
+			'name' => 'User',
+			'type' => 'participant',
+			'process' => 'Process_User',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$stateMachineParticipant = $bpmnGraph->createNode('Participant_StateMachine', [
+			'id' => 'Participant_StateMachine',
+			'name' => 'State Machine',
+			'type' => 'participant',
+			'process' => 'Process_StateMachine',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$userGraph = $userParticipant->getNestedGraph();
+		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
+
+		// Create
+		$createTask = $this->createBpmnUserNode($userGraph, 'Create', 'task', 'Create issue');
+		$this->createSequenceFlow($startEvent, $createTask);
+		$this->createMessageFlow($createTask, $stateMachineParticipant, 'create');
+
+		// Gateway
+		$gateway = $this->createBpmnUserNode($userGraph, 'GW', 'exclusiveGateway');
+		$this->createSequenceFlow($createTask, $gateway);
+
+		$processTasks = [];
+
+		for ($n = 0; $n < $realTaskCount; $n++) {
+			// Process Issue
+			$processTask = $processTasks[$n] = $this->createBpmnUserNode($userGraph, 'ProcessIssute' . $n, 'task', 'Process Issue ' . $n);
+			$this->createSequenceFlow($gateway, $processTask);
+			$this->createMessageFlow($processTask, $stateMachineParticipant, 'storeResult'.$n);
+		}
+
+		$gateways = [];
+
+		for ($n = 0; $n < $realTaskCount; $n++) {
+			// Store result
+			$storeResultTask = $this->createBpmnUserNode($userGraph, 'ResultTask' . $n, 'task', 'Store result ' . $n);
+			$this->createSequenceFlow($processTasks[$n], $storeResultTask);
+			$this->createMessageFlow($storeResultTask, $stateMachineParticipant, 'storeResult' . $n);
+
+			// Gateway
+			$gateway = $gateways[$n] = $this->createBpmnUserNode($userGraph, 'GW'. $n, 'eventBasedGateway');
+			$this->createSequenceFlow($storeResultTask, $gateway);
+		}
+
+		for ($n = 0; $n < $realTaskCount; $n++) {
+			// Receive result
+			$resultReceiveNode = $this->createBpmnUserNode($userGraph, 'ReceiveResultTask' . $n, 'intermediateCatchEvent');
+			for ($ng = 0; $ng < $realTaskCount; $ng++) {
+				$this->createSequenceFlow($gateways[$ng], $resultReceiveNode);
+			}
+			$this->createMessageFlow($stateMachineParticipant, $resultReceiveNode, 'result'.$n);
+
+			// Process result
+			$resultProcessTask = $this->createBpmnUserNode($userGraph, 'ProcessResultTask' . $n, 'task', 'Process result ' . $n);
+			$this->createSequenceFlow($resultReceiveNode, $resultProcessTask);
+			$this->createMessageFlow($resultProcessTask, $stateMachineParticipant, 'processResult'.$n);
+
+			// End
+			$endEvent = $this->createBpmnUserNode($userGraph, 'end'.$n, 'endEvent');
+			$this->createSequenceFlow($resultProcessTask, $endEvent);
+		}
+
+		$this->assertCount(3 + 3 * $realTaskCount + 3 * $realTaskCount + 2, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(3 + 5 * $realTaskCount + $realTaskCount * ($realTaskCount + 1) + 3 * $realTaskCount, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
 
 		return $bpmnGraph;
 	}
@@ -345,6 +431,16 @@ class BpmnTest extends TestCase
 		// Example of the generated graph
 		$bpmnGraph = $this->generateMachineDecidesBpmn(7);
 		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'machine-decides', 'Generated MachineDecides', false);
+	}
+
+	/**
+	 * @dataProvider noodleTimeProvider
+	 */
+	public function testGeneratedBpmnBothDecide(int $testRunId = 0, int $N = 0)
+	{
+		// Example of the generated graph
+		$bpmnGraph = $this->generateBothDecideBpmn(9);
+		$this->runGeneratedTest($testRunId, $N, $bpmnGraph, 'mess', 'Generated Mess', false);
 	}
 
 
