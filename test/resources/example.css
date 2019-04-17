@@ -47,6 +47,15 @@ nav {
 		white-space: nowrap;
 	}
 
+	nav ul {
+		padding-bottom: 0.5em;
+	}
+
+	nav ul + ul {
+		border-top: 1px solid #ddd;
+		padding-top: 0.5em;
+	}
+
 	nav ul li a {
 		display: block;
 		padding: 0.5em 1em;
