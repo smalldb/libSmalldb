@@ -178,7 +178,7 @@ class BpmnTest extends TestCase
 		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
 		$endEvent = $this->createBpmnUserNode($userGraph, 'end', 'endEvent');
 
-		// Create a simple tasks
+		// Create simple tasks
 		$prevNode = $startEvent;
 		for ($t = 0; $t < $taskCount; $t++) {
 			$taskNode = $this->createBpmnUserNode($userGraph, 'Task'.$t, 'task');
@@ -398,6 +398,83 @@ class BpmnTest extends TestCase
 		return $bpmnGraph;
 	}
 
+	private function generateTShapeBpmn(int $taskCount = 9): Graph
+	{
+		// This case has quadratic complexity, so we reduce input size to keep run time at the same level as other tests.
+		$taskCount = (int) sqrt($taskCount);
+
+		$sideTaskCount = (int)($taskCount / 2);
+		$bpmnGraph = new Graph();
+
+		$userParticipant = $bpmnGraph->createNode('Participant_User', [
+			'id' => 'Participant_User',
+			'name' => 'User',
+			'type' => 'participant',
+			'process' => 'Process_User',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$stateMachineParticipant = $bpmnGraph->createNode('Participant_StateMachine', [
+			'id' => 'Participant_StateMachine',
+			'name' => 'State Machine',
+			'type' => 'participant',
+			'process' => 'Process_StateMachine',
+			'features' => [],
+			'_generated' => false,
+		]);
+
+		$userGraph = $userParticipant->getNestedGraph();
+		$startEvent = $this->createBpmnUserNode($userGraph, 'start', 'startEvent');
+		$endEvent = $this->createBpmnUserNode($userGraph, 'end', 'endEvent');
+
+		// Create
+		$createTask = $this->createBpmnUserNode($userGraph, 'Create', 'task', 'Create issue');
+		$this->createSequenceFlow($startEvent, $createTask);
+		$this->createMessageFlow($createTask, $stateMachineParticipant, 'create');
+
+		// Gateway - Split
+		$gatewaySplit = $this->createBpmnUserNode($userGraph, 'GW1', 'exclusiveGateway');
+		$this->createSequenceFlow($createTask, $gatewaySplit);
+
+		// Gateway - Merge
+		$gatewayMerge = $this->createBpmnUserNode($userGraph, 'GW2', 'exclusiveGateway');
+
+		// Create paralel tasks
+		for ($t = 0; $t < $sideTaskCount; $t++) {
+			$taskNode = $this->createBpmnUserNode($userGraph, 'Task'.$t, 'task');
+			$this->createSequenceFlow($gatewaySplit, $taskNode);
+			$this->createSequenceFlow($taskNode, $gatewayMerge);
+			$this->createMessageFlow($taskNode, $stateMachineParticipant, 't' . $t);
+		}
+
+		// Alternative endi in the middle
+		$altEndTask = $this->createBpmnUserNode($userGraph, 'altEndTask', 'task');
+		$altEndEvent = $this->createBpmnUserNode($userGraph, 'altEndEvent', 'endEvent');
+		$this->createSequenceFlow($altEndTask, $altEndEvent);
+		$this->createMessageFlow($altEndTask, $stateMachineParticipant, 'tx');
+		$altSeqFlow = null;
+
+		// Create simple tasks
+		$prevNode = $gatewayMerge;
+		for ($t = $sideTaskCount; $t < $taskCount; $t++) {
+			$taskNode = $this->createBpmnUserNode($userGraph, 'Task'.$t, 'task');
+			$this->createSequenceFlow($prevNode, $taskNode);
+			$prevNode = $taskNode;
+
+			if ($t >= (int) ($taskCount * 2 / 3) && $altSeqFlow === null) {
+				$altSeqFlow = $this->createSequenceFlow($taskNode, $altEndTask);
+			}
+		}
+		$this->createMessageFlow($prevNode, $stateMachineParticipant, 't' . $t);
+		$this->createSequenceFlow($prevNode, $endEvent);
+
+		$this->assertCount(9 + $taskCount, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(8 + 3 * $sideTaskCount + ($taskCount - $sideTaskCount), $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+
+		return $bpmnGraph;
+	}
+
 
 	/**
 	 * @dataProvider generatedTestProvider
@@ -585,9 +662,14 @@ class BpmnTest extends TestCase
 			'user-decides' => ['Generated User Decides', false, function ($N) { return $this->generateUserDecidesBpmn($N); }],
 			'machine-decides' => ['Generated Machine Decides', false, function ($N) { return $this->generateMachineDecidesBpmn($N); }],
 			'both-decide' => ['Generated Both Decide', false, function ($N) { return $this->generateBothDecideBpmn($N); }],
+			't-shape' => ['Generated T-Shape', false, function ($N) { return $this->generateTShapeBpmn($N); }],
 		];
 
 		$id = time();
+
+		foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator]) {
+			yield "$machineType: N = 0" => [$id, 0, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
+		}
 
 		for ($N = min(self::MIN_N, self::MAX_N); $N <= self::MAX_N; $N += max((int)($N / self::N_STEP_FRACTION), 1)) {
 			foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator]) {
