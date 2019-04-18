@@ -2,6 +2,7 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.0/phpunit.xsd"
 	bootstrap="vendor/autoload.php"
+	defaultTestSuite="unit-tests"
 	executionOrder="default"
 	forceCoversAnnotation="false"
 	beStrictAboutCoversAnnotation="true"
@@ -10,8 +11,12 @@
 	verbose="true">
 
 	<testsuites>
-		<testsuite name="">
+		<testsuite name="unit-tests">
 			<directory suffix="Test.php">test</directory>
+			<exclude>test/BpmnBenchmarkTest.php</exclude>
+		</testsuite>
+		<testsuite name="benchmark">
+			<file>test/BpmnBenchmarkTest.php</file>
 		</testsuite>
 	</testsuites>
 

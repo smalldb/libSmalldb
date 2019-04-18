@@ -37,13 +37,17 @@ use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
 class BpmnTest extends TestCase
 {
 	/** @var int Minimum number of tasks to generate */
-	const MIN_N = 150;
+	const MIN_N = 9;
 
 	/** @var int Maximum number of tasks to generate */
-	const MAX_N = 3000;
+	const MAX_N = 9;
 
 	/** @var int Fraction of N to add each step ($N += $N / N_STEP_FRACTION) */
 	const N_STEP_FRACTION = 3;
+
+	/** @var int Minimum increment of $N */
+	const N_MIN_STEP = 200;
+
 
 	private $outputDir;
 
@@ -190,8 +194,16 @@ class BpmnTest extends TestCase
 
 		$this->assertCount($taskCount + 4, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
 		$this->assertCount(2 * $taskCount + 1, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertEquals($this->getNoodleBpmnSize($taskCount),
+			count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges()),
+			'Unexpected graph size.');
 
 		return $bpmnGraph;
+	}
+
+	private function getNoodleBpmnSize($taskCount): int
+	{
+		return ($taskCount + 4) + (2 * $taskCount + 1);
 	}
 
 
@@ -246,9 +258,18 @@ class BpmnTest extends TestCase
 
 		$this->assertCount(2 * $taskCount + 6, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
 		$this->assertCount(3 * $taskCount + 4, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertEquals($this->getUserDecidesBpmnSize($taskCount),
+			count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges()),
+			'Unexpected graph size.');
 
 		return $bpmnGraph;
 	}
+
+	private function getUserDecidesBpmnSize($taskCount): int
+	{
+		return (2 * $taskCount + 6) + (3 * $taskCount + 4);
+	}
+
 
 
 	private function generateMachineDecidesBpmn(int $taskCount = 7): Graph
@@ -311,8 +332,16 @@ class BpmnTest extends TestCase
 
 		$this->assertCount(3 * $taskCount + 7, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
 		$this->assertCount(4 * $taskCount + 6, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertEquals($this->getMachineDecidesBpmnSize($taskCount),
+			count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges()),
+			'Unexpected graph size.');
 
 		return $bpmnGraph;
+	}
+
+	private function getMachineDecidesBpmnSize($taskCount): int
+	{
+		return (3 * $taskCount + 7) + (4 * $taskCount + 6);
 	}
 
 
@@ -394,16 +423,27 @@ class BpmnTest extends TestCase
 
 		$this->assertCount(3 + 3 * $realTaskCount + 3 * $realTaskCount + 2, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
 		$this->assertCount(3 + 5 * $realTaskCount + $realTaskCount * ($realTaskCount + 1) + 3 * $realTaskCount, $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertEquals($this->getBothDecideBpmnSize($taskCount),
+			count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges()),
+			'Unexpected graph size.');
 
 		return $bpmnGraph;
 	}
 
+	private function getBothDecideBpmnSize($taskCount): int
+	{
+		$realTaskCount = (int) sqrt($taskCount);
+		return (3 + 3 * $realTaskCount + 3 * $realTaskCount + 2)
+			+ (3 + 5 * $realTaskCount + $realTaskCount * ($realTaskCount + 1) + 3 * $realTaskCount);
+	}
+
+
 	private function generateTShapeBpmn(int $taskCount = 9): Graph
 	{
 		// This case has quadratic complexity, so we reduce input size to keep run time at the same level as other tests.
-		$taskCount = (int) sqrt($taskCount);
+		$realTaskCount = max((int) sqrt($taskCount), 9);
 
-		$sideTaskCount = (int)($taskCount / 2);
+		$sideTaskCount = (int)($realTaskCount / 2);
 		$bpmnGraph = new Graph();
 
 		$userParticipant = $bpmnGraph->createNode('Participant_User', [
@@ -457,22 +497,32 @@ class BpmnTest extends TestCase
 
 		// Create simple tasks
 		$prevNode = $gatewayMerge;
-		for ($t = $sideTaskCount; $t < $taskCount; $t++) {
+		for ($t = $sideTaskCount; $t < $realTaskCount; $t++) {
 			$taskNode = $this->createBpmnUserNode($userGraph, 'Task'.$t, 'task');
 			$this->createSequenceFlow($prevNode, $taskNode);
 			$prevNode = $taskNode;
 
-			if ($t >= (int) ($taskCount * 2 / 3) && $altSeqFlow === null) {
+			if ($t >= (int) ($realTaskCount * 2 / 3) && $altSeqFlow === null) {
 				$altSeqFlow = $this->createSequenceFlow($taskNode, $altEndTask);
 			}
 		}
 		$this->createMessageFlow($prevNode, $stateMachineParticipant, 't' . $t);
 		$this->createSequenceFlow($prevNode, $endEvent);
 
-		$this->assertCount(9 + $taskCount, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
-		$this->assertCount(8 + 3 * $sideTaskCount + ($taskCount - $sideTaskCount), $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertCount(9 + $realTaskCount, $bpmnGraph->getAllNodes(), 'Unexpected node count.');
+		$this->assertCount(8 + 3 * $sideTaskCount + ($realTaskCount - $sideTaskCount), $bpmnGraph->getAllEdges(), 'Unexpected edge count.');
+		$this->assertEquals($this->getTShapeBpmnSize($taskCount),
+			count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges()),
+			'Unexpected graph size.');
 
 		return $bpmnGraph;
+	}
+
+	private function getTShapeBpmnSize($taskCount): int
+	{
+		$realTaskCount = max((int) sqrt($taskCount), 9);
+		$sideTaskCount = (int)($realTaskCount / 2);
+		return (9 + $realTaskCount) + (8 + 3 * $sideTaskCount + ($realTaskCount - $sideTaskCount));
 	}
 
 
@@ -658,22 +708,40 @@ class BpmnTest extends TestCase
 	public function generatedTestProvider()
 	{
 		$generatedTests = [
-			'noodle' => ['Generated Task Noodle', true, function ($N) { return $this->generateNoodleBpmn($N); }],
-			'user-decides' => ['Generated User Decides', false, function ($N) { return $this->generateUserDecidesBpmn($N); }],
-			'machine-decides' => ['Generated Machine Decides', false, function ($N) { return $this->generateMachineDecidesBpmn($N); }],
-			'both-decide' => ['Generated Both Decide', false, function ($N) { return $this->generateBothDecideBpmn($N); }],
-			't-shape' => ['Generated T-Shape', false, function ($N) { return $this->generateTShapeBpmn($N); }],
+			'noodle' => ['Generated Task Noodle', true,
+				function ($N) { return $this->generateNoodleBpmn($N); },
+				function ($N) { return $this->getNoodleBpmnSize($N); },
+			],
+			'user-decides' => ['Generated User Decides', false,
+				function ($N) { return $this->generateUserDecidesBpmn($N); },
+				function ($N) { return $this->getUserDecidesBpmnSize($N); },
+			],
+			'machine-decides' => ['Generated Machine Decides', false,
+				function ($N) { return $this->generateMachineDecidesBpmn($N); },
+				function ($N) { return $this->getMachineDecidesBpmnSize($N); },
+			],
+			'both-decide' => ['Generated Both Decide', false,
+				function ($N) { return $this->generateBothDecideBpmn($N); },
+				function ($N) { return $this->getBothDecideBpmnSize($N); },
+			],
+			't-shape' => ['Generated T-Shape', false,
+				function ($N) { return $this->generateTShapeBpmn($N); },
+				function ($N) { return $this->getTShapeBpmnSize($N); },
+			],
 		];
 
 		$id = time();
 
-		foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator]) {
+		// General initial pages
+		foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator, $bpmnSizeCalculator]) {
 			yield "$machineType: N = 0" => [$id, 0, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
 		}
 
-		for ($N = min(self::MIN_N, self::MAX_N); $N <= self::MAX_N; $N += max((int)($N / self::N_STEP_FRACTION), 1)) {
-			foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator]) {
-				yield "$machineType: N = $N" => [$id, $N, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
+		// Run for $N
+		for ($N = min(static::MIN_N, static::MAX_N); $N <= static::MAX_N; $N += (int) max($N / static::N_STEP_FRACTION, static::N_MIN_STEP)) {
+			foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator, $bpmnSizeCalculator]) {
+				$size = $bpmnSizeCalculator($N);
+				yield "$machineType: N = $N, size = $size" => [$id, $N, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
 			}
 		}
 	}

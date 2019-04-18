@@ -7,6 +7,9 @@ test-coverage: test-example
 	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/coverage
 	find test/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'
 
+benchmark: test-example
+	./vendor/bin/phpunit -c phpunit.xml --testdox --testsuite benchmark
+
 test-example:
 	$(MAKE) -C ./test/example --no-print-dir
 
@@ -17,5 +20,5 @@ doc:
 	make -C doc/
 
 
-.PHONY: all test test-coverage test-example doc
+.PHONY: all test test-coverage test-example doc benchmark
 
