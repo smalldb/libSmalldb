@@ -56,7 +56,7 @@ class BasicMachineTest extends TestCase
 
 		// Glue them together using a machine provider
 		$machineProvider = (new LambdaStateMachineProvider())
-			->setReferenceFactory(function(...$id) use ($smalldb) { return new CrudItemRef($smalldb, ...$id); })
+			->setReferenceClass(CrudItemRef::class)
 			->setDefinition($definition)
 			->setTransitionsImplementation($transitionsImplementation)
 			->setRepository($repository);

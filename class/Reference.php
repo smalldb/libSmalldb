@@ -271,6 +271,12 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	}
 
 
+	public function invokeTransition(string $transitionName, ...$args)
+	{
+		return $this->__call($transitionName, $args);
+	}
+
+
 	/**
 	 * Get data from machine
 	 *

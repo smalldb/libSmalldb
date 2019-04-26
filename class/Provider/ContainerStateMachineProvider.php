@@ -20,9 +20,6 @@ namespace Smalldb\StateMachine\Provider;
 
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Reference;
-use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
@@ -31,9 +28,6 @@ class ContainerStateMachineProvider extends AbstractCachingStateMachineProvider 
 {
 	/** @var ContainerInterface */
 	private $container;
-
-	/** @var string|null */
-	private $referenceClass;
 
 	/** @var string|null */
 	private $definitionId;
@@ -48,16 +42,6 @@ class ContainerStateMachineProvider extends AbstractCachingStateMachineProvider 
 	public function __construct(ContainerInterface $container)
 	{
 		$this->container = $container;
-	}
-
-
-	protected function provideReferenceFactory(): callable
-	{
-		if (isset($this->referenceClass)) {
-			return function(Smalldb $smalldb, ...$id): ReferenceInterface { return new $this->referenceClass($smalldb, ...$id); };
-		} else {
-			throw new \LogicException("Reference class not set.");
-		}
 	}
 
 
@@ -90,12 +74,6 @@ class ContainerStateMachineProvider extends AbstractCachingStateMachineProvider 
 		}
 	}
 
-
-	public function setReferenceClass(string $referenceClass): self
-	{
-		$this->referenceClass = $referenceClass;
-		return $this;
-	}
 
 
 	public function setDefinitionId(string $definitionId): self

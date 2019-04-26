@@ -42,6 +42,6 @@ interface ReferenceInterface
 	/**
 	 * Invoke transition of the state machine.
 	 */
-	public function invokeTransition(string $transitionName, array $args = []);
+	public function invokeTransition(string $transitionName, ...$args);
 
 }

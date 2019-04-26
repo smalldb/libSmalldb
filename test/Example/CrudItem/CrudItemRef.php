@@ -20,6 +20,7 @@
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Provider\SmalldbStateMachineProviderInterface;
 use Smalldb\StateMachine\Smalldb;
 
 
@@ -35,28 +36,32 @@ class CrudItemRef implements CrudItemMachine
 	/** @var CrudItemRepository */
 	private $repository;
 
+	/** @var SmalldbStateMachineProviderInterface */
+	private $machineProvider;
+
 	private $id;
 
-	public function __construct(Smalldb $smalldb, ...$id)
+
+	public function __construct(Smalldb $smalldb, SmalldbStateMachineProviderInterface $machineProvider, ...$id)
 	{
 		$this->smalldb = $smalldb;
-		$this->repository = $smalldb->getMachineProvider('crud-item')->getRepository();
+		$this->machineProvider = $machineProvider;
 		$this->id = $id[0] ?? null;
 	}
 
 	public function create($itemData)
 	{
-		// TODO: Implement create() method.
+		return $this->invokeTransition('create', $itemData);
 	}
 
 	public function update($itemData)
 	{
-		// TODO: Implement update() method.
+		return $this->invokeTransition('update', $itemData);
 	}
 
 	public function delete()
 	{
-		// TODO: Implement delete() method.
+		return $this->invokeTransition('delete');
 	}
 
 	/**
@@ -64,7 +69,7 @@ class CrudItemRef implements CrudItemMachine
 	 */
 	public function getState(): string
 	{
-		return $this->repository->getState($this->id);
+		return $this->machineProvider->getRepository()->getState($this->id);
 	}
 
 	/**
@@ -72,14 +77,14 @@ class CrudItemRef implements CrudItemMachine
 	 */
 	public function getDefinition(): StateMachineDefinition
 	{
-		// TODO: Implement getDefinition() method.
+		return $this->machineProvider->getDefinition();
 	}
 
 	/**
 	 * Invoke transition of the state machine.
 	 */
-	public function invokeTransition(string $transitionName, array $args = [])
+	public function invokeTransition(string $transitionName, ...$args)
 	{
-		// TODO: Implement invokeTransition() method.
+		return $this->machineProvider->getTransitionsDecorator()->invokeTransition($this, $transitionName, $args);
 	}
 }

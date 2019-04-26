@@ -19,17 +19,12 @@
 namespace Smalldb\StateMachine\Provider;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Reference;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
 class LambdaStateMachineProvider extends AbstractCachingStateMachineProvider implements SmalldbStateMachineProviderInterface
 {
-	/** @var string|null */
-	private $referenceClass;
-
 	/** @var callable */
 	private $definitionFactory;
 
@@ -38,20 +33,6 @@ class LambdaStateMachineProvider extends AbstractCachingStateMachineProvider imp
 
 	/** @var callable */
 	private $repositoryFactory;
-
-
-	public function setReferenceClass(string $referenceClass): self
-	{
-		$this->referenceClass = $referenceClass;
-		return $this;
-	}
-
-
-	public function setReferenceFactory(callable $referenceFactory): self
-	{
-		$this->referenceFactory = $referenceFactory;
-		return $this;
-	}
 
 
 	public function setDefinitionFactory(callable $definitionFactory): self
@@ -93,16 +74,6 @@ class LambdaStateMachineProvider extends AbstractCachingStateMachineProvider imp
 	{
 		$this->transitionsDecoratorFactory = function() use ($transitionsDecorator) { return $transitionsDecorator; };
 		return $this;
-	}
-
-
-	public function provideReferenceFactory(): callable
-	{
-		if (isset($this->referenceClass)) {
-			return function(Smalldb $smalldb, ...$id): Reference { return new $this->referenceClass($smalldb, ...$id); };
-		} else {
-			throw new \LogicException("Reference class not set.");
-		}
 	}
 
 
