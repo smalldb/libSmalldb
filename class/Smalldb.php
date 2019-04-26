@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Provider\SmalldbStateMachineProviderInterface;
 use Smalldb\StateMachine\Utils\Hook;
 
 
@@ -37,6 +38,12 @@ class Smalldb
 
 	/** @var Hook */
 	private $after_listing_created = null;
+
+	/**
+	 * Map of registered machine types and their providers.
+	 * @var SmalldbStateMachineProviderInterface[]
+	 */
+	private $machineProviders = [];
 
 	/**
 	 * List of registered backends
@@ -78,6 +85,31 @@ class Smalldb
 	public function afterListingCreated()
 	{
 		return $this->after_listing_created ?? ($this->after_listing_created = new Hook());
+	}
+
+
+	/**
+	 * Register machine type and its provider
+	 */
+	public function registerMachineType(string $machineType, SmalldbStateMachineProviderInterface $provider)
+	{
+		if (isset($this->machineProviders[$machineType])) {
+			throw new InvalidArgumentException('Duplicate machine type: ' . $machineType);
+		}
+		$this->machineProviders[$machineType] = $provider;
+	}
+
+
+	/**
+	 * Retrieve a machine provider for the given machine type.
+	 */
+	public function getMachineProvider(string $machineType): SmalldbStateMachineProviderInterface
+	{
+		if (isset($this->machineProviders[$machineType])) {
+			return $this->machineProviders[$machineType];
+		} else {
+			throw new InvalidArgumentException('Undefined machine type: ' . $machineType);
+		}
 	}
 
 
@@ -139,7 +171,7 @@ class Smalldb
 	 *     $ref = $this->ref(array('item', 1, 2, 3));
 	 *     $ref = $this->ref($this->ref('item', 1, 2, 3)));
 	 */
-	public function ref(...$argv): Reference
+	public function ref(...$argv): ReferenceInterface
 	{
 		$type = $argv[0];
 

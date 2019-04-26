@@ -184,9 +184,6 @@ class AnnotationReader
 	}
 
 
-	/**
-	 * @throws \ReflectionException
-	 */
 	public function getStateMachineDefinition(): StateMachineDefinition
 	{
 		$this->builder = new StateMachineDefinitionBuilder();

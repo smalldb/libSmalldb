@@ -42,7 +42,7 @@ use Smalldb\StateMachine\Utils\Hook;
  * Flush property cache:
  *   unset($ref->properties);
  */
-abstract class Reference implements \ArrayAccess, \Iterator, \JsonSerializable
+abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator, \JsonSerializable
 {
 	/**
 	 * Smalldb
