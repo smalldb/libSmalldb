@@ -44,7 +44,7 @@ class ArrayDao
 
 	public function create($data): int
 	{
-		$id = count($this->items);
+		$id = count($this->items) + 1;
 		$this->items[$id] = $data;
 		return $id;
 	}
