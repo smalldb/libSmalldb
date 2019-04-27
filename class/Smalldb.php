@@ -189,31 +189,22 @@ class Smalldb
 				throw new InvalidArgumentException('The first argument is an array and more than one argument given.');
 			}
 		}
+		$id = array_slice($argv, 1);
 
-		// Decode arguments to machine type and machine-specific ID
-		foreach ($this->backends as $b => $backend) {
-			$id = array_slice($argv, 1);
-			if ($backend->inferMachineType($argv, $type, $id)) {
-				// Create reference
-				$m = $backend->getMachine($this, $type);
-				if ($m === null) {
-					throw new RuntimeException('Cannot create machine: '.$type);
-				}
-				$ref = $m->ref($id);
+		// Create the Reference
+		$machineProvider = $this->getMachineProvider($type);
+		$refFactory = $machineProvider->getReferenceFactory();
+		$ref = $refFactory($this, ...$id);
 
-				// Emit events
-				if ($this->debug_logger) {
-					$this->debug_logger->afterReferenceCreated($backend, $ref);
-				}
-				if ($this->after_reference_created) {
-					$this->after_reference_created->emit($ref);
-				}
-
-				return $ref;
-			}
+		// Emit events
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $machineProvider, $ref);
+		}
+		if ($this->after_reference_created) {
+			$this->after_reference_created->emit($ref);
 		}
 
-		throw new InvalidReferenceException('Cannot infer machine type: '.$type);
+		return $ref;
 	}
 
 
@@ -222,25 +213,22 @@ class Smalldb
 	 * You may want to invoke 'create' or similar transition using this 
 	 * reference.
 	 */
-	public function nullRef(string $type): Reference
+	public function nullRef(string $type): ReferenceInterface
 	{
-		foreach ($this->backends as $b => $backend) {
-			$m = $backend->getMachine($this, $type);
-			if ($m !== null) {
-				$ref = $m->nullRef();
+		// Create the Reference
+		$machineProvider = $this->getMachineProvider($type);
+		$refFactory = $machineProvider->getReferenceFactory();
+		$ref = $refFactory($this, null);
 
-				// Emit events
-				if ($this->debug_logger) {
-					$this->debug_logger->afterReferenceCreated($backend, $ref);
-				}
-				if ($this->after_reference_created) {
-					$this->after_reference_created->emit($ref);
-				}
-
-				return $ref;
-			}
+		// Emit events
+		if ($this->debug_logger) {
+			$this->debug_logger->afterReferenceCreated($this, $machineProvider, $ref);
 		}
-		throw new RuntimeException('Cannot create machine: '.$type);
+		if ($this->after_reference_created) {
+			$this->after_reference_created->emit($ref);
+		}
+
+		return $ref;
 	}
 
 

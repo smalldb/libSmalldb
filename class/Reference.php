@@ -95,8 +95,11 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	 * @example `$ref->afterPkChanged()->addListener(function() { ... });`
 	 */
 
+	/** @var Hook|null */
 	private $after_pk_changed = null;
+	/** @var Hook|null */
 	private $before_transition = null;
+	/** @var Hook|null */
 	private $after_transition = null;
 
 	/**

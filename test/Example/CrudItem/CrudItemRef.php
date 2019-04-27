@@ -69,7 +69,12 @@ class CrudItemRef implements CrudItemMachine
 	 */
 	public function getState(): string
 	{
-		return $this->machineProvider->getRepository()->getState($this->id);
+		return $this->machineProvider->getRepository()->getState($this);
+	}
+
+	public function getId(): ?int
+	{
+		return $this->id;
 	}
 
 	/**

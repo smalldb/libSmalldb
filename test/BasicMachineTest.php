@@ -138,20 +138,16 @@ class BasicMachineTest extends TestCase
 		$this->assertCount(3, $definition->getActions());
 
 		// Try to create a null reference
-		$refFactory = $crudMachineProvider->getReferenceFactory();
-		$nullRef = $refFactory($smalldb, null);
-		$this->assertInstanceOf(CrudItemRef::class, $nullRef);
-
-		$this->markTestIncomplete();
-
-		// Usage: Get reference
-		/** @var CrudItemMachine $ref */
-		$ref = $smalldb->refCrudItem(null);
+		/** @var CrudItemRef $ref */
+		$ref = $smalldb->nullRef('crud-item');
+		$this->assertInstanceOf(CrudItemRef::class, $ref);
 		$this->assertInstanceOf(CrudItemMachine::class, $ref);
+		$this->assertEquals(null, $ref->getId());
 		$this->assertEquals(CrudItemMachine::NOT_EXISTS, $ref->getState());
 
 		// Usage: Create
 		$ref->create('Foo');
+		$this->assertNotEquals(null, $ref->getId());
 		$this->assertEquals(CrudItemMachine::EXISTS, $ref->getState());
 
 		// Usage: Delete

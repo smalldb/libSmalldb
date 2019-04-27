@@ -46,7 +46,8 @@ class CrudItemRepository implements SmalldbRepositoryInterface
 	public function getState(ReferenceInterface $ref): string
 	{
 		if ($ref instanceof CrudItemRef) {
-			return $this->dao->exists($ref->getId())
+			$id = $ref->getId();
+			return $id !== null && $this->dao->exists($id)
 				? CrudItemMachine::EXISTS
 				: CrudItemMachine::NOT_EXISTS;
 		} else {
