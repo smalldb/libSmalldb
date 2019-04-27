@@ -32,13 +32,14 @@ namespace Smalldb\StateMachine\Utils;
  */
 class Hook
 {
+	/** @var callable[] */
 	private $listeners = [];
 
 
 	/**
 	 * Add event listener
 	 */
-	public function addListener($callback)
+	public function addListener(callable $callback): int
 	{
 		$index = count($this->listeners);
 		$this->listeners[] = $callback;
@@ -49,12 +50,12 @@ class Hook
 	/**
 	 * Remove event listener identified by the index returned from add().
 	 */
-	public function removeListener($index)
+	public function removeListener(int $index)
 	{
 		if (isset($this->listeners[$index])) {
 			unset($index);
 		} else {
-			throw \InvalidArgumentException('Listener #' + $index + ' is not registered.');
+			throw new \InvalidArgumentException('Listener #' . $index . ' is not registered.');
 		}
 	}
 
@@ -62,7 +63,7 @@ class Hook
 	/**
 	 * Get list of all registered listeners.
 	 */
-	public function getListeners()
+	public function getListeners(): array
 	{
 		return $this->listeners;
 	}
