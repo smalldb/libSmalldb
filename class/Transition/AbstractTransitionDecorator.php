@@ -35,6 +35,8 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 
 	final public function invokeTransition(TransitionEvent $transitionEvent): TransitionEvent
 	{
+		// FIXME: Don't assume the getState() method (marking vs. state). Use a machine-specific event instead.
+
 		// Get the transition definition, check the transition exists and is valid
 		$ref = $transitionEvent->getRef();
 		$sourceState = $ref->getState();
