@@ -25,7 +25,7 @@ use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
-interface SmalldbStateMachineProviderInterface
+interface SmalldbProviderInterface
 {
 
 	/**

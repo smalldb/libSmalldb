@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\SmalldbStateMachineProviderInterface;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Smalldb;
 
 
@@ -36,13 +36,13 @@ class CrudItemRef implements CrudItemMachine
 	/** @var CrudItemRepository */
 	private $repository;
 
-	/** @var SmalldbStateMachineProviderInterface */
+	/** @var SmalldbProviderInterface */
 	private $machineProvider;
 
 	private $id;
 
 
-	public function __construct(Smalldb $smalldb, SmalldbStateMachineProviderInterface $machineProvider, ...$id)
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, ...$id)
 	{
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;

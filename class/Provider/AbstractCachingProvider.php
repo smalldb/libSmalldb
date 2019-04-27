@@ -32,7 +32,7 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
  * to feed the respective getters. Each of the provide* methods will be called
  * only once.
  */
-abstract class AbstractCachingStateMachineProvider implements SmalldbStateMachineProviderInterface
+abstract class AbstractCachingProvider implements SmalldbProviderInterface
 {
 	/** @var string|null */
 	private $referenceClass;

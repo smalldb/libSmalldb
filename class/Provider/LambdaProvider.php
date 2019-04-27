@@ -23,7 +23,7 @@ use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
-class LambdaStateMachineProvider extends AbstractCachingStateMachineProvider implements SmalldbStateMachineProviderInterface
+class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderInterface
 {
 	/** @var callable */
 	private $definitionFactory;

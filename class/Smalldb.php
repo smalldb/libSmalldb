@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\Provider\SmalldbStateMachineProviderInterface;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Utils\Hook;
 
 
@@ -41,7 +41,8 @@ class Smalldb
 
 	/**
 	 * Map of registered machine types and their providers.
-	 * @var SmalldbStateMachineProviderInterface[]
+	 *
+	 * @var SmalldbProviderInterface[]
 	 */
 	private $machineProviders = [];
 
@@ -91,7 +92,7 @@ class Smalldb
 	/**
 	 * Register machine type and its provider
 	 */
-	public function registerMachineType(string $machineType, SmalldbStateMachineProviderInterface $provider)
+	public function registerMachineType(string $machineType, SmalldbProviderInterface $provider)
 	{
 		if (isset($this->machineProviders[$machineType])) {
 			throw new InvalidArgumentException('Duplicate machine type: ' . $machineType);
@@ -103,7 +104,7 @@ class Smalldb
 	/**
 	 * Retrieve a machine provider for the given machine type.
 	 */
-	public function getMachineProvider(string $machineType): SmalldbStateMachineProviderInterface
+	public function getMachineProvider(string $machineType): SmalldbProviderInterface
 	{
 		if (isset($this->machineProviders[$machineType])) {
 			return $this->machineProviders[$machineType];

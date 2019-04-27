@@ -22,9 +22,9 @@ use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\ArrayMachine;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\ContainerStateMachineProvider;
-use Smalldb\StateMachine\Provider\LambdaStateMachineProvider;
-use Smalldb\StateMachine\Provider\SmalldbStateMachineProviderInterface;
+use Smalldb\StateMachine\Provider\ContainerProvider;
+use Smalldb\StateMachine\Provider\LambdaProvider;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
@@ -55,7 +55,7 @@ class BasicMachineTest extends TestCase
 		$transitionsImplementation = new CrudItemTransitions($repository, $dao);
 
 		// Glue them together using a machine provider
-		$machineProvider = (new LambdaStateMachineProvider())
+		$machineProvider = (new LambdaProvider())
 			->setReferenceClass(CrudItemRef::class)
 			->setDefinition($definition)
 			->setTransitionsImplementation($transitionsImplementation)
@@ -96,7 +96,7 @@ class BasicMachineTest extends TestCase
 			->setPublic(true);
 
 		// Glue them together using a machine provider
-		$machineProvider = $c->autowire(ContainerStateMachineProvider::class)
+		$machineProvider = $c->autowire(ContainerProvider::class)
 			->addMethodCall('setDefinitionId', [$definitionId])
 			->addMethodCall('setTransitionsImplementationId', [$transitionsId])
 			->addMethodCall('setRepositoryId', [CrudItemRepository::class])
@@ -129,7 +129,7 @@ class BasicMachineTest extends TestCase
 		$this->assertInstanceOf(Smalldb::class, $smalldb);
 
 		$crudMachineProvider = $smalldb->getMachineProvider('crud-item');
-		$this->assertInstanceOf(SmalldbStateMachineProviderInterface::class, $crudMachineProvider);
+		$this->assertInstanceOf(SmalldbProviderInterface::class, $crudMachineProvider);
 
 		// Check the definition
 		$definition = $crudMachineProvider->getDefinition();

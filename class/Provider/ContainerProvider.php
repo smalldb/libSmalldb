@@ -24,7 +24,7 @@ use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
-class ContainerStateMachineProvider extends AbstractCachingStateMachineProvider implements SmalldbStateMachineProviderInterface
+class ContainerProvider extends AbstractCachingProvider implements SmalldbProviderInterface
 {
 	/** @var ContainerInterface */
 	private $container;
