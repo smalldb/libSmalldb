@@ -84,15 +84,16 @@ class BasicMachineTest extends TestCase
 			->setPublic(true);
 
 		// Repository
-		$crudItemDao = $c->autowire(ArrayDao::class . ' $crudItemDao', ArrayDao::class);
+		$crudItemDaoId = ArrayDao::class . ' $crudItemDao';
+		$c->autowire($crudItemDaoId, ArrayDao::class);
 		$c->autowire(CrudItemRepository::class)
-			->setArgument(ArrayDao::class, $crudItemDao)
+			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
 			->setPublic(true);
 
 		// Transitions implementation
 		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
 		$c->autowire($transitionsId, CrudItemTransitions::class)
-			->setArgument(ArrayDao::class, $crudItemDao)
+			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
 			->setPublic(true);
 
 		// Glue them together using a machine provider

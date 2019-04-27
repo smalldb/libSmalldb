@@ -57,7 +57,13 @@ class CrudItemRepository implements SmalldbRepositoryInterface
 
 	public function ref(...$id): CrudItemRef
 	{
-		return new CrudItemRef($this->smalldb, $this, $id[0]);
+		$ref = $this->smalldb->ref('crud-item', ...$id);
+		if ($ref instanceof CrudItemRef) {
+			return $ref;
+		} else {
+			throw new UnsupportedReferenceException('The new reference should be instance of '
+				. CrudItemRef::class . ', but it is ' . get_class($ref) . ' instead.');
+		}
 	}
 
 }

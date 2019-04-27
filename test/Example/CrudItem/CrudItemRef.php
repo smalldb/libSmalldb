@@ -22,6 +22,7 @@ namespace Smalldb\StateMachine\Test\Example\CrudItem;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
 /**
@@ -64,6 +65,11 @@ class CrudItemRef implements CrudItemMachine
 		return $this->invokeTransition('delete');
 	}
 
+	public function getMachineType(): string
+	{
+		return $this->machineProvider->getDefinition()->getMachineType();
+	}
+
 	/**
 	 * Read state machine state
 	 */
@@ -90,6 +96,10 @@ class CrudItemRef implements CrudItemMachine
 	 */
 	public function invokeTransition(string $transitionName, ...$args)
 	{
-		return $this->machineProvider->getTransitionsDecorator()->invokeTransition($this, $transitionName, $args);
+		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
+		$transitionEvent->onNewId(function($newId) {
+			$this->id = $newId;
+		});
+		return $this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent);
 	}
 }

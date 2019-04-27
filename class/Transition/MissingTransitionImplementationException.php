@@ -16,37 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Transition;
 
-use Smalldb\StateMachine\Annotation\State;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
-
-
-interface ReferenceInterface
+class MissingTransitionImplementationException extends TransitionException
 {
-	/**
-	 * @State("Not Exists")
-	 */
-	const NOT_EXISTS = "";
-
-	/**
-	 * Get state machine type.
-	 */
-	public function getMachineType(): string;
-
-	/**
-	 * Read state machine state
-	 */
-	public function getState(): string;
-
-	/**
-	 * Get state machine definition
-	 */
-	public function getDefinition(): StateMachineDefinition;
-
-	/**
-	 * Invoke transition of the state machine.
-	 */
-	public function invokeTransition(string $transitionName, ...$args);
-
+	// Just an exception.
 }
