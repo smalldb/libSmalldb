@@ -149,8 +149,15 @@ class BasicMachineTest extends TestCase
 
 		// Usage: Create
 		$ref->create('Foo');
-		$this->assertNotEquals(null, $ref->getId());
-		$this->assertEquals(CrudItemMachine::EXISTS, $ref->getState());
+		$id = $ref->getId();
+		$state = $ref->getState();
+		$this->assertNotEquals(null, $id);
+		$this->assertEquals(CrudItemMachine::EXISTS, $state);
+
+		// Try another reference
+		$ref2 = $smalldb->ref('crud-item', $id);
+		$state2 = $ref2->getState();
+		$this->assertEquals($state, $state2);
 
 		// Usage: Delete
 		$ref->delete();
@@ -163,52 +170,6 @@ class BasicMachineTest extends TestCase
 	{
 		yield "Static" => [function(): Smalldb { return $this->createCrudMachineSmalldb(); }];
 		yield "Container" => [function(): Smalldb { return $this->createCrudMachineContainer()->get(Smalldb::class); }];
-	}
-
-
-	public function testMachine()
-	{
-		$this->markTestSkipped('Test obsolete.');
-
-		// Initialize backend
-		$smalldb = new \Smalldb\StateMachine\Smalldb();
-		$smalldbBackend = new Smalldb\StateMachine\SimpleBackend();
-		$smalldbBackend->initializeBackend([]);
-		$smalldb->registerBackend($smalldbBackend);
-
-		// Register machine type
-		$article_json = json_decode(file_get_contents(dirname(__FILE__) . '/example/article.json'), TRUE);
-		$smalldbBackend->registerMachineType('article', ArrayMachine::class, $article_json['state_machine']);
-
-		// Get known machine types
-		$knownTypes = [];
-		foreach ($smalldb->getBackends() as $backend) {
-			foreach ($backend->getKnownTypes() as $t) {
-				$knownTypes[] = $t;
-			}
-		}
-		$this->assertContains('article', $knownTypes);
-
-		// Check the machine
-		$machine = $smalldb->getMachine('article');
-		$this->assertInstanceOf(ArrayMachine::class, $machine);
-
-		// Get null ref
-		$nullRef = $smalldb->nullRef('article');
-		$this->assertInstanceOf(Reference::class, $nullRef);
-		$this->assertEquals('', $nullRef->state);
-
-		// Available actions for the null ref
-		$availableActions = $nullRef->actions;
-		$this->assertEquals(['create'], $availableActions);
-
-		// Create machine instantion - invoke initial transition
-		$ref = $nullRef->create();
-		$this->assertEquals('writing', $ref->state);
-
-		// Available actions for the new ref
-		$this->assertEquals(['edit', 'submit'], $ref->actions);
-
 	}
 
 }
