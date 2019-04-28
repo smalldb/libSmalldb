@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Smalldb\\StateMachine\\": "class/"
+            "Smalldb\\StateMachine\\": "src/"
         }
     },
     "repositories": [
