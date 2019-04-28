@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Example\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Smalldb\StateMachine\UnsupportedReferenceException;
 
 

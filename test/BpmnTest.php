@@ -30,8 +30,8 @@ use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
-use Smalldb\StateMachine\Test\Example\TestTemplate\Html;
-use Smalldb\StateMachine\Test\Example\TestTemplate\TestOutputTemplate;
+use Smalldb\StateMachine\Test\TestTemplate\Html;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
 
 class BpmnTest extends TestCase

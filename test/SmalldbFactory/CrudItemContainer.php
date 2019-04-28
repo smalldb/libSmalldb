@@ -26,7 +26,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\Example\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 

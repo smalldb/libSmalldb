@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\Database;
+namespace Smalldb\StateMachine\Test\Database;
 
 
 /**

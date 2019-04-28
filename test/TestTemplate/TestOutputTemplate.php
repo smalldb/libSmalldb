@@ -17,7 +17,7 @@
  */
 
 
-namespace Smalldb\StateMachine\Test\Example\TestTemplate;
+namespace Smalldb\StateMachine\Test\TestTemplate;
 
 use Smalldb\StateMachine\Definition\Renderer\StateMachineRenderer;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
@@ -48,7 +48,7 @@ class TestOutputTemplate implements Template
 
 	public function __construct()
 	{
-		$this->outputDir = dirname(dirname(__DIR__)) . '/output';
+		$this->outputDir = dirname(__DIR__) . '/output';
 	}
 
 	public function outputPath(string $basename): string

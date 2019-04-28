@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Test\Example\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;

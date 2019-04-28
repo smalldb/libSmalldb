@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\TestTemplate;
+namespace Smalldb\StateMachine\Test\TestTemplate;
 
 
 interface Template

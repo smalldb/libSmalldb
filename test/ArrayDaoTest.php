@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\Test\Example\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDao;
 
 
 class ArrayDaoTest extends TestCase

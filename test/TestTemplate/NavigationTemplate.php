@@ -17,7 +17,7 @@
  */
 
 
-namespace Smalldb\StateMachine\Test\Example\TestTemplate;
+namespace Smalldb\StateMachine\Test\TestTemplate;
 
 
 use Smalldb\StateMachine\Test\BpmnTest;
