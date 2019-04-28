@@ -18,117 +18,29 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\AnnotationReader;
-use Smalldb\StateMachine\ArrayMachine;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\ContainerProvider;
-use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\Example\Database\ArrayDao;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
+use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
+use Smalldb\StateMachine\Test\SmalldbFactory\SmalldbFactory;
 
 
 class BasicMachineTest extends TestCase
 {
 
-	private function createCrudMachineSmalldb(): Smalldb
-	{
-		$smalldb = new Smalldb();
-
-		// Definition
-		$reader = new AnnotationReader(CrudItemMachine::class);
-		$definition = $reader->getStateMachineDefinition();
-
-		// Repository
-		$dao = new ArrayDao();
-		$repository = new CrudItemRepository($smalldb, $dao);
-
-		// Transitions implementation
-		$transitionsImplementation = new CrudItemTransitions($repository, $dao);
-
-		// Glue them together using a machine provider
-		$machineProvider = (new LambdaProvider())
-			->setReferenceClass(CrudItemRef::class)
-			->setDefinition($definition)
-			->setTransitionsImplementation($transitionsImplementation)
-			->setRepository($repository);
-
-		// Register state machine type
-		$smalldb->registerMachineType($definition->getMachineType(), $machineProvider);
-
-		return $smalldb;
-	}
-
-
-	private function createCrudMachineContainer(): ContainerInterface
-	{
-		$c = new ContainerBuilder();
-
-		$smalldb = $c->autowire(Smalldb::class)
-			->setPublic(true);
-
-		// Definition
-		$reader = $c->register(AnnotationReader::class . ' $crudItemReader', AnnotationReader::class)
-			->addArgument(CrudItemMachine::class);
-		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
-		$c->register($definitionId, StateMachineDefinition::class)
-			->setFactory([$reader, 'getStateMachineDefinition'])
-			->setPublic(true);
-
-		// Repository
-		$crudItemDaoId = ArrayDao::class . ' $crudItemDao';
-		$c->autowire($crudItemDaoId, ArrayDao::class);
-		$c->autowire(CrudItemRepository::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
-			->setPublic(true);
-
-		// Transitions implementation
-		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
-		$c->autowire($transitionsId, CrudItemTransitions::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
-			->setPublic(true);
-
-		// Glue them together using a machine provider
-		$machineProvider = $c->autowire(ContainerProvider::class)
-			->addMethodCall('setDefinitionId', [$definitionId])
-			->addMethodCall('setTransitionsImplementationId', [$transitionsId])
-			->addMethodCall('setRepositoryId', [CrudItemRepository::class])
-			->addMethodCall('setReferenceClass', [CrudItemRef::class]);
-
-		// Register state machine type
-		$smalldb->addMethodCall('registerMachineType', ['crud-item', $machineProvider]);
-
-		$c->compile();
-
-		// Dump the container so that we can examine it.
-		$dumper = new PhpDumper($c);
-		$outputDir = __DIR__ . '/output';
-		if (!is_dir($outputDir)) {
-			mkdir($outputDir);
-		}
-		file_put_contents("$outputDir/BasicMachineContainer.php", $dumper->dump());
-
-		return $c;
-	}
-
-
 	/**
 	 * @dataProvider smalldbProvider
 	 */
-	public function testCrudMachine(callable $smalldbFactory)
+	public function testCrudMachine(string $smalldbFactoryClass)
 	{
-		/** @var Smalldb $smalldb */
-		$smalldb = $smalldbFactory();
+		/** @var SmalldbFactory $smalldbFactory */
+		$smalldbFactory = new $smalldbFactoryClass();
+		$smalldb = $smalldbFactory->createSmalldb();
 		$this->assertInstanceOf(Smalldb::class, $smalldb);
 
+		// Check the provider
 		$crudMachineProvider = $smalldb->getMachineProvider('crud-item');
 		$this->assertInstanceOf(SmalldbProviderInterface::class, $crudMachineProvider);
 		$this->assertEquals(CrudItemRef::class, $crudMachineProvider->getReferenceClass());
@@ -162,14 +74,13 @@ class BasicMachineTest extends TestCase
 		// Usage: Delete
 		$ref->delete();
 		$this->assertEquals(CrudItemMachine::NOT_EXISTS, $ref->getState());
-
 	}
 
 
 	public function smalldbProvider()
 	{
-		yield "Static" => [function(): Smalldb { return $this->createCrudMachineSmalldb(); }];
-		yield "Container" => [function(): Smalldb { return $this->createCrudMachineContainer()->get(Smalldb::class); }];
+		yield "Basic" => [CrudItemBasic::class];
+		yield "Container" => [CrudItemContainer::class];
 	}
 
 }
