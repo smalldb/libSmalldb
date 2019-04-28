@@ -4,8 +4,8 @@ test: test-example
 	./vendor/bin/phpunit -c phpunit.xml --testdox
 
 test-coverage: test-example
-	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/coverage
-	find test/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'
+	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage
+	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'
 
 benchmark: test-example
 	./vendor/bin/phpunit -c phpunit.xml --testdox --testsuite benchmark
