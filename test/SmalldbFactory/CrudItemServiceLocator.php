@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\ContainerProvider;
+use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
@@ -30,9 +30,10 @@ use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+use Symfony\Component\DependencyInjection\Reference;
 
 
-class CrudItemContainer implements SmalldbFactory
+class CrudItemServiceLocator implements SmalldbFactory
 {
 
 	/**
@@ -56,28 +57,28 @@ class CrudItemContainer implements SmalldbFactory
 			->addArgument(CrudItemMachine::class);
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
 		$c->register($definitionId, StateMachineDefinition::class)
-			->setFactory([$reader, 'getStateMachineDefinition'])
-			->setPublic(true);
+			->setFactory([$reader, 'getStateMachineDefinition']);
 
 		// Repository
 		$crudItemDaoId = ArrayDao::class . ' $crudItemDao';
 		$c->autowire($crudItemDaoId, ArrayDao::class);
 		$c->autowire(CrudItemRepository::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
-			->setPublic(true);
+			->setArgument(ArrayDao::class, new Reference($crudItemDaoId));
 
 		// Transitions implementation
 		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
 		$c->autowire($transitionsId, CrudItemTransitions::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
-			->setPublic(true);
+			->setArgument(ArrayDao::class, new Reference($crudItemDaoId));
 
 		// Glue them together using a machine provider
-		$machineProvider = $c->autowire(ContainerProvider::class)
-			->addMethodCall('setDefinitionId', [$definitionId])
-			->addMethodCall('setTransitionsImplementationId', [$transitionsId])
-			->addMethodCall('setRepositoryId', [CrudItemRepository::class])
-			->addMethodCall('setReferenceClass', [CrudItemRef::class]);
+		$machineProvider = $c->autowire(LambdaProvider::class)
+			->addTag('container.service_locator')
+			->addArgument([
+				LambdaProvider::DEFINITION => new Reference($definitionId),
+				LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsId),
+				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
+			])
+			->addArgument(CrudItemRef::class);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', ['crud-item', $machineProvider]);
