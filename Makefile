@@ -11,7 +11,7 @@ benchmark: test-example
 	./vendor/bin/phpunit -c phpunit.xml --testdox --testsuite benchmark
 
 test-example:
-	$(MAKE) -C ./test/example --no-print-dir
+	$(MAKE) -C ./test/example.json --no-print-dir
 
 ./vendor/bin/phpunit:
 	composer install --dev
