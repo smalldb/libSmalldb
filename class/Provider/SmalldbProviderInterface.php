@@ -33,6 +33,8 @@ interface SmalldbProviderInterface
 	 */
 	public function getReferenceFactory(): callable;
 
+	public function getReferenceClass(): string;
+
 	public function getDefinition(): StateMachineDefinition;
 
 	public function getTransitionsDecorator(): TransitionDecorator;

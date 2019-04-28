@@ -16,39 +16,16 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Reference;
 
 
 /**
  * Class CrudItemRef
- * TODO: Implement \Smalldb\StateMachine\Reference ?
  */
-class CrudItemRef implements CrudItemMachine
+class CrudItemRef extends Reference implements CrudItemMachine
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var CrudItemRepository */
-	private $repository;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider;
-
-	private $id;
-
-
-	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, ...$id)
-	{
-		$this->smalldb = $smalldb;
-		$this->machineProvider = $machineProvider;
-		$this->id = $id[0] ?? null;
-	}
 
 	public function create($itemData)
 	{
@@ -65,41 +42,4 @@ class CrudItemRef implements CrudItemMachine
 		return $this->invokeTransition('delete');
 	}
 
-	public function getMachineType(): string
-	{
-		return $this->machineProvider->getDefinition()->getMachineType();
-	}
-
-	/**
-	 * Read state machine state
-	 */
-	public function getState(): string
-	{
-		return $this->machineProvider->getRepository()->getState($this);
-	}
-
-	public function getId(): ?int
-	{
-		return $this->id;
-	}
-
-	/**
-	 * Get state machine definition
-	 */
-	public function getDefinition(): StateMachineDefinition
-	{
-		return $this->machineProvider->getDefinition();
-	}
-
-	/**
-	 * Invoke transition of the state machine.
-	 */
-	public function invokeTransition(string $transitionName, ...$args)
-	{
-		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
-		$transitionEvent->onNewId(function($newId) {
-			$this->id = $newId;
-		});
-		return $this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent);
-	}
 }

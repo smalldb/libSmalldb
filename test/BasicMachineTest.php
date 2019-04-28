@@ -131,6 +131,7 @@ class BasicMachineTest extends TestCase
 
 		$crudMachineProvider = $smalldb->getMachineProvider('crud-item');
 		$this->assertInstanceOf(SmalldbProviderInterface::class, $crudMachineProvider);
+		$this->assertEquals(CrudItemRef::class, $crudMachineProvider->getReferenceClass());
 
 		// Check the definition
 		$definition = $crudMachineProvider->getDefinition();

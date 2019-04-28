@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types = 1);
 /*
- * Copyright (c) 2012, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2012-2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 use Smalldb\StateMachine\Utils\Hook;
 
 
@@ -50,11 +53,8 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	 */
 	protected $smalldb;
 
-	/**
-	 * State machine.
-	 * @var AbstractMachine
-	 */
-	protected $machine;
+	/** @var SmalldbProviderInterface */
+	private $machineProvider;
 
 	/**
 	 * Primary key (unique within $machine).
@@ -136,17 +136,15 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 
 
 	/**
-	 * Create reference and initialize it with given ID. To copy
-	 * a reference use clone keyword.
-	 *
-	 * TODO: Check $id to be made of scalar values only.
+	 * Create a reference and initialize it with a given ID. To copy
+	 * a reference use the clone keyword.
 	 */
-	public function __construct(Smalldb $smalldb, AbstractMachine $machine, ...$id)
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, ...$id)
 	{
 		$this->clearCache();
 
 		$this->smalldb = $smalldb;
-		$this->machine = $machine;
+		$this->machineProvider = $machineProvider;
 
 		switch (count($id)) {
 			case 0:
@@ -182,14 +180,44 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	}
 
 
+	public function getMachineType(): string
+	{
+		return $this->machineProvider->getDefinition()->getMachineType();
+	}
+
+
+	public function getId()
+	{
+		return $this->id;
+	}
+
+
+	/**
+	 * Get state machine definition
+	 */
+	public function getDefinition(): StateMachineDefinition
+	{
+		return $this->machineProvider->getDefinition();
+	}
+
+
+	/**
+	 * Read state machine state
+	 */
+	public function getState(): string
+	{
+		return $this->machineProvider->getRepository()->getState($this);
+	}
+
+
 	/**
 	 * Create pre-heated reference.
 	 *
 	 * @warning This may break things a lot. Be careful.
 	 */
-	public static function createPreheatedReference(Smalldb $smalldb, AbstractMachine $machine, $properties)
+	public static function createPreheatedReference(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, $properties)
 	{
-		$ref = new static($smalldb, $machine, null);
+		$ref = new static($smalldb, $machineProvider, null);
 		$ref->properties_cache = $properties;
 		$ref->state_cache = $properties['state'];
 
@@ -238,45 +266,38 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	 */
 	public function __call($name, $arguments)
 	{
-		if ($this->before_transition) {
-			$this->before_transition->emit($this, $name, $arguments);
-		}
-
-		$old_id = $this->id;
-
-		$this->clearCache();
-		$t = $this;
-		$r = $this->machine->invokeTransition($this, $name, $arguments, $returns, function($new_id) use ($t) {
-			if (is_array($new_id) && count($new_id) == 1) {
-				list($t->id) = $new_id;
-			} else {
-				$t->id = $new_id;
-			}
-		});
-
-		if ($this->after_transition) {
-			$this->after_transition->emit($this, $name, $arguments, $r, $returns);
-		}
-
-		switch ($returns) {
-			case AbstractMachine::RETURNS_VALUE:
-				// Returned value is simply passed to caller.
-				return $r;
-			case AbstractMachine::RETURNS_NEW_ID:
-				// When state machine ID changes, reference must be updated to point to the same machine.
-				if ($this->after_pk_changed) {
-					$this->after_pk_changed->emit($this, $old_id, $this->id);
-				}
-				return $this;
-			default:
-				throw new RuntimeException('Unknown semantics of the return value: '.$returns);
-		}
+		$transitionEvent = $this->invokeTransition($name, $arguments);
+		return $transitionEvent->getReturnValue();
 	}
 
 
+	/**
+	 * Invoke transition of the state machine.
+	 */
 	public function invokeTransition(string $transitionName, ...$args)
 	{
-		return $this->__call($transitionName, $args);
+		if ($this->before_transition) {
+			$this->before_transition->emit($this, $transitionName, $args);
+		}
+		$oldId = $this->id;
+
+		$this->clearCache();
+
+		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
+		$transitionEvent->onNewId(function($newId) use ($oldId) {
+			$this->id = $newId;
+
+			if ($this->after_pk_changed) {
+				$this->after_pk_changed->emit($this, $oldId, $this->id);
+			}
+		});
+		$this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent);
+
+		if ($this->after_transition) {
+			$this->after_transition->emit($this, $transitionName, $args, $transitionEvent);
+		}
+
+		return $transitionEvent;
 	}
 
 
