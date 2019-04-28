@@ -27,6 +27,8 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Test\Database\ArrayDao;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 
@@ -85,11 +87,8 @@ class CrudItemContainer implements SmalldbFactory
 
 		// Dump the container so that we can examine it.
 		$dumper = new PhpDumper($c);
-		$outputDir = dirname(__DIR__) . '/output';
-		if (!is_dir($outputDir)) {
-			mkdir($outputDir);
-		}
-		file_put_contents("$outputDir/BasicMachineContainer.php", $dumper->dump());
+		$output = new TestOutput();
+		$output->writeResource("BasicMachineContainer.php", $dumper->dump());
 
 		return $c;
 	}

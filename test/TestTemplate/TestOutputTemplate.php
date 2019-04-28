@@ -23,12 +23,9 @@ use Smalldb\StateMachine\Definition\Renderer\StateMachineRenderer;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 
-class TestOutputTemplate implements Template
+class TestOutputTemplate extends TestOutput implements Template
 {
 	public static $grafovatkoJsUrl = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
-
-	/** @var string */
-	private $outputDir;
 
 	/** @var string */
 	private $title;
@@ -44,23 +41,6 @@ class TestOutputTemplate implements Template
 
 	/** @var string|null */
 	private $outputFilename = null;
-
-
-	public function __construct()
-	{
-		$this->outputDir = dirname(__DIR__) . '/output';
-	}
-
-	public function outputPath(string $basename): string
-	{
-		return $this->outputDir . '/' . basename($basename);
-	}
-
-
-	private function resourcePath(string $basename): string
-	{
-		return dirname($this->outputDir) . '/resources/' . $basename;
-	}
 
 
 	public function setTitle(string $title): self
@@ -133,44 +113,6 @@ class TestOutputTemplate implements Template
 		if (!file_put_contents($targetPath, $html)) {
 			throw new \RuntimeException('Failed to write graph: ' . $targetPath);
 		}
-	}
-
-
-	/**
-	 * Copy the file to the output directory and return relative URL of the file.
-	 */
-	public function resource(string $filename): string
-	{
-		$outputPath = $this->outputPath(basename($filename));
-		$resourcePath = ($filename[0] == '/' ? $filename : $this->resourcePath($filename));
-
-		if (!file_exists($resourcePath)) {
-			throw new \InvalidArgumentException('Resource does not exist: ' . $resourcePath);
-		}
-
-		if (realpath($outputPath) !== realpath($resourcePath) && (!file_exists($outputPath) || filemtime($resourcePath) > filemtime($outputPath))) {
-			if (!copy($resourcePath, $outputPath)) {
-				throw new \RuntimeException('Failed to copy resource: ' . $filename);
-			}
-		}
-		return basename($outputPath);
-	}
-
-
-	/**
-	 * Write content to the file in the output directory and return relative URL of the file.
-	 *
-	 * @see file_put_contents()
-	 */
-	public function writeResource(string $filename, $content): string
-	{
-		$outputPath = $this->outputPath(basename($filename));
-
-		if (file_put_contents($outputPath, $content) === false) {
-			throw new \RuntimeException('Failed to copy resource: ' . $filename);
-		}
-
-		return basename($outputPath);
 	}
 
 

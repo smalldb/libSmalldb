@@ -23,7 +23,8 @@
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="true">
 			<directory suffix=".php">src</directory>
-			<directory suffix=".php">test/Example/Database</directory>
+			<directory suffix=".php">test/Database</directory>
+			<directory suffix=".php">test/SmalldbFactory</directory>
 		</whitelist>
 	</filter>
 </phpunit>
