@@ -34,6 +34,7 @@
     "require-dev": {
         "smalldb/doc-tools": "dev-master",
         "psr/container": ">=1.0",
+        "psr/event-dispatcher": ">=1.0",
         "symfony/dependency-injection": "~4.2",
         "phpunit/phpunit": "^8.0"
     },
