@@ -60,13 +60,6 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 	}
 
 
-	public function setDefinition(StateMachineDefinition $definition): self
-	{
-		$this->definitionFactory = function() use ($definition) { return $definition; };
-		return $this;
-	}
-
-
 	public function setRepositoryFactory(callable $repositoryFactory): self
 	{
 		$this->repositoryFactory = $repositoryFactory;
@@ -74,23 +67,9 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 	}
 
 
-	public function setRepository(SmalldbRepositoryInterface $repository): self
-	{
-		$this->repositoryFactory = function() use ($repository) { return $repository; };
-		return $this;
-	}
-
-
 	public function setTransitionsDecoratorFactory(callable $transitionsDecoratorFactory): self
 	{
 		$this->transitionsDecoratorFactory = $transitionsDecoratorFactory;
-		return $this;
-	}
-
-
-	public function setTransitionsImplementation(TransitionDecorator $transitionsDecorator): self
-	{
-		$this->transitionsDecoratorFactory = function() use ($transitionsDecorator) { return $transitionsDecorator; };
 		return $this;
 	}
 

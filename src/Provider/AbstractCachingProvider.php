@@ -37,13 +37,13 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	/** @var string|null */
 	private $referenceClass;
 
-	/** @var StateMachineDefinition */
+	/** @var StateMachineDefinition|null */
 	protected $definition;
 
-	/** @var TransitionDecorator */
+	/** @var TransitionDecorator|null */
 	protected $transitionsDecorator;
 
-	/** @var SmalldbRepositoryInterface */
+	/** @var SmalldbRepositoryInterface|null */
 	protected $repository;
 
 
@@ -75,12 +75,33 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	}
 
 
+	/**
+	 * @return $this
+	 */
+	final public function setDefinition(?StateMachineDefinition $definition)
+	{
+		$this->definition = $definition;
+		return $this;
+	}
+
+
 	final public function getDefinition(): StateMachineDefinition
 	{
 		return $this->definition ?? ($this->definition = $this->provideDefinition());
 	}
 
+
 	abstract protected function provideDefinition(): StateMachineDefinition;
+
+
+	/**
+	 * @return $this
+	 */
+	final public function setTransitionsDecorator(?TransitionDecorator $transitionsDecorator)
+	{
+		$this->transitionsDecorator = $transitionsDecorator;
+		return $this;
+	}
 
 
 	final public function getTransitionsDecorator(): TransitionDecorator
@@ -88,13 +109,25 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 		return $this->transitionsDecorator ?? ($this->transitionsDecorator = $this->provideTransitionsImplementation());
 	}
 
+
 	abstract protected function provideTransitionsImplementation(): TransitionDecorator;
+
+
+	/**
+	 * @return $this
+	 */
+	final public function setRepository(?SmalldbRepositoryInterface $repository)
+	{
+		$this->repository = $repository;
+		return $this;
+	}
 
 
 	final public function getRepository(): SmalldbRepositoryInterface
 	{
 		return $this->repository ?? ($this->repository = $this->provideRepository());
 	}
+
 
 	abstract protected function provideRepository(): SmalldbRepositoryInterface;
 
