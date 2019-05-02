@@ -21,11 +21,11 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\Database\ArrayDao;
 
 
 class CrudItemBasic implements SmalldbFactory
@@ -40,7 +40,7 @@ class CrudItemBasic implements SmalldbFactory
 		$definition = $reader->getStateMachineDefinition();
 
 		// Repository
-		$dao = new ArrayDao();
+		$dao = new ArrayDaoTables();
 		$repository = new CrudItemRepository($smalldb, $dao);
 
 		// Transitions implementation

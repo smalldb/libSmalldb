@@ -22,11 +22,11 @@ use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
@@ -60,16 +60,13 @@ class CrudItemContainer implements SmalldbFactory
 			->setPublic(true);
 
 		// Repository
-		$crudItemDaoId = ArrayDao::class . ' $crudItemDao';
-		$c->autowire($crudItemDaoId, ArrayDao::class);
+		$c->autowire(ArrayDaoTables::class);
 		$c->autowire(CrudItemRepository::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
 			->setPublic(true);
 
 		// Transitions implementation
 		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
 		$c->autowire($transitionsId, CrudItemTransitions::class)
-			->setArgument(ArrayDao::class, new \Symfony\Component\DependencyInjection\Reference($crudItemDaoId))
 			->setPublic(true);
 
 		// Glue them together using a machine provider

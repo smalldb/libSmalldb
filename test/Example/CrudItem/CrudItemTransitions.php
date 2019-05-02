@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Test\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
@@ -29,32 +29,36 @@ class CrudItemTransitions extends MethodTransitionsDecorator implements Transiti
 	/** @var CrudItemRepository */
 	private $repository;
 
-	/** @var ArrayDao */
+	/** @var ArrayDaoTables */
 	private $dao;
 
+	/** @var string */
+	private $table;
 
-	public function __construct(CrudItemRepository $repository, ArrayDao $dao)
+
+	public function __construct(CrudItemRepository $repository, ArrayDaoTables $dao)
 	{
 		parent::__construct();
 		$this->repository = $repository;
 		$this->dao = $dao;
+		$this->table = $repository->getTableName();
 	}
 
 	protected function create(TransitionEvent $transitionEvent, CrudItemRef $ref, $data): int
 	{
-		$newId = $this->dao->create($data);
+		$newId = $this->dao->table($this->table)->create($data);
 		$transitionEvent->setNewId($newId);
 		return $newId;
 	}
 
 	protected function update(TransitionEvent $transitionEvent, CrudItemRef $ref, $data): void
 	{
-		$this->dao->update($ref->getId(), $data);
+		$this->dao->table($this->table)->update((int) $ref->getId(), $data);
 	}
 
 	protected function delete(TransitionEvent $transitionEvent, CrudItemRef $ref): void
 	{
-		$this->dao->delete($ref->getId());
+		$this->dao->table($this->table)->delete((int) $ref->getId());
 	}
 
 }

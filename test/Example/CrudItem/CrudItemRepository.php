@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Database\ArrayDao;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
@@ -32,22 +32,38 @@ use Smalldb\StateMachine\UnsupportedReferenceException;
  */
 class CrudItemRepository implements SmalldbRepositoryInterface
 {
+	/** @var string */
+	private $table;
+
+	/** @var Smalldb */
 	private $smalldb;
+
+	/** @var ArrayDaoTables */
 	private $dao;
 
-	private $items = [];
 
-	public function __construct(Smalldb $smalldb, ArrayDao $dao)
+	public function __construct(Smalldb $smalldb, ArrayDaoTables $dao)
 	{
+		$this->table = get_class($this);
 		$this->smalldb = $smalldb;
 		$this->dao = $dao;
+
+		// In a real-world application, we would create the table in a database migration.
+		$this->dao->createTable($this->table);
 	}
+
+
+	public function getTableName(): string
+	{
+		return $this->table;
+	}
+
 
 	public function getState(ReferenceInterface $ref): string
 	{
 		if ($ref instanceof CrudItemRef) {
 			$id = (int) $ref->getId();
-			return $id !== null && $this->dao->exists($id)
+			return $id !== null && $this->dao->table($this->table)->exists($id)
 				? CrudItemMachine::EXISTS
 				: CrudItemMachine::NOT_EXISTS;
 		} else {
