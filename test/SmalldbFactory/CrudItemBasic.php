@@ -48,13 +48,14 @@ class CrudItemBasic implements SmalldbFactory
 
 		// Glue them together using a machine provider
 		$machineProvider = (new LambdaProvider())
+			->setMachineType($definition->getMachineType())
 			->setReferenceClass(CrudItemRef::class)
 			->setDefinition($definition)
 			->setTransitionsDecorator($transitionsImplementation)
 			->setRepository($repository);
 
 		// Register state machine type
-		$smalldb->registerMachineType($definition->getMachineType(), $machineProvider);
+		$smalldb->registerMachineType($machineProvider);
 
 		return $smalldb;
 	}

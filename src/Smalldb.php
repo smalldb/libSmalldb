@@ -92,11 +92,14 @@ class Smalldb
 	/**
 	 * Register machine type and its provider
 	 */
-	public function registerMachineType(string $machineType, SmalldbProviderInterface $provider)
+	public function registerMachineType(SmalldbProviderInterface $provider)
 	{
+		$machineType = $provider->getMachineType();
+
 		if (isset($this->machineProviders[$machineType])) {
 			throw new InvalidArgumentException('Duplicate machine type: ' . $machineType);
 		}
+
 		$this->machineProviders[$machineType] = $provider;
 	}
 

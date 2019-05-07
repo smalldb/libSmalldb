@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Provider;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
@@ -35,7 +36,13 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
 abstract class AbstractCachingProvider implements SmalldbProviderInterface
 {
 	/** @var string|null */
+	private $machineType;
+
+	/** @var string|null */
 	private $referenceClass;
+
+	/** @var SmalldbDefinitionBag|null */
+	protected $definitionBag;
 
 	/** @var StateMachineDefinition|null */
 	protected $definition;
@@ -85,9 +92,38 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	}
 
 
+	/**
+	 * @return $this
+	 */
+	final public function setDefinitionBag(SmalldbDefinitionBag $definitionBag)
+	{
+		$this->definitionBag = $definitionBag;
+		return $this;
+	}
+
+
+	/**
+	 * @return $this
+	 */
+	final public function setMachineType(string $machineType)
+	{
+		$this->machineType = $machineType;
+		return $this;
+	}
+
+
+	final public function getMachineType(): string
+	{
+		return $this->machineType ?? $this->getDefinition()->getMachineType();
+	}
+
+
 	final public function getDefinition(): StateMachineDefinition
 	{
-		return $this->definition ?? ($this->definition = $this->provideDefinition());
+		return $this->definition
+			?? ($this->definition = ($this->machineType !== null && $this->definitionBag !== null
+					? $this->definitionBag->getDefinition($this->machineType)
+					: $this->provideDefinition()));
 	}
 
 

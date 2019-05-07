@@ -29,22 +29,31 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 	private $definitionFactory;
 
 	/** @var callable */
+	private $definitionBagFactory;
+
+	/** @var callable */
 	private $transitionsDecoratorFactory;
 
 	/** @var callable */
 	private $repositoryFactory;
 
 	const DEFINITION = 'd';
+	const DEFINITION_BAG = 'db';
 	const TRANSITIONS_DECORATOR = 't';
 	const REPOSITORY = 'r';
 
 
-	public function __construct(array $closureMap = null, string $referenceClass = null)
+	public function __construct(array $closureMap = null, ?string $machineType = null, ?string $referenceClass = null)
 	{
 		if (!empty($closureMap)) {
 			$this->definitionFactory = $closureMap[self::DEFINITION] ?? null;
+			$this->definitionBagFactory = $closureMap[self::DEFINITION_BAG] ?? null;
 			$this->transitionsDecoratorFactory = $closureMap[self::TRANSITIONS_DECORATOR] ?? null;
 			$this->repositoryFactory = $closureMap[self::REPOSITORY] ?? null;
+		}
+
+		if ($machineType !== null) {
+			$this->setMachineType($machineType);
 		}
 
 		if ($referenceClass !== null) {

@@ -77,7 +77,7 @@ class CrudItemContainer implements SmalldbFactory
 			->addMethodCall('setReferenceClass', [CrudItemRef::class]);
 
 		// Register state machine type
-		$smalldb->addMethodCall('registerMachineType', ['crud-item', $machineProvider]);
+		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
 
 		$c->compile();
 

@@ -28,6 +28,8 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
 interface SmalldbProviderInterface
 {
 
+	public function getMachineType(): string;
+
 	/**
 	 * @return (function(Smalldb $smalldb, ...$id): ReferenceInterface)
 	 */

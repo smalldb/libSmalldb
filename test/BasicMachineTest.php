@@ -24,6 +24,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
+use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemDefinitionBag;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemServiceLocator;
 use Smalldb\StateMachine\Test\SmalldbFactory\SmalldbFactory;
 
@@ -83,6 +84,7 @@ class BasicMachineTest extends TestCase
 		yield "Basic" => [CrudItemBasic::class];
 		yield "Container" => [CrudItemContainer::class];
 		yield "Service Locator" => [CrudItemServiceLocator::class];
+		yield "Definition Bag" => [CrudItemDefinitionBag::class];
 	}
 
 }

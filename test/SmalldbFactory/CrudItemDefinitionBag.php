@@ -22,6 +22,7 @@ use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
@@ -33,7 +34,7 @@ use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class CrudItemServiceLocator implements SmalldbFactory
+class CrudItemDefinitionBag implements SmalldbFactory
 {
 
 	/**
@@ -52,13 +53,9 @@ class CrudItemServiceLocator implements SmalldbFactory
 		$smalldb = $c->autowire(Smalldb::class)
 			->setPublic(true);
 
-		// Definition
-		$readerId = AnnotationReader::class . ' $crudItemReader';
-		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
-		$c->register($readerId, AnnotationReader::class)
-			->addArgument(CrudItemMachine::class);
-		$c->register($definitionId, StateMachineDefinition::class)
-			->setFactory([new Reference($readerId), 'getStateMachineDefinition']);
+		// Definition Bag
+		$c->autowire(SmalldbDefinitionBag::class)
+			->addMethodCall('addFromAnnotatedClass', [CrudItemMachine::class]);
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -72,12 +69,12 @@ class CrudItemServiceLocator implements SmalldbFactory
 		$machineProvider = $c->autowire(LambdaProvider::class)
 			->addTag('container.service_locator')
 			->addArgument([
-				LambdaProvider::DEFINITION => new Reference($definitionId),
 				LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsId),
 				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
 			])
-			->addArgument('crud-item')
-			->addArgument(CrudItemRef::class);
+			->addMethodCall('setReferenceClass', [CrudItemRef::class])
+			->addMethodCall('setMachineType', ['crud-item'])
+			->addMethodCall('setDefinitionBag', [new Reference(SmalldbDefinitionBag::class)]);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
