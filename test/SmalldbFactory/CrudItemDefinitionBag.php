@@ -72,9 +72,9 @@ class CrudItemDefinitionBag implements SmalldbFactory
 				LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsId),
 				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
 			])
-			->addMethodCall('setReferenceClass', [CrudItemRef::class])
-			->addMethodCall('setMachineType', ['crud-item'])
-			->addMethodCall('setDefinitionBag', [new Reference(SmalldbDefinitionBag::class)]);
+			->addArgument('crud-item')
+			->addArgument(CrudItemRef::class)
+			->addArgument(new Reference(SmalldbDefinitionBag::class));
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
