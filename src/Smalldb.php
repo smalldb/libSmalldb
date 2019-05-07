@@ -54,6 +54,23 @@ class Smalldb
 
 
 	/**
+	 * Provides a factory to get typed references.
+	 *
+	 * @var ReferenceFactory
+	 */
+	public $ref;
+
+
+	/**
+	 * Smalldb constructor.
+	 */
+	public function __construct()
+	{
+		$this->ref = new ReferenceFactory($this);
+	}
+
+
+	/**
 	 * Set debug logger
 	 */
 	public function setDebugLogger(IDebugLogger $debug_logger)
@@ -140,7 +157,7 @@ class Smalldb
 	 *
 	 * @return AbstractBackend[]
 	 */
-	public function getBackends()
+	public function getBackends(): array
 	{
 		return $this->backends;
 	}
@@ -260,6 +277,20 @@ class Smalldb
 			}
 		}
 		throw new RuntimeException('Cannot create listing.');
+	}
+
+
+	/**
+	 * Generate list of all machines.
+	 */
+	public function getAllMachines()
+	{
+		foreach ($this->backends as $b => $backend) {
+			foreach ($backend->getKnownTypes() as $m) {
+				yield $m => $backend->getMachine($this, $m);
+			}
+		}
+		return;
 	}
 
 

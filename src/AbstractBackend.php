@@ -159,7 +159,7 @@ abstract class AbstractBackend
 	 *
 	 * @return AbstractMachine|null
 	 */
-	public function getMachine(Smalldb $smalldb, string $type)
+	public function getMachine(Smalldb $smalldb, string $type): AbstractMachine
 	{
 		if (isset($this->machine_type_cache[$type])) {
 			return $this->machine_type_cache[$type];
