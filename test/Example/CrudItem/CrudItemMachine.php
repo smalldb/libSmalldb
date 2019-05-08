@@ -37,12 +37,12 @@ interface CrudItemMachine extends ReferenceInterface
 	/**
 	 * @Transition("", {"Exists"})
 	 */
-	public function create($itemData);
+	public function create(?array $itemData);
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 */
-	public function update($itemData);
+	public function update(array $itemData);
 
 	/**
 	 * @Transition("Exists", {""})

@@ -62,14 +62,13 @@ class CrudItemDefinitionBag implements SmalldbFactory
 		$c->autowire(CrudItemRepository::class);
 
 		// Transitions implementation
-		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
-		$c->autowire($transitionsId, CrudItemTransitions::class);
+		$c->autowire(CrudItemTransitions::class);
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(LambdaProvider::class)
 			->addTag('container.service_locator')
 			->addArgument([
-				LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsId),
+				LambdaProvider::TRANSITIONS_DECORATOR => new Reference(CrudItemTransitions::class),
 				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
 			])
 			->addArgument('crud-item')
