@@ -27,6 +27,7 @@ use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemDefinitionBag;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemServiceLocator;
 use Smalldb\StateMachine\Test\SmalldbFactory\SmalldbFactory;
+use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
 
 class BasicMachineTest extends TestCase
@@ -83,6 +84,8 @@ class BasicMachineTest extends TestCase
 		yield "CRUD Item Container" => [CrudItemContainer::class, 'crud-item'];
 		yield "CRUD Item Service Locator" => [CrudItemServiceLocator::class, 'crud-item'];
 		yield "CRUD Item Definition Bag" => [CrudItemDefinitionBag::class, 'crud-item'];
+		yield "Symfony Demo Container" => [SymfonyDemoContainer::class, 'crud-item'];
+		//yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
 	}
 
 }

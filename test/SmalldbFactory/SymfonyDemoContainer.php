@@ -1,0 +1,122 @@
+<?php declare(strict_types = 1);
+/*
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+namespace Smalldb\StateMachine\Test\SmalldbFactory;
+
+use Psr\Container\ContainerInterface;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\Provider\LambdaProvider;
+use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\Post\PostRepository;
+use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
+use Smalldb\StateMachine\Test\Example\Tag\TagTransitions;
+use Smalldb\StateMachine\Test\Example\User\User;
+use Smalldb\StateMachine\Test\Example\User\UserRepository;
+use Smalldb\StateMachine\Test\Example\User\UserTransitions;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
+use Symfony\Component\DependencyInjection\Reference;
+
+
+class SymfonyDemoContainer implements SmalldbFactory
+{
+
+	public function createSmalldb(): Smalldb
+	{
+		return $this->createContainer()->get(Smalldb::class);
+	}
+
+
+	public function createContainer(): ContainerInterface
+	{
+		$out = new TestOutput();
+		$referencesDir = $out->mkdir('references');
+
+		$c = new ContainerBuilder();
+
+		$smalldb = $c->autowire(Smalldb::class)
+			->setPublic(true);
+
+		// Definition Bag
+		// FIXME: Remove duplicate definition bag
+		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBagDefinition = $c->autowire(SmalldbDefinitionBag::class);
+
+		// "Database"
+		$c->autowire(ArrayDaoTables::class);
+
+		// Reference class generator
+		$refGenerator = new ReferenceClassGenerator($referencesDir);
+
+		// State machines
+		// TODO: Where to get this configuration? ... Definition bag builder?
+		$machines = [
+			'crud-item' => [CrudItem::class, CrudItemRepository::class, CrudItemTransitions::class],
+			'post' => [Post::class, PostRepository::class, PostTransitions::class],
+			'tag' => [Tag::class, TagRepository::class, TagTransitions::class],
+			'user' => [User::class, UserRepository::class, UserTransitions::class],
+		];
+
+		// Register & Autowire all state machine components
+		foreach ($machines as $machineType => [$refClass, $repositoryClass, $transitionsClass]) {
+			$definition = $definitionBag->addFromAnnotatedClass($refClass);
+			$definitionBagDefinition->addMethodCall('addFromAnnotatedClass', [$refClass]);
+
+			$c->autowire($repositoryClass)
+				->setPublic(true);
+
+			$c->autowire($transitionsClass);
+
+			$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
+
+			// Glue them together using a machine provider
+			$providerId = "smalldb.$machineType.provider";
+			$c->autowire($providerId, LambdaProvider::class)
+				->addTag('container.service_locator')
+				->addArgument([
+					LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsClass),
+					LambdaProvider::REPOSITORY => new Reference($repositoryClass),
+				])
+				->addArgument($machineType)
+				->addArgument($realRefClass)
+				->addArgument(new Reference(SmalldbDefinitionBag::class));
+
+			// Register state machine type
+			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
+		}
+
+
+		$c->compile();
+
+		// Dump the container so that we can examine it.
+		$dumper = new PhpDumper($c);
+		$output = new TestOutput();
+		$output->writeResource(basename(__FILE__), $dumper->dump());
+
+		return $c;
+	}
+
+}
