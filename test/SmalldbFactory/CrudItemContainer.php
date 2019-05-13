@@ -19,11 +19,13 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
@@ -46,6 +48,9 @@ class CrudItemContainer implements SmalldbFactory
 
 	private function createCrudMachineContainer(): ContainerInterface
 	{
+		$out = new TestOutput();
+		$referencesDir = $out->mkdir('references');
+
 		$c = new ContainerBuilder();
 
 		$smalldb = $c->autowire(Smalldb::class)
@@ -53,11 +58,18 @@ class CrudItemContainer implements SmalldbFactory
 
 		// Definition
 		$reader = $c->register(AnnotationReader::class . ' $crudItemReader', AnnotationReader::class)
-			->addArgument(CrudItemMachine::class);
+			->addArgument(CrudItem::class);
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
 		$c->register($definitionId, StateMachineDefinition::class)
 			->setFactory([$reader, 'getStateMachineDefinition'])
 			->setPublic(true);
+
+		// FIXME: Remove duplicate definition bag
+		$definitionBag = new SmalldbDefinitionBag();
+		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
+
+		// Reference Generator
+		$refGenerator = new ReferenceClassGenerator($referencesDir);
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -69,12 +81,14 @@ class CrudItemContainer implements SmalldbFactory
 		$c->autowire($transitionsId, CrudItemTransitions::class)
 			->setPublic(true);
 
+		$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
+
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(ContainerProvider::class)
 			->addMethodCall('setDefinitionId', [$definitionId])
 			->addMethodCall('setTransitionsImplementationId', [$transitionsId])
 			->addMethodCall('setRepositoryId', [CrudItemRepository::class])
-			->addMethodCall('setReferenceClass', [CrudItemRef::class]);
+			->addMethodCall('setReferenceClass', [$realRefClass]);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);

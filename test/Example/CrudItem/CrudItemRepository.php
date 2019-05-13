@@ -61,24 +61,24 @@ class CrudItemRepository implements SmalldbRepositoryInterface
 
 	public function getState(ReferenceInterface $ref): string
 	{
-		if ($ref instanceof CrudItemRef) {
+		if ($ref instanceof CrudItem) {
 			$id = (int) $ref->getId();
 			return $id !== null && $this->dao->table($this->table)->exists($id)
-				? CrudItemMachine::EXISTS
-				: CrudItemMachine::NOT_EXISTS;
+				? CrudItem::EXISTS
+				: CrudItem::NOT_EXISTS;
 		} else {
 			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
 		}
 	}
 
-	public function ref(...$id): CrudItemRef
+	public function ref(...$id): CrudItem
 	{
 		$ref = $this->smalldb->ref('crud-item', ...$id);
-		if ($ref instanceof CrudItemRef) {
+		if ($ref instanceof CrudItem) {
 			return $ref;
 		} else {
 			throw new UnsupportedReferenceException('The new reference should be instance of '
-				. CrudItemRef::class . ', but it is ' . get_class($ref) . ' instead.');
+				. CrudItem::class . ', but it is ' . get_class($ref) . ' instead.');
 		}
 	}
 

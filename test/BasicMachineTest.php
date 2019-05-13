@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
@@ -35,7 +35,7 @@ class BasicMachineTest extends TestCase
 	/**
 	 * @dataProvider smalldbProvider
 	 */
-	public function testCrudMachine(string $smalldbFactoryClass)
+	public function testCrudMachine(string $smalldbFactoryClass, string $machineType)
 	{
 		/** @var SmalldbFactory $smalldbFactory */
 		$smalldbFactory = new $smalldbFactoryClass();
@@ -43,48 +43,46 @@ class BasicMachineTest extends TestCase
 		$this->assertInstanceOf(Smalldb::class, $smalldb);
 
 		// Check the provider
-		$crudMachineProvider = $smalldb->getMachineProvider('crud-item');
+		$crudMachineProvider = $smalldb->getMachineProvider($machineType);
 		$this->assertInstanceOf(SmalldbProviderInterface::class, $crudMachineProvider);
-		$this->assertEquals(CrudItemRef::class, $crudMachineProvider->getReferenceClass());
 
 		// Check the definition
 		$definition = $crudMachineProvider->getDefinition();
-		$this->assertEquals('crud-item', $definition->getMachineType());
+		$this->assertEquals($machineType, $definition->getMachineType());
 		$this->assertCount(2, $definition->findReachableStates());
 		$this->assertCount(3, $definition->getActions());
 
 		// Try to create a null reference
-		/** @var CrudItemRef $ref */
-		$ref = $smalldb->nullRef('crud-item');
-		$this->assertInstanceOf(CrudItemRef::class, $ref);
-		$this->assertInstanceOf(CrudItemMachine::class, $ref);
+		/** @var CrudItem $ref */
+		$ref = $smalldb->nullRef($machineType);
+		$this->assertInstanceOf(CrudItem::class, $ref);
 		$this->assertEquals(null, $ref->getId());
-		$this->assertEquals(CrudItemMachine::NOT_EXISTS, $ref->getState());
+		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
 		// Usage: Create
-		$ref->create('Foo');
+		$ref->create(['name' => 'Foo']);
 		$id = $ref->getId();
 		$state = $ref->getState();
 		$this->assertNotEquals(null, $id);
-		$this->assertEquals(CrudItemMachine::EXISTS, $state);
+		$this->assertEquals(CrudItem::EXISTS, $state);
 
 		// Try another reference
-		$ref2 = $smalldb->ref('crud-item', $id);
+		$ref2 = $smalldb->ref($machineType, $id);
 		$state2 = $ref2->getState();
 		$this->assertEquals($state, $state2);
 
 		// Usage: Delete
 		$ref->delete();
-		$this->assertEquals(CrudItemMachine::NOT_EXISTS, $ref->getState());
+		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 	}
 
 
 	public function smalldbProvider()
 	{
-		yield "Basic" => [CrudItemBasic::class];
-		yield "Container" => [CrudItemContainer::class];
-		yield "Service Locator" => [CrudItemServiceLocator::class];
-		yield "Definition Bag" => [CrudItemDefinitionBag::class];
+		yield "CRUD Item Basic" => [CrudItemBasic::class, 'crud-item'];
+		yield "CRUD Item Container" => [CrudItemContainer::class, 'crud-item'];
+		yield "CRUD Item Service Locator" => [CrudItemServiceLocator::class, 'crud-item'];
+		yield "CRUD Item Definition Bag" => [CrudItemDefinitionBag::class, 'crud-item'];
 	}
 
 }

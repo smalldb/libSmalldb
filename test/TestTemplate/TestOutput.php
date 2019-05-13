@@ -28,6 +28,9 @@ class TestOutput
 	public function __construct()
 	{
 		$this->outputDir = dirname(__DIR__) . '/output';
+		if (!is_dir($this->outputDir)) {
+			mkdir($this->outputDir);
+		}
 	}
 
 
@@ -40,6 +43,16 @@ class TestOutput
 	protected function resourcePath(string $basename): string
 	{
 		return dirname($this->outputDir) . '/resources/' . $basename;
+	}
+
+
+	public function mkdir(string $basename): string
+	{
+		$dir = $this->outputDir . '/' . basename($basename);
+		if (!is_dir($dir)) {
+			mkdir($dir);
+		}
+		return $dir;
 	}
 
 

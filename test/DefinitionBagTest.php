@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 
 
 class DefinitionBagTest extends TestCase
@@ -37,7 +37,7 @@ class DefinitionBagTest extends TestCase
 		$bag->addDefinition($fooDefinition);
 		$bag->addDefinition($barDefinition);
 
-		$crudItemDefinition = $bag->addFromAnnotatedClass(CrudItemMachine::class);
+		$crudItemDefinition = $bag->addFromAnnotatedClass(CrudItem::class);
 
 		$allDefinitions = $bag->getAllDefinitions();
 		$this->assertContains($fooDefinition, $allDefinitions);

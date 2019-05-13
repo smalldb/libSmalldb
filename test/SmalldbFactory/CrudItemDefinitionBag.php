@@ -19,12 +19,13 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
@@ -48,6 +49,9 @@ class CrudItemDefinitionBag implements SmalldbFactory
 
 	private function createCrudMachineContainer(): ContainerInterface
 	{
+		$out = new TestOutput();
+		$referencesDir = $out->mkdir('references');
+
 		$c = new ContainerBuilder();
 
 		$smalldb = $c->autowire(Smalldb::class)
@@ -55,7 +59,14 @@ class CrudItemDefinitionBag implements SmalldbFactory
 
 		// Definition Bag
 		$c->autowire(SmalldbDefinitionBag::class)
-			->addMethodCall('addFromAnnotatedClass', [CrudItemMachine::class]);
+			->addMethodCall('addFromAnnotatedClass', [CrudItem::class]);
+
+		// FIXME: Remove duplicate definition bag
+		$definitionBag = new SmalldbDefinitionBag();
+		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
+
+		// Reference Generator
+		$refGenerator = new ReferenceClassGenerator($referencesDir);
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -63,6 +74,8 @@ class CrudItemDefinitionBag implements SmalldbFactory
 
 		// Transitions implementation
 		$c->autowire(CrudItemTransitions::class);
+
+		$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(LambdaProvider::class)
@@ -72,7 +85,7 @@ class CrudItemDefinitionBag implements SmalldbFactory
 				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
 			])
 			->addArgument('crud-item')
-			->addArgument(CrudItemRef::class)
+			->addArgument($realRefClass)
 			->addArgument(new Reference(SmalldbDefinitionBag::class));
 
 		// Register state machine type

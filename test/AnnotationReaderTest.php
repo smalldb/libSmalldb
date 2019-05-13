@@ -22,7 +22,7 @@ use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 
 
 class AnnotationReaderTest extends TestCase
@@ -30,7 +30,7 @@ class AnnotationReaderTest extends TestCase
 
 	public function testCrudItem()
 	{
-		$reader = new AnnotationReader(CrudItemMachine::class);
+		$reader = new AnnotationReader(CrudItem::class);
 		$definition = $reader->getStateMachineDefinition();
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertEquals('crud-item', $definition->getMachineType());

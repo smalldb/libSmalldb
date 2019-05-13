@@ -15,31 +15,39 @@
  * limitations under the License.
  *
  */
-
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Reference;
+use Smalldb\StateMachine\Annotation\StateMachine;
+use Smalldb\StateMachine\Annotation\State;
+use Smalldb\StateMachine\Annotation\Transition;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
- * Class CrudItemRef
+ * @StateMachine("crud-item")
  */
-class CrudItemRef extends Reference implements CrudItemMachine
+interface CrudItem extends ReferenceInterface
 {
 
-	public function create($itemData)
-	{
-		return $this->invokeTransition('create', $itemData);
-	}
+	/**
+	 * @State(color = "#baf")
+	 */
+	const EXISTS = "Exists";
 
-	public function update($itemData)
-	{
-		return $this->invokeTransition('update', $itemData);
-	}
+	/**
+	 * @Transition("", {"Exists"})
+	 */
+	public function create(?array $itemData);
 
-	public function delete()
-	{
-		return $this->invokeTransition('delete');
-	}
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 */
+	public function update(array $itemData);
+
+	/**
+	 * @Transition("Exists", {""})
+	 */
+	public function delete();
 
 }
+

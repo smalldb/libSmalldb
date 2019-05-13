@@ -44,19 +44,19 @@ class CrudItemTransitions extends MethodTransitionsDecorator implements Transiti
 		$this->table = $repository->getTableName();
 	}
 
-	protected function create(TransitionEvent $transitionEvent, CrudItemRef $ref, $data): int
+	protected function create(TransitionEvent $transitionEvent, CrudItem $ref, $data): int
 	{
 		$newId = $this->dao->table($this->table)->create($data);
 		$transitionEvent->setNewId($newId);
 		return $newId;
 	}
 
-	protected function update(TransitionEvent $transitionEvent, CrudItemRef $ref, $data): void
+	protected function update(TransitionEvent $transitionEvent, CrudItem $ref, $data): void
 	{
 		$this->dao->table($this->table)->update((int) $ref->getId(), $data);
 	}
 
-	protected function delete(TransitionEvent $transitionEvent, CrudItemRef $ref): void
+	protected function delete(TransitionEvent $transitionEvent, CrudItem $ref): void
 	{
 		$this->dao->table($this->table)->delete((int) $ref->getId());
 	}

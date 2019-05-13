@@ -19,11 +19,13 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
@@ -47,18 +49,28 @@ class CrudItemServiceLocator implements SmalldbFactory
 
 	private function createCrudMachineContainer(): ContainerInterface
 	{
+		$out = new TestOutput();
+		$referencesDir = $out->mkdir('references');
+
 		$c = new ContainerBuilder();
 
 		$smalldb = $c->autowire(Smalldb::class)
 			->setPublic(true);
 
+		// Reference Generator
+		$refGenerator = new ReferenceClassGenerator($referencesDir);
+
 		// Definition
 		$readerId = AnnotationReader::class . ' $crudItemReader';
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
 		$c->register($readerId, AnnotationReader::class)
-			->addArgument(CrudItemMachine::class);
+			->addArgument(CrudItem::class);
 		$c->register($definitionId, StateMachineDefinition::class)
 			->setFactory([new Reference($readerId), 'getStateMachineDefinition']);
+
+		// FIXME: Remove duplicate definition bag
+		$definitionBag = new SmalldbDefinitionBag();
+		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -67,6 +79,8 @@ class CrudItemServiceLocator implements SmalldbFactory
 		// Transitions implementation
 		$transitionsId = CrudItemTransitions::class . ' $crudItemTransitionsImplementation';
 		$c->autowire($transitionsId, CrudItemTransitions::class);
+
+		$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(LambdaProvider::class)
@@ -77,7 +91,7 @@ class CrudItemServiceLocator implements SmalldbFactory
 				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
 			])
 			->addArgument('crud-item')
-			->addArgument(CrudItemRef::class);
+			->addArgument($realRefClass);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);

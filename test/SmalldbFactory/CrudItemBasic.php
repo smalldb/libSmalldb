@@ -19,13 +19,15 @@
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\AnnotationReader;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemMachine;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 
 
 class CrudItemBasic implements SmalldbFactory
@@ -33,10 +35,13 @@ class CrudItemBasic implements SmalldbFactory
 
 	public function createSmalldb(): Smalldb
 	{
+		$out = new TestOutput();
+		$referencesDir = $out->mkdir('references');
+
 		$smalldb = new Smalldb();
 
 		// Definition
-		$reader = new AnnotationReader(CrudItemMachine::class);
+		$reader = new AnnotationReader(CrudItem::class);
 		$definition = $reader->getStateMachineDefinition();
 
 		// Repository
@@ -46,10 +51,14 @@ class CrudItemBasic implements SmalldbFactory
 		// Transitions implementation
 		$transitionsImplementation = new CrudItemTransitions($repository, $dao);
 
+		// Reference class generator
+		$refGenerator = new ReferenceClassGenerator($referencesDir);
+		$realRefClassName = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
+
 		// Glue them together using a machine provider
 		$machineProvider = (new LambdaProvider())
 			->setMachineType($definition->getMachineType())
-			->setReferenceClass(CrudItemRef::class)
+			->setReferenceClass($realRefClassName)
 			->setDefinition($definition)
 			->setTransitionsDecorator($transitionsImplementation)
 			->setRepository($repository);

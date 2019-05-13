@@ -76,20 +76,20 @@ class PhpFileWriter
 	}
 
 
-	public function toCamelCase(string $identifier): string
+	public static function toCamelCase(string $identifier): string
 	{
 		return str_replace('_', '', ucwords($identifier, '_'));
 	}
 
 
-	public function getShortClassName(string $fqcn): string
+	public static function getShortClassName(string $fqcn): string
 	{
 		$lastSlashPos = strrpos($fqcn, '\\');
 		return $lastSlashPos === false ? $fqcn : substr($fqcn, $lastSlashPos + 1);
 	}
 
 
-	public function getClassNamespace(string $fqcn): string
+	public static function getClassNamespace(string $fqcn): string
 	{
 		$lastSlashPos = strrpos($fqcn, '\\');
 		return $lastSlashPos === false ? '' : substr($fqcn, $fqcn[0] == '/' ? 1 : 0, $lastSlashPos);
@@ -185,10 +185,10 @@ class PhpFileWriter
 	}
 
 
-	public function beginClass(string $classname, array $extends = [], array $implements = []): self
+	public function beginClass(string $classname, ?string $extends = null, array $implements = []): self
 	{
 		$this->writeln("class $classname"
-			. ($extends ? " extends " . join(', ', $extends) : '')
+			. ($extends ? " extends " . $extends : '')
 			. ($implements  ? " implements " . join(', ', $implements) : ''));
 		$this->beginBlock();
 		return $this;
