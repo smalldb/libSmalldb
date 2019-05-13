@@ -17,7 +17,6 @@
  */
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
-use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
@@ -35,27 +34,16 @@ use Smalldb\StateMachine\Test\Example\Tag\TagTransitions;
 use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\Example\User\UserTransitions;
-use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class SymfonyDemoContainer implements SmalldbFactory
+class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
 {
 
-	public function createSmalldb(): Smalldb
+	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
-		return $this->createContainer()->get(Smalldb::class);
-	}
-
-
-	public function createContainer(): ContainerInterface
-	{
-		$out = new TestOutput();
-		$referencesDir = $out->mkdir('references');
-
-		$c = new ContainerBuilder();
+		$referencesDir = $this->out->mkdir('references');
 
 		$smalldb = $c->autowire(Smalldb::class)
 			->setPublic(true);
@@ -64,6 +52,7 @@ class SymfonyDemoContainer implements SmalldbFactory
 		// FIXME: Remove duplicate definition bag
 		$definitionBag = new SmalldbDefinitionBag();
 		$definitionBagDefinition = $c->autowire(SmalldbDefinitionBag::class);
+		$c->addObjectResource($definitionBag);
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);
@@ -107,14 +96,6 @@ class SymfonyDemoContainer implements SmalldbFactory
 			// Register state machine type
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
 		}
-
-
-		$c->compile();
-
-		// Dump the container so that we can examine it.
-		$dumper = new PhpDumper($c);
-		$output = new TestOutput();
-		$output->writeResource(basename(__FILE__), $dumper->dump());
 
 		return $c;
 	}

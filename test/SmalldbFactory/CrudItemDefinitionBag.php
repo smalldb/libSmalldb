@@ -17,40 +17,24 @@
  */
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
-use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class CrudItemDefinitionBag implements SmalldbFactory
+class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements SmalldbFactory
 {
 
-	/**
-	 * Initialize Smalldb with a crud-item state machine.
-	 */
-	public function createSmalldb(): Smalldb
+	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
-		return $this->createCrudMachineContainer()->get(Smalldb::class);
-	}
-
-
-	private function createCrudMachineContainer(): ContainerInterface
-	{
-		$out = new TestOutput();
-		$referencesDir = $out->mkdir('references');
+		$referencesDir = $this->out->mkdir('references');
 
 		$c = new ContainerBuilder();
 
@@ -90,13 +74,6 @@ class CrudItemDefinitionBag implements SmalldbFactory
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
-
-		$c->compile();
-
-		// Dump the container so that we can examine it.
-		$dumper = new PhpDumper($c);
-		$output = new TestOutput();
-		$output->writeResource(basename(__FILE__), $dumper->dump());
 
 		return $c;
 	}
