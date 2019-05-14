@@ -54,19 +54,10 @@ class Smalldb
 
 
 	/**
-	 * Provides a factory to get typed references.
-	 *
-	 * @var ReferenceFactory
-	 */
-	public $ref;
-
-
-	/**
 	 * Smalldb constructor.
 	 */
 	public function __construct()
 	{
-		$this->ref = new ReferenceFactory($this);
 	}
 
 
