@@ -93,7 +93,8 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
 		}
 
-		$c->autowire(SmalldbDefinitionBagInterface::class, $scg->generateDefinitionBag($definitionBag));
+		$c->autowire(SmalldbDefinitionBagInterface::class,
+			$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_SymfonyDemoContainer'));
 		return $c;
 	}
 

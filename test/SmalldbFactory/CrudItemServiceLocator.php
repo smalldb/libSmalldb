@@ -45,7 +45,8 @@ class CrudItemServiceLocator extends AbstractSmalldbContainerFactory implements 
 		// Definition Bag
 		$definitionBag = new SmalldbDefinitionBag();
 		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
-		$c->autowire(SmalldbDefinitionBagInterface::class, $scg->generateDefinitionBag($definitionBag));
+		$c->autowire(SmalldbDefinitionBagInterface::class,
+			$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_CrudItemServiceLocator'));
 
 		// Definition
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
