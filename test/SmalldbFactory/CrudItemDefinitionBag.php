@@ -18,9 +18,11 @@
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
@@ -34,23 +36,14 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
-		$referencesDir = $this->out->mkdir('references');
-
-		$c = new ContainerBuilder();
-
+		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
 		$smalldb = $c->autowire(Smalldb::class)
 			->setPublic(true);
 
 		// Definition Bag
-		$c->autowire(SmalldbDefinitionBag::class)
-			->addMethodCall('addFromAnnotatedClass', [CrudItem::class]);
-
-		// FIXME: Remove duplicate definition bag
 		$definitionBag = new SmalldbDefinitionBag();
 		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
-
-		// Reference Generator
-		$refGenerator = new ReferenceClassGenerator($referencesDir);
+		$c->autowire(SmalldbDefinitionBagInterface::class, $scg->generateDefinitionBag($definitionBag));
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -59,7 +52,7 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 		// Transitions implementation
 		$c->autowire(CrudItemTransitions::class);
 
-		$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
+		$realRefClass = $scg->generateReferenceClass(CrudItem::class, $definition);
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(LambdaProvider::class)
@@ -70,7 +63,7 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 			])
 			->addArgument('crud-item')
 			->addArgument($realRefClass)
-			->addArgument(new Reference(SmalldbDefinitionBag::class));
+			->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);

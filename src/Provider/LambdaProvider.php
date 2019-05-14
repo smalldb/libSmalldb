@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Provider;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
@@ -45,7 +45,7 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 
 
 	public function __construct(array $closureMap = null, ?string $machineType = null,
-		?string $referenceClass = null, ?SmalldbDefinitionBag $definitionBag = null)
+		?string $referenceClass = null, ?SmalldbDefinitionBagInterface $definitionBag = null)
 	{
 		if (!empty($closureMap)) {
 			$this->definitionFactory = $closureMap[self::DEFINITION] ?? null;

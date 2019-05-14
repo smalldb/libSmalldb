@@ -1,0 +1,92 @@
+<?php declare(strict_types = 1);
+/*
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+namespace Smalldb\StateMachine\CodeGenerator;
+
+use http\Exception\InvalidArgumentException;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\Utils\PhpFileWriter;
+
+
+/**
+ * A PSR-4-friendly class generator.
+ */
+class SmalldbClassGenerator
+{
+	/** @var string */
+	private $classDirectory;
+
+	/** @var string */
+	private $classNamespace;
+
+	/** @var string[] */
+	private $classFiles = [];
+
+	/** @var ReferenceClassGenerator */
+	private $referenceClassGenerator = null;
+
+
+	public function __construct(string $classNamespace, string $classDirectory)
+	{
+		$this->classNamespace = trim($classNamespace, '\\');
+		$this->classDirectory = $classDirectory;
+	}
+
+
+	public function getClassNamespace(): string
+	{
+		return $this->classNamespace;
+	}
+
+
+	public function addGeneratedClass(string $className, string $classContent)
+	{
+		$shortClassName = PhpFileWriter::getShortClassName($className);
+		$namespace = PhpFileWriter::getClassNamespace($className);
+
+		if ($namespace !== $this->classNamespace) {
+			throw new \InvalidArgumentException("The generated class $className must be in $this->classNamespace namespace.");
+		}
+
+		$filename = $shortClassName . '.php';
+		if (file_put_contents($this->classDirectory . '/' . $filename, $classContent) === false) {
+			throw new \RuntimeException("Failed to store class: $filename");
+		}
+
+		$this->classFiles[$className] = $filename;
+	}
+
+
+	public function generateDefinitionBag(SmalldbDefinitionBag $definitionBag, string $bagShortClassName = 'GeneratedDefinitionBag'): string
+	{
+		$loader = new DefinitionBagGenerator($this);
+		return $loader->generateDefinitionBagClass($this->classNamespace . '\\' . $bagShortClassName, $definitionBag);
+	}
+
+
+	public function generateReferenceClass(string $sourceReferenceClass, StateMachineDefinition $definition): string
+	{
+		if (!$this->referenceClassGenerator) {
+			$this->referenceClassGenerator = new ReferenceClassGenerator($this);
+		}
+
+		return $this->referenceClassGenerator->generateReferenceClass($sourceReferenceClass, $definition);
+	}
+
+}

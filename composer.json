@@ -28,7 +28,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Smalldb\\StateMachine\\Test\\": "test/"
+            "Smalldb\\StateMachine\\Test\\": "test/",
+            "Smalldb\\GeneratedCode\\": "test/output/generated/"
         }
     },
     "require-dev": {

@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Provider;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
@@ -41,7 +41,7 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	/** @var string|null */
 	private $referenceClass;
 
-	/** @var SmalldbDefinitionBag|null */
+	/** @var SmalldbDefinitionBagInterface|null */
 	protected $definitionBag;
 
 	/** @var StateMachineDefinition|null */
@@ -95,7 +95,7 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	/**
 	 * @return $this
 	 */
-	final public function setDefinitionBag(SmalldbDefinitionBag $definitionBag)
+	final public function setDefinitionBag(SmalldbDefinitionBagInterface $definitionBag)
 	{
 		$this->definitionBag = $definitionBag;
 		return $this;

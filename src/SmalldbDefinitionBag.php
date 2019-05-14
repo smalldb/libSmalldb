@@ -21,10 +21,13 @@ namespace Smalldb\StateMachine;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 
-class SmalldbDefinitionBag
+class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 {
 	/** @var StateMachineDefinition[] */
 	private $definitionBag = [];
+
+	/** @var string[] */
+	private $aliases = [];
 
 
 	public function __construct()
@@ -36,6 +39,8 @@ class SmalldbDefinitionBag
 	{
 		if (isset($this->definitionBag[$machineType])) {
 			return $this->definitionBag[$machineType];
+		} else if (isset($this->aliases[$machineType])) {
+			return $this->definitionBag[$this->aliases[$machineType]];
 		} else {
 			throw new InvalidArgumentException("Undefined machine type: $machineType");
 		}
@@ -54,19 +59,41 @@ class SmalldbDefinitionBag
 	/**
 	 * @return string[]
 	 */
+	public function getAllAliases(): array
+	{
+		return $this->aliases;
+	}
+
+
+	/**
+	 * @return string[]
+	 */
 	public function getAllMachineTypes(): array
 	{
 		return array_keys($this->definitionBag);
 	}
 
 
-	public function addDefinition(StateMachineDefinition $definition)
+	public function addDefinition(StateMachineDefinition $definition): string
 	{
 		$machineType = $definition->getMachineType();
 		if (isset($this->definitionBag[$machineType])) {
 			throw new InvalidArgumentException("Duplicate state machine type: $machineType");
 		} else {
 			$this->definitionBag[$machineType] = $definition;
+			return $machineType;
+		}
+	}
+
+
+	public function addAlias(string $alias, string $machineType)
+	{
+		if (isset($this->aliases[$alias])) {
+			throw new InvalidArgumentException("Duplicate state machine alias: $alias");
+		} else if (isset($this->definitionBag[$machineType])) {
+			$this->aliases[$alias] = $machineType;
+		} else {
+			throw new InvalidArgumentException("Undefined machine type: $machineType");
 		}
 	}
 
@@ -75,7 +102,8 @@ class SmalldbDefinitionBag
 	{
 		$reader = new AnnotationReader($className);
 		$definition = $reader->getStateMachineDefinition();
-		$this->addDefinition($definition);
+		$machineType = $this->addDefinition($definition);
+		$this->addAlias($className, $machineType);
 		return $definition;
 	}
 

@@ -19,16 +19,18 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
-use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 
 class CrudItemContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
@@ -36,25 +38,21 @@ class CrudItemContainer extends AbstractSmalldbContainerFactory implements Small
 
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
-		$referencesDir = $this->out->mkdir('references');
-
+		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
 		$smalldb = $c->autowire(Smalldb::class)
 			->setPublic(true);
 
-		// Definition
-		$reader = $c->register(AnnotationReader::class . ' $crudItemReader', AnnotationReader::class)
-			->addArgument(CrudItem::class);
-		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
-		$c->register($definitionId, StateMachineDefinition::class)
-			->setFactory([$reader, 'getStateMachineDefinition'])
-			->setPublic(true);
-
-		// FIXME: Remove duplicate definition bag
+		// Definition Bag
 		$definitionBag = new SmalldbDefinitionBag();
 		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
+		$c->autowire(SmalldbDefinitionBagInterface::class, $scg->generateDefinitionBag($definitionBag));
 
-		// Reference Generator
-		$refGenerator = new ReferenceClassGenerator($referencesDir);
+		// Definition
+		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';
+		$c->register($definitionId, StateMachineDefinition::class)
+			->setFactory([new Reference(SmalldbDefinitionBagInterface::class), 'getDefinition'])
+			->addArgument('crud-item')
+			->setPublic(true);
 
 		// Repository
 		$c->autowire(ArrayDaoTables::class);
@@ -66,7 +64,7 @@ class CrudItemContainer extends AbstractSmalldbContainerFactory implements Small
 		$c->autowire($transitionsId, CrudItemTransitions::class)
 			->setPublic(true);
 
-		$realRefClass = $refGenerator->generateReferenceClass(CrudItem::class, $definition);
+		$realRefClass = $scg->generateReferenceClass(CrudItem::class, $definition);
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->autowire(ContainerProvider::class)

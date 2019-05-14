@@ -47,7 +47,7 @@ abstract class AbstractSmalldbContainerFactory implements SmalldbFactory
 	{
 		$c = $this->configureContainer(new ContainerBuilder());
 		$c->compile();
-		$this->dumpContainer($c, preg_replace('/^.*\\\\/', '', get_class($this)));
+		$this->dumpContainer($c, preg_replace('/^.*\\\\/', '', get_class($this)) . '.php');
 		return $c;
 	}
 
@@ -61,7 +61,7 @@ abstract class AbstractSmalldbContainerFactory implements SmalldbFactory
 	protected function dumpContainer(ContainerBuilder $c, string $filename): void
 	{
 		$dumper = new PhpDumper($c);
-		$this->out->writeResource($filename, $dumper->dump());
+		file_put_contents($this->out->mkdir('container') . '/' . $filename, $dumper->dump());
 	}
 
 }

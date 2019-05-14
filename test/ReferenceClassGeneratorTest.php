@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Smalldb;
@@ -33,14 +34,15 @@ class ReferenceClassGeneratorTest extends TestCase
 	public function testReferenceGenerator()
 	{
 		$out = new TestOutput();
-		$outputDir = $out->mkdir('references');
+		$namespace = 'Smalldb\\GeneratedCode';
+		$scg = new SmalldbClassGenerator($namespace, $out->mkdir('generated'));
 
 		$origClass = CrudItem::class;
 
 		$definitionBag = new SmalldbDefinitionBag();
 		$definition = $definitionBag->addFromAnnotatedClass($origClass);
 
-		$generator = new ReferenceClassGenerator($outputDir);
+		$generator = new ReferenceClassGenerator($scg);
 		$newClass = $generator->generateReferenceClass($origClass, $definition);
 
 		// Try to create a dummy null reference

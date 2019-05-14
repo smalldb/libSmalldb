@@ -25,16 +25,8 @@ use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
-class ReferenceClassGenerator
+class ReferenceClassGenerator extends AbstractClassGenerator
 {
-	private $outputDir;
-
-
-	public function __construct(string $outputDir)
-	{
-		$this->outputDir = $outputDir;
-	}
-
 
 	/**
 	 * Generate a new class implementing the missing methods in $sourceReferenceClassName.
@@ -45,41 +37,36 @@ class ReferenceClassGenerator
 	{
 		try {
 			$sourceClassReflection = new \ReflectionClass($sourceReferenceClassName);
-			$hash = sha1(serialize([$sourceClassReflection, $definition]));
 
-			$targetReferenceClassName = $sourceReferenceClassName . '__' . $hash;
-			$shortTargetClassName = PhpFileWriter::getShortClassName($targetReferenceClassName);
-			$targetFilename = $this->outputDir . '/' . $shortTargetClassName . '.php';
+			$targetNamespace = $this->classGenerator->getClassNamespace();
+			$shortTargetClassName = PhpFileWriter::getShortClassName($sourceReferenceClassName);
+			$targetReferenceClassName = $targetNamespace . '\\' . $shortTargetClassName;
 
-			if (!file_exists($targetFilename) || filemtime(__FILE__) > filemtime($targetFilename)) {
-				$w = new PhpFileWriter();
-				$w->setFileHeader(__CLASS__);
-				$w->setNamespace($w->getClassNamespace($targetReferenceClassName));
+			$w = new PhpFileWriter();
+			$w->setFileHeader(__CLASS__);
+			$w->setNamespace($w->getClassNamespace($targetReferenceClassName));
+			$w->setClassName($shortTargetClassName);
 
-				// Create the class
-				$extends = $w->useClass(Reference::class);
-				$implements = [$w->useClass(ReferenceInterface::class)];
-				if ($sourceClassReflection->isInterface()) {
-					$implements[] = $w->useClass($sourceReferenceClassName);
-				} else {
-					$extends = $w->useClass($sourceReferenceClassName);
-				}
-				$w->beginClass($shortTargetClassName, $extends, $implements);
-
-				// Create methods
-				$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-
-				$w->endClass();
-				$w->write($targetFilename);
+			// Create the class
+			$extends = $w->useClass(Reference::class);
+			$implements = [$w->useClass(ReferenceInterface::class)];
+			if ($sourceClassReflection->isInterface()) {
+				$implements[] = $w->useClass($sourceReferenceClassName);
+			} else {
+				$extends = $w->useClass($sourceReferenceClassName);
 			}
+			$w->beginClass($shortTargetClassName, $extends, $implements);
+
+			// Create methods
+			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
+
+			$w->endClass();
 		}
 		catch (\ReflectionException $ex) {
 			throw new RuntimeException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
 		}
 
-		if (!class_exists($targetReferenceClassName)) {
-			require $targetFilename;
-		}
+		$this->classGenerator->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
 		return $targetReferenceClassName;
 	}
 
