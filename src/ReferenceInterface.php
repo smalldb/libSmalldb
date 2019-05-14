@@ -25,7 +25,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 interface ReferenceInterface
 {
 	/**
-	 * @State("Not Exists")
+	 * @State
 	 */
 	const NOT_EXISTS = "";
 

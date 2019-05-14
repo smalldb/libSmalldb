@@ -37,6 +37,11 @@ class NavigationTemplate implements Template
 		return Html::nav([],
 			Html::ul([],
 				$this->item('index.html', 'CRUD Item'),
+				),
+			Html::ul([],
+				$this->item('demo_post.html', 'Post'),
+				$this->item('demo_tag.html', 'Tag'),
+				$this->item('demo_user.html', 'User'),
 			),
 			Html::ul([],
 				...$this->bpmnItems()

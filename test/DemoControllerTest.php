@@ -20,12 +20,15 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 
@@ -52,6 +55,25 @@ class DemoControllerTest extends TestCase
 		$container = $this->createContainer();
 		foreach ([Smalldb::class, PostRepository::class, TagRepository::class, UserRepository::class] as $service) {
 			$this->assertInstanceOf($service, $container->get($service));
+		}
+	}
+
+
+	public function testDefinitionBag()
+	{
+		$container = $this->createContainer();
+		/** @var SmalldbDefinitionBagInterface $definitionBag */
+		$definitionBag = $container->get(SmalldbDefinitionBagInterface::class);
+
+		foreach ($definitionBag->getAllMachineTypes() as $machineType) {
+			$definition = $definitionBag->getDefinition($machineType);
+			$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+
+			// Render the result
+			$output = new TestOutputTemplate();
+			$output->setTitle('Demo App: ' . ucfirst($machineType));
+			$output->addStateMachineGraph($definition);
+			$output->writeHtmlFile('demo_' . $machineType . '.html');
 		}
 	}
 
