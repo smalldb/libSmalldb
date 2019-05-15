@@ -44,8 +44,10 @@ class DefinitionBagGenerator extends AbstractClassGenerator
 		// Generate the SmalldbDefinitionBagInterface implementation
 		$w->beginClass($shortTargetClassName, null, [$w->useClass(SmalldbDefinitionBagInterface::class)]);
 		$this->generateGetAllMachineTypesMethod($w, $definitionBag->getAllMachineTypes());
-		$this->generateGetAllAliasesMethod($w, $definitionBag->getAllAliases());
-		$this->generateGetDefinitionMethod($w, $definitionMethodNames, $definitionBag->getAllAliases());
+		$this->generateGetAllDefinitions($w);
+		$aliases = $definitionBag->getAllAliases();
+		$this->generateGetAllAliasesMethod($w, $aliases);
+		$this->generateGetDefinitionMethod($w, $definitionMethodNames, $aliases);
 
 		// Definition methods
 		foreach ($definitionMethodNames as $machineType => $methodName) {
@@ -71,6 +73,15 @@ class DefinitionBagGenerator extends AbstractClassGenerator
 	{
 		$w->beginMethod('getAllMachineTypes', [], 'array');
 		$w->writeln('return %s;', $machineTypes);
+		$w->endMethod();
+	}
+
+	private function generateGetAllDefinitions(PhpFileWriter $w)
+	{
+		$w->beginMethod('getAllDefinitions', [], 'iterable');
+		$w->beginBlock('foreach ($this->getAllMachineTypes() as $machineType)');
+		$w->writeln('yield $machineType => $this->getDefinition($machineType);');
+		$w->endBlock();
 		$w->endMethod();
 	}
 

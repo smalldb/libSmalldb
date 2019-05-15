@@ -19,22 +19,15 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
+use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\Post\PostRepository;
-use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
-use Smalldb\StateMachine\Test\Example\Tag\TagTransitions;
 use Smalldb\StateMachine\Test\Example\User\User;
-use Smalldb\StateMachine\Test\Example\User\UserRepository;
-use Smalldb\StateMachine\Test\Example\User\UserTransitions;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -50,46 +43,50 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 
 		// Definition Bag
 		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBag->addFromAnnotatedClass(CrudItem::class);
+		$definitionBag->addFromAnnotatedClass(Post::class);
+		$definitionBag->addFromAnnotatedClass(Tag::class);
+		$definitionBag->addFromAnnotatedClass(User::class);
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);
 
-		// State machines
-		// TODO: Where to get this configuration? ... Definition bag builder?
-		$machines = [
-			'crud-item' => [CrudItem::class, CrudItemRepository::class, CrudItemTransitions::class],
-			'post' => [Post::class, PostRepository::class, PostTransitions::class],
-			'tag' => [Tag::class, TagRepository::class, TagTransitions::class],
-			'user' => [User::class, UserRepository::class, UserTransitions::class],
-		];
-
 		// Register & Autowire all state machine components
-		foreach ($machines as $machineType => [$refClass, $repositoryClass, $transitionsClass]) {
-			$definition = $definitionBag->addFromAnnotatedClass($refClass);
+		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {
+			$referenceClass = $definition->getReferenceClass();
+			$repositoryClass = $definition->getRepositoryClass();
+			$transitionsClass = $definition->getTransitionsClass();
 
-			$c->autowire($repositoryClass)
-				->setPublic(true);
+			$serviceReferences = [];
 
-			$c->autowire($transitionsClass);
+			if ($repositoryClass) {
+				$serviceReferences[LambdaProvider::REPOSITORY] = new Reference($repositoryClass);
+				$c->autowire($repositoryClass)
+					->setPublic(true);
+			}
 
-			$realRefClass = $scg->generateReferenceClass($refClass, $definition);
+			if ($transitionsClass) {
+				$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = new Reference($transitionsClass);
+				$c->autowire($transitionsClass);
+			}
+
+			$realReferenceClass = $referenceClass ? $scg->generateReferenceClass($referenceClass, $definition) : null;
+
 
 			// Glue them together using a machine provider
 			$providerId = "smalldb.$machineType.provider";
 			$c->register($providerId, LambdaProvider::class)
 				->addTag('container.service_locator')
-				->addArgument([
-					LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsClass),
-					LambdaProvider::REPOSITORY => new Reference($repositoryClass),
-				])
+				->addArgument($serviceReferences)
 				->addArgument($machineType)
-				->addArgument($realRefClass)
+				->addArgument($realReferenceClass)
 				->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
 
 			// Register state machine type
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
 		}
 
+		// Compile & register definition bag
 		$c->autowire(SmalldbDefinitionBagInterface::class,
 				$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_SymfonyDemoContainer'))
 			->setPublic(true);

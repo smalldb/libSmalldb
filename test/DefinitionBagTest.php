@@ -32,8 +32,8 @@ class DefinitionBagTest extends TestCase
 		$bag = new SmalldbDefinitionBag();
 		$this->assertEmpty($bag->getAllDefinitions(), "A new definition bag should be empty.");
 
-		$fooDefinition = new StateMachineDefinition('foo', [], [], [], [], []);
-		$barDefinition = new StateMachineDefinition('bar', [], [], [], [], []);
+		$fooDefinition = new StateMachineDefinition('foo', [], [], [], []);
+		$barDefinition = new StateMachineDefinition('bar', [], [], [], []);
 		$bag->addDefinition($fooDefinition);
 		$bag->addDefinition($barDefinition);
 
@@ -57,8 +57,8 @@ class DefinitionBagTest extends TestCase
 	public function testUndefinedDefinition()
 	{
 		$bag = new SmalldbDefinitionBag();
-		$bag->addDefinition(new StateMachineDefinition('foo1', [], [], [], [], []));
-		$bag->addDefinition(new StateMachineDefinition('foo2', [], [], [], [], []));
+		$bag->addDefinition(new StateMachineDefinition('foo1', [], [], [], []));
+		$bag->addDefinition(new StateMachineDefinition('foo2', [], [], [], []));
 		$this->assertNotEmpty($bag->getAllDefinitions(), "The definition bag should not be empty.");
 
 		$this->expectException(\InvalidArgumentException::class);
@@ -69,10 +69,10 @@ class DefinitionBagTest extends TestCase
 	public function testDuplicateDefinition()
 	{
 		$bag = new SmalldbDefinitionBag();
-		$bag->addDefinition(new StateMachineDefinition('foo', [], [], [], [], []));
+		$bag->addDefinition(new StateMachineDefinition('foo', [], [], [], []));
 
 		$this->expectException(\InvalidArgumentException::class);
-		$bag->addDefinition(new StateMachineDefinition('foo', [], [], [], [], []));
+		$bag->addDefinition(new StateMachineDefinition('foo', [], [], [], []));
 	}
 
 }

@@ -50,6 +50,15 @@ class StateMachineDefinitionBuilder
 	/** @var DefinitionError[] */
 	private $errors = [];
 
+	/** @var string|null */
+	private $referenceClass = null;
+
+	/** @var string|null */
+	private $repositoryClass = null;
+
+	/** @var string|null */
+	private $transitionsClass = null;
+
 
 	public function __construct()
 	{
@@ -93,7 +102,8 @@ class StateMachineDefinitionBuilder
 			$actions[$action->getName()] = $action;
 		}
 
-		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->errors, $this->debugData);
+		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->errors,
+			$this->referenceClass, $this->transitionsClass, $this->repositoryClass, $this->debugData);
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
@@ -208,5 +218,42 @@ class StateMachineDefinitionBuilder
 	{
 		return !empty($this->errors);
 	}
+
+
+	public function getReferenceClass(): ?string
+	{
+		return $this->referenceClass;
+	}
+
+
+	public function setReferenceClass(?string $referenceClass): void
+	{
+		$this->referenceClass = $referenceClass;
+	}
+
+
+	public function getRepositoryClass(): ?string
+	{
+		return $this->repositoryClass;
+	}
+
+
+	public function setRepositoryClass(?string $repositoryClass): void
+	{
+		$this->repositoryClass = $repositoryClass;
+	}
+
+
+	public function getTransitionsClass(): ?string
+	{
+		return $this->transitionsClass;
+	}
+
+
+	public function setTransitionsClass(?string $transitionsClass): void
+	{
+		$this->transitionsClass = $transitionsClass;
+	}
+
 
 }

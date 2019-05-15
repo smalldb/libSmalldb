@@ -53,7 +53,7 @@ class DefinitionTest extends TestCase
 		$stateMachineDefinition = new StateMachineDefinition('crud-item',
 			['' => $sNotExists, 'Exists' => $sExists],
 			['create' => $aCreate, 'update' => $aUpdate, 'delete' => $aDelete],
-			[$tCreate, $tUpdate, $tDelete], [], []);
+			[$tCreate, $tUpdate, $tDelete], []);
 
 		return $stateMachineDefinition;
 	}

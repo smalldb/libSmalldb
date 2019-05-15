@@ -93,6 +93,7 @@ class AnnotationReader
 	{
 		$this->classFileName = $reflectionClass->getFileName();
 		$this->baseDir = dirname($this->classFileName);
+		$this->builder->setReferenceClass($reflectionClass->getName());
 
 		$reader = $this->createAnnotationReader();
 

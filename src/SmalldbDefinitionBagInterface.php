@@ -37,6 +37,15 @@ interface SmalldbDefinitionBagInterface
 	public function getAllMachineTypes(): array;
 
 	/**
+	 * Returns array or generator of all state machine definitions.
+	 * This may be slow and cause a lot of lazy-loading. It is better
+	 * to use getAllMachineTypes() when possible.
+	 *
+	 * @return StateMachineDefinition[]
+	 */
+	public function getAllDefinitions(): iterable;
+
+	/**
 	 * List of all aliases which have the definition in this bag.
 	 *
 	 * @return string[]

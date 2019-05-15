@@ -55,6 +55,15 @@ class StateMachineDefinition
 	/** @var DebugDataBag[] */
 	private $debugData;
 
+	/** @var string|null */
+	private $referenceClass;
+
+	/** @var string|null */
+	private $repositoryClass;
+
+	/** @var string|null */
+	private $transitionsClass;
+
 
 	/**
 	 * StateMachineDefinition constructor.
@@ -67,13 +76,17 @@ class StateMachineDefinition
 	 * @param DefinitionError[] $errors
 	 * @param DebugDataBag[] $debugData
 	 */
-	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $errors, array $debugData)
+	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $errors,
+		?string $referenceClass = null, ?string $transitionsClass = null, ?string $repositoryClass = null, array $debugData = [])
 	{
 		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;
 		$this->errors = $errors;
+		$this->referenceClass = $referenceClass;
+		$this->transitionsClass = $transitionsClass;
+		$this->repositoryClass = $repositoryClass;
 		$this->debugData = $debugData;
 	}
 
@@ -174,6 +187,24 @@ class StateMachineDefinition
 	public function getErrors(): array
 	{
 		return $this->errors;
+	}
+
+
+	public function getReferenceClass(): ?string
+	{
+		return $this->referenceClass;
+	}
+
+
+	public function getTransitionsClass(): ?string
+	{
+		return $this->transitionsClass;
+	}
+
+
+	public function getRepositoryClass(): ?string
+	{
+		return $this->repositoryClass;
 	}
 
 
