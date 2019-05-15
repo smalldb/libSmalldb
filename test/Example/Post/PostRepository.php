@@ -19,11 +19,18 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
+use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
+use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudRepository;
 
 
-class PostRepository extends CrudItemRepository implements SmalldbRepositoryInterface
+class PostRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
 {
+
+	protected function supports(ReferenceInterface $ref): bool
+	{
+		return $ref instanceof Post;
+	}
+
 }
 

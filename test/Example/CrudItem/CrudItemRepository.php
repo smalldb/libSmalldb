@@ -19,67 +19,19 @@
 
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
 /**
  * Crud item repository -- a simple array-based testing repository.
  */
-class CrudItemRepository implements SmalldbRepositoryInterface
+class CrudItemRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
 {
-	/** @var string */
-	private $table;
 
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var ArrayDaoTables */
-	private $dao;
-
-
-	public function __construct(Smalldb $smalldb, ArrayDaoTables $dao)
+	protected function supports(ReferenceInterface $ref): bool
 	{
-		$this->table = get_class($this);
-		$this->smalldb = $smalldb;
-		$this->dao = $dao;
-
-		// In a real-world application, we would create the table in a database migration.
-		$this->dao->createTable($this->table);
-	}
-
-
-	public function getTableName(): string
-	{
-		return $this->table;
-	}
-
-
-	public function getState(ReferenceInterface $ref): string
-	{
-		if ($ref instanceof CrudItem) {
-			$id = (int) $ref->getId();
-			return $id !== null && $this->dao->table($this->table)->exists($id)
-				? CrudItem::EXISTS
-				: CrudItem::NOT_EXISTS;
-		} else {
-			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
-		}
-	}
-
-	public function ref(...$id): CrudItem
-	{
-		$ref = $this->smalldb->ref('crud-item', ...$id);
-		if ($ref instanceof CrudItem) {
-			return $ref;
-		} else {
-			throw new UnsupportedReferenceException('The new reference should be instance of '
-				. CrudItem::class . ', but it is ' . get_class($ref) . ' instead.');
-		}
+		return $ref instanceof CrudItem;
 	}
 
 }

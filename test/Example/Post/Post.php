@@ -19,13 +19,18 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Annotation\UseRepository;
+use Smalldb\StateMachine\Annotation\UseTransitions;
+use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
  * @StateMachine("post")
+ * @UseRepository(PostRepository::class)
+ * @UseTransitions(PostTransitions::class)
  */
-interface Post extends CrudItem
+interface Post extends CrudMachine, ReferenceInterface
 {
 
 }

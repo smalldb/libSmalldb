@@ -19,13 +19,18 @@
 namespace Smalldb\StateMachine\Test\Example\User;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Annotation\UseRepository;
+use Smalldb\StateMachine\Annotation\UseTransitions;
+use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
  * @StateMachine("user")
+ * @UseRepository(UserRepository::class)
+ * @UseTransitions(UserTransitions::class)
  */
-interface User extends CrudItem
+interface User extends CrudMachine, ReferenceInterface
 {
 
 }

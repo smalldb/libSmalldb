@@ -19,13 +19,18 @@
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Annotation\UseRepository;
+use Smalldb\StateMachine\Annotation\UseTransitions;
+use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
  * @StateMachine("tag")
+ * @UseRepository(TagRepository::class)
+ * @UseTransitions(TagTransitions::class)
  */
-interface Tag extends CrudItem
+interface Tag extends CrudMachine, ReferenceInterface
 {
 
 }

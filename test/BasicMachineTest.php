@@ -19,6 +19,7 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
@@ -56,7 +57,7 @@ class BasicMachineTest extends TestCase
 		// Try to create a null reference
 		/** @var CrudItem $ref */
 		$ref = $smalldb->nullRef($machineType);
-		$this->assertInstanceOf(CrudItem::class, $ref);
+		$this->assertInstanceOf(ReferenceInterface::class, $ref);
 		$this->assertEquals(null, $ref->getId());
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
@@ -85,7 +86,7 @@ class BasicMachineTest extends TestCase
 		yield "CRUD Item Service Locator" => [CrudItemServiceLocator::class, 'crud-item'];
 		yield "CRUD Item Definition Bag" => [CrudItemDefinitionBag::class, 'crud-item'];
 		yield "Symfony Demo Container" => [SymfonyDemoContainer::class, 'crud-item'];
-		//yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
+		yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
 		yield "YAML Container" => [YamlDemoContainer::class, 'crud-item'];
 	}
 

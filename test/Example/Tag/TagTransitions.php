@@ -18,11 +18,17 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudTransitions;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
-class TagTransitions extends CrudItemTransitions implements TransitionDecorator
+class TagTransitions extends AbstractCrudTransitions implements TransitionDecorator
 {
+
+	public function __construct(TagRepository $repository, ArrayDaoTables $dao)
+	{
+		parent::__construct($repository, $dao);
+	}
 
 }

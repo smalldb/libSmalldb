@@ -18,12 +18,17 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudTransitions;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
-class PostTransitions extends CrudItemTransitions implements TransitionDecorator
+class PostTransitions extends AbstractCrudTransitions implements TransitionDecorator
 {
+
+	public function __construct(PostRepository $repository, ArrayDaoTables $dao)
+	{
+		parent::__construct($repository, $dao);
+	}
 
 }
