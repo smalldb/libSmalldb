@@ -1,0 +1,38 @@
+services:
+    Smalldb\StateMachine\Smalldb:
+        public: true
+        calls:
+            - method: registerMachineType
+              arguments: ['@smalldb.crud-item.provider']
+
+    Smalldb\StateMachine\SmalldbDefinitionBag:
+        calls:
+            - method: addFromAnnotatedClass
+              arguments: ['Smalldb\StateMachine\Test\Example\CrudItem\CrudItem']
+
+    smalldb.crud-item.provider:
+        class: Smalldb\StateMachine\Provider\LambdaProvider
+        tags: ['container.service_locator']
+        arguments:
+            -
+                  t: '@Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions'
+                  r: '@Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository'
+            - 'crud-item'
+            - Smalldb\StateMachine\Test\Example\CrudItem\CrudItem
+            - '@Smalldb\StateMachine\SmalldbDefinitionBag'
+
+    repositories:
+        namespace: Smalldb\StateMachine\Test\Example\
+        resource: '../Example/*/*Repository.php'
+        autowire: true
+        public: true
+
+    transitions:
+        namespace: Smalldb\StateMachine\Test\Example\
+        resource: '../Example/*/*Transitions.php'
+        autowire: true
+
+    # Dummy Database
+    Smalldb\StateMachine\Test\Database\ArrayDaoTables:
+        autowire: true
+

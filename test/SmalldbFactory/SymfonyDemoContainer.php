@@ -18,9 +18,6 @@
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
-use Smalldb\StateMachine\CodeGenerator\DefinitionBagGenerator;
-use Smalldb\StateMachine\CodeGenerator\GeneratedClassLoader;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;

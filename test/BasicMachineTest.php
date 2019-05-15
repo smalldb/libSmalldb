@@ -21,13 +21,13 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRef;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemDefinitionBag;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemServiceLocator;
 use Smalldb\StateMachine\Test\SmalldbFactory\SmalldbFactory;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
+use Smalldb\StateMachine\Test\SmalldbFactory\YamlDemoContainer;
 
 
 class BasicMachineTest extends TestCase
@@ -86,6 +86,7 @@ class BasicMachineTest extends TestCase
 		yield "CRUD Item Definition Bag" => [CrudItemDefinitionBag::class, 'crud-item'];
 		yield "Symfony Demo Container" => [SymfonyDemoContainer::class, 'crud-item'];
 		//yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
+		yield "YAML Container" => [YamlDemoContainer::class, 'crud-item'];
 	}
 
 }
