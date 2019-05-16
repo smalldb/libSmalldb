@@ -19,18 +19,13 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudRepository;
 
 
 class TagRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
 {
-
-	protected function supports(ReferenceInterface $ref): bool
-	{
-		return $ref instanceof Tag;
-	}
-
+	protected const MACHINE_TYPE = 'tag';
+	protected const REFERENCE_CLASS = Tag::class;
 }
 

@@ -82,8 +82,6 @@ class DemoControllerTest extends TestCase
 		$container = $this->createContainer();
 		$postRepository = $container->get(PostRepository::class);
 
-		$this->markTestIncomplete();
-
 		// The Post object is loaded by Symfony's argument resolver.
 		$post = $postRepository->ref(1);
 		$this->assertInstanceOf(Post::class, $post);

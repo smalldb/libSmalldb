@@ -28,10 +28,6 @@ use Smalldb\StateMachine\SmalldbRepositoryInterface;
  */
 class CrudItemRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
 {
-
-	protected function supports(ReferenceInterface $ref): bool
-	{
-		return $ref instanceof CrudItem;
-	}
-
+	protected const MACHINE_TYPE = 'crud-item';
+	protected const REFERENCE_CLASS = CrudItem::class;
 }

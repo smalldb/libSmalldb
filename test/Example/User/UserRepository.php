@@ -19,18 +19,13 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
-use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudRepository;
 
 
 class UserRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
 {
-
-	protected function supports(ReferenceInterface $ref): bool
-	{
-		return $ref instanceof User;
-	}
-
+	protected const MACHINE_TYPE = 'user';
+	protected const REFERENCE_CLASS = User::class;
 }
 

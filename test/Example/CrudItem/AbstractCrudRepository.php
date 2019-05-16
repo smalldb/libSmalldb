@@ -28,6 +28,9 @@ use Smalldb\StateMachine\UnsupportedReferenceException;
 
 abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 {
+	protected const MACHINE_TYPE = 'crud-item';
+	protected const REFERENCE_CLASS = CrudItem::class;
+
 	/** @var string */
 	private $table;
 
@@ -49,7 +52,11 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	}
 
 
-	abstract protected function supports(ReferenceInterface $ref): bool;
+	protected function supports(ReferenceInterface $ref): bool
+	{
+		$className = static::REFERENCE_CLASS;
+		return $ref instanceof $className;
+	}
 
 
 	public function getTableName(): string
@@ -70,9 +77,9 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 	}
 
-	public function ref(...$id): CrudItem
+	public function ref(...$id): ReferenceInterface
 	{
-		$ref = $this->smalldb->ref('crud-item', ...$id);
+		$ref = $this->smalldb->ref(static::MACHINE_TYPE, ...$id);
 		if ($this->supports($ref)) {
 			return $ref;
 		} else {
