@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
-use http\Exception\InvalidArgumentException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
@@ -73,10 +72,13 @@ class SmalldbClassGenerator
 	}
 
 
-	public function generateDefinitionBag(SmalldbDefinitionBag $definitionBag, string $bagShortClassName = 'GeneratedDefinitionBag'): string
+	public function generateDefinitionBag(SmalldbDefinitionBag $definitionBag,
+		string $bagShortClassName = 'GeneratedDefinitionBag'): string
 	{
 		$loader = new DefinitionBagGenerator($this);
-		return $loader->generateDefinitionBagClass($this->classNamespace . '\\' . $bagShortClassName, $definitionBag);
+		$generatedClass = $loader->generateDefinitionBagClass($this->classNamespace . '\\' . $bagShortClassName, $definitionBag);
+		$this->checkGeneratedClass($generatedClass);
+		return $generatedClass;
 	}
 
 
@@ -86,7 +88,17 @@ class SmalldbClassGenerator
 			$this->referenceClassGenerator = new ReferenceClassGenerator($this);
 		}
 
-		return $this->referenceClassGenerator->generateReferenceClass($sourceReferenceClass, $definition);
+		$generatedClass = $this->referenceClassGenerator->generateReferenceClass($sourceReferenceClass, $definition);
+		$this->checkGeneratedClass($generatedClass);
+		return $generatedClass;
+	}
+
+
+	private function checkGeneratedClass(string $generatedClass)
+	{
+		if (!class_exists($generatedClass)) {
+			throw new \RuntimeException("Generated class $generatedClass not found. Is class loader configured to load the generated classes?");
+		}
 	}
 
 }

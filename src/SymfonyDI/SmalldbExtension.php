@@ -1,6 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2017-2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,66 +15,75 @@
  * limitations under the License.
  *
  */
-namespace Smalldb\StateMachine\Test\SmalldbFactory;
+
+namespace Smalldb\StateMachine\SymfonyDI;
 
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
-use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
-use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Test\Example\User\User;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
+class SmalldbExtension extends Extension
 {
 
-	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
+	public function load(array $configs, ContainerBuilder $container)
 	{
-		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
-		$smalldb = $c->autowire(Smalldb::class)
-			->setPublic(true);
+		// Get configuration
+		$config = $this->processConfiguration(new Configuration(), $configs);
 
-		// Definition Bag
+		// Define Smalldb entry point
+		if ($container->has(Smalldb::class)) {
+			$smalldb = $container->getDefinition(Smalldb::class);
+		} else {
+			$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
+				->setPublic(true);
+		}
+
+		// Load all state machine definitions
 		$definitionBag = new SmalldbDefinitionBag();
-		$definitionBag->addFromAnnotatedClass(CrudItem::class);
-		$definitionBag->addFromAnnotatedClass(Post::class);
-		$definitionBag->addFromAnnotatedClass(Tag::class);
-		$definitionBag->addFromAnnotatedClass(User::class);
+		foreach ($config['machine_references'] as $refClass) {
+			$definitionBag->addFromAnnotatedClass($refClass);
+		}
 
-		// "Database"
-		$c->autowire(ArrayDaoTables::class);
+		// Generate everything
+		$this->generateClasses($container, $smalldb, $definitionBag,
+			$config['class_generator']['namespace'], $config['class_generator']['path']);
+	}
 
-		// Register & Autowire all state machine components
+
+	private function generateClasses(ContainerBuilder $container, Definition $smalldb,
+		SmalldbDefinitionBag $definitionBag,
+		string $generatedCodeNamespace, string $generatedCodePath)
+	{
+		// Code generator
+		$generator = new SmalldbClassGenerator($generatedCodeNamespace, $generatedCodePath);
+
+		// Generate reference implementations and register providers
 		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {
 			$referenceClass = $definition->getReferenceClass();
 			$repositoryClass = $definition->getRepositoryClass();
 			$transitionsClass = $definition->getTransitionsClass();
 
+			// Collect lazy-loaded references
 			$serviceReferences = [];
-
 			if ($repositoryClass) {
 				$serviceReferences[LambdaProvider::REPOSITORY] = new Reference($repositoryClass);
-				$c->autowire($repositoryClass)
-					->setPublic(true);
 			}
-
 			if ($transitionsClass) {
 				$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = new Reference($transitionsClass);
-				$c->autowire($transitionsClass);
 			}
 
-			$realReferenceClass = $referenceClass ? $scg->generateReferenceClass($referenceClass, $definition) : null;
-
+			$realReferenceClass = $referenceClass ? $generator->generateReferenceClass($referenceClass, $definition) : null;
 
 			// Glue them together using a machine provider
 			$providerId = "smalldb.$machineType.provider";
-			$c->register($providerId, LambdaProvider::class)
+			$container->register($providerId, LambdaProvider::class)
 				->addTag('container.service_locator')
 				->addArgument($serviceReferences)
 				->addArgument($machineType)
@@ -85,11 +94,10 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
 		}
 
-		// Compile & register definition bag
-		$c->autowire(SmalldbDefinitionBagInterface::class,
-				$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_SymfonyDemoContainer'))
-			->setPublic(true);
-		return $c;
+		// Generate static definition bag
+		$generatedBag = $generator->generateDefinitionBag($definitionBag);
+		$container->register(SmalldbDefinitionBagInterface::class, $generatedBag);
 	}
 
 }
+

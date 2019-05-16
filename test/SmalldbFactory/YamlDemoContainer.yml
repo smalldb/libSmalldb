@@ -1,31 +1,21 @@
+smalldb:
+    class_generator:
+        namespace: Smalldb\GeneratedCode
+        path: '%generated_output_dir%'
+    machine_references:
+        - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
+        - 'Smalldb\StateMachine\Test\Example\Post\Post'
+        - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
+        - 'Smalldb\StateMachine\Test\Example\User\User'
+
+parameters:
+    generated_output_dir: ~ # Set by the test
+
 services:
-    Smalldb\StateMachine\Smalldb:
-        public: true
-        calls:
-            - method: registerMachineType
-              arguments: ['@smalldb.crud-item.provider']
-
-    Smalldb\StateMachine\SmalldbDefinitionBag:
-        calls:
-            - method: addFromAnnotatedClass
-              arguments: ['Smalldb\StateMachine\Test\Example\CrudItem\CrudItem']
-
-    smalldb.crud-item.provider:
-        class: Smalldb\StateMachine\Provider\LambdaProvider
-        tags: ['container.service_locator']
-        arguments:
-            -
-                  t: '@Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions'
-                  r: '@Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository'
-            - 'crud-item'
-            - Smalldb\StateMachine\Test\Example\CrudItem\CrudItem
-            - '@Smalldb\StateMachine\SmalldbDefinitionBag'
-
     repositories:
         namespace: Smalldb\StateMachine\Test\Example\
         resource: '../Example/*/*Repository.php'
         autowire: true
-        public: true
 
     transitions:
         namespace: Smalldb\StateMachine\Test\Example\

@@ -17,6 +17,7 @@
  */
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
+use Smalldb\StateMachine\SymfonyDI\SmalldbExtension;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -30,10 +31,13 @@ class YamlDemoContainer extends AbstractSmalldbContainerFactory implements Small
 	 */
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
+		$c->registerExtension(new SmalldbExtension());
+
 		$fileLocator = new FileLocator(__DIR__);
 		$loader = new YamlFileLoader($c, $fileLocator);
 		$loader->load('YamlDemoContainer.yml');
 
+		$c->setParameter('generated_output_dir', $this->out->mkdir('generated'));
 		return $c;
 	}
 
