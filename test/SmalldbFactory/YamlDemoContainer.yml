@@ -12,15 +12,19 @@ parameters:
     generated_output_dir: ~ # Set by the test
 
 services:
-    repositories:
-        namespace: Smalldb\StateMachine\Test\Example\
-        resource: '../Example/*/*Repository.php'
+    Smalldb\StateMachine\Test\Example\:
+        resource: '../Example/'
         autowire: true
 
-    transitions:
-        namespace: Smalldb\StateMachine\Test\Example\
-        resource: '../Example/*/*Transitions.php'
-        autowire: true
+    #repositories:
+    #    namespace: Smalldb\StateMachine\Test\Example\
+    #    resource: '../Example/*/*Repository.php'
+    #    autowire: true
+
+    #transitions:
+    #    namespace: Smalldb\StateMachine\Test\Example\
+    #    resource: '../Example/*/*Transitions.php'
+    #    autowire: true
 
     # Dummy Database
     Smalldb\StateMachine\Test\Database\ArrayDaoTables:
