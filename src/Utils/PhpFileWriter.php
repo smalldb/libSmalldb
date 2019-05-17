@@ -66,6 +66,7 @@ class PhpFileWriter
 		if ($this->fileNamespace) {
 			$code .= "namespace " . $this->fileNamespace . ";\n\n";
 		}
+		ksort($this->useAliases);
 		foreach ($this->useAliases as $className => $alias) {
 			if ($this->getShortClassName($className) === $alias) {
 				$code .= "use $className;\n";
