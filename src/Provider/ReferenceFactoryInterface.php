@@ -18,24 +18,13 @@
 
 namespace Smalldb\StateMachine\Provider;
 
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Transition\TransitionDecorator;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 
 
-interface SmalldbProviderInterface
+interface ReferenceFactoryInterface
 {
 
-	public function getMachineType(): string;
-
-	public function getReferenceFactory(): ReferenceFactoryInterface;
-
-	public function getReferenceClass(): string;
-
-	public function getDefinition(): StateMachineDefinition;
-
-	public function getTransitionsDecorator(): TransitionDecorator;
-
-	public function getRepository(): SmalldbRepositoryInterface;
+	public function createReference(Smalldb $smalldb, $id): ReferenceInterface;
 
 }

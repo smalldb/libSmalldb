@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Provider;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
@@ -33,7 +34,7 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
  * to feed the respective getters. Each of the provide* methods will be called
  * only once.
  */
-abstract class AbstractCachingProvider implements SmalldbProviderInterface
+abstract class AbstractCachingProvider implements SmalldbProviderInterface, ReferenceFactoryInterface
 {
 	/** @var string|null */
 	private $machineType;
@@ -54,26 +55,31 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	protected $repository;
 
 
-	public function getReferenceFactory(): callable
+	public function getReferenceFactory(): ReferenceFactoryInterface
 	{
 		if (isset($this->referenceClass)) {
-			return function(Smalldb $smalldb, ...$id): ReferenceInterface {
-				return new $this->referenceClass($smalldb, $this, ...$id);
-			};
+			return $this;
 		} else {
 			throw new \LogicException("Reference class not set.");
 		}
 	}
 
 
-	/**
-	 * @return $this
-	 */
+	public function createReference(Smalldb $smalldb, $id): ReferenceInterface
+	{
+		return new $this->referenceClass($smalldb, $this, $id);
+	}
+
+
 	public function setReferenceClass(string $referenceClass)
 	{
+		if (!class_exists($referenceClass)) {
+			throw new InvalidArgumentException("Reference class does not exist: $referenceClass");
+		}
 		$this->referenceClass = $referenceClass;
 		return $this;
 	}
+
 
 
 	public function getReferenceClass(): string
