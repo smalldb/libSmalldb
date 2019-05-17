@@ -18,11 +18,11 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Reference;
-use Smalldb\StateMachine\ReferenceInterface;
 
 
 class ReferenceClassGenerator extends AbstractClassGenerator
@@ -48,7 +48,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$w->setClassName($shortTargetClassName);
 
 			// Create the class
-			$extends = $w->useClass(Reference::class);
+			$extends = null;
 			$implements = [$w->useClass(ReferenceInterface::class)];
 			if ($sourceClassReflection->isInterface()) {
 				$implements[] = $w->useClass($sourceReferenceClassName);
@@ -56,6 +56,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$extends = $w->useClass($sourceReferenceClassName);
 			}
 			$w->beginClass($shortTargetClassName, $extends, $implements);
+			$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
 
 			// Create methods
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);

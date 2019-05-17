@@ -34,6 +34,7 @@ interface ReferenceInterface
 	 */
 	public function getMachineType(): string;
 
+
 	/**
 	 * Read state machine state
 	 */

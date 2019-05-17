@@ -121,7 +121,7 @@ class Smalldb
 
 
 	/**
-	 * Retrieve a machine provider for the given machine type.
+	 * Retrieve a machine provider for the given machine type or reference class.
 	 */
 	public function getMachineProvider(string $machineType): SmalldbProviderInterface
 	{
@@ -181,40 +181,13 @@ class Smalldb
 
 	/**
 	 * Get reference to state machine instance of given type and id.
-	 *
-	 * If the first argument is instance of Reference, this makes copy of it.
-	 * If the first argument is an array, it will be used instead of all arguments.
-	 *
-	 * These calls are equivalent:
-	 *
-	 *     $ref = $this->ref('item', 1, 2, 3);
-	 *     $ref = $this->ref(array('item', 1, 2, 3));
-	 *     $ref = $this->ref($this->ref('item', 1, 2, 3)));
 	 */
-	public function ref(...$argv): ReferenceInterface
+	public function ref(string $type, ...$id): ReferenceInterface
 	{
-		$type = $argv[0];
-
-		// Clone if Reference is given
-		if ($type instanceof Reference) {
-			if (count($argv) != 1) {
-				throw new InvalidArgumentException('The first argument is a Reference and more than one argument given.');
-			}
-			return clone $type;
-		}
-
-		// Get arguments
-		if (is_array($type)) {
-			if (count($argv) != 1) {
-				throw new InvalidArgumentException('The first argument is an array and more than one argument given.');
-			}
-		}
-		$id = array_slice($argv, 1);
-
 		// Create the Reference
 		$machineProvider = $this->getMachineProvider($type);
 		$refFactory = $machineProvider->getReferenceFactory();
-		$ref = $refFactory($this, ...$id);
+		$ref = $refFactory->createReference($this, $id);
 
 		// Emit events
 		if ($this->debug_logger) {
@@ -238,7 +211,7 @@ class Smalldb
 		// Create the Reference
 		$machineProvider = $this->getMachineProvider($type);
 		$refFactory = $machineProvider->getReferenceFactory();
-		$ref = $refFactory($this, null);
+		$ref = $refFactory->createReference($this, null);
 
 		// Emit events
 		if ($this->debug_logger) {
