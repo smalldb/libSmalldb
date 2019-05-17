@@ -99,16 +99,24 @@ class Smalldb
 
 	/**
 	 * Register machine type and its provider
+	 *
+	 * @param SmalldbProviderInterface $provider
+	 * @param string[] $aliases
 	 */
-	public function registerMachineType(SmalldbProviderInterface $provider)
+	public function registerMachineType(SmalldbProviderInterface $provider, array $aliases = [])
 	{
 		$machineType = $provider->getMachineType();
-
 		if (isset($this->machineProviders[$machineType])) {
 			throw new InvalidArgumentException('Duplicate machine type: ' . $machineType);
 		}
-
 		$this->machineProviders[$machineType] = $provider;
+
+		foreach ($aliases as $alias) {
+			if (isset($this->machineProviders[$alias])) {
+				throw new InvalidArgumentException('Duplicate machine type (alias): ' . $alias);
+			}
+			$this->machineProviders[$alias] = $provider;
+		}
 	}
 
 

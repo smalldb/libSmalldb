@@ -61,7 +61,7 @@ class CrudItemBasic implements SmalldbFactory
 			->setRepository($repository);
 
 		// Register state machine type
-		$smalldb->registerMachineType($machineProvider);
+		$smalldb->registerMachineType($machineProvider, [CrudItem::class]);
 
 		return $smalldb;
 	}

@@ -78,7 +78,7 @@ class CrudItemServiceLocator extends AbstractSmalldbContainerFactory implements 
 			->addArgument(null);
 
 		// Register state machine type
-		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
+		$smalldb->addMethodCall('registerMachineType', [$machineProvider, [CrudItem::class]]);
 
 		return $c;
 	}

@@ -67,7 +67,7 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 			->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
 
 		// Register state machine type
-		$smalldb->addMethodCall('registerMachineType', [$machineProvider]);
+		$smalldb->addMethodCall('registerMachineType', [$machineProvider, [CrudItem::class]]);
 
 		return $c;
 	}

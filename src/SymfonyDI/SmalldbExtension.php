@@ -91,7 +91,7 @@ class SmalldbExtension extends Extension
 				->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
 
 			// Register state machine type
-			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
+			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId), [$referenceClass]]);
 		}
 
 		// Generate static definition bag

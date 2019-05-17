@@ -82,7 +82,7 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 				->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
 
 			// Register state machine type
-			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId)]);
+			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId), [$referenceClass]]);
 		}
 
 		// Compile & register definition bag
