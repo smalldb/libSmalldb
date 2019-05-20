@@ -31,6 +31,8 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class SmalldbExtension extends Extension
 {
+	protected const PROVIDER_CLASS = LambdaProvider::class;
+
 
 	public function load(array $configs, ContainerBuilder $container)
 	{
@@ -70,25 +72,14 @@ class SmalldbExtension extends Extension
 			$repositoryClass = $definition->getRepositoryClass();
 			$transitionsClass = $definition->getTransitionsClass();
 
-			// Collect lazy-loaded references
-			$serviceReferences = [];
-			if ($repositoryClass) {
-				$serviceReferences[LambdaProvider::REPOSITORY] = new Reference($repositoryClass);
-			}
-			if ($transitionsClass) {
-				$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = new Reference($transitionsClass);
-			}
-
 			$realReferenceClass = $referenceClass ? $generator->generateReferenceClass($referenceClass, $definition) : null;
-
-			// Glue them together using a machine provider
 			$providerId = "smalldb.$machineType.provider";
-			$container->register($providerId, LambdaProvider::class)
-				->addTag('container.service_locator')
-				->addArgument($serviceReferences)
-				->addArgument($machineType)
-				->addArgument($realReferenceClass)
-				->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
+
+			// Register the provider
+			$this->registerProvider($container, $providerId, $machineType, $realReferenceClass,
+				$repositoryClass ? new Reference($repositoryClass) : null,
+				$transitionsClass ? new Reference($transitionsClass) : null,
+				new Reference(SmalldbDefinitionBagInterface::class));
 
 			// Register state machine type
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId), [$referenceClass]]);
@@ -97,6 +88,29 @@ class SmalldbExtension extends Extension
 		// Generate static definition bag
 		$generatedBag = $generator->generateDefinitionBag($definitionBag);
 		$container->register(SmalldbDefinitionBagInterface::class, $generatedBag);
+	}
+
+
+	protected function registerProvider(ContainerBuilder $container, string $providerId, $machineType,
+		?string $realReferenceClass, ?Reference $repositoryReference, ?Reference $transitionsReference,
+		Reference $definitionBagReference): Definition
+	{
+		// Collect lazy-loaded references
+		$serviceReferences = [];
+		if ($repositoryReference) {
+			$serviceReferences[LambdaProvider::REPOSITORY] = $repositoryReference;
+		}
+		if ($transitionsReference) {
+			$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = $transitionsReference;
+		}
+
+		// Glue them together using a machine provider
+		return $container->autowire($providerId, static::PROVIDER_CLASS)
+			->addTag('container.service_locator')
+			->addArgument($serviceReferences)
+			->addArgument($machineType)
+			->addArgument($realReferenceClass)
+			->addArgument($definitionBagReference);
 	}
 
 }
