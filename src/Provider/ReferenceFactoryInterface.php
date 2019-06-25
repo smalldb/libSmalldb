@@ -25,6 +25,17 @@ use Smalldb\StateMachine\Smalldb;
 interface ReferenceFactoryInterface
 {
 
+	/**
+	 * Create Reference object without using a repository (so it does
+	 * not have to be initialized).
+	 */
 	public function createReference(Smalldb $smalldb, $id): ReferenceInterface;
+
+	/**
+	 * Get the Reference class which createReference() instantiates,
+	 * so that repository can call its static factory method to
+	 * create a preheated Reference object.
+	 */
+	public function getReferenceClass(): string;
 
 }

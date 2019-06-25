@@ -42,6 +42,12 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	protected $id;
 
+	/** @var string */
+	private $state = null;
+
+	/** @var mixed */
+	private $data = null;
+
 
 	/**
 	 * Create a reference and initialize it with a given ID. To copy
@@ -78,7 +84,16 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	public function getState(): string
 	{
-		return $this->machineProvider->getRepository()->getState($this);
+		return $this->state ?? ($this->state = $this->machineProvider->getRepository()->getState($this));
+	}
+
+
+	/**
+	 * Return data from which getState() calculates the state.
+	 */
+	public function getData()
+	{
+		return $this->data ?? ($this->data = $this->machineProvider->getRepository()->getData($this, $this->state));
 	}
 
 
@@ -121,9 +136,10 @@ trait ReferenceTrait // implements ReferenceInterface
 		return $transitionEvent;
 	}
 
-	protected function clearCache()
+	public function clearCache()
 	{
-		// TODO
+		$this->state = null;
+		$this->data = null;
 	}
 
 }

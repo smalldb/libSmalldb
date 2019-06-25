@@ -19,6 +19,8 @@
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
 use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\Provider\ReferenceFactoryInterface;
+use Smalldb\StateMachine\Reference;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
@@ -36,6 +38,9 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 
 	/** @var Smalldb */
 	private $smalldb;
+
+	/** @var ReferenceFactoryInterface */
+	private $refFactory;
 
 	/** @var ArrayDaoTables */
 	private $dao;
@@ -67,19 +72,41 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 
 	public function getState(ReferenceInterface $ref): string
 	{
-		if ($this->supports($ref)) {
-			$id = (int) $ref->getId();
-			return $id !== null && $this->dao->table($this->table)->exists($id)
-				? CrudItem::EXISTS
-				: CrudItem::NOT_EXISTS;
-		} else {
+		if (!$this->supports($ref)) {
 			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
+		}
+
+		$id = (int) $ref->getId();
+		return $id !== null && $this->dao->table($this->table)->exists($id)
+			? CrudItem::EXISTS
+			: CrudItem::NOT_EXISTS;
+	}
+
+
+	public function getData(ReferenceInterface $ref, & $state)
+	{
+		if (!$this->supports($ref)) {
+			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
+		}
+
+		$id = (int) $ref->getId();
+		if ($id !== null) {
+			$data = $this->dao->table($this->table)->read($id);
+			$state = CrudItem::EXISTS;
+			return $data;
+		} else {
+			$state = CrudItem::NOT_EXISTS;
+			return null;
 		}
 	}
 
+
 	public function ref(...$id): ReferenceInterface
 	{
-		$ref = $this->smalldb->ref(static::MACHINE_TYPE, ...$id);
+		$refFactory = $this->refFactory
+			?? ($this->refFactory = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS)->getReferenceFactory());
+
+		$ref = $refFactory->createReference($this->smalldb, $id);
 		if ($this->supports($ref)) {
 			return $ref;
 		} else {

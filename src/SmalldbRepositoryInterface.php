@@ -22,12 +22,18 @@ namespace Smalldb\StateMachine;
 interface SmalldbRepositoryInterface
 {
 	/**
-	 * Return the state of the refered state machine
+	 * Return the state of the refered state machine.
 	 *
 	 * @throws UnsupportedReferenceException
 	 */
 	public function getState(ReferenceInterface $ref): string;
 
+	/**
+	 * Load data for the state machine and set the state
+	 *
+	 * @throws UnsupportedReferenceException
+	 */
+	public function getData(ReferenceInterface $ref, string & $state);
 
 	/**
 	 * Create a reference to a state machine identified by $id.
@@ -35,5 +41,6 @@ interface SmalldbRepositoryInterface
 	 * @return ReferenceInterface
 	 */
 	public function ref(...$id);
+
 
 }

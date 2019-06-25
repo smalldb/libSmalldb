@@ -15,22 +15,24 @@
  * limitations under the License.
  *
  */
-namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Annotation\UseRepository;
-use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
-use Smalldb\StateMachine\ReferenceInterface;
+namespace Smalldb\StateMachine\Test\Example\Post;
+
+use DateTimeImmutable;
 
 
 /**
- * @StateMachine("crud-item")
- * @UseRepository(CrudItemRepository::class)
- * @UseTransitions(CrudItemTransitions::class)
+ * Interface PostDataImmutable
+ *
+ * TODO: Can we generate this interface automatically?
  */
-interface CrudItem extends CrudMachine, ReferenceInterface
+interface PostDataImmutable
 {
-
+	public function getId();
+	public function getTitle(): string;
+	public function getSlug(): string;
+	public function getSummary(): string;
+	public function getContent(): string;
+	public function getPublishedAt(): DateTimeImmutable;
+	public function getAuthorId(): int;
 }
-

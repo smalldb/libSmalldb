@@ -49,6 +49,7 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 		$this->doInvokeTransition($transitionEvent, $transitionDefinition);
 
 		// Verify that the new state is expected according to the definition
+		$ref->clearCache();
 		$targetState = $ref->getState();
 		$this->assertTransition($transitionEvent, $transitionDefinition, $sourceState, $targetState);
 

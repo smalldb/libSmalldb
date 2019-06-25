@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
+use ReflectionClass;
+use ReflectionException;
+use ReflectionParameter;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
@@ -36,7 +39,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
 	{
 		try {
-			$sourceClassReflection = new \ReflectionClass($sourceReferenceClassName);
+			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
 
 			$targetNamespace = $this->classGenerator->getClassNamespace();
 			$shortTargetClassName = PhpFileWriter::getShortClassName($sourceReferenceClassName);
@@ -60,10 +63,11 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 			// Create methods
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
+			$this->generateDataGetterMethods($w, $sourceClassReflection);
 
 			$w->endClass();
 		}
-		catch (\ReflectionException $ex) {
+		catch (ReflectionException $ex) {
 			throw new RuntimeException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
 		}
 
@@ -73,9 +77,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 
 	/**
-	 * @throws \ReflectionException
+	 * @throws ReflectionException
 	 */
-	private function getParamAsCode(\ReflectionParameter $param) : string
+	private function getParamAsCode(ReflectionParameter $param) : string
 	{
 		$code = '$' . $param->name;
 
@@ -108,10 +112,10 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 
 	/**
-	 * @throws \ReflectionException
+	 * @throws ReflectionException
 	 */
 	private function generateTransitionMethods(PhpFileWriter $w, StateMachineDefinition $definition,
-		\ReflectionClass $sourceClassReflection): void
+		ReflectionClass $sourceClassReflection): void
 	{
 		foreach ($definition->getActions() as $action) {
 			$methodName = $action->getName();
@@ -132,6 +136,35 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			} else {
 				$w->beginMethod($methodName, ['...$args']);
 				$w->writeln('return $this->invokeTransition(%s, ...$args);', $methodName);
+				$w->endMethod();
+			}
+		}
+	}
+
+	/**
+	 * @throws ReflectionException
+	 */
+	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection)
+	{
+		// TODO: Generate proxy getters only for getter methods of getData() return type
+
+		$referenceInterfaceReflection = new ReflectionClass(ReferenceInterface::class);
+
+		foreach ($sourceClassReflection->getMethods() as $method) {
+			$methodName = $method->getName();
+			if ($method->isAbstract() && strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
+				$argMethod = [];
+				$argCall = [];
+				foreach ($method->getParameters() as $param) {
+					$argMethod[] = $this->getParamAsCode($param);
+					$argCall[] = '$' . $param->name;
+				}
+				$returnType = (string) $method->getReturnType();
+				if (class_exists($returnType)) {
+					$returnType = $w->useClass($returnType);
+				}
+				$w->beginMethod($methodName, $argMethod, $returnType);
+				$w->writeln("return \$this->getData()->$methodName(" . join(', ', $argCall) . ");");
 				$w->endMethod();
 			}
 		}

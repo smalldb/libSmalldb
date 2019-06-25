@@ -25,6 +25,7 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
@@ -83,8 +84,11 @@ class DemoControllerTest extends TestCase
 		$postRepository = $container->get(PostRepository::class);
 
 		// The Post object is loaded by Symfony's argument resolver.
+		/** @var Post $post */
 		$post = $postRepository->ref(1);
 		$this->assertInstanceOf(Post::class, $post);
+		$post->create(['id' => 1, 'name' => 'A Post about Foo']);
+		$this->assertEquals(Post::EXISTS, $post->getState());
 
 		$this->postShowController($post);
 	}
@@ -99,17 +103,21 @@ class DemoControllerTest extends TestCase
 	{
 		$container = $this->createContainer();
 		$posts = $container->get(PostRepository::class);
+		/** @var TagRepository $tags */
 		$tags = $container->get(TagRepository::class);
 
-		$this->indexController(0, 'tag', $posts, $tags);
+		/** @var Tag $ref */
+		$ref = $tags->ref(null);
+		$ref->create(['id' => 1, 'name' => 'foo']);
+
+		$this->indexController(0, 'foo', $posts, $tags);
 	}
 
 	private function indexController(?int $page, ?string $tagName, PostRepository $posts, TagRepository $tags)
 	{
-		$this->markTestIncomplete();
-
 		$tag = null;
 		if ($tagName !== null) {
+			$this->markTestIncomplete(); // TODO
 			$tag = $tags->findOneBy(['name' => $tagName]);
 		}
 
@@ -125,11 +133,23 @@ class DemoControllerTest extends TestCase
 	{
 		if (array_key_exists('posts', $templateArgs)) {
 			$this->assertContainsOnlyInstancesOf(Post::class, $templateArgs['posts']);
+			foreach ($templateArgs['posts'] as $post) {
+				$this->renderPost($post);
+			}
 		}
 
 		if (array_key_exists('post', $templateArgs)) {
 			$this->assertInstanceOf(Post::class, $templateArgs['post']);
+			$this->renderPost($templateArgs['post']);
 		}
+	}
+
+
+	private function renderPost(Post $post)
+	{
+		// Read the 'name' attribute to emulate rendering.
+		$postData = $post->getData();
+		$this->assertNotEmpty($postData['name']);
 	}
 
 }

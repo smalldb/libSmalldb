@@ -34,6 +34,11 @@ interface ReferenceInterface
 	 */
 	public function getMachineType(): string;
 
+	/**
+	 * Get ID of the state machine.
+	 * The ID must be unique within state machine type.
+	 */
+	public function getId();
 
 	/**
 	 * Read state machine state
@@ -49,5 +54,11 @@ interface ReferenceInterface
 	 * Invoke transition of the state machine.
 	 */
 	public function invokeTransition(string $transitionName, ...$args);
+
+	/**
+	 * Get state data of the state machine -- the representation from
+	 * which getState() calculates the state.
+	 */
+	public function getData();
 
 }

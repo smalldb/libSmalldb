@@ -30,7 +30,7 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  */
-interface Post extends CrudMachine, ReferenceInterface
+interface Post extends CrudMachine, ReferenceInterface, PostDataImmutable
 {
 
 }
