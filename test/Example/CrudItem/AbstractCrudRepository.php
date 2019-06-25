@@ -115,4 +115,48 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 	}
 
+
+	public function findOneBy(array $properties): ReferenceInterface
+	{
+		// Find the first matching item. It does not have to be fast;
+		// we have only a few items anyway.
+		$items = $this->dao->table($this->table)->getFilteredSlice(function($item) use ($properties) {
+			foreach ($properties as $key => $expectedValue) {
+				if ($item[$key] !== $expectedValue) {
+					return false;
+				}
+			}
+			return true;
+		}, 0, 1);
+
+		if (empty($items)) {
+			throw new \InvalidArgumentException("Item not found: "
+				. json_encode($properties, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+		} else {
+			$item = reset($items);
+			return $item;  // TODO: Map item to a reference
+		}
+	}
+
+
+	/**
+	 * @return ReferenceInterface[]
+	 */
+	public function findLatest(?int $page, ?ReferenceInterface $tag): array
+	{
+		$table = $this->dao->table($this->table);
+		$pageSize = 10;
+		$offset = $page * $pageSize;
+
+		if ($tag) {
+			$items = $table->getFilteredSlice(function ($item) use ($tag) {
+				return in_array($tag->getId(), $item['tags']);
+			}, $offset, $pageSize);
+		} else {
+			$items = $table->getSlice($offset, $pageSize);
+		}
+
+		return $items;  // TODO: Map array to array of references
+	}
+
 }

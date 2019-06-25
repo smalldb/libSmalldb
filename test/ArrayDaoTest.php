@@ -91,4 +91,50 @@ class ArrayDaoTest extends TestCase
 		$dao->delete($idAlice + 1);
 	}
 
+	private function createDao(): ArrayDao
+	{
+		$dao = new ArrayDao();
+		$dao->create(/* 1 */['name' => 'Alice']);
+		$dao->create(/* 2 */['name' => 'Bob']);
+		$dao->create(/* 3 */['name' => 'Cecil']);
+		$dao->create(/* 4 */['name' => 'Dave']);
+		$dao->create(/* 5 */['name' => 'Eve']);
+		$this->assertCount(5, $dao->getIterator());
+		return $dao;
+	}
+
+	public function testSlice()
+	{
+		$dao = $this->createDao();
+
+		$slice = $dao->getSlice(2);
+		$this->assertCount(3, $slice);
+		$this->assertEquals([3, 4, 5], array_keys($slice));
+
+		$slice = $dao->getSlice(1, 3);
+		$this->assertCount(3, $slice);
+		$this->assertEquals([2, 3, 4], array_keys($slice));
+	}
+
+	public function testFilteredSlice()
+	{
+		$dao = $this->createDao();
+
+		$slice = $dao->getFilteredSlice(function ($item) {
+			return $item['name'] !== 'Alice' && $item['name'] !== 'Cecil';
+		}, 1, 2);
+		$this->assertCount(2, $slice);
+		$this->assertEquals([4, 5], array_keys($slice));
+	}
+
+	public function testFilteredSliceOutOfRange()
+	{
+		$dao = $this->createDao();
+
+		$this->expectException(\RangeException::class);
+
+		$dao->getFilteredSlice(function ($item) {
+			return $item['name'] !== 'Alice' && $item['name'] !== 'Cecil';
+		}, 3, null);
+	}
 }

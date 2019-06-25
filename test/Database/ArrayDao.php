@@ -71,4 +71,57 @@ class ArrayDao
 		}
 	}
 
+
+	public function getCount(): int
+	{
+		return count($this->items);
+	}
+
+
+	public function getSlice(int $offset, ?int $length = null): array
+	{
+		if ($offset >= count($this->items)) {
+			throw new \RangeException('Offset out of bounds.');
+		}
+
+		return array_slice($this->items, $offset, $length, true);
+	}
+
+
+	public function getFilteredSlice(callable $filter, int $offset, ?int $length = null): array
+	{
+		$result = [];
+		$resultLength = 0;
+		$position = 0;
+
+		if ($offset >= count($this->items)) {
+			throw new \RangeException('Offset out of bounds.');
+		}
+
+		foreach ($this->items as $id => $item) {
+			if ($filter($item)) {
+				if (++$position <= $offset) {
+					continue;
+				}
+
+				$result[$id] = $item;
+				$resultLength++;
+				if ($length !== null && $resultLength >= $length) {
+					return $result;
+				}
+			}
+		}
+
+		if ($position <= $offset) {
+			throw new \RangeException('Offset out of bounds.');
+		}
+
+		return $result;
+	}
+
+	public function getIterator(): \Iterator
+	{
+		return new \ArrayIterator($this->items);
+	}
+
 }
