@@ -41,6 +41,9 @@ class PhpFileWriter
 	/** @var int[][] */
 	private $usedIdentifiersCounter = [];
 
+	/** @var string[] */
+	private $definedMethodNames = [];
+
 	/**
 	 * PhpFileWriter constructor.
 	 */
@@ -250,24 +253,27 @@ class PhpFileWriter
 	}
 
 
-	public function beginMethod(string $name, array $args = [], $returnType = ''): self
+	public function beginMethod(string $name, array $args = [], string $returnType = ''): self
 	{
+		$this->definedMethodNames[$name] = $name;
 		$this->writeln('');
 		$this->writeln("public function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
 		$this->beginBlock();
 		return $this;
 	}
 
-	public function beginPrivateMethod(string $name, array $args = [], $returnType = ''): self
+	public function beginPrivateMethod(string $name, array $args = [], string $returnType = ''): self
 	{
+		$this->definedMethodNames[$name] = $name;
 		$this->writeln('');
 		$this->writeln("private function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
 		$this->beginBlock();
 		return $this;
 	}
 
-	public function beginFinalMethod(string $name, array $args = [], $returnType = ''): self
+	public function beginFinalMethod(string $name, array $args = [], string $returnType = ''): self
 	{
+		$this->definedMethodNames[$name] = $name;
 		$this->writeln('');
 		$this->writeln("public final function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
 		$this->beginBlock();
@@ -280,6 +286,11 @@ class PhpFileWriter
 		$this->endBlock();
 		$this->writeln('');
 		return $this;
+	}
+
+	public function hasMethod(string $methodName)
+	{
+		return isset($this->definedMethodNames[$methodName]);
 	}
 
 }
