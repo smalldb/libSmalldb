@@ -36,12 +36,12 @@ interface CrudMachine
 	/**
 	 * @Transition("", {"Exists"})
 	 */
-	public function create(?array $itemData);
+	public function create($itemData);
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 */
-	public function update(array $itemData);
+	public function update($itemData);
 
 	/**
 	 * @Transition("Exists", {""})

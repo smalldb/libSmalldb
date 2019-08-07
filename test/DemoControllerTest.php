@@ -24,14 +24,13 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\Post\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-
 
 /**
  * DemoControllerTest -- try to emulate Symfony Demo app controllers
@@ -78,17 +77,30 @@ class DemoControllerTest extends TestCase
 		}
 	}
 
+
+	/**
+	 * Create a post in the repository.
+	 */
+	private function createPost(PostRepository $postRepository, int $id = 1): Post
+	{
+		/** @var Post $post */
+		$post = $postRepository->ref($id);
+		$this->assertInstanceOf(Post::class, $post);
+
+		$post->create(new PostData(['id' => $id, 'title' => 'A Post about Foo #' . $id]));
+		$this->assertEquals(Post::EXISTS, $post->getState());
+
+		return $post;
+	}
+
+
 	public function testPostShowController()
 	{
 		$container = $this->createContainer();
 		$postRepository = $container->get(PostRepository::class);
 
 		// The Post object is loaded by Symfony's argument resolver.
-		/** @var Post $post */
-		$post = $postRepository->ref(1);
-		$this->assertInstanceOf(Post::class, $post);
-		$post->create(['id' => 1, 'name' => 'A Post about Foo']);
-		$this->assertEquals(Post::EXISTS, $post->getState());
+		$post = $this->createPost($postRepository);
 
 		$this->postShowController($post);
 	}
@@ -102,13 +114,14 @@ class DemoControllerTest extends TestCase
 	public function testIndexController()
 	{
 		$container = $this->createContainer();
+		/** @var PostRepository $posts */
 		$posts = $container->get(PostRepository::class);
 		/** @var TagRepository $tags */
 		$tags = $container->get(TagRepository::class);
 
 		/** @var Tag $ref */
 		$ref = $tags->ref(null);
-		$ref->create(['id' => 1, 'name' => 'foo']);
+		$ref->create(new PostData(['id' => 1, 'title' => 'foo']));
 
 		$this->indexController(0, 'foo', $posts, $tags);
 	}
@@ -125,6 +138,43 @@ class DemoControllerTest extends TestCase
 
 		return $this->render(['posts' => $latestPosts]);
 	}
+
+
+	public function testEditController()
+	{
+		$container = $this->createContainer();
+		/** @var PostRepository $posts */
+		$postRepository = $container->get(PostRepository::class);
+		$post = $this->createPost($postRepository);
+
+		$newTitle = 'A post about Bar.';
+		$request = ['title' => $newTitle];
+
+		$this->assertNotEquals($newTitle, $post->getTitle());
+
+		$this->editController($request, $post);
+
+		$this->assertEquals($newTitle, $post->getTitle());
+	}
+
+	private function editController($request, Post $post)
+	{
+		$postData = $post->getData();
+
+		// Process the form; update $postData from the $request.
+		$postData->setTitle($request['title']);
+
+		// if ($form->isSubmitted() && $form->isValid()) {
+			$postData->setSlug($this->slugify($postData->getTitle()));
+			$post->update($postData);
+		// }
+
+		return $this->render([
+			'post' => $post,
+			//'form' => $form->createView(),
+		]);
+	}
+
 
 	/**
 	 * A dummy render function to make examples a bit more realistic.
@@ -149,7 +199,13 @@ class DemoControllerTest extends TestCase
 	{
 		// Read the 'name' attribute to emulate rendering.
 		$postData = $post->getData();
-		$this->assertNotEmpty($postData['name']);
+		$this->assertNotEmpty($postData->getTitle());
+	}
+
+
+	private function slugify(string $string)
+	{
+		return trim(preg_replace('/[^a-z0-9-]+/', '-', strtolower($string)), '-');
 	}
 
 }

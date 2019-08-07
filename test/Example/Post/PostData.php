@@ -45,6 +45,14 @@ class PostData implements PostDataImmutable
 	private $authorId;
 
 
+	public function __construct(array $properties = [])
+	{
+		foreach ($properties as $k => $v) {
+			$this->$k = $v;
+		}
+	}
+
+
 	/**
 	 * @return int
 	 *

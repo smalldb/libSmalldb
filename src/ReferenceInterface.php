@@ -59,6 +59,6 @@ interface ReferenceInterface
 	 * Get state data of the state machine -- the representation from
 	 * which getState() calculates the state.
 	 */
-	public function getData();
+	//public function getData();
 
 }

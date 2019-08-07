@@ -32,6 +32,6 @@ use Smalldb\StateMachine\ReferenceInterface;
  */
 interface Post extends CrudMachine, ReferenceInterface, PostDataImmutable
 {
-
+	public function getData(): PostData;
 }
 
