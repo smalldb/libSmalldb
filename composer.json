@@ -36,6 +36,8 @@
         "smalldb/doc-tools": "dev-master",
         "psr/container": ">=1.0",
         "psr/event-dispatcher": ">=1.0",
+        "ext-pdo": "*",
+        "ext-sqlite3": "*",
         "symfony/dependency-injection": "~4.2",
         "symfony/config": "~4.2",
         "symfony/yaml": "~4.2",

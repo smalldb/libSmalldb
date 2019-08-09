@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use PDO;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
@@ -30,6 +31,7 @@ use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
 /**
@@ -43,12 +45,40 @@ use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
  */
 class DemoControllerTest extends TestCase
 {
+	/** @var PDO */
+	protected $db;
+
+	/** @var string */
+	private $dbFileName;
 
 	private function createContainer(): ContainerInterface
 	{
 		$containerFactory = new SymfonyDemoContainer();
 		return $containerFactory->createContainer();
 	}
+
+
+	public function setUp(): void
+	{
+		$output = new TestOutput();
+		$this->dbFileName = $output->outputPath($output->resource('symfony_demo_database.sqlite'));
+		$this->db = new PDO('sqlite:' . $this->dbFileName, null, null, [
+			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+		]);
+
+		// Check that the database is ready
+		$stmt = $this->db->query('select count(*) from symfony_demo_post');
+		$maxPostId = $stmt->fetchColumn(0);
+		$this->assertGreaterThan(0, $maxPostId, "No posts found in the database.");
+	}
+
+
+	public function tearDown(): void
+	{
+		unset($this->db);
+		unlink($this->dbFileName);
+	}
+
 
 	public function testContainer()
 	{
