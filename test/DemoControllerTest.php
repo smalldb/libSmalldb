@@ -24,6 +24,7 @@ use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
@@ -48,35 +49,11 @@ class DemoControllerTest extends TestCase
 	/** @var PDO */
 	protected $db;
 
-	/** @var string */
-	private $dbFileName;
 
 	private function createContainer(): ContainerInterface
 	{
 		$containerFactory = new SymfonyDemoContainer();
 		return $containerFactory->createContainer();
-	}
-
-
-	public function setUp(): void
-	{
-		$output = new TestOutput();
-		$this->dbFileName = $output->outputPath($output->resource('symfony_demo_database.sqlite'));
-		$this->db = new PDO('sqlite:' . $this->dbFileName, null, null, [
-			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-		]);
-
-		// Check that the database is ready
-		$stmt = $this->db->query('select count(*) from symfony_demo_post');
-		$maxPostId = $stmt->fetchColumn(0);
-		$this->assertGreaterThan(0, $maxPostId, "No posts found in the database.");
-	}
-
-
-	public function tearDown(): void
-	{
-		unset($this->db);
-		unlink($this->dbFileName);
 	}
 
 
@@ -86,6 +63,18 @@ class DemoControllerTest extends TestCase
 		foreach ([Smalldb::class, PostRepository::class, TagRepository::class, UserRepository::class] as $service) {
 			$this->assertInstanceOf($service, $container->get($service));
 		}
+	}
+
+
+	public function testSymfonyDemoDatabase()
+	{
+		/** @var PDO $db */
+		$db = $this->createContainer()->get(SymfonyDemoDatabase::class);
+
+		// Check that the database is ready
+		$stmt = $db->query('select count(*) from symfony_demo_post');
+		$maxPostId = $stmt->fetchColumn(0);
+		$this->assertGreaterThan(0, $maxPostId, "No posts found in the database.");
 	}
 
 

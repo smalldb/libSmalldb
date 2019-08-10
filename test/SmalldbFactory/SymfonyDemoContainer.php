@@ -23,10 +23,12 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\User\User;
+use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -49,6 +51,13 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);
+
+		// Symfony Demo Database
+		$c->autowire(TestOutput::class);
+		$c->autowire(SymfonyDemoDatabase::class)
+			->setPublic(true);
+		$c->setAlias(\PDO::class, SymfonyDemoDatabase::class)
+			->setPublic(true);
 
 		// Register & Autowire all state machine components
 		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {
