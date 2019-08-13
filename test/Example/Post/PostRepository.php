@@ -19,13 +19,95 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
+use PDO;
+use Smalldb\StateMachine\Provider\ReferenceFactoryInterface;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudRepository;
+use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
+use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
-class PostRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
+class PostRepository implements SmalldbRepositoryInterface
 {
-	protected const MACHINE_TYPE = 'post';
-	protected const REFERENCE_CLASS = Post::class;
+	/** @var Smalldb */
+	private $smalldb;
+
+	/** @var PDO */
+	private $pdo;
+	private $table = 'symfony_demo_post';
+
+	/** @var ReferenceFactoryInterface */
+	private $refFactory;
+
+
+	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
+	{
+		$this->smalldb = $smalldb;
+		$this->pdo = $pdo;
+	}
+
+
+	/**
+	 * Return the state of the refered state machine.
+	 *
+	 * @throws UnsupportedReferenceException
+	 */
+	public function getState(ReferenceInterface $ref): string
+	{
+		$stmt = $this->pdo->prepare("SELECT COUNT(id) FROM $this->table WHERE id = :id");
+		[$id] = $ref->getId();
+		$stmt->execute(['id' => $id]);
+		$exists = $stmt->fetchColumn(0);
+		$stmt->closeCursor();
+		return $exists == 0 ? '' : 'Exists';
+	}
+
+
+	/**
+	 * Load data for the state machine and set the state
+	 *
+	 * @throws UnsupportedReferenceException
+	 */
+	public function getData(ReferenceInterface $ref, ?string &$state)
+	{
+		if (!($ref instanceof Post)) {
+			throw new UnsupportedReferenceException('Reference not supported: ' . get_class($ref));
+		}
+
+		$stmt = $this->pdo->prepare("
+			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
+			FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		");
+		[$id] = $ref->getId();
+		$stmt->execute(['id' => $id]);
+		$data = $stmt->fetchObject(PostData::class);
+		if ($data === false) {
+			$state = '';
+			throw new \LogicException('Cannot load data in the Not Exists state.');
+		} else {
+			$state = 'Exists';
+			return $data;
+		}
+	}
+
+	/**
+	 * Create a reference to a state machine identified by $id.
+	 *
+	 * @return ReferenceInterface
+	 */
+	public function ref(...$id): Post
+	{
+		$ref = $this->getReferenceFactory()->createReference($this->smalldb, $id);
+		return $ref;
+	}
+
+	private function getReferenceFactory(): ReferenceFactoryInterface
+	{
+		return $this->refFactory ?? ($this->refFactory = $this->smalldb->getMachineProvider(Post::class)->getReferenceFactory());
+	}
+
 }
 

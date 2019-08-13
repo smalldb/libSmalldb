@@ -68,7 +68,7 @@ class TestOutput
 			throw new \InvalidArgumentException('Resource does not exist: ' . $resourcePath);
 		}
 
-		if (realpath($outputPath) !== realpath($resourcePath) && (!file_exists($outputPath) || filemtime($resourcePath) > filemtime($outputPath))) {
+		if (realpath($outputPath) !== realpath($resourcePath) && (!file_exists($outputPath) || filemtime($resourcePath) !== filemtime($outputPath))) {
 			if (!copy($resourcePath, $outputPath)) {
 				throw new \RuntimeException('Failed to copy resource: ' . $filename);
 			}

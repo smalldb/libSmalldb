@@ -101,12 +101,38 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	}
 
 
+	private function getReferenceFactory(): ReferenceFactoryInterface
+	{
+		return $this->refFactory ?? ($this->refFactory = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS)->getReferenceFactory());
+	}
+
+
+	private function createPreheatedReference($item): ReferenceInterface
+	{
+		$factory = $this->getReferenceFactory();
+
+		$id = $item['id'];
+		$ref = $factory->createReference($this->smalldb, $id);
+		return $ref;
+	}
+
+
+	private function createPreheatedReferenceCollection(array $items): array
+	{
+		$factory = $this->getReferenceFactory();
+
+		$result = [];
+		foreach ($items as $k => $item) {
+			$id = $item['id'];
+			$result[$k] = $factory->createReference($this->smalldb, $id);
+		}
+		return $result;
+	}
+
+
 	public function ref(...$id): ReferenceInterface
 	{
-		$refFactory = $this->refFactory
-			?? ($this->refFactory = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS)->getReferenceFactory());
-
-		$ref = $refFactory->createReference($this->smalldb, $id);
+		$ref = $this->getReferenceFactory()->createReference($this->smalldb, $id);
 		if ($this->supports($ref)) {
 			return $ref;
 		} else {
@@ -134,7 +160,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 				. json_encode($properties, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 		} else {
 			$item = reset($items);
-			return $item;  // TODO: Map item to a reference
+			return $this->createPreheatedReference($item);
 		}
 	}
 
@@ -156,7 +182,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 			$items = $table->getSlice($offset, $pageSize);
 		}
 
-		return $items;  // TODO: Map array to array of references
+		return $this->createPreheatedReferenceCollection($items);
 	}
 
 }

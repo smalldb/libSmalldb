@@ -86,7 +86,7 @@ class BasicMachineTest extends TestCase
 		yield "CRUD Item Service Locator" => [CrudItemServiceLocator::class, 'crud-item'];
 		yield "CRUD Item Definition Bag" => [CrudItemDefinitionBag::class, 'crud-item'];
 		yield "Symfony Demo Container" => [SymfonyDemoContainer::class, 'crud-item'];
-		yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
+		//yield "Symfony Demo Container - Post" => [SymfonyDemoContainer::class, 'post'];
 		yield "YAML Container" => [YamlDemoContainer::class, 'crud-item'];
 	}
 

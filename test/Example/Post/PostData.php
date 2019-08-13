@@ -45,14 +45,6 @@ class PostData implements PostDataImmutable
 	private $authorId;
 
 
-	public function __construct(array $properties = [])
-	{
-		foreach ($properties as $k => $v) {
-			$this->$k = $v;
-		}
-	}
-
-
 	/**
 	 * @return int
 	 *
@@ -110,7 +102,7 @@ class PostData implements PostDataImmutable
 
 	public function getPublishedAt(): DateTimeImmutable
 	{
-		return $this->publishedAt;
+		return is_string($this->publishedAt) ? new DateTimeImmutable($this->publishedAt) : $this->publishedAt;
 	}
 
 	public function setPublishedAt(DateTimeImmutable $publishedAt): void
@@ -120,7 +112,7 @@ class PostData implements PostDataImmutable
 
 	public function getAuthorId(): int
 	{
-		return $this->authorId;
+		return (int) $this->authorId;
 	}
 
 	public function setAuthorId(int $authorId): void

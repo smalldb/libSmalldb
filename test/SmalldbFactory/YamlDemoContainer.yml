@@ -30,3 +30,12 @@ services:
     Smalldb\StateMachine\Test\Database\ArrayDaoTables:
         autowire: true
 
+    # Symfony Test Database
+    Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase:
+        autowire: true
+    PDO:
+        alias: Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase
+    Smalldb\StateMachine\Test\TestTemplate\TestOutput:
+        autowire: true
+
+

@@ -100,13 +100,22 @@ class DemoControllerTest extends TestCase
 	/**
 	 * Create a post in the repository.
 	 */
-	private function createPost(PostRepository $postRepository, int $id = 1): Post
+	private function createPost(PostRepository $postRepository, int $id = 1000): Post
 	{
 		/** @var Post $post */
 		$post = $postRepository->ref($id);
 		$this->assertInstanceOf(Post::class, $post);
 
-		$post->create(new PostData(['id' => $id, 'title' => 'A Post about Foo #' . $id]));
+		$postData = new PostData();
+		$postData->setId($id);
+		$postData->setTitle('Foo');
+		$postData->setSlug('foo');
+		$postData->setAuthorId(1);
+		$postData->setPublishedAt(new \DateTimeImmutable());
+		$postData->setSummary('Foo, foo.');
+		$postData->setContent('Foo. Foo. Foo.');
+
+		$post->create($postData);
 		$this->assertEquals(Post::EXISTS, $post->getState());
 
 		return $post;
@@ -164,7 +173,7 @@ class DemoControllerTest extends TestCase
 		$container = $this->createContainer();
 		/** @var PostRepository $posts */
 		$postRepository = $container->get(PostRepository::class);
-		$post = $this->createPost($postRepository);
+		$post = $this->createPost($postRepository, 1000);
 
 		$newTitle = 'A post about Bar.';
 		$request = ['title' => $newTitle];

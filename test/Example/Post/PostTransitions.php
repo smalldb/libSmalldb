@@ -18,17 +18,102 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudTransitions;
+use PDO;
+use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-class PostTransitions extends AbstractCrudTransitions implements TransitionDecorator
+class PostTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
+	/** @var PDO */
+	private $pdo;
+	private $table = 'symfony_demo_post';
 
-	public function __construct(PostRepository $repository, ArrayDaoTables $dao)
+	public function __construct(PDO $pdo)
 	{
-		parent::__construct($repository, $dao);
+		parent::__construct();
+		$this->pdo = $pdo;
+	}
+
+
+	protected function create(TransitionEvent $transitionEvent, Post $ref, PostDataImmutable $data): int
+	{
+		$stmt = $this->pdo->prepare("
+			INSERT INTO $this->table (id, author_id, title, slug, summary, content, published_at)
+			VALUES (:id, :authorId, :title, :slug, :summary, :content, :publishedAt)
+		");
+
+		[$id] = $ref->getId();
+		$stmt->execute([
+			'id' => $id,
+			'authorId' => $data->getAuthorId(),
+			'title' => $data->getTitle(),
+			'slug' => $data->getSlug(),
+			'summary' => $data->getSummary(),
+			'content' => $data->getContent(),
+			'publishedAt' => $data->getPublishedAt()->format(DATE_ISO8601),
+		]);
+
+		/*
+		// TODO: Generate ID when $id is null
+		if ($oldId !== $newId) {
+			$transitionEvent->setNewId($newId);
+		}
+		*/
+
+		return $id;
+	}
+
+
+	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data): void
+	{
+		$stmt = $this->pdo->prepare("
+			UPDATE $this->table
+			SET
+				id = :newId,
+				author_id = :authorId,
+				title = :title,
+				slug = :slug,
+				summary = :summary,
+				content = :content,
+				published_at = :publishedAt
+			WHERE
+				id = :oldId
+			LIMIT 1
+		");
+
+		[$oldId] = $ref->getId();
+		$newId =  $data->getId();
+		$stmt->execute([
+			'oldId' => $oldId,
+			'newId' => $newId,
+			'authorId' => $data->getAuthorId(),
+			'title' => $data->getTitle(),
+			'slug' => $data->getSlug(),
+			'summary' => $data->getSummary(),
+			'content' => $data->getContent(),
+			'publishedAt' => $data->getPublishedAt()->format(DATE_ISO8601),
+		]);
+
+		if ($oldId != $newId) {
+			$transitionEvent->setNewId($newId);
+		}
+	}
+
+
+	protected function delete(TransitionEvent $transitionEvent, Post $ref): void
+	{
+		[$id] = $ref->getId();
+		$stmt = $this->pdo->prepare("
+			DELETE FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		");
+		$stmt->execute([
+			'id' => $id,
+		]);
+		$transitionEvent->setNewId(null);
 	}
 
 }
