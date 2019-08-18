@@ -26,6 +26,7 @@ use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
@@ -96,6 +97,33 @@ class PostRepository implements SmalldbRepositoryInterface
 			return $data;
 		}
 	}
+
+
+	/**
+	 * @returns Post[]
+	 */
+	public function findLatest(int $page = 0, ?Tag $tag = null): array
+	{
+		assert($page >= 0);
+
+		$pageSize = 10;
+		$pageOffset = $page * $pageSize;
+
+		$stmt = $this->pdo->prepare("
+			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
+			FROM $this->table
+			ORDER BY published_at DESC, id DESC
+			LIMIT :pageSize OFFSET :pageOffset
+		");
+		$stmt->execute(['pageSize' => $pageSize, 'pageOffset' => $pageOffset]);
+
+		$posts = [];
+		while (($post = $this->fetchReference($stmt))) {
+			$posts[$post->getId()] = $post;
+		}
+		return $posts;
+	}
+
 
 	/**
 	 * Create a reference to a state machine identified by $id.

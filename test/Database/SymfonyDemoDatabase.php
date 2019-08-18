@@ -45,7 +45,10 @@ class SymfonyDemoDatabase extends \PDO
 
 	public function __destruct()
 	{
-		unlink($this->dbFileName);
+		// FIXME: Allow parallel runs of the tests
+		if (file_exists($this->dbFileName)) {
+			unlink($this->dbFileName);
+		}
 	}
 
 

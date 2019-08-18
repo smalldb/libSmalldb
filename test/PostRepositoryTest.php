@@ -147,4 +147,13 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('', $ref->getState());
 	}
 
+
+	public function testFindLatest()
+	{
+		$latestPosts = $this->postRepository->findLatest();
+		$this->assertNotEmpty($latestPosts);
+		$latestPost = reset($latestPosts);
+		$this->assertInstanceOf(Post::class, $latestPost);
+	}
+
 }
