@@ -23,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData;
+use Smalldb\StateMachine\Test\Example\Post\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
@@ -68,6 +69,27 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals(1, $data->getId());
 		$this->assertNotEmpty($data->getTitle());
 	}
+
+	public function testPostObjects()
+	{
+		$mutablePost = $this->createPostData();
+		$immutablePost = new PostDataImmutable($mutablePost);
+		$this->assertEquals(get_object_vars($mutablePost), get_object_vars($immutablePost));
+	}
+
+
+	public function testPostReferenceObjects()
+	{
+		/** @var Post $ref */
+		$ref = $this->smalldb->ref(Post::class, 1);
+
+		$postData = new PostDataImmutable($ref);
+
+		$dataTitle = $postData->getTitle();
+		$refTitle = $ref->getTitle();
+		$this->assertEquals($refTitle, $dataTitle);
+	}
+
 
 	private function createPostData(): PostData
 	{

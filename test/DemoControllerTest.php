@@ -147,9 +147,17 @@ class DemoControllerTest extends TestCase
 		/** @var TagRepository $tags */
 		$tags = $container->get(TagRepository::class);
 
+		$postData = new PostData();
+		$postData->setTitle('Foo');
+		$postData->setSlug('foo');
+		$postData->setAuthorId(1);
+		$postData->setPublishedAt(new \DateTimeImmutable());
+		$postData->setSummary('Foo, foo.');
+		$postData->setContent('Foo. Foo. Foo.');
+
 		/** @var Tag $ref */
 		$ref = $tags->ref(null);
-		$ref->create(new PostData(['id' => 1, 'title' => 'foo']));
+		$ref->create($postData);
 
 		$this->indexController(0, 'foo', $posts, $tags);
 	}
@@ -187,7 +195,7 @@ class DemoControllerTest extends TestCase
 
 	private function editController($request, Post $post)
 	{
-		$postData = $post->getData();
+		$postData = new PostData($post);
 
 		// Process the form; update $postData from the $request.
 		$postData->setTitle($request['title']);
@@ -225,9 +233,8 @@ class DemoControllerTest extends TestCase
 
 	private function renderPost(Post $post)
 	{
-		// Read the 'name' attribute to emulate rendering.
-		$postData = $post->getData();
-		$this->assertNotEmpty($postData->getTitle());
+		// Read the 'title' attribute to emulate rendering.
+		$this->assertNotEmpty($post->getTitle());
 	}
 
 

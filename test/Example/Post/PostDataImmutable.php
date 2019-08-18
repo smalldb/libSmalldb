@@ -21,18 +21,91 @@ namespace Smalldb\StateMachine\Test\Example\Post;
 use DateTimeImmutable;
 
 
-/**
- * Interface PostDataImmutable
- *
- * TODO: Can we generate this interface automatically?
- */
-interface PostDataImmutable
+class PostDataImmutable
 {
-	public function getId();
-	public function getTitle(): string;
-	public function getSlug(): string;
-	public function getSummary(): string;
-	public function getContent(): string;
-	public function getPublishedAt(): DateTimeImmutable;
-	public function getAuthorId(): int;
+	/** @var int */
+	protected $id;
+
+	/** @var string */
+	protected $title;
+
+	/** @var string */
+	protected $slug;
+
+	/** @var string */
+	protected $summary;
+
+	/** @var string */
+	protected $content;
+
+	/** @var DateTimeImmutable */
+	protected $publishedAt;
+
+	/** @var int */
+	protected $authorId;
+
+
+	/**
+	 * PostDataImmutable copy constructor.
+	 */
+	public function __construct(?PostDataImmutable $immutable = null)
+	{
+		if ($immutable !== null) {
+			$this->copyProperties($immutable);
+		}
+	}
+
+
+	protected function copyProperties(PostDataImmutable $src): void
+	{
+		$this->id = $src->getId();
+		$this->title = $src->getTitle();
+		$this->slug = $src->getSlug();
+		$this->summary = $src->getSummary();
+		$this->content = $src->getContent();
+		$this->publishedAt = $src->getPublishedAt();
+		$this->authorId = $src->getAuthorId();
+	}
+
+
+	/**
+	 * @return int
+	 *
+	 * TODO: Fix return type conflict with ReferenceInterface::getId()
+	 */
+	public function getId()
+	{
+		return $this->id;
+	}
+
+	public function getContent(): string
+	{
+		return $this->content;
+	}
+
+	public function getPublishedAt(): DateTimeImmutable
+	{
+		return is_string($this->publishedAt) ? new DateTimeImmutable($this->publishedAt) : $this->publishedAt;
+	}
+
+	public function getTitle(): string
+	{
+		return $this->title;
+	}
+
+	public function getAuthorId(): int
+	{
+		return (int)$this->authorId;
+	}
+
+	public function getSlug(): string
+	{
+		return $this->slug;
+	}
+
+	public function getSummary(): string
+	{
+		return $this->summary;
+	}
+
 }

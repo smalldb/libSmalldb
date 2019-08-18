@@ -19,9 +19,10 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
+use Smalldb\StateMachine\Annotation\Transition;
+use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
@@ -30,8 +31,28 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  */
-interface Post extends CrudMachine, ReferenceInterface, PostDataImmutable
+abstract class Post extends PostDataImmutable implements ReferenceInterface
 {
-	public function getData(): PostData;
+
+	/**
+	 * @State(color = "#baf")
+	 */
+	const EXISTS = "Exists";
+
+	/**
+	 * @Transition("", {"Exists"})
+	 */
+	abstract public function create(PostDataImmutable $itemData);
+
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 */
+	abstract public function update(PostDataImmutable $itemData);
+
+	/**
+	 * @Transition("Exists", {""})
+	 */
+	abstract public function delete();
+
 }
 
