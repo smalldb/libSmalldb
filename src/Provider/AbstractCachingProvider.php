@@ -34,7 +34,7 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
  * to feed the respective getters. Each of the provide* methods will be called
  * only once.
  */
-abstract class AbstractCachingProvider implements SmalldbProviderInterface, ReferenceFactoryInterface
+abstract class AbstractCachingProvider implements SmalldbProviderInterface
 {
 	/** @var string|null */
 	private $machineType;
@@ -55,22 +55,6 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface, Refe
 	protected $repository;
 
 
-	public function getReferenceFactory(): ReferenceFactoryInterface
-	{
-		if (isset($this->referenceClass)) {
-			return $this;
-		} else {
-			throw new \LogicException("Reference class not set.");
-		}
-	}
-
-
-	public function createReference(Smalldb $smalldb, $id): ReferenceInterface
-	{
-		return new $this->referenceClass($smalldb, $this, $id);
-	}
-
-
 	public function setReferenceClass(string $referenceClass)
 	{
 		if (!class_exists($referenceClass)) {
@@ -79,7 +63,6 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface, Refe
 		$this->referenceClass = $referenceClass;
 		return $this;
 	}
-
 
 
 	public function getReferenceClass(): string

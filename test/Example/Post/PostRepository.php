@@ -20,7 +20,8 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use PDO;
-use Smalldb\StateMachine\Provider\ReferenceFactoryInterface;
+use PDOStatement;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
@@ -33,12 +34,15 @@ class PostRepository implements SmalldbRepositoryInterface
 	/** @var Smalldb */
 	private $smalldb;
 
+	/** @var SmalldbProviderInterface */
+	private $machineProvider = null;
+
+	/** @var string */
+	private $refClass;
+
 	/** @var PDO */
 	private $pdo;
 	private $table = 'symfony_demo_post';
-
-	/** @var ReferenceFactoryInterface */
-	private $refFactory;
 
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
@@ -55,12 +59,12 @@ class PostRepository implements SmalldbRepositoryInterface
 	 */
 	public function getState(ReferenceInterface $ref): string
 	{
+		$id = $ref->getId();
 		$stmt = $this->pdo->prepare("SELECT COUNT(id) FROM $this->table WHERE id = :id");
-		[$id] = $ref->getId();
 		$stmt->execute(['id' => $id]);
-		$exists = $stmt->fetchColumn(0);
+		$exists = intval($stmt->fetchColumn(0));
 		$stmt->closeCursor();
-		return $exists == 0 ? '' : 'Exists';
+		return $exists === 0 ? '' : 'Exists';
 	}
 
 
@@ -81,9 +85,9 @@ class PostRepository implements SmalldbRepositoryInterface
 			WHERE id = :id
 			LIMIT 1
 		");
-		[$id] = $ref->getId();
+		$id = $ref->getId();
 		$stmt->execute(['id' => $id]);
-		$data = $stmt->fetchObject(PostData::class);
+		$data = $stmt->fetchObject(PostDataImmutable::class);
 		if ($data === false) {
 			$state = '';
 			throw new \LogicException('Cannot load data in the Not Exists state.');
@@ -98,15 +102,35 @@ class PostRepository implements SmalldbRepositoryInterface
 	 *
 	 * @return ReferenceInterface
 	 */
-	public function ref(...$id): Post
+	public function ref($id): Post
 	{
-		$ref = $this->getReferenceFactory()->createReference($this->smalldb, $id);
+		if (!$this->machineProvider) {
+			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
+			$this->refClass = $this->machineProvider->getReferenceClass();
+		}
+
+		/** @var ReferenceInterface $ref */
+		$ref = new $this->refClass($id);
+		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
 		return $ref;
 	}
 
-	private function getReferenceFactory(): ReferenceFactoryInterface
+
+	protected function fetchReference(PDOStatement $stmt): ?Post
 	{
-		return $this->refFactory ?? ($this->refFactory = $this->smalldb->getMachineProvider(Post::class)->getReferenceFactory());
+		if (!$this->machineProvider) {
+			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
+			$this->refClass = $this->machineProvider->getReferenceClass();
+		}
+
+		/** @var Post $ref */
+		$ref = $stmt->fetchObject($this->refClass);
+		if ($ref) {
+			$ref->smalldbConnect($this->smalldb, $this->machineProvider);
+			return $ref;
+		} else {
+			return null;
+		}
 	}
 
 }

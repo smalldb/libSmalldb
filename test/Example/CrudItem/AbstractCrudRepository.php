@@ -18,9 +18,8 @@
 
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
-use Smalldb\StateMachine\Provider\ReferenceFactoryInterface;
-use Smalldb\StateMachine\Reference;
+use InvalidArgumentException;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
@@ -39,17 +38,21 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	/** @var Smalldb */
 	private $smalldb;
 
-	/** @var ReferenceFactoryInterface */
-	private $refFactory;
+	/** @var string */
+	private $refClass;
 
 	/** @var ArrayDaoTables */
 	private $dao;
 
+	/** @var SmalldbProviderInterface */
+	private $machineProvider;
+
 
 	public function __construct(Smalldb $smalldb, ArrayDaoTables $dao)
 	{
-		$this->table = get_class($this);
 		$this->smalldb = $smalldb;
+
+		$this->table = get_class($this);
 		$this->dao = $dao;
 
 		// In a real-world application, we would create the table in a database migration.
@@ -101,44 +104,41 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function getReferenceFactory(): ReferenceFactoryInterface
-	{
-		return $this->refFactory ?? ($this->refFactory = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS)->getReferenceFactory());
-	}
-
-
 	private function createPreheatedReference($item): ReferenceInterface
 	{
-		$factory = $this->getReferenceFactory();
+		if (!$this->machineProvider) {
+			$this->machineProvider = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS);
+			$this->refClass = $this->machineProvider->getReferenceClass();
+		}
 
-		$id = $item['id'];
-		$ref = $factory->createReference($this->smalldb, $id);
+		/** @var ReferenceInterface $ref */
+		$ref = new $this->refClass($item);
+		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
 		return $ref;
 	}
 
 
 	private function createPreheatedReferenceCollection(array $items): array
 	{
-		$factory = $this->getReferenceFactory();
-
 		$result = [];
 		foreach ($items as $k => $item) {
-			$id = $item['id'];
-			$result[$k] = $factory->createReference($this->smalldb, $id);
+			$result[$k] = $this->createPreheatedReference($item);
 		}
 		return $result;
 	}
 
 
-	public function ref(...$id): ReferenceInterface
+	public function ref($id): ReferenceInterface
 	{
-		$ref = $this->getReferenceFactory()->createReference($this->smalldb, $id);
-		if ($this->supports($ref)) {
-			return $ref;
-		} else {
-			throw new UnsupportedReferenceException('The new reference should be instance of '
-				. CrudItem::class . ', but it is ' . get_class($ref) . ' instead.');
+		if (!$this->machineProvider) {
+			$this->machineProvider = $this->smalldb->getMachineProvider(static::REFERENCE_CLASS);
+			$this->refClass = $this->machineProvider->getReferenceClass();
 		}
+
+		/** @var ReferenceInterface $ref */
+		$ref = new $this->refClass($id);
+		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
+		return $ref;
 	}
 
 
@@ -156,7 +156,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}, 0, 1);
 
 		if (empty($items)) {
-			throw new \InvalidArgumentException("Item not found: "
+			throw new InvalidArgumentException("Item not found: "
 				. json_encode($properties, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 		} else {
 			$item = reset($items);

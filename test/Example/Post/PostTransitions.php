@@ -44,7 +44,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			VALUES (:id, :authorId, :title, :slug, :summary, :content, :publishedAt)
 		");
 
-		[$id] = $ref->getId();
+		$id = $ref->getId();
 		$stmt->execute([
 			'id' => $id,
 			'authorId' => $data->getAuthorId(),
@@ -83,7 +83,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			LIMIT 1
 		");
 
-		[$oldId] = $ref->getId();
+		$oldId = $ref->getId();
 		$newId =  $data->getId();
 		$stmt->execute([
 			'oldId' => $oldId,
@@ -104,7 +104,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 
 	protected function delete(TransitionEvent $transitionEvent, Post $ref): void
 	{
-		[$id] = $ref->getId();
+		$id = $ref->getId();
 		$stmt = $this->pdo->prepare("
 			DELETE FROM $this->table
 			WHERE id = :id

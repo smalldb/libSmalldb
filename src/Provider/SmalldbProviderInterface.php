@@ -28,8 +28,6 @@ interface SmalldbProviderInterface
 
 	public function getMachineType(): string;
 
-	public function getReferenceFactory(): ReferenceFactoryInterface;
-
 	public function getReferenceClass(): string;
 
 	public function getDefinition(): StateMachineDefinition;

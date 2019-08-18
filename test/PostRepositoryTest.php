@@ -113,7 +113,7 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('', $ref->getState());
 		$ref->create($postData);
 		$this->assertEquals('Exists', $ref->getState());
-		$this->assertEquals([1000], $ref->getId());
+		$this->assertEquals(1000, $ref->getId());
 		$this->assertEquals('Foo', $ref->getTitle());
 	}
 
@@ -124,14 +124,14 @@ class PostRepositoryTest extends TestCase
 		$ref = $this->smalldb->ref(Post::class, 1000);
 		$ref->create($this->createPostData());
 		$this->assertEquals('Exists', $ref->getState());
+		$this->assertEquals('Foo', $ref->getTitle());
 
-		$postData = $ref->getData();
-		$this->assertEquals('Foo', $postData->getTitle());
+		$postData = new PostData($ref);
 		$postData->setTitle('Bar');
 
 		$ref->update($postData);
 		$this->assertEquals('Exists', $ref->getState());
-		$this->assertEquals([1000], $ref->getId());
+		$this->assertEquals(1000, $ref->getId());
 		$this->assertEquals('Bar', $ref->getTitle());
 	}
 

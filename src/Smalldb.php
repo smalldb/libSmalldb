@@ -182,12 +182,14 @@ class Smalldb
 	/**
 	 * Get reference to state machine instance of given type and id.
 	 */
-	public function ref(string $type, ...$id): ReferenceInterface
+	public function ref(string $type, $id): ReferenceInterface
 	{
 		// Create the Reference
 		$machineProvider = $this->getMachineProvider($type);
-		$refFactory = $machineProvider->getReferenceFactory();
-		$ref = $refFactory->createReference($this, $id);
+		$refClass = $machineProvider->getReferenceClass();
+		/** @var ReferenceInterface $ref */
+		$ref = new $refClass($id);
+		$ref->smalldbConnect($this, $machineProvider);
 
 		// Emit events
 		if ($this->debug_logger) {
@@ -208,20 +210,7 @@ class Smalldb
 	 */
 	public function nullRef(string $type): ReferenceInterface
 	{
-		// Create the Reference
-		$machineProvider = $this->getMachineProvider($type);
-		$refFactory = $machineProvider->getReferenceFactory();
-		$ref = $refFactory->createReference($this, null);
-
-		// Emit events
-		if ($this->debug_logger) {
-			$this->debug_logger->afterReferenceCreated($this, $machineProvider, $ref);
-		}
-		if ($this->after_reference_created) {
-			$this->after_reference_created->emit($ref);
-		}
-
-		return $ref;
+		return $this->ref($type, null);
 	}
 
 

@@ -40,7 +40,7 @@ interface SmalldbRepositoryInterface
 	 *
 	 * @return ReferenceInterface
 	 */
-	public function ref(...$id);
+	public function ref($id);
 
 
 }
