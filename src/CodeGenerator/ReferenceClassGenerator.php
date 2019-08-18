@@ -79,41 +79,6 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	/**
 	 * @throws ReflectionException
 	 */
-	private function getParamAsCode(ReflectionParameter $param) : string
-	{
-		$code = '$' . $param->name;
-
-		if ($param->isPassedByReference()) {
-			$code = '& ' . $code;
-		}
-
-		if ($param->isVariadic()) {
-			$code = '... ' . $code;
-		}
-
-		if (($type = $param->getType()) !== null) {
-			$code = $type . ' ' . $code;
-
-			if ($param->allowsNull()) {
-				$code = '?' . $code;
-			}
-		}
-
-		if ($param->isDefaultValueAvailable()) {
-			if ($param->isDefaultValueConstant()) {
-				$code .= ' = ' . $param->getDefaultValueConstantName();
-			} else {
-				$code .= ' = ' . var_export($param->getDefaultValue(), true);
-			}
-		}
-
-		return $code;
-	}
-
-
-	/**
-	 * @throws ReflectionException
-	 */
 	private function generateTransitionMethods(PhpFileWriter $w, StateMachineDefinition $definition,
 		ReflectionClass $sourceClassReflection): void
 	{
@@ -125,7 +90,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 					$argMethod = [];
 					$argCall = [];
 					foreach ($methodReflection->getParameters() as $param) {
-						$argMethod[] = $this->getParamAsCode($param);
+						$argMethod[] = $w->getParamAsCode($param);
 						$argCall[] = '$' . $param->name;
 					}
 					$w->beginMethod($methodName, $argMethod);
@@ -158,7 +123,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$argMethod = [];
 				$argCall = [];
 				foreach ($method->getParameters() as $param) {
-					$argMethod[] = $this->getParamAsCode($param);
+					$argMethod[] = $w->getParamAsCode($param);
 					$argCall[] = '$' . $param->name;
 				}
 				$returnType = (string) $method->getReturnType();

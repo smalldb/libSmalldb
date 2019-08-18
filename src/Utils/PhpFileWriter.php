@@ -85,6 +85,45 @@ class PhpFileWriter
 	}
 
 
+	/**
+	 * @throws \ReflectionException
+	 */
+	public function getParamAsCode(\ReflectionParameter $param) : string
+	{
+		$code = '$' . $param->name;
+
+		if ($param->isPassedByReference()) {
+			$code = '& ' . $code;
+		}
+
+		if ($param->isVariadic()) {
+			$code = '... ' . $code;
+		}
+
+		if (($type = $param->getType()) !== null) {
+			$type = (string) $type;
+			if (class_exists($type)) {
+				$type = $this->useClass($type);
+			}
+			$code = $type . ' ' . $code;
+
+			if ($param->allowsNull()) {
+				$code = '?' . $code;
+			}
+		}
+
+		if ($param->isDefaultValueAvailable()) {
+			if ($param->isDefaultValueConstant()) {
+				$code .= ' = ' . $param->getDefaultValueConstantName();
+			} else {
+				$code .= ' = ' . var_export($param->getDefaultValue(), true);
+			}
+		}
+
+		return $code;
+	}
+
+
 	public static function toCamelCase(string $identifier): string
 	{
 		return str_replace('_', '', ucwords($identifier, '_'));
@@ -258,6 +297,15 @@ class PhpFileWriter
 		$this->definedMethodNames[$name] = $name;
 		$this->writeln('');
 		$this->writeln("public function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
+		$this->beginBlock();
+		return $this;
+	}
+
+	public function beginProtectedMethod(string $name, array $args = [], string $returnType = ''): self
+	{
+		$this->definedMethodNames[$name] = $name;
+		$this->writeln('');
+		$this->writeln("protected function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
 		$this->beginBlock();
 		return $this;
 	}
