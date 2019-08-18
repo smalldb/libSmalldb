@@ -34,30 +34,49 @@ trait ReferenceTrait // implements ReferenceInterface
 	protected $smalldb;
 
 	/** @var SmalldbProviderInterface */
-	private $machineProvider;
+	protected $machineProvider;
 
 	/**
 	 * Primary key (unique within $machine).
 	 * @var mixed
 	 */
-	protected $id;
+	protected $id = null;
 
 	/** @var string */
 	private $state = null;
 
-	/** @var mixed */
-	private $data = null;
+	/** @var bool */
+	private $dataLoaded = false;
 
 
 	/**
 	 * Create a reference and initialize it with a given ID. To copy
 	 * a reference use the clone keyword.
 	 */
-	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, $id)
+	public function __construct($id = null)
 	{
+		// Do not overwrite $id when it is not provided
+		// so that PDOStatement::fetchObject() can provide the value.
+		if ($id !== null) {
+			$this->id = $id;
+		}
+	}
+
+
+	/**
+	 * Connect this reference to Smalldb and the relevant provider.
+	 * This method must be called before the reference is used, but you usually don't have to worry about it.
+	 * We don't pass these to the constructor because there are many ways to create a reference.
+	 *
+	 * @internal
+	 */
+	public function smalldbConnect(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider = null): void
+	{
+		if ($this->smalldb) {
+			throw new \LogicException('The reference is already connected.');
+		}
 		$this->smalldb = $smalldb;
-		$this->machineProvider = $machineProvider;
-		$this->id = $id;
+		$this->machineProvider = $machineProvider ?? $this->smalldb->getMachineProvider(static::class);
 	}
 
 
