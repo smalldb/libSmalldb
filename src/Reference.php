@@ -141,7 +141,7 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	 */
 	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, ...$id)
 	{
-		$this->clearCache();
+		$this->invalidateCache();
 
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
@@ -250,7 +250,7 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	/**
 	 * Drop all cached data.
 	 */
-	protected function clearCache()
+	protected function invalidateCache()
 	{
 		$this->state_cache = null;
 		$this->properties_cache = null;
@@ -281,7 +281,7 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 		}
 		$oldId = $this->id;
 
-		$this->clearCache();
+		$this->invalidateCache();
 
 		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
 		$transitionEvent->onNewId(function($newId) use ($oldId) {
@@ -349,7 +349,7 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 				throw new InvalidArgumentException('Property is not cached: '.$key);
 			case 'state':
 			case 'properties':
-				$this->clearCache();
+				$this->invalidateCache();
 				break;
 			default:
 				throw new InvalidArgumentException('Unknown property: '.$key);

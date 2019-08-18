@@ -117,7 +117,7 @@ trait ReferenceTrait // implements ReferenceInterface
 		//}
 		$oldId = $this->id;
 
-		$this->clearCache();
+		$this->invalidateCache();
 
 		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
 		$transitionEvent->onNewId(function($newId) use ($oldId) {
@@ -136,7 +136,7 @@ trait ReferenceTrait // implements ReferenceInterface
 		return $transitionEvent;
 	}
 
-	public function clearCache()
+	public function invalidateCache(): void
 	{
 		$this->state = null;
 		$this->data = null;

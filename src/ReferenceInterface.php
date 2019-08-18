@@ -30,6 +30,13 @@ interface ReferenceInterface
 	const NOT_EXISTS = "";
 
 	/**
+	 * Invalidate cached data.
+	 *
+	 * @internal
+	 */
+	public function invalidateCache(): void;
+
+	/**
 	 * Get state machine type.
 	 */
 	public function getMachineType(): string;
