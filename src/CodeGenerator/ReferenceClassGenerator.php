@@ -111,14 +111,11 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	 */
 	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection)
 	{
-		// TODO: Generate proxy getters only for getter methods of getData() return type
-
 		$referenceInterfaceReflection = new ReflectionClass(ReferenceInterface::class);
 
 		foreach ($sourceClassReflection->getMethods() as $method) {
 			$methodName = $method->getName();
-			if ($method->isAbstract() && strncmp('get', $methodName, 3) === 0
-				&& !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName))
+			if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName))
 			{
 				$argMethod = [];
 				$argCall = [];
@@ -130,14 +127,15 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				if (class_exists($returnType)) {
 					$returnType = $w->useClass($returnType);
 				}
+
 				$w->beginMethod($methodName, $argMethod, $returnType);
-				// TODO: getData() should not be a special name, this feature should be controlled by an annotation.
-				// TODO: Alternative approach: Use reference directly as an immutable value object and add method to construct mutable value objects.
-				if ($methodName == 'getData') {
-					$w->writeln("return clone (\$this->data ?? (\$this->data = \$this->machineProvider->getRepository()->getData(\$this, \$this->state)));");
-				} else {
-					$w->writeln("return \$this->getData()->$methodName(" . join(', ', $argCall) . ");");
+				$w->beginBlock("if (!\$this->dataLoaded)");
+				{
+					$w->writeln("\$this->dataLoaded = true;");
+					$w->writeln("\$this->loadData();");
 				}
+				$w->endBlock();
+				$w->writeln("return parent::$methodName(" . join(', ', $argCall) . ");");
 				$w->endMethod();
 			}
 		}
