@@ -60,14 +60,11 @@ class PostRepositoryTest extends TestCase
 
 	public function testLoadData()
 	{
+		/** @var Post $ref */
 		$ref = $this->smalldb->ref(Post::class, 1);
-
-		/** @var PostData $data */
-		$string = null;
-		$data = $this->postRepository->getData($ref, $state);
-		$this->assertEquals('Exists', $state);
-		$this->assertEquals(1, $data->getId());
-		$this->assertNotEmpty($data->getTitle());
+		$this->assertEquals('Exists', $ref->getState());
+		$this->assertEquals(1, $ref->getId());
+		$this->assertNotEmpty($ref->getTitle());
 	}
 
 	public function testPostObjects()

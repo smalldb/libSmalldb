@@ -86,7 +86,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	}
 
 
-	public function getData(ReferenceInterface $ref, & $state)
+	public function loadData(ReferenceInterface $ref, & $state)
 	{
 		if (!$this->supports($ref)) {
 			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));

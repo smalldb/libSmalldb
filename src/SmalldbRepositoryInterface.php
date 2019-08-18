@@ -33,7 +33,7 @@ interface SmalldbRepositoryInterface
 	 *
 	 * @throws UnsupportedReferenceException
 	 */
-	public function getData(ReferenceInterface $ref, string & $state);
+	public function loadData(ReferenceInterface $ref, string & $state);
 
 	/**
 	 * Create a reference to a state machine identified by $id.

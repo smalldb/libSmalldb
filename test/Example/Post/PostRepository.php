@@ -73,7 +73,7 @@ class PostRepository implements SmalldbRepositoryInterface
 	 *
 	 * @throws UnsupportedReferenceException
 	 */
-	public function getData(ReferenceInterface $ref, ?string &$state)
+	public function loadData(ReferenceInterface $ref, ?string &$state)
 	{
 		if (!($ref instanceof Post)) {
 			throw new UnsupportedReferenceException('Reference not supported: ' . get_class($ref));

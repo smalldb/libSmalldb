@@ -110,9 +110,12 @@ trait ReferenceTrait // implements ReferenceInterface
 	/**
 	 * Return data from which getState() calculates the state.
 	 */
-	public function getData()
+	protected function loadData()
 	{
-		return $this->data ?? ($this->data = $this->machineProvider->getRepository()->getData($this, $this->state));
+		$data = $this->machineProvider->getRepository()->loadData($this, $this->state);
+		if ($data !== null) {
+			$this->copyProperties($data);
+		}
 	}
 
 
@@ -158,8 +161,9 @@ trait ReferenceTrait // implements ReferenceInterface
 	public function invalidateCache(): void
 	{
 		$this->state = null;
-		$this->data = null;
+		$this->dataLoaded = false;
 	}
+
 
 }
 
