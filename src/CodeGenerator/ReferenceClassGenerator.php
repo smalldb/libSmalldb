@@ -67,9 +67,11 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 			$w->endClass();
 		}
+		// @codeCoverageIgnoreStart
 		catch (ReflectionException $ex) {
 			throw new RuntimeException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
 		}
+		// @codeCoverageIgnoreEnd
 
 		$this->classGenerator->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
 		return $targetReferenceClassName;

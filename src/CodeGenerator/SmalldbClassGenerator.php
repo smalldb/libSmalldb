@@ -60,12 +60,12 @@ class SmalldbClassGenerator
 		$namespace = PhpFileWriter::getClassNamespace($className);
 
 		if ($namespace !== $this->classNamespace) {
-			throw new \InvalidArgumentException("The generated class $className must be in $this->classNamespace namespace.");
+			throw new \InvalidArgumentException("The generated class $className must be in $this->classNamespace namespace.");  // @codeCoverageIgnore
 		}
 
 		$filename = $shortClassName . '.php';
 		if (file_put_contents($this->classDirectory . '/' . $filename, $classContent) === false) {
-			throw new \RuntimeException("Failed to store class: $filename");
+			throw new \RuntimeException("Failed to store class: $filename");  // @codeCoverageIgnore
 		}
 
 		$this->classFiles[$className] = $filename;
@@ -97,7 +97,7 @@ class SmalldbClassGenerator
 	private function checkGeneratedClass(string $generatedClass)
 	{
 		if (!class_exists($generatedClass)) {
-			throw new \RuntimeException("Generated class $generatedClass not found. Is class loader configured to load the generated classes?");
+			throw new \RuntimeException("Generated class $generatedClass not found. Is class loader configured to load the generated classes?");  // @codeCoverageIgnore
 		}
 	}
 
