@@ -36,6 +36,9 @@ use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
 class BpmnTest extends TestCase
 {
+	/** @var bool Should we preserve times (*-times.json files) from the earlier runs? */
+	const KEEP_PREVIOUS_DATA = false;
+
 	/** @var int Minimum number of tasks to generate */
 	const MIN_N = 9;
 
@@ -529,7 +532,7 @@ class BpmnTest extends TestCase
 	/**
 	 * @dataProvider generatedTestProvider
 	 */
-	public function testGeneratedBpmn(int $testRunId, int $N, callable $bpmnGraphGenerator, string $machineType, string $title, bool $horizontalLayout)
+	public function testGeneratedBpmn(int $testRunId, bool $firstIteration, int $N, callable $bpmnGraphGenerator, string $machineType, string $title, bool $horizontalLayout)
 	{
 		$bpmnGraph = $bpmnGraphGenerator(9);
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
@@ -538,26 +541,32 @@ class BpmnTest extends TestCase
 		$definition = $definitionBuilder->build();
 
 		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), $title, null, $horizontalLayout);
+		$timesLogFileName = "$machineType-times.json";
+
+		// Clear old results
+		if (!static::KEEP_PREVIOUS_DATA && $firstIteration) {
+			$this->clearBenchmarkResults($output, $timesLogFileName);
+		}
 
 		// Run the benchmark for $N
 		if ($N > 0) {
 			/** @var Graph $bpmnGraph */
 			$bpmnGraph = $bpmnGraphGenerator($N);
 			$nEV = count($bpmnGraph->getAllNodes()) + count($bpmnGraph->getAllEdges());
-			$this->runBenchmark($output, $machineType, $bpmnGraph, $testRunId, $nEV);
+			$this->runBenchmark($output, $timesLogFileName, $bpmnGraph, $testRunId, $nEV);
 		} else {
 			$testRunId = null;
 			$curTimeLog = null;
 		}
 
 		// Print statistics
-		$this->showTimeLogPlot($output, "$machineType-times.json", $testRunId);
+		$this->showTimeLogPlot($output, $timesLogFileName, $testRunId);
 
 		$output->writeHtmlFile("$machineType.html");
 	}
 
 
-	private function runBenchmark(TestOutputTemplate $output, string $machineType, Graph $bpmnGraph, $testRunId, int $N)
+	private function runBenchmark(TestOutputTemplate $output, string $timesLogFileName, Graph $bpmnGraph, $testRunId, int $N)
 	{
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
 
@@ -572,7 +581,7 @@ class BpmnTest extends TestCase
 			- ($tStart['ru_utime.tv_sec'] + $tStart['ru_utime.tv_usec'] / 1e6);
 		$timeLog = $bpmnReader->getTimeLog();
 
-		$this->storeBenchmarkResult($output, "$machineType-times.json", [
+		$this->storeBenchmarkResult($output, $timesLogFileName, [
 			'id' => $testRunId,
 			'N' => $N, 't_sec' => $t_sec,
 			'mem_B' => memory_get_usage(false),
@@ -585,6 +594,14 @@ class BpmnTest extends TestCase
 		$data = json_encode($results, JSON_NUMERIC_CHECK) . ",\n";
 		if (file_put_contents($filename, $data, FILE_APPEND | LOCK_EX) === false) {
 			throw new \RuntimeException('Failed to store results: ' . $filename);
+		}
+	}
+
+	private function clearBenchmarkResults(TestOutputTemplate $output, $logFilename): void
+	{
+		$filename = $output->outputPath($logFilename);
+		if (file_exists($filename)) {
+			unlink($filename);
 		}
 	}
 
@@ -734,14 +751,14 @@ class BpmnTest extends TestCase
 
 		// General initial pages
 		foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator, $bpmnSizeCalculator]) {
-			yield "$machineType: N = 0" => [$id, 0, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
+			yield "$machineType: N = 0" => [$id, true, 0, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
 		}
 
 		// Run for $N
 		for ($N = min(static::MIN_N, static::MAX_N); $N <= static::MAX_N; $N += (int) max($N / static::N_STEP_FRACTION, static::N_MIN_STEP)) {
 			foreach ($generatedTests as $machineType => [$title, $horizontalLayout, $bpmnGraphGenerator, $bpmnSizeCalculator]) {
 				$size = $bpmnSizeCalculator($N);
-				yield "$machineType: N = $N, size = $size" => [$id, $N, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
+				yield "$machineType: N = $N, size = $size" => [$id, false, $N, $bpmnGraphGenerator, $machineType, $title, $horizontalLayout];
 			}
 		}
 	}
