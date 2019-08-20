@@ -26,6 +26,7 @@ use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 
 
@@ -38,7 +39,7 @@ class ReferenceClassGeneratorTest extends TestCase
 		$namespace = 'Smalldb\\GeneratedCode';
 		$scg = new SmalldbClassGenerator($namespace, $out->mkdir('generated'));
 
-		$origClass = CrudItem::class;
+		$origClass = Post::class;
 
 		$definitionBag = new SmalldbDefinitionBag();
 		$definition = $definitionBag->addFromAnnotatedClass($origClass);
@@ -50,10 +51,18 @@ class ReferenceClassGeneratorTest extends TestCase
 		$smalldb = new Smalldb();
 		$provider = new LambdaProvider();
 		$dataSource = new DummyDataSource();
+		/** @var Post $newClassInstance */
 		$newClassInstance = new $newClass($smalldb, $provider, $dataSource, null);
 
 		// The new reference must implement the original class, so we can use the original for type hints.
 		$this->assertInstanceOf($origClass, $newClassInstance);
+
+		// DummyDataSource: Try to load state of the machine (DummyDataSource always returns NotExists)
+		$this->assertEquals('', $newClassInstance->getState());
+
+		// DummyDataSource: Data should not be available in Not Exists state
+		$this->expectException(\LogicException::class);
+		$this->assertEquals(null, $newClassInstance->getTitle());
 	}
 
 }

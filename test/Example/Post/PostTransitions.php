@@ -56,14 +56,13 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			'publishedAt' => $data->getPublishedAt()->format(DATE_ISO8601),
 		]);
 
-		/*
-		// TODO: Generate ID when $id is null
-		if ($oldId !== $newId) {
+		if ($id === null) {
+			$newId = (int) $this->pdo->lastInsertId();
 			$transitionEvent->setNewId($newId);
+			return $newId;
+		} else {
+			return $id;
 		}
-		*/
-
-		return $id;
 	}
 
 

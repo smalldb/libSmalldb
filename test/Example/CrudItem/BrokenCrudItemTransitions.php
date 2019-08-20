@@ -18,18 +18,62 @@
 
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
+use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
+use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-class BrokenCrudItemTransitions extends CrudItemTransitions
+/**
+ * Class BrokenCrudItemTransitions
+ *
+ * Similar to CrudItemTransitions, but with some major flaws.
+ */
+class BrokenCrudItemTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
+
+	/** @var CrudItemRepository */
+	private $repository;
+
+	/** @var ArrayDaoTables */
+	private $dao;
+
+	/** @var string */
+	private $table;
+
+
+	public function __construct(CrudItemRepository $repository, ArrayDaoTables $dao)
+	{
+		parent::__construct();
+		$this->repository = $repository;
+		$this->dao = $dao;
+		$this->table = $repository->getTableName();
+	}
+
+
+	/**
+	 * The same create as in CrudItemTransitions
+	 */
+	protected function create(TransitionEvent $transitionEvent, CrudItem $ref, $data): int
+	{
+		$newId = $this->dao->table($this->table)->create($data);
+		$transitionEvent->setNewId($newId);
+		return $newId;
+	}
+
 
 	/**
 	 * Invoke delete instead of update to test transition assertion.
 	 */
 	protected function update(TransitionEvent $transitionEvent, CrudItem $ref, $data): void
 	{
-		parent::delete($transitionEvent, $ref);
+		$this->dao->table($this->table)->delete((int) $ref->getId());
 	}
+
+
+	/**
+	 * The delete transition is not implemented.
+	 */
+	// protected function delete(TransitionEvent $transitionEvent, CrudItem $ref): void;
 
 }

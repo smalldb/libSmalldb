@@ -22,12 +22,13 @@ use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\BrokenCrudItemTransitions;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
 class BrokenCrudItemBasic extends CrudItemBasic
 {
 
-	protected function createCrudItemTransitions(CrudItemRepository $repository, ArrayDaoTables $dao): CrudItemTransitions
+	protected function createCrudItemTransitions(CrudItemRepository $repository, ArrayDaoTables $dao): TransitionDecorator
 	{
 		return new BrokenCrudItemTransitions($repository, $dao);
 	}

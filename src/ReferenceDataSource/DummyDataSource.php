@@ -39,8 +39,7 @@ class DummyDataSource implements ReferenceDataSourceInterface
 	 */
 	public function loadData($id, string &$state)
 	{
-		$state = '';
-		return null;
+		throw new \LogicException('Cannot load data in Not Exists state.');
 	}
 
 }

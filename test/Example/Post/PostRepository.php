@@ -72,36 +72,6 @@ class PostRepository implements SmalldbRepositoryInterface
 
 
 	/**
-	 * Load data for the state machine and set the state
-	 *
-	 * @throws UnsupportedReferenceException
-	 */
-	public function loadData(ReferenceInterface $ref, ?string &$state)
-	{
-		if (!($ref instanceof Post)) {
-			throw new UnsupportedReferenceException('Reference not supported: ' . get_class($ref));
-		}
-
-		$stmt = $this->pdo->prepare("
-			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
-			FROM $this->table
-			WHERE id = :id
-			LIMIT 1
-		");
-		$id = $ref->getId();
-		$stmt->execute(['id' => $id]);
-		$data = $stmt->fetchObject(PostDataImmutable::class);
-		if ($data === false) {
-			$state = '';
-			throw new \LogicException('Cannot load data in the Not Exists state.');
-		} else {
-			$state = 'Exists';
-			return $data;
-		}
-	}
-
-
-	/**
 	 * @returns Post[]
 	 */
 	public function findLatest(int $page = 0, ?Tag $tag = null): array
@@ -140,7 +110,7 @@ class PostRepository implements SmalldbRepositoryInterface
 		switch ($this->fetchMode) {
 			case 1: return $this->fetchReference1($stmt);
 			case 2: return $this->fetchReference2($stmt);
-			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');
+			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');  // @codeCoverageIgnore
 		}
 	}
 
