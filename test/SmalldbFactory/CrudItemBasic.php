@@ -48,7 +48,7 @@ class CrudItemBasic implements SmalldbFactory
 		$repository = new CrudItemRepository($smalldb, $dao);
 
 		// Transitions implementation
-		$transitionsImplementation = new CrudItemTransitions($repository, $dao);
+		$transitionsImplementation = $this->createCrudItemTransitions($repository, $dao);
 
 		$realRefClassName = $scg->generateReferenceClass(CrudItem::class, $definition);
 
@@ -64,6 +64,12 @@ class CrudItemBasic implements SmalldbFactory
 		$smalldb->registerMachineType($machineProvider, [CrudItem::class]);
 
 		return $smalldb;
+	}
+
+
+	protected function createCrudItemTransitions(CrudItemRepository $repository, ArrayDaoTables $dao): CrudItemTransitions
+	{
+		return new CrudItemTransitions($repository, $dao);
 	}
 
 }

@@ -23,6 +23,7 @@ use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Test\SmalldbFactory\BrokenCrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemDefinitionBag;
@@ -30,6 +31,7 @@ use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemServiceLocator;
 use Smalldb\StateMachine\Test\SmalldbFactory\SmalldbFactory;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\YamlDemoContainer;
+use Smalldb\StateMachine\Transition\TransitionAssertException;
 
 
 class BasicMachineTest extends TestCase
@@ -112,4 +114,29 @@ class BasicMachineTest extends TestCase
 		yield "YAML Container" => [YamlDemoContainer::class, 'crud-item'];
 	}
 
+
+	public function testBrokenCrudMachine()
+	{
+		/** @var SmalldbFactory $smalldbFactory */
+		$smalldbFactory = new BrokenCrudItemBasic();
+		$smalldb = $smalldbFactory->createSmalldb();
+
+		// Create a null reference
+		/** @var CrudItem $ref */
+		$ref = $smalldb->nullRef('crud-item');
+		$this->assertInstanceOf(ReferenceInterface::class, $ref);
+		$this->assertEquals(null, $ref->getId());
+		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
+
+		// Create the item
+		$ref->create(['name' => 'Foo']);
+		$id = $ref->getId();
+		$state = $ref->getState();
+		$this->assertNotEquals(null, $id);
+		$this->assertEquals(CrudItem::EXISTS, $state);
+
+		// Broken update of the item
+		$this->expectException(TransitionAssertException::class);
+		$ref->update(['name' => 'Bar']);
+	}
 }
