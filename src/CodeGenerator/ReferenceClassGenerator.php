@@ -62,6 +62,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
 
 			// Create methods
+			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
 
@@ -75,6 +76,14 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 		$this->classGenerator->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
 		return $targetReferenceClassName;
+	}
+
+
+	private function generateReferenceMethods(PhpFileWriter $w, StateMachineDefinition $definition): void
+	{
+		$w->beginMethod('getMachineType', [], 'string');
+		$w->writeln('return %s;', $definition->getMachineType());
+		$w->endMethod();
 	}
 
 
