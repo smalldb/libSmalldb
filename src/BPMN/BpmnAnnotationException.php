@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\BPMN;
 
 /**
  * Something went wrong when parsing annotations in BPMN file.

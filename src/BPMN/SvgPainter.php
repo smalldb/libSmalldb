@@ -16,13 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\BPMN;
 
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Node;
 
 
-class BpmnSvgPainter
+class SvgPainter
 {
 
 	// TODO
@@ -88,7 +88,7 @@ class BpmnSvgPainter
 	public function colorizeSvgFile(string $svgFileContent, Graph $bpmnGraph, array $errors, string $prefix): string
 	{
 		$svg_style = '';
-		$processor = new BpmnGrafovatkoProcessor();
+		$processor = new GrafovatkoProcessor();
 
 		// Style nodes
 		foreach ($bpmnGraph->getAllNodes() as $id => $node) {

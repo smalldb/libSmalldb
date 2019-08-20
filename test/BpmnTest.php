@@ -19,9 +19,9 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\BpmnGrafovatkoProcessor;
-use Smalldb\StateMachine\BpmnReader;
-use Smalldb\StateMachine\BpmnSvgPainter;
+use Smalldb\StateMachine\BPMN\GrafovatkoProcessor;
+use Smalldb\StateMachine\BPMN\BpmnReader;
+use Smalldb\StateMachine\BPMN\SvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
@@ -687,7 +687,7 @@ class BpmnTest extends TestCase
 		if ($svgFilename) {
 			$this->assertFileExists($svgFilename);
 			$svgContent = file_get_contents($svgFilename);
-			$svgPainter = new BpmnSvgPainter();
+			$svgPainter = new SvgPainter();
 			$colorizedSvgContent = $svgPainter->colorizeSvgFile($svgContent, $bpmnGraph, [], '');
 
 			$svgUrl = $output->writeResource($svgFilename, $colorizedSvgContent);
@@ -698,7 +698,7 @@ class BpmnTest extends TestCase
 
 		// Render BPMN diagram using Grafovatko
 		$renderer = new GrafovatkoExporter();
-		$renderer->addProcessor(new BpmnGrafovatkoProcessor());
+		$renderer->addProcessor(new GrafovatkoProcessor());
 		$output->addGrafovatko();
 		$output->addHtml(Html::h2([], 'Graph of the BPMN Diagram'));
 		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));

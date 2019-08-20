@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\BPMN;
 
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Grafovatko\ProcessorInterface;
@@ -25,7 +25,7 @@ use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 
 
-class BpmnGrafovatkoProcessor implements ProcessorInterface
+class GrafovatkoProcessor implements ProcessorInterface
 {
 
 	/**

@@ -17,15 +17,16 @@
  */
 
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\BPMN;
 
+use Smalldb\StateMachine\AbstractMachine;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\Node;
 
 
-class BpmnGraphvizExport
+class GraphvizExport
 {
 
 	protected function renderBpmn($prefix, $fragment_file, $fragment, $errors)
