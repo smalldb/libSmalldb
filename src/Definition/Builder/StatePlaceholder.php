@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
+use Smalldb\StateMachine\Definition\StateDefinition;
+
 
 /**
  * Class StatePlaceholder
@@ -29,9 +31,20 @@ class StatePlaceholder
 	/** @var string */
 	public $name;
 
-	public function __construct(string $name)
+	/** @var ?string */
+	public $color;
+
+
+	public function __construct(string $name, ?string $color = null)
 	{
 		$this->name = $name;
+		$this->color = $color;
+	}
+
+
+	public function buildStateDefinition(): StateDefinition
+	{
+		return new StateDefinition($this->name, $this->color);
 	}
 
 }

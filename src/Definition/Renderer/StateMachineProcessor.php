@@ -59,6 +59,7 @@ class StateMachineProcessor implements ProcessorInterface
 			$state = $node->getState();
 			$stateName = $state->getName();
 			$exportedNode['label'] = $stateName;
+			$exportedNode['fill'] = $state->getColor() ?: "#eee";
 
 			if ($stateName === '') {
 				if ($node->isSourceNode()) {
@@ -71,9 +72,6 @@ class StateMachineProcessor implements ProcessorInterface
 			} else {
 				$exportedNode['shape'] = 'uml.state';
 			}
-
-			// TODO: Add color support
-			$exportedNode['fill'] = "#eee";
 
 			// TODO: Highlight unreachable and undefined states
 
@@ -90,6 +88,7 @@ class StateMachineProcessor implements ProcessorInterface
 		if ($edge instanceof StateMachineEdge) {
 			$transition = $edge->getTransition();
 			$exportedEdge['label'] = $transition->getName();
+			$exportedEdge['color'] = $transition->getColor() ?: "#000";
 		}
 		return $exportedEdge;
 	}

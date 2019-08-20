@@ -35,12 +35,12 @@ abstract class Post extends PostDataImmutable implements ReferenceInterface
 {
 
 	/**
-	 * @State(color = "#baf")
+	 * @State(color = "#def")
 	 */
 	const EXISTS = "Exists";
 
 	/**
-	 * @Transition("", {"Exists"})
+	 * @Transition("", {"Exists"}, color = "#4a0")
 	 */
 	abstract public function create(PostDataImmutable $itemData);
 
@@ -50,7 +50,7 @@ abstract class Post extends PostDataImmutable implements ReferenceInterface
 	abstract public function update(PostDataImmutable $itemData);
 
 	/**
-	 * @Transition("Exists", {""})
+	 * @Transition("Exists", {""}, color = "#a40")
 	 */
 	abstract public function delete();
 

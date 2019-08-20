@@ -29,7 +29,7 @@ interface CrudMachine
 {
 
 	/**
-	 * @State(color = "#baf")
+	 * @State()
 	 */
 	const EXISTS = "Exists";
 

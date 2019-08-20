@@ -108,13 +108,13 @@ class StateMachineDefinitionBuilder
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
 	{
-		return new StateDefinition($statePlaceholder->name);
+		return $statePlaceholder->buildStateDefinition();
 	}
 
 
 	protected function buildActionDefinition(ActionPlaceholder $actionPlaceholder, array $transitions): ActionDefinition
 	{
-		return new ActionDefinition($actionPlaceholder->name, $transitions);
+		return $actionPlaceholder->buildActionDefinition($transitions);
 	}
 
 
@@ -134,7 +134,7 @@ class StateMachineDefinitionBuilder
 			$targetStates[$targetStateName] = $targetState;
 		}
 
-		return new TransitionDefinition($transitionPlaceholder->name, $sourceState, $targetStates);
+		return $transitionPlaceholder->buildTransitionDefinition($sourceState, $targetStates);
 	}
 
 

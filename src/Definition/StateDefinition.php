@@ -25,19 +25,29 @@ class StateDefinition
 	/** @var string */
 	private $name;
 
+	/** @var ?string */
+	private $color;
+
 
 	/**
 	 * StateDefinition constructor.
 	 *
 	 * @internal
 	 */
-	public function __construct(string $name)
+	public function __construct(string $name, ?string $color = null)
 	{
 		$this->name = $name;
+		$this->color = $color;
 	}
 
 	public function getName(): string
 	{
 		return $this->name;
 	}
+
+	public function getColor(): ?string
+	{
+		return $this->color;
+	}
+
 }

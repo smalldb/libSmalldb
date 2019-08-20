@@ -73,7 +73,7 @@ class Transition implements TransitionPlaceholderApplyInterface, ActionPlacehold
 
 	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
 	{
-		// TODO: Configure the transition
+		$placeholder->color = $this->color;
 	}
 
 	public function applyToActionPlaceholder(ActionPlaceholder $placeholder): void

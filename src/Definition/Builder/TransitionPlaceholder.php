@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
+use Smalldb\StateMachine\Definition\StateDefinition;
+use Smalldb\StateMachine\Definition\TransitionDefinition;
+
 
 /**
  * Class TransitionPlaceholder
@@ -35,11 +38,22 @@ class TransitionPlaceholder
 	/** @var string[] */
 	public $targetStates;
 
-	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames)
+	/** @var ?string */
+	public $color;
+
+
+	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null)
 	{
 		$this->name = $transitionName;
 		$this->sourceState = $sourceStateName;
 		$this->targetStates = $targetStateNames;
+		$this->color = $color;
+	}
+
+
+	public function buildTransitionDefinition(StateDefinition $sourceState, array $targetStates): TransitionDefinition
+	{
+		return new TransitionDefinition($this->name, $sourceState, $targetStates, $this->color);
 	}
 
 }

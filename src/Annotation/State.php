@@ -32,14 +32,22 @@ class State implements StatePlaceholderApplyInterface
 	/** @var string */
 	public $name;
 
-	/** @var string */
+	/** @var ?string */
 	public $label;
 
-	/** @var string */
+	/** @var ?string */
 	public $color;
+
+	public function __construct(array $values)
+	{
+		foreach ($values as $k => $v) {
+			$this->$k = $v;
+		}
+	}
+
 
 	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
 	{
-		// TODO: Apply attributes to the state placeholder.
+		$placeholder->color = $this->color;
 	}
 }

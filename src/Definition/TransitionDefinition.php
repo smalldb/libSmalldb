@@ -36,17 +36,21 @@ class TransitionDefinition
 	/** @var StateDefinition[] */
 	private $targetStates;
 
+	/** @var ?string */
+	private $color;
+
 
 	/**
 	 * TransitionDefinition constructor.
 	 *
 	 * @internal
 	 */
-	public function __construct(string $name, StateDefinition $sourceState, array $targetStates)
+	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, ?string $color = null)
 	{
 		$this->name = $name;
 		$this->sourceState = $sourceState;
 		$this->targetStates = $targetStates;
+		$this->color = $color;
 	}
 
 	public function getName(): string
@@ -70,6 +74,12 @@ class TransitionDefinition
 	public function getTargetStates(): array
 	{
 		return $this->targetStates;
+	}
+
+
+	public function getColor()
+	{
+		return $this->color;
 	}
 
 }

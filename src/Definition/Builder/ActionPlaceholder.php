@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
+use Smalldb\StateMachine\Definition\ActionDefinition;
+
 
 /**
  * Class ActionPlaceholder
@@ -32,6 +34,12 @@ class ActionPlaceholder
 	public function __construct(string $name)
 	{
 		$this->name = $name;
+	}
+
+
+	public function buildActionDefinition(array $transitions): ActionDefinition
+	{
+		return new ActionDefinition($this->name, $transitions);
 	}
 
 }
