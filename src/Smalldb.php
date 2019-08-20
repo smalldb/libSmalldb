@@ -21,25 +21,16 @@ namespace Smalldb\StateMachine;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
-use Smalldb\StateMachine\Utils\Hook;
 
 
 /**
  * The libSmalldb entry point.
- * 
- * Smalldb class manages backends (see AbstractBackend) and provides API to
- * create listings and references from the backends.
+ *
+ * Smalldb class manages machine providers and uses them to provide
+ * a simple lazy way to obtain repositories and references.
  */
 class Smalldb
 {
-	/** @var IDebugLogger */
-	private $debug_logger = null;
-
-	/** @var Hook */
-	private $after_reference_created = null;
-
-	/** @var Hook */
-	private $after_listing_created = null;
 
 	/**
 	 * Map of registered machine types and their providers.
@@ -49,10 +40,11 @@ class Smalldb
 	private $machineProviders = [];
 
 	/**
-	 * List of registered backends
-	 * @var AbstractBackend[]
+	 * List of registered machine names without aliases.
+	 *
+	 * @var string[]
 	 */
-	protected $backends = [];
+	private $machineTypes = [];
 
 
 	/**
@@ -60,42 +52,6 @@ class Smalldb
 	 */
 	public function __construct()
 	{
-	}
-
-
-	/**
-	 * Set debug logger
-	 */
-	public function setDebugLogger(IDebugLogger $debug_logger)
-	{
-		$this->debug_logger = $debug_logger;
-	}
-
-
-	/**
-	 * Get debug logger
-	 */
-	public function getDebugLogger(): IDebugLogger
-	{
-		return $this->debug_logger;
-	}
-
-
-	/**
-	 * Get afterReferenceCreated hook.
-	 */
-	public function afterReferenceCreated()
-	{
-		return $this->after_reference_created ?? ($this->after_reference_created = new Hook());
-	}
-
-
-	/**
-	 * Get afterListingCreated hook.
-	 */
-	public function afterListingCreated()
-	{
-		return $this->after_listing_created ?? ($this->after_listing_created = new Hook());
 	}
 
 
@@ -112,6 +68,7 @@ class Smalldb
 			throw new InvalidArgumentException('Duplicate machine type: ' . $machineType);
 		}
 		$this->machineProviders[$machineType] = $provider;
+		$this->machineTypes[] = $machineType;
 
 		foreach ($aliases as $alias) {
 			if (isset($this->machineProviders[$alias])) {
@@ -153,55 +110,9 @@ class Smalldb
 	}
 
 
-	/**
-	 * Register a new backend
-	 */
-	public function registerBackend(AbstractBackend $backend)
-	{
-		if (in_array($backend, $this->backends, TRUE)) {
-			throw new InvalidArgumentException('Duplicate backend: '.get_class($backend));
-		} else {
-			$this->backends[] = $backend;
-
-			if ($this->debug_logger) {
-				$backend->setDebugLogger($this->debug_logger);
-			}
-		}
-		return $this;
-	}
-
-
 	public function getRepository(string $type): SmalldbRepositoryInterface
 	{
 		return $this->getMachineProvider($type)->getRepository();
-	}
-
-
-	/**
-	 * Get list of registered backends
-	 *
-	 * @return AbstractBackend[]
-	 */
-	public function getBackends(): array
-	{
-		return $this->backends;
-	}
-
-
-	/**
-	 * Obtain machine from backends.
-	 *
-	 * @return AbstractMachine|null
-	 */
-	public function getMachine(string $type)
-	{
-		foreach ($this->backends as $b => $backend) {
-			$m = $backend->getMachine($this, $type);
-			if ($m !== null) {
-				return $m;
-			}
-		}
-		return null;
 	}
 
 
@@ -240,65 +151,13 @@ class Smalldb
 
 
 	/**
-	 * Create a listing using given query filters via createListing() method.
-	 *
-	 * @see createListing()
-	 *
-	 * @return IListing.
-	 */
-	public final function listing($query_filters, $filtering_flags = 0): IListing
-	{
-		foreach ($this->backends as $b => $backend) {
-			$listing = $backend->listing($this, $query_filters, $filtering_flags);
-
-			if ($listing) {
-				//if ($this->debug_logger) {
-				//	$this->debug_logger->afterListingCreated($backend, $listing, $query_filters);
-				//}
-				if ($this->after_listing_created) {
-					$this->after_listing_created->emit($listing);
-				}
-
-				return $listing;
-			}
-		}
-		throw new RuntimeException('Cannot create listing.');
-	}
-
-
-	/**
 	 * Generate list of all machines.
-	 */
-	public function getAllMachines()
-	{
-		foreach ($this->backends as $b => $backend) {
-			foreach ($backend->getKnownTypes() as $m) {
-				yield $m => $backend->getMachine($this, $m);
-			}
-		}
-		return;
-	}
-
-
-	/**
-	 * Perform a quick self-check to detect most common errors (but not all of them).
 	 *
-	 * This will throw various exceptions on errors.
-	 *
-	 * @return array  Array with results (machine type -> per-machine results).
+	 * @return string[]
 	 */
-	public function performSelfCheck(): array
+	public function getMachineTypes(): array
 	{
-		$results = [];
-
-		foreach ($this->backends as $b => $backend) {
-			foreach($backend->getKnownTypes() as $m) {
-				$machine = $backend->getMachine($this, $m);
-				$results[$b][$m] = $machine->performSelfCheck();
-			}
-		}
-
-		return $results;
+		return $this->machineTypes;
 	}
 
 }
