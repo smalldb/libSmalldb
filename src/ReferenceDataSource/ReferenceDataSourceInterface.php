@@ -32,4 +32,10 @@ interface ReferenceDataSourceInterface
 	 */
 	public function loadData($id, string & $state);
 
+
+	/**
+	 * Invalidate cached data
+	 */
+	public function invalidateCache($id = null);
+
 }

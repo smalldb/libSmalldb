@@ -42,4 +42,13 @@ class DummyDataSource implements ReferenceDataSourceInterface
 		throw new \LogicException('Cannot load data in Not Exists state.');
 	}
 
+
+	/**
+	 * Invalidate cached data
+	 */
+	public function invalidateCache($id = null)
+	{
+		// No cache.
+	}
+
 }

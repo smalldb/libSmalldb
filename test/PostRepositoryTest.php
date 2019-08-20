@@ -51,6 +51,9 @@ class PostRepositoryTest extends TestCase
 		$ref = $this->smalldb->ref(Post::class, 1);
 		$state = $ref->getState();
 		$this->assertEquals('Exists', $state);
+
+		// One query to load the state
+		$this->assertEquals(1, $this->postRepository->getDataSourceQueryCount());
 	}
 
 
@@ -61,6 +64,9 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('Exists', $ref->getState());
 		$this->assertEquals(1, $ref->getId());
 		$this->assertNotEmpty($ref->getTitle());
+
+		// One query to load the state, second to load data. One would be better.
+		$this->assertLessThanOrEqual(2, $this->postRepository->getDataSourceQueryCount());
 	}
 
 	public function testPostObjects()
@@ -143,24 +149,42 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('', $ref->getState());
 	}
 
+	public function testAssertBenchmark()
+	{
+		$foo = 0;
+		for ($i = 0; $i < 25 * 1000; $i++) {
+			$foo |= empty(true);
+		}
+		$this->assertEmpty($foo);
+	}
+
 
 	/** @dataProvider fetchMode */
 	public function testFindLatest($fetchMode)
 	{
 		$this->postRepository->fetchMode = $fetchMode;
+		$hasEmptyTitle = 0;
 
 		for ($i = 0; $i < 1000; $i++) {
 			$latestPosts = $this->postRepository->findLatest();
+
+			// Make sure each reference has its data loaded
+			foreach ($latestPosts as $post) {
+				$hasEmptyTitle |= empty($post->getTitle());
+			}
 		}
-		$this->assertNotEmpty($latestPosts);
-		$latestPost = reset($latestPosts);
-		$this->assertInstanceOf(Post::class, $latestPost);
+
+		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
+
+		// One query to load everything; data source should not query any additional data.
+		//$this->assertEquals(0, $this->postRepository->getDataSourceQueryCount());
+		echo "Query count [mode $fetchMode]: ", $this->postRepository->getDataSourceQueryCount(), "\n";
 	}
 
 	public function fetchMode()
 	{
-		yield [1];
-		yield [2];
+		yield 'Fetch mode 1' => [1];
+		yield 'Fetch mode 2' => [2];
 	}
 
 }

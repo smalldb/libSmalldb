@@ -48,12 +48,27 @@ class PostRepository implements SmalldbRepositoryInterface
 	/** @var PostDataSource */
 	private $postDataSource;
 
+	private $queryCount = 0;
+
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
 	{
 		$this->smalldb = $smalldb;
 		$this->pdo = $pdo;
-		$this->postDataSource = new PostDataSource($pdo, $this->table);
+		$this->postDataSource = $this->createDataSource();
+	}
+
+
+	private function createDataSource($preloadedDataSet = null): PostDataSource
+	{
+		return new PostDataSource($this->pdo, $this->table, $preloadedDataSet,
+			function($rowCount) { $this->queryCount++; });
+	}
+
+
+	public function getDataSourceQueryCount(): int
+	{
+		return $this->queryCount;
 	}
 
 
@@ -72,13 +87,13 @@ class PostRepository implements SmalldbRepositoryInterface
 
 
 	/**
-	 * @returns Post[]
+	 * @return Post[]
 	 */
 	public function findLatest(int $page = 0, ?Tag $tag = null): array
 	{
 		assert($page >= 0);
 
-		$pageSize = 10;
+		$pageSize = 25;
 		$pageOffset = $page * $pageSize;
 
 		if (!$this->machineProvider) {
@@ -93,37 +108,57 @@ class PostRepository implements SmalldbRepositoryInterface
 			LIMIT :pageSize OFFSET :pageOffset
 		");
 		$stmt->execute(['pageSize' => $pageSize, 'pageOffset' => $pageOffset]);
+		$this->queryCount++;
 
-		$posts = [];
-		while (($post = $this->fetchReference($stmt))) {
-			$posts[$post->getId()] = $post;
-		}
+		$posts = $this->fetchAllReferences($stmt);
 		return $posts;
 	}
 
 
 	public $fetchMode = 1;
 
-	protected function fetchReference(PDOStatement $stmt): ?Post
+	/**
+	 * @return Post[]
+	 */
+	protected function fetchAllReferences(PDOStatement $stmt): array
 	{
 		// Test various implementations
 		switch ($this->fetchMode) {
-			case 1: return $this->fetchReference1($stmt);
-			case 2: return $this->fetchReference2($stmt);
+			case 1: return $this->fetchAllReferences1($stmt);
+			case 2: return $this->fetchAllReferences2($stmt);
 			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');  // @codeCoverageIgnore
 		}
 	}
 
-	private function fetchReference1(PDOStatement $stmt): ?Post
+	/**
+	 * @return Post[]
+	 */
+	private function fetchAllReferences1(PDOStatement $stmt): array
 	{
-		$ref = $stmt->fetchObject($this->refClass, [$this->smalldb, $this->machineProvider, $this->postDataSource]);
-		return $ref ?: null;
+		$posts = [];
+		while (($post = $stmt->fetchObject($this->refClass, [$this->smalldb, $this->machineProvider, $this->postDataSource]))) {
+			$posts[$post->getId()] = $post;
+		}
+		return $posts;
 	}
 
-	private function fetchReference2(PDOStatement $stmt): ?Post
+	/**
+	 * @return Post[]
+	 */
+	private function fetchAllReferences2(PDOStatement $stmt): array
 	{
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		return $row ? new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource, null, $row) : null;
+		$rows = [];
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+			$rows[$row['id']] = $row;
+		}
+		$dataSource = $this->createDataSource($rows);
+
+		$posts = [];
+		foreach ($rows as $id => $row) {
+			$post = new $this->refClass($this->smalldb, $this->machineProvider, $dataSource, $id);
+			$posts[$id] = $post;
+		}
+		return $posts;
 	}
 
 }

@@ -122,6 +122,37 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	 */
 	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection)
 	{
+		$w->writeln("/** @var bool */");
+		$w->writeln('private $dataLoaded = false;');
+
+		$w->beginMethod('invalidateCache', [], 'void');
+		{
+			$w->writeln('$this->state = null;');
+			$w->writeln('$this->dataLoaded = false;');
+		}
+		$w->endMethod();
+
+		$w->beginPrivateMethod('loadData', [], 'void');
+		{
+			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getId(), \$this->state);");
+			$w->beginBlock("if (\$data !== null)");
+			{
+				$w->writeln("if (is_array(\$data)) {");
+				$w->writeln("\t\$this->copyFromArray(\$data);");
+				$w->writeln("} else {");
+				$w->writeln("\t\$this->copyProperties(\$data);");
+				$w->writeln("}");
+			}
+			$w->endBlock();
+		}
+		$w->endMethod();
+
+		$w->beginProtectedMethod('onDataPreloaded', [], 'void');
+		{
+			$w->writeln('$this->dataLoaded = true;');
+		}
+		$w->endMethod();
+
 		$referenceInterfaceReflection = new ReflectionClass(ReferenceInterface::class);
 
 		foreach ($sourceClassReflection->getMethods() as $method) {

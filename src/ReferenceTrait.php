@@ -37,7 +37,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	/** @var SmalldbProviderInterface */
 	private $machineProvider = null;
 
-	/** @var object */
+	/** @var ReferenceDataSourceInterface */
 	protected $dataSource = null;
 
 	/**
@@ -48,9 +48,6 @@ trait ReferenceTrait // implements ReferenceInterface
 
 	/** @var string */
 	private $state = null;
-
-	/** @var bool */
-	private $dataLoaded = false;
 
 
 	/**
@@ -66,6 +63,10 @@ trait ReferenceTrait // implements ReferenceInterface
 	{
 		if (!empty(class_parents($this))) {
 			parent::__construct($src);
+			if ($src !== null || $this->id !== null) {
+				// Source data provided or PDOStatement::fetchObject() detected.
+				$this->onDataPreloaded();
+			}
 		}
 
 		$this->smalldb = $smalldb;
@@ -83,6 +84,12 @@ trait ReferenceTrait // implements ReferenceInterface
 	protected function getMachineProvider(): SmalldbProviderInterface
 	{
 		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider($this->getMachineType()));
+	}
+
+
+	protected function onDataPreloaded(): void
+	{
+		// No-op.
 	}
 
 
@@ -112,17 +119,6 @@ trait ReferenceTrait // implements ReferenceInterface
 		return $this->state ?? ($this->state = $this->dataSource->getState($this->getId()));
 	}
 
-
-	/**
-	 * Return data from which getState() calculates the state.
-	 */
-	protected function loadData()
-	{
-		$data = $this->dataSource->loadData($this->getId(), $this->state);
-		if ($data !== null) {
-			$this->copyProperties($data);
-		}
-	}
 
 
 	/**
@@ -154,13 +150,6 @@ trait ReferenceTrait // implements ReferenceInterface
 
 		return $transitionEvent;
 	}
-
-	public function invalidateCache(): void
-	{
-		$this->state = null;
-		$this->dataLoaded = false;
-	}
-
 
 }
 

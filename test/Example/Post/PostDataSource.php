@@ -32,11 +32,18 @@ class PostDataSource implements ReferenceDataSourceInterface
 	/** @var string */
 	protected $table;
 
+	protected $preloadedDataSet;
 
-	public function __construct(PDO $pdo, string $table)
+	/** @var callable */
+	protected $onQueryCallback;
+
+
+	public function __construct(PDO $pdo, string $table, $preloadedDataSet = null, ?callable $onQueryCallback = null)
 	{
 		$this->pdo = $pdo;
 		$this->table = $table;
+		$this->preloadedDataSet = $preloadedDataSet;
+		$this->onQueryCallback = $onQueryCallback ?? function($rowCount) {};
 	}
 
 
@@ -45,11 +52,16 @@ class PostDataSource implements ReferenceDataSourceInterface
 	 */
 	public function getState($id): string
 	{
-		$stmt = $this->pdo->prepare("SELECT COUNT(id) FROM $this->table WHERE id = :id");
-		$stmt->execute(['id' => $id]);
-		$exists = intval($stmt->fetchColumn(0));
-		$stmt->closeCursor();
-		return $exists === 0 ? '' : 'Exists';
+		if (isset($this->preloadedDataSet[$id])) {
+			return 'Exists';
+		} else {
+			$stmt = $this->pdo->prepare("SELECT COUNT(id) FROM $this->table WHERE id = :id");
+			$stmt->execute(['id' => $id]);
+			($this->onQueryCallback)($stmt->rowCount());
+			$exists = intval($stmt->fetchColumn(0));
+			$stmt->closeCursor();
+			return $exists === 0 ? '' : 'Exists';
+		}
 	}
 
 
@@ -58,20 +70,36 @@ class PostDataSource implements ReferenceDataSourceInterface
 	 */
 	public function loadData($id, ?string &$state)
 	{
-		$stmt = $this->pdo->prepare("
-			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
-			FROM $this->table
-			WHERE id = :id
-			LIMIT 1
-		");
-		$stmt->execute(['id' => $id]);
-		$data = $stmt->fetchObject(PostDataImmutable::class);
-		if ($data === false) {
-			$state = '';
-			throw new \LogicException('Cannot load data in the Not Exists state.');
+		if (isset($this->preloadedDataSet[$id])) {
+			$data = $this->preloadedDataSet[$id];
 		} else {
+			$stmt = $this->pdo->prepare("
+				SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
+				FROM $this->table
+				WHERE id = :id
+				LIMIT 1
+			");
+			$stmt->execute(['id' => $id]);
+			($this->onQueryCallback)($stmt->rowCount());
+			$data = $stmt->fetchObject(PostDataImmutable::class);
+		}
+
+		if ($data) {
 			$state = 'Exists';
 			return $data;
+		} else {
+			$state = '';
+			throw new \LogicException('Cannot load data in the Not Exists state.');
+		}
+	}
+
+
+	public function invalidateCache($id = null)
+	{
+		if ($id === null) {
+			$this->preloadedDataSet = null;
+		} else {
+			unset($this->preloadedDataSet[$id]);
 		}
 	}
 

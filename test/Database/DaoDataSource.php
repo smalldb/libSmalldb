@@ -59,4 +59,13 @@ class DaoDataSource implements ReferenceDataSourceInterface
 		}
 	}
 
+
+	/**
+	 * Invalidate cached data
+	 */
+	public function invalidateCache($id = null)
+	{
+		// No cache.
+	}
+
 }
