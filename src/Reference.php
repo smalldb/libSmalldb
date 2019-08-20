@@ -250,7 +250,7 @@ abstract class Reference implements ReferenceInterface, \ArrayAccess, \Iterator,
 	/**
 	 * Drop all cached data.
 	 */
-	protected function invalidateCache()
+	public function invalidateCache(): void
 	{
 		$this->state_cache = null;
 		$this->properties_cache = null;

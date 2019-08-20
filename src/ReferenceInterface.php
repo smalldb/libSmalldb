@@ -33,7 +33,10 @@ interface ReferenceInterface
 	/**
 	 * Invalidate cached data.
 	 *
+	 * TODO: Remove invalidateCache() and implement proper locking before invoking a transition.
+	 *
 	 * @internal
+	 * @deprecated
 	 */
 	public function invalidateCache(): void;
 
