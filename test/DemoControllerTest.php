@@ -139,7 +139,10 @@ class DemoControllerTest extends TestCase
 	}
 
 
-	public function testIndexController()
+	/**
+	 * @dataProvider tagProvider
+	 */
+	public function testIndexController(?string $tagName)
 	{
 		$container = $this->createContainer();
 		/** @var PostRepository $posts */
@@ -159,11 +162,12 @@ class DemoControllerTest extends TestCase
 		$ref = $tags->ref(null);
 		$ref->create($postData);
 
-		$this->indexController(0, 'foo', $posts, $tags);
+		$this->indexController(0, $tagName, $posts, $tags);
 	}
 
 	private function indexController(?int $page, ?string $tagName, PostRepository $posts, TagRepository $tags)
 	{
+		/** @var Tag $tag */
 		$tag = null;
 		if ($tagName !== null) {
 			$this->markTestIncomplete(); // TODO
@@ -173,6 +177,12 @@ class DemoControllerTest extends TestCase
 		$latestPosts = $posts->findLatest($page, $tag);
 
 		return $this->render(['posts' => $latestPosts]);
+	}
+
+	public function tagProvider()
+	{
+		yield 'no tag' => [null];
+		// yield 'foo' => ['foo'];         // TODO
 	}
 
 
