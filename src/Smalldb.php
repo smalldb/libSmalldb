@@ -18,7 +18,9 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Utils\Hook;
 
 
@@ -133,6 +135,24 @@ class Smalldb
 	}
 
 
+	public function getReferenceClass(string $type): string
+	{
+		return $this->getMachineProvider($type)->getReferenceClass();
+	}
+
+
+	public function getDefinition(string $type): StateMachineDefinition
+	{
+		return $this->getMachineProvider($type)->getDefinition();
+	}
+
+
+	public function getTransitionsDecorator(string $type): TransitionDecorator
+	{
+		return $this->getMachineProvider($type)->getTransitionsDecorator();
+	}
+
+
 	/**
 	 * Register a new backend
 	 */
@@ -148,6 +168,12 @@ class Smalldb
 			}
 		}
 		return $this;
+	}
+
+
+	public function getRepository(string $type): SmalldbRepositoryInterface
+	{
+		return $this->getMachineProvider($type)->getRepository();
 	}
 
 
@@ -181,25 +207,22 @@ class Smalldb
 
 	/**
 	 * Get reference to state machine instance of given type and id.
+	 *
+	 * @see nullRef()
 	 */
 	public function ref(string $type, $id): ReferenceInterface
 	{
-		// Create the Reference
-		$machineProvider = $this->getMachineProvider($type);
-		$refClass = $machineProvider->getReferenceClass();
-		/** @var ReferenceInterface $ref */
-		$ref = new $refClass($id);
-		$ref->smalldbConnect($this, $machineProvider);
+		return $this->getRepository($type)->ref($id);
 
-		// Emit events
+		// TODO: Emit events
+		/*
 		if ($this->debug_logger) {
 			$this->debug_logger->afterReferenceCreated($this, $machineProvider, $ref);
 		}
 		if ($this->after_reference_created) {
 			$this->after_reference_created->emit($ref);
 		}
-
-		return $ref;
+		*/
 	}
 
 
@@ -207,10 +230,12 @@ class Smalldb
 	 * Get reference to non-existent state machine instance of given type. 
 	 * You may want to invoke 'create' or similar transition using this 
 	 * reference.
+	 *
+	 * @see ref()
 	 */
 	public function nullRef(string $type): ReferenceInterface
 	{
-		return $this->ref($type, null);
+		return $this->getRepository($type)->ref(null);
 	}
 
 

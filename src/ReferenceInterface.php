@@ -31,15 +31,6 @@ interface ReferenceInterface
 	const NOT_EXISTS = "";
 
 	/**
-	 * Connect this reference to Smalldb and the relevant provider.
-	 * This method must be called before the reference is used, but you usually don't have to worry about it.
-	 * We don't pass these to the constructor because there are many ways to create a reference.
-	 *
-	 * @internal
-	 */
-	public function smalldbConnect(Smalldb $smalldb, SmalldbProviderInterface $machineProvider);
-
-	/**
 	 * Invalidate cached data.
 	 *
 	 * @internal

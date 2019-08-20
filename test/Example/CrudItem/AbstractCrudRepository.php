@@ -112,8 +112,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 
 		/** @var ReferenceInterface $ref */
-		$ref = new $this->refClass($item);
-		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
+		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $item);
 		return $ref;
 	}
 
@@ -136,8 +135,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 
 		/** @var ReferenceInterface $ref */
-		$ref = new $this->refClass($id);
-		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
+		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $id);
 		return $ref;
 	}
 

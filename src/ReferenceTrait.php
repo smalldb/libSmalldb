@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
@@ -34,13 +35,16 @@ trait ReferenceTrait // implements ReferenceInterface
 	protected $smalldb;
 
 	/** @var SmalldbProviderInterface */
-	protected $machineProvider;
+	private $machineProvider = null;
+
+	/** @var object */
+	protected $dataSource = null;
 
 	/**
 	 * Primary key (unique within $machine).
 	 * @var mixed
 	 */
-	protected $id = null;
+	protected $id;
 
 	/** @var string */
 	private $state = null;
@@ -53,8 +57,13 @@ trait ReferenceTrait // implements ReferenceInterface
 	 * Create a reference and initialize it with a given ID. To copy
 	 * a reference use the clone keyword.
 	 */
-	public function __construct($id = null)
+	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, $id = null, $dataSource = null)
 	{
+		parent::__construct($dataSource);
+
+		$this->smalldb = $smalldb;
+		$this->machineProvider = $machineProvider;
+
 		// Do not overwrite $id when it is not provided
 		// so that PDOStatement::fetchObject() can provide the value.
 		if ($id !== null) {
@@ -63,29 +72,18 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
-	/**
-	 * Connect this reference to Smalldb and the relevant provider.
-	 * This method must be called before the reference is used, but you usually don't have to worry about it.
-	 * We don't pass these to the constructor because there are many ways to create a reference.
-	 *
-	 * @internal
-	 */
-	public function smalldbConnect(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider = null): void
+	protected function getMachineProvider(): SmalldbProviderInterface
 	{
-		if ($this->smalldb) {
-			throw new \LogicException('The reference is already connected.');
-		}
-		$this->smalldb = $smalldb;
-		$this->machineProvider = $machineProvider ?? $this->smalldb->getMachineProvider(static::class);
+		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider($this->getMachineType()));
 	}
 
 
 	/**
-	 * Get state machine type.
+	 * Get state machine definition
 	 */
-	public function getMachineType(): string
+	public function getDefinition(): StateMachineDefinition
 	{
-		return $this->machineProvider->getDefinition()->getMachineType();
+		return $this->getMachineProvider()->getDefinition();
 	}
 
 
@@ -116,15 +114,6 @@ trait ReferenceTrait // implements ReferenceInterface
 		if ($data !== null) {
 			$this->copyProperties($data);
 		}
-	}
-
-
-	/**
-	 * Get state machine definition
-	 */
-	public function getDefinition(): StateMachineDefinition
-	{
-		return $this->machineProvider->getDefinition();
 	}
 
 
