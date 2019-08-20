@@ -16,17 +16,20 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\ReferenceDataSource;
 
 
-interface SmalldbRepositoryInterface
+interface ReferenceDataSourceInterface
 {
 
 	/**
-	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
+	 * Return the state of the refered state machine.
 	 */
-	public function ref($id);
+	public function getState($id): string;
+
+	/**
+	 * Load data for the state machine and set the state
+	 */
+	public function loadData($id, string & $state);
 
 }

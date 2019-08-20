@@ -24,6 +24,7 @@ use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Database\DaoDataSource;
 use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
@@ -47,6 +48,9 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	/** @var SmalldbProviderInterface */
 	private $machineProvider;
 
+	/** @var DaoDataSource */
+	private $dataSource;
+
 
 	public function __construct(Smalldb $smalldb, ArrayDaoTables $dao)
 	{
@@ -57,6 +61,8 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 
 		// In a real-world application, we would create the table in a database migration.
 		$this->dao->createTable($this->table);
+
+		$this->dataSource = new DaoDataSource($this->dao, $this->getTableName());
 	}
 
 
@@ -73,37 +79,6 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	}
 
 
-	public function getState(ReferenceInterface $ref): string
-	{
-		if (!$this->supports($ref)) {
-			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
-		}
-
-		$id = (int) $ref->getId();
-		return $id !== null && $this->dao->table($this->table)->exists($id)
-			? CrudItem::EXISTS
-			: CrudItem::NOT_EXISTS;
-	}
-
-
-	public function loadData(ReferenceInterface $ref, & $state)
-	{
-		if (!$this->supports($ref)) {
-			throw new UnsupportedReferenceException('Unsupported reference: ' . get_class($ref));
-		}
-
-		$id = (int) $ref->getId();
-		if ($id !== null) {
-			$data = $this->dao->table($this->table)->read($id);
-			$state = CrudItem::EXISTS;
-			return $data;
-		} else {
-			$state = CrudItem::NOT_EXISTS;
-			return null;
-		}
-	}
-
-
 	private function createPreheatedReference($item): ReferenceInterface
 	{
 		if (!$this->machineProvider) {
@@ -112,7 +87,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 
 		/** @var ReferenceInterface $ref */
-		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $item);
+		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this->dataSource, $item);
 		return $ref;
 	}
 
@@ -135,7 +110,7 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 
 		/** @var ReferenceInterface $ref */
-		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $id);
+		$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this->dataSource, $id);
 		return $ref;
 	}
 

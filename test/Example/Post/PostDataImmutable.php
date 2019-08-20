@@ -48,13 +48,16 @@ class PostDataImmutable
 	/**
 	 * PostDataImmutable copy constructor.
 	 */
-	public function __construct(?PostDataImmutable $immutable = null)
+	public function __construct($src = null)
 	{
-		if ($immutable !== null) {
-			$this->copyProperties($immutable);
+		if ($src !== null) {
+			if (is_array($src)) {
+				$this->copyFromArray($src);
+			} else {
+				$this->copyProperties($src);
+			}
 		}
 	}
-
 
 	protected function copyProperties(PostDataImmutable $src): void
 	{
@@ -65,6 +68,21 @@ class PostDataImmutable
 		$this->content = $src->getContent();
 		$this->publishedAt = $src->getPublishedAt();
 		$this->authorId = $src->getAuthorId();
+	}
+
+
+	/**
+	 * FIXME: This should be in a separate hydrator.
+	 */
+	protected function copyFromArray(array $src): void
+	{
+		$this->id = $src['id'];
+		$this->title = $src['title'];
+		$this->slug = $src['slug'];
+		$this->summary = $src['summary'];
+		$this->content = $src['content'];
+		$this->publishedAt = $src['publishedAt'];
+		$this->authorId = $src['authorId'];
 	}
 
 

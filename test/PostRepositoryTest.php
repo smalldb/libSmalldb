@@ -49,10 +49,6 @@ class PostRepositoryTest extends TestCase
 	public function testLoadState()
 	{
 		$ref = $this->smalldb->ref(Post::class, 1);
-
-		$state = $this->postRepository->getState($ref);
-		$this->assertEquals('Exists', $state);
-
 		$state = $ref->getState();
 		$this->assertEquals('Exists', $state);
 	}
@@ -148,12 +144,23 @@ class PostRepositoryTest extends TestCase
 	}
 
 
-	public function testFindLatest()
+	/** @dataProvider fetchMode */
+	public function testFindLatest($fetchMode)
 	{
-		$latestPosts = $this->postRepository->findLatest();
+		$this->postRepository->fetchMode = $fetchMode;
+
+		for ($i = 0; $i < 1000; $i++) {
+			$latestPosts = $this->postRepository->findLatest();
+		}
 		$this->assertNotEmpty($latestPosts);
 		$latestPost = reset($latestPosts);
 		$this->assertInstanceOf(Post::class, $latestPost);
+	}
+
+	public function fetchMode()
+	{
+		yield [1];
+		yield [2];
 	}
 
 }

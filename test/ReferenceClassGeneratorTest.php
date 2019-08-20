@@ -19,9 +19,10 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -48,7 +49,8 @@ class ReferenceClassGeneratorTest extends TestCase
 		// Try to create a dummy null reference
 		$smalldb = new Smalldb();
 		$provider = new LambdaProvider();
-		$newClassInstance = new $newClass($smalldb, $provider, null);
+		$dataSource = new DummyDataSource();
+		$newClassInstance = new $newClass($smalldb, $provider, $dataSource, null);
 
 		// The new reference must implement the original class, so we can use the original for type hints.
 		$this->assertInstanceOf($origClass, $newClassInstance);

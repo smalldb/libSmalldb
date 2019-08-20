@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\Transition\TransitionDecorator;
+use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
@@ -56,13 +56,21 @@ trait ReferenceTrait // implements ReferenceInterface
 	/**
 	 * Create a reference and initialize it with a given ID. To copy
 	 * a reference use the clone keyword.
+	 *
+	 * @param Smalldb $smalldb
+	 * @param SmalldbProviderInterface|null $machineProvider
+	 * @param ReferenceDataSourceInterface $dataSource
+	 * @param null $id
 	 */
-	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, $id = null, $dataSource = null)
+	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null, $src = null)
 	{
-		parent::__construct($dataSource);
+		if (!empty(class_parents($this))) {
+			parent::__construct($src);
+		}
 
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
+		$this->dataSource = $dataSource;
 
 		// Do not overwrite $id when it is not provided
 		// so that PDOStatement::fetchObject() can provide the value.
@@ -101,7 +109,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	public function getState(): string
 	{
-		return $this->state ?? ($this->state = $this->machineProvider->getRepository()->getState($this));
+		return $this->state ?? ($this->state = $this->dataSource->getState($this->getId()));
 	}
 
 
@@ -110,7 +118,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	protected function loadData()
 	{
-		$data = $this->machineProvider->getRepository()->loadData($this, $this->state);
+		$data = $this->dataSource->loadData($this->getId(), $this->state);
 		if ($data !== null) {
 			$this->copyProperties($data);
 		}

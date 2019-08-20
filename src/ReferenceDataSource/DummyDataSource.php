@@ -16,17 +16,31 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\ReferenceDataSource;
 
 
-interface SmalldbRepositoryInterface
+/**
+ * DummyDataSource thinks that all state machines are in NotExists state.
+ */
+class DummyDataSource implements ReferenceDataSourceInterface
 {
 
 	/**
-	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
+	 * Return the state of the refered state machine.
 	 */
-	public function ref($id);
+	public function getState($id): string
+	{
+		return '';
+	}
+
+
+	/**
+	 * Load data for the state machine and set the state
+	 */
+	public function loadData($id, string &$state)
+	{
+		$state = '';
+		return null;
+	}
 
 }

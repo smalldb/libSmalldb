@@ -45,27 +45,29 @@ class PostRepository implements SmalldbRepositoryInterface
 	private $pdo;
 	private $table = 'symfony_demo_post';
 
+	/** @var PostDataSource */
+	private $postDataSource;
+
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
 	{
 		$this->smalldb = $smalldb;
 		$this->pdo = $pdo;
+		$this->postDataSource = new PostDataSource($pdo, $this->table);
 	}
 
 
 	/**
-	 * Return the state of the refered state machine.
+	 * Create a reference to a state machine identified by $id.
 	 *
-	 * @throws UnsupportedReferenceException
+	 * @return ReferenceInterface
 	 */
-	public function getState(ReferenceInterface $ref): string
+	public function ref($id): Post
 	{
-		$id = $ref->getId();
-		$stmt = $this->pdo->prepare("SELECT COUNT(id) FROM $this->table WHERE id = :id");
-		$stmt->execute(['id' => $id]);
-		$exists = intval($stmt->fetchColumn(0));
-		$stmt->closeCursor();
-		return $exists === 0 ? '' : 'Exists';
+		$provider = $this->smalldb->getMachineProvider(Post::class);
+		$refClass = $provider->getReferenceClass();
+		$ref = new $refClass($this->smalldb, $provider, $this->postDataSource, $id);
+		return $ref;
 	}
 
 
@@ -109,6 +111,11 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageSize = 10;
 		$pageOffset = $page * $pageSize;
 
+		if (!$this->machineProvider) {
+			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
+			$this->refClass = $this->machineProvider->getReferenceClass();
+		}
+
 		$stmt = $this->pdo->prepare("
 			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
 			FROM $this->table
@@ -125,40 +132,28 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	/**
-	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
-	 */
-	public function ref($id): Post
-	{
-		if (!$this->machineProvider) {
-			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
-			$this->refClass = $this->machineProvider->getReferenceClass();
-		}
-
-		/** @var ReferenceInterface $ref */
-		$ref = new $this->refClass($id);
-		$ref->smalldbConnect($this->smalldb, $this->machineProvider);
-		return $ref;
-	}
-
+	public $fetchMode = 1;
 
 	protected function fetchReference(PDOStatement $stmt): ?Post
 	{
-		if (!$this->machineProvider) {
-			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
-			$this->refClass = $this->machineProvider->getReferenceClass();
+		// Test various implementations
+		switch ($this->fetchMode) {
+			case 1: return $this->fetchReference1($stmt);
+			case 2: return $this->fetchReference2($stmt);
+			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');
 		}
+	}
 
-		/** @var Post $ref */
-		$ref = $stmt->fetchObject($this->refClass);
-		if ($ref) {
-			$ref->smalldbConnect($this->smalldb, $this->machineProvider);
-			return $ref;
-		} else {
-			return null;
-		}
+	private function fetchReference1(PDOStatement $stmt): ?Post
+	{
+		$ref = $stmt->fetchObject($this->refClass, [$this->smalldb, $this->machineProvider, $this->postDataSource]);
+		return $ref ?: null;
+	}
+
+	private function fetchReference2(PDOStatement $stmt): ?Post
+	{
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		return $row ? new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource, null, $row) : null;
 	}
 
 }
