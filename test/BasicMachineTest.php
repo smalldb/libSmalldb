@@ -18,6 +18,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
@@ -76,6 +77,27 @@ class BasicMachineTest extends TestCase
 		// Usage: Delete
 		$ref->delete();
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
+	}
+
+
+	/**
+	 * @dataProvider smalldbProvider
+	 */
+	public function testRegisteredMachines(string $smalldbFactoryClass, string $machineType)
+	{
+		/** @var SmalldbFactory $smalldbFactory */
+		$smalldbFactory = new $smalldbFactoryClass();
+		$smalldb = $smalldbFactory->createSmalldb();
+		$this->assertInstanceOf(Smalldb::class, $smalldb);
+
+		$provider = $smalldb->getMachineProvider($machineType);
+		$this->assertInstanceOf(SmalldbProviderInterface::class, $provider);
+		$this->assertEquals($machineType, $provider->getMachineType());
+
+		$this->assertEquals($provider->getReferenceClass(), $smalldb->getReferenceClass($machineType));
+		$this->assertEquals($provider->getRepository(), $smalldb->getRepository($machineType));
+		$this->assertEquals($provider->getDefinition(), $smalldb->getDefinition($machineType));
+		$this->assertEquals($provider->getTransitionsDecorator(), $smalldb->getTransitionsDecorator($machineType));
 	}
 
 
