@@ -37,7 +37,6 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
-
 	protected function create(TransitionEvent $transitionEvent, Post $ref, PostDataImmutable $data): int
 	{
 		$stmt = $this->pdo->prepare("

@@ -42,9 +42,10 @@ trait ReferenceTrait // implements ReferenceInterface
 
 	/**
 	 * Primary key (unique within $machine).
-	 * @var mixed
+	 *
+	 * The $id should be defined by the parent class; otherwise ReferenceClassGenerator will add it.
 	 */
-	protected $id;
+	//protected $id;
 
 	/** @var string */
 	private $state = null;
@@ -99,15 +100,6 @@ trait ReferenceTrait // implements ReferenceInterface
 	public function getMachineType(): string
 	{
 		return $this->getDefinition()->getMachineType();
-	}
-
-
-	/**
-	 * Get ID (primary key) of the referred machine
-	 */
-	public function getId()
-	{
-		return $this->id;
 	}
 
 

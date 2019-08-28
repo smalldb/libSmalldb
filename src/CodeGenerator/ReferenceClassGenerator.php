@@ -148,17 +148,20 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		}
 		$w->endMethod();
 
-		$w->beginProtectedMethod('onDataPreloaded', [], 'void');
-		{
-			$w->writeln('$this->dataLoaded = true;');
-		}
-		$w->endMethod();
-
 		$referenceInterfaceReflection = new ReflectionClass(ReferenceInterface::class);
 
 		foreach ($sourceClassReflection->getMethods() as $method) {
 			$methodName = $method->getName();
-			if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName))
+			if ($methodName === 'getId' && !$w->hasMethod($methodName) && $method->isAbstract()) {
+				if (!$sourceClassReflection->hasProperty('id')) {
+					$w->writeln('protected $id;');
+				}
+				$w->beginMethod('getId', []);
+				{
+					$w->writeln("return \$this->id;");
+				}
+				$w->endMethod();
+			} else if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName))
 			{
 				$argMethod = [];
 				$argCall = [];
@@ -190,7 +193,36 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		{
 			foreach ($sourceClassReflection->getProperties() as $property) {
 				$name = $property->getName();
-				$w->writeln("\$target->$name = \$row[%s] ?? null;", $name);
+
+				// Get a typehint from getter return type
+				$getterName = 'get' . ucfirst($name);
+				try {
+					$returnType = $sourceClassReflection->getMethod($getterName)->getReturnType();
+					$typehint = $returnType ? $returnType->getName() : null;
+				}
+				catch (ReflectionException $e) {
+					// No getter, no conversion.
+					$typehint = null;
+				}
+
+				// Convert value to fit the typehint
+				switch ($typehint) {
+					case 'int':
+					case 'float':
+					case 'bool':
+					case 'string':
+						$w->writeln("\$target->$name = isset(\$row[%s]) ? ($typehint) \$row[%s] : null;", $name, $name);
+						break;
+
+					default:
+						if ($typehint && class_exists($typehint)) {
+							$c = $w->useClass($typehint);
+							$w->writeln("\$target->$name = (\$v = \$row[%s] ?? null) instanceof $c || \$v === null ? \$v : new $c(\$v);", $name);
+						} else {
+							$w->writeln("\$target->$name = \$row[%s] ?? null;", $name);
+						}
+						break;
+				}
 			}
 			$w->writeln("\$target->dataLoaded = true;");
 		}

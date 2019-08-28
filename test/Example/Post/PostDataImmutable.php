@@ -48,12 +48,7 @@ class PostDataImmutable
 	protected $authorId;
 
 
-	/**
-	 * @return int
-	 *
-	 * TODO: Fix return type conflict with ReferenceInterface::getId()
-	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -63,9 +58,9 @@ class PostDataImmutable
 		return $this->content;
 	}
 
-	public function getPublishedAt(): DateTimeImmutable
+	public function getPublishedAt(): ?DateTimeImmutable
 	{
-		return is_string($this->publishedAt) ? new DateTimeImmutable($this->publishedAt) : $this->publishedAt;
+		return $this->publishedAt;
 	}
 
 	public function getTitle(): string
@@ -75,7 +70,7 @@ class PostDataImmutable
 
 	public function getAuthorId(): int
 	{
-		return (int)$this->authorId;
+		return $this->authorId;
 	}
 
 	public function getSlug(): string

@@ -197,10 +197,30 @@ class PhpFileWriter
 	}
 
 
+	private $lineIndented = false;
+
+	public function writeString(string $string = '', ...$args): self
+	{
+		if ($string !== '') {
+			if (!$this->lineIndented) {
+				$this->buffer .= $this->indent;
+				$this->lineIndented = true;
+			}
+			if (count($args) > 0) {
+				$this->buffer .= vsprintf($string, array_map(function($v) { return var_export($v, true); }, $args));
+			} else {
+				$this->buffer .= $string;
+			}
+		}
+		return $this;
+	}
+
 	public function writeln(string $string = '', ...$args): self
 	{
 		if ($string !== '') {
-			$this->buffer .= $this->indent;
+			if (!$this->lineIndented) {
+				$this->buffer .= $this->indent;
+			}
 			if (count($args) > 0) {
 				$this->buffer .= vsprintf($string, array_map(function($v) { return var_export($v, true); }, $args));
 			} else {
@@ -208,6 +228,7 @@ class PhpFileWriter
 			}
 		}
 		$this->buffer .= "\n";
+		$this->lineIndented = false;
 		return $this;
 	}
 
