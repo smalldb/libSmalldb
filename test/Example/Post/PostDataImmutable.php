@@ -19,10 +19,13 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
 class PostDataImmutable
 {
+	use CopyConstructorTrait;
+
 	/** @var int */
 	protected $id;
 
@@ -43,38 +46,6 @@ class PostDataImmutable
 
 	/** @var int */
 	protected $authorId;
-
-
-	/**
-	 * PostDataImmutable copy constructor.
-	 */
-	public function __construct(self $src = null)
-	{
-		if ($src !== null) {
-			$this->copyProperties($src);
-		}
-	}
-
-	protected function copyProperties(PostDataImmutable $src): void
-	{
-		$src->loadData();
-		$this->id = $src->id;
-		$this->title = $src->title;
-		$this->slug = $src->slug;
-		$this->summary = $src->summary;
-		$this->content = $src->content;
-		$this->publishedAt = $src->publishedAt;
-		$this->authorId = $src->authorId;
-	}
-
-
-	/**
-	 * Trigger lazy-loading of the properties.
-	 */
-	protected function loadData(): void
-	{
-		// No-op.
-	}
 
 
 	/**
