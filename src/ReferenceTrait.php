@@ -69,7 +69,7 @@ trait ReferenceTrait // implements ReferenceInterface
 		// Do not overwrite $id when it is not provided
 		// so that PDOStatement::fetchObject() can provide the value.
 		if ($id !== null) {
-			$this->id = $id;
+			$this->setId($id);
 		}
 	}
 
@@ -122,13 +122,13 @@ trait ReferenceTrait // implements ReferenceInterface
 		//if ($this->before_transition) {
 		//	$this->before_transition->emit($this, $transitionName, $args);
 		//}
-		$oldId = $this->id;
+		$oldId = $this->getId();
 
 		$this->invalidateCache();
 
 		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
 		$transitionEvent->onNewId(function($newId) use ($oldId) {
-			$this->id = $newId;
+			$this->setId($newId);
 
 			//if ($this->after_pk_changed) {
 			//	$this->after_pk_changed->emit($this, $oldId, $this->id);

@@ -161,8 +161,12 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 					$w->writeln("return \$this->id;");
 				}
 				$w->endMethod();
-			} else if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName))
-			{
+				$w->beginProtectedMethod('setId', ["\$id"], 'void');
+				{
+					$w->writeln("\$this->id = \$id;");
+				}
+				$w->endMethod();
+			} else if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
 				$argMethod = [];
 				$argCall = [];
 				foreach ($method->getParameters() as $param) {
@@ -183,6 +187,11 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$w->writeln("return parent::$methodName(" . join(', ', $argCall) . ");");
 				$w->endMethod();
 			}
+		}
+
+		if (!$sourceClassReflection->hasMethod('setId') && !$w->hasMethod('setId')) {
+			$className = $sourceClassReflection->getName();
+			throw new \LogicException("Protected method $className::setId() is not defined. It is required by ReferenceTrait.");
 		}
 	}
 

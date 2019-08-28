@@ -53,6 +53,14 @@ class PostDataImmutable
 		return $this->id;
 	}
 
+	/**
+	 * Set/Update the ID. Used by ReferenceTrait.
+	 */
+	protected function setId(?int $id): void
+	{
+		$this->id = $id;
+	}
+
 	public function getContent(): string
 	{
 		return $this->content;
