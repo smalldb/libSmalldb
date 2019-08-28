@@ -180,6 +180,23 @@ class PhpFileWriter
 	}
 
 
+	private function decreaseIndent(): void
+	{
+		if ($this->indentDepth <= 0) {
+			throw new \LogicException("Indentation level reached zero. No block left to end when generating a PHP file.");
+		}
+		$this->indentDepth--;
+		$this->indent = str_repeat("\t", $this->indentDepth);
+	}
+
+
+	private function increaseIndent(): void
+	{
+		$this->indent = $this->indent . "\t";
+		$this->indentDepth++;
+	}
+
+
 	public function writeln(string $string = '', ...$args): self
 	{
 		if ($string !== '') {
@@ -217,30 +234,28 @@ class PhpFileWriter
 
 	public function beginBlock(string $statement = ''): self
 	{
-		if ($statement === '') {
-			$this->writeln("{");
-		} else {
-			$this->writeln("$statement {");
-		}
-		$this->indent = $this->indent."\t";
-		$this->indentDepth++;
+		$this->writeln($statement === '' ? "{" : "$statement {");
+		$this->increaseIndent();
 		return $this;
 	}
 
-	public function endBlock(string $suffix = ''): self
+
+	public function midBlock(string $statement): self
 	{
-		if ($this->indentDepth <= 0) {
-			throw new \LogicException("Indentation level reached zero. No block left to end when generating a PHP file.");
-		}
-		$this->indentDepth--;
-		$this->indent = str_repeat("\t", $this->indentDepth);
-		if ($suffix === '') {
-			$this->writeln("}");
-		} else {
-			$this->writeln("}$suffix");
-		}
+		$this->decreaseIndent();
+		$this->writeln("} $statement {");
+		$this->increaseIndent();
 		return $this;
 	}
+
+
+	public function endBlock(string $suffix = ''): self
+	{
+		$this->decreaseIndent();
+		$this->writeln($suffix === '' ? "}" : "}$suffix");
+		return $this;
+	}
+
 
 	public function comment(string $comment): self
 	{
@@ -259,6 +274,7 @@ class PhpFileWriter
 
 		return $this;
 	}
+
 
 	public function setNamespace(string $namespace): self
 	{
@@ -344,6 +360,7 @@ class PhpFileWriter
 		$this->writeln('');
 		return $this;
 	}
+
 
 	public function hasMethod(string $methodName)
 	{

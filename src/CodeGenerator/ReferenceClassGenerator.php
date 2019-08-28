@@ -68,7 +68,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
-			$this->generateHydrator($w, $sourceClassReflection);
+			$this->generateHydratorMethod($w, $sourceClassReflection);
 
 			$w->endClass();
 		}
@@ -141,11 +141,15 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getId(), \$this->state);");
 			$w->beginBlock("if (\$data !== null)");
 			{
-				$w->writeln("if (is_array(\$data)) {");
-				$w->writeln("\tstatic::hydrate(\$this, \$data);");
-				$w->writeln("} else {");
-				$w->writeln("\t\$this->copyProperties(\$data);");
-				$w->writeln("}");
+				$w->beginBlock("if (is_array(\$data))");
+				{
+					$w->writeln("static::hydrate(\$this, \$data);");
+				}
+				$w->midBlock("else");
+				{
+					$w->writeln("\$this->copyProperties(\$data);");
+				}
+				$w->endBlock();
 			}
 			$w->writeln("\$this->dataLoaded = true;");
 			$w->endBlock();
@@ -187,7 +191,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		}
 	}
 
-	private function generateHydrator(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
+	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
 	{
 		$w->beginStaticMethod('hydrate', ['self $target', 'array $row'], 'void');
 		{
