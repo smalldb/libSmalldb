@@ -149,13 +149,21 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('', $ref->getState());
 	}
 
+
+	/**
+	 * Baseline test for testFindLatest benchmark
+	 */
 	public function testAssertBenchmark()
 	{
+		$N = 1000;
 		$foo = 0;
-		for ($i = 0; $i < 25 * 1000; $i++) {
-			$foo |= empty(true);
+		for ($i = 0; $i < 25 * $N; $i++) {
+			$post = new PostData();
+			$post->setTitle('Foo');
+			$foo |= empty($post->getTitle());
 		}
 		$this->assertEmpty($foo);
+		$this->assertEquals($N, 1000, 'Just counting.');
 	}
 
 

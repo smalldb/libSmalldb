@@ -232,27 +232,35 @@ class PhpFileWriter
 	}
 
 
-	public function beginBlock(string $statement = ''): self
+	public function beginBlock(string $statement = '', ...$args): self
 	{
-		$this->writeln($statement === '' ? "{" : "$statement {");
+		if ($statement === '') {
+			$this->writeln("{");
+		} else {
+			$this->writeln("$statement {", ...$args);
+		}
 		$this->increaseIndent();
 		return $this;
 	}
 
 
-	public function midBlock(string $statement): self
+	public function midBlock(string $statement, ...$args): self
 	{
 		$this->decreaseIndent();
-		$this->writeln("} $statement {");
+		$this->writeln("} $statement {", ...$args);
 		$this->increaseIndent();
 		return $this;
 	}
 
 
-	public function endBlock(string $suffix = ''): self
+	public function endBlock(string $suffix = '', ...$args): self
 	{
 		$this->decreaseIndent();
-		$this->writeln($suffix === '' ? "}" : "}$suffix");
+		if ($suffix === '') {
+			$this->writeln("}");
+		} else {
+			$this->writeln("}$suffix", ...$args);
+		}
 		return $this;
 	}
 

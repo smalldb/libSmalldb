@@ -204,6 +204,50 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		$w->endMethod();
 
 
+		$w->beginStaticMethod('hydrateFromArrayIfSet', ['self $target', 'array $row'], 'void');
+		{
+			foreach ($sourceClassReflection->getProperties() as $property) {
+				$name = $property->getName();
+				$w->beginBlock("if (isset(\$row[%s]))", $name);
+				{
+					$w->writeln("\$target->$name = \$row[%s];", $name);
+				}
+				$w->endBlock();
+			}
+			$w->writeln("\$target->dataLoaded = true;");
+		}
+		$w->endMethod();
+
+
+		$w->beginStaticMethod('hydrateFromArrayOrNull', ['self $target', 'array $row'], 'void');
+		{
+			foreach ($sourceClassReflection->getProperties() as $property) {
+				$name = $property->getName();
+				$w->writeln("\$target->$name = \$row[%s] ?? null;", $name);
+			}
+			$w->writeln("\$target->dataLoaded = true;");
+		}
+		$w->endMethod();
+
+
+		$w->writeln('private static $hydratorClosure = null;');
+
+		$w->beginStaticMethod('hydrateClosureFromArray', ['self $target', 'array $row'], 'void');
+		{
+			$w->beginBlock("\$hydratorClosure = self::\$hydratorClosure ?? function(array \$row): void");
+			{
+				foreach ($sourceClassReflection->getProperties() as $property) {
+					$name = $property->getName();
+					$w->writeln("\$this->$name = \$row[%s];", $name);
+				}
+				$w->writeln("\$this->dataLoaded = true;");
+			}
+			$w->endBlock(';');
+			$w->writeln('$hydratorClosure->call($target, $row);');
+		}
+		$w->endMethod();
+
+
 		$args = [
 			$w->useClass(Smalldb::class) . ' $smalldb',
 			'?' . $w->useClass(SmalldbProviderInterface::class) . ' $machineProvider',

@@ -116,7 +116,7 @@ class PostRepository implements SmalldbRepositoryInterface
 
 
 	public $fetchMode = 5;
-	const FETCH_MODES = [3, 4, 5, 6];
+	const FETCH_MODES = [3, 4, '4c', '4d', '4b', 5, 6];
 
 	/**
 	 * @return Post[]
@@ -127,6 +127,9 @@ class PostRepository implements SmalldbRepositoryInterface
 		switch ($this->fetchMode) {
 			case 3: return $this->fetchAllReferences3($stmt);
 			case 4: return $this->fetchAllReferences4($stmt);
+			case '4c': return $this->fetchAllReferences4c($stmt);
+			case '4b': return $this->fetchAllReferences4b($stmt);
+			case '4d': return $this->fetchAllReferences4d($stmt);
 			case 5: return $this->fetchAllReferences5($stmt);
 			case 6: return $this->fetchAllReferences6($stmt);
 			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');  // @codeCoverageIgnore
@@ -168,6 +171,51 @@ class PostRepository implements SmalldbRepositoryInterface
 		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
 			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
 			($this->refClass)::hydrateFromArray($post, $row);
+			$posts[] = $post;
+		}
+		return $posts;
+	}
+
+
+	/**
+	 * @return Post[]
+	 */
+	private function fetchAllReferences4c(PDOStatement $stmt): array
+	{
+		$posts = [];
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
+			($this->refClass)::hydrateFromArrayIfSet($post, $row);
+			$posts[] = $post;
+		}
+		return $posts;
+	}
+
+
+	/**
+	 * @return Post[]
+	 */
+	private function fetchAllReferences4d(PDOStatement $stmt): array
+	{
+		$posts = [];
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
+			($this->refClass)::hydrateFromArrayOrNull($post, $row);
+			$posts[] = $post;
+		}
+		return $posts;
+	}
+
+
+	/**
+	 * @return Post[]
+	 */
+	private function fetchAllReferences4b(PDOStatement $stmt): array
+	{
+		$posts = [];
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
+			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
+			($this->refClass)::hydrateClosureFromArray($post, $row);
 			$posts[] = $post;
 		}
 		return $posts;
