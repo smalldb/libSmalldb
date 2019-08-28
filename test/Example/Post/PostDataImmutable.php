@@ -48,14 +48,10 @@ class PostDataImmutable
 	/**
 	 * PostDataImmutable copy constructor.
 	 */
-	public function __construct($src = null)
+	public function __construct(self $src = null)
 	{
 		if ($src !== null) {
-			if (is_array($src)) {
-				static::hydrate($this, $src);
-			} else {
-				$this->copyProperties($src);
-			}
+			$this->copyProperties($src);
 		}
 	}
 
@@ -71,6 +67,10 @@ class PostDataImmutable
 		$this->authorId = $src->authorId;
 	}
 
+
+	/**
+	 * Trigger lazy-loading of the properties.
+	 */
 	protected function loadData(): void
 	{
 		// No-op.

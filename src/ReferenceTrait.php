@@ -59,16 +59,8 @@ trait ReferenceTrait // implements ReferenceInterface
 	 * @param ReferenceDataSourceInterface $dataSource
 	 * @param null $id
 	 */
-	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null, $src = null)
+	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null)
 	{
-		if (!empty(class_parents($this))) {
-			parent::__construct($src);
-			if ($src !== null || $this->id !== null) {
-				// Source data provided or PDOStatement::fetchObject() detected.
-				$this->onDataPreloaded();
-			}
-		}
-
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
 		$this->dataSource = $dataSource;
@@ -81,15 +73,12 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
+	/**
+	 * Lazy-load the provider from Smalldb
+	 */
 	protected function getMachineProvider(): SmalldbProviderInterface
 	{
 		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider($this->getMachineType()));
-	}
-
-
-	protected function onDataPreloaded(): void
-	{
-		// No-op.
 	}
 
 
@@ -99,6 +88,17 @@ trait ReferenceTrait // implements ReferenceInterface
 	public function getDefinition(): StateMachineDefinition
 	{
 		return $this->getMachineProvider()->getDefinition();
+	}
+
+
+	/**
+	 * Get machine type
+	 *
+	 * ReferenceClassGenerator overrides the getDefinition() call with a constant.
+	 */
+	public function getMachineType(): string
+	{
+		return $this->getDefinition()->getMachineType();
 	}
 
 

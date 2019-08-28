@@ -68,7 +68,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
-			$this->generateHydratorMethod($w, $sourceClassReflection);
+			$this->generateHydratorMethods($w, $sourceClassReflection);
 
 			$w->endClass();
 		}
@@ -191,9 +191,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		}
 	}
 
-	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
+	private function generateHydratorMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
 	{
-		$w->beginStaticMethod('hydrate', ['self $target', 'array $row'], 'void');
+		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
 		{
 			foreach ($sourceClassReflection->getProperties() as $property) {
 				$name = $property->getName();
@@ -211,7 +211,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		];
 		$useArgs = ['$smalldb', '$machineProvider', '$dataSource'];
 
-		$w->beginStaticMethod('createFetchHydrator', $args, $w->useClass(\Closure::class));
+		$w->beginStaticMethod('createHydrator', $args, $w->useClass(\Closure::class));
 		{
 			$closureArgs = [];
 			foreach ($sourceClassReflection->getProperties() as $property) {
