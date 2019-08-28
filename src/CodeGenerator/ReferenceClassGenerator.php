@@ -141,15 +141,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getId(), \$this->state);");
 			$w->beginBlock("if (\$data !== null)");
 			{
-				$w->beginBlock("if (is_array(\$data))");
-				{
-					$w->writeln("static::hydrate(\$this, \$data);");
-				}
-				$w->midBlock("else");
-				{
-					$w->writeln("\$this->copyProperties(\$data);");
-				}
-				$w->endBlock();
+				$w->writeln("static::hydrateFromArray(\$this, \$data);");
 			}
 			$w->writeln("\$this->dataLoaded = true;");
 			$w->endBlock();
@@ -197,53 +189,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		{
 			foreach ($sourceClassReflection->getProperties() as $property) {
 				$name = $property->getName();
-				$w->writeln("\$target->$name = \$row[%s];", $name);
-			}
-			$w->writeln("\$target->dataLoaded = true;");
-		}
-		$w->endMethod();
-
-
-		$w->beginStaticMethod('hydrateFromArrayIfSet', ['self $target', 'array $row'], 'void');
-		{
-			foreach ($sourceClassReflection->getProperties() as $property) {
-				$name = $property->getName();
-				$w->beginBlock("if (isset(\$row[%s]))", $name);
-				{
-					$w->writeln("\$target->$name = \$row[%s];", $name);
-				}
-				$w->endBlock();
-			}
-			$w->writeln("\$target->dataLoaded = true;");
-		}
-		$w->endMethod();
-
-
-		$w->beginStaticMethod('hydrateFromArrayOrNull', ['self $target', 'array $row'], 'void');
-		{
-			foreach ($sourceClassReflection->getProperties() as $property) {
-				$name = $property->getName();
 				$w->writeln("\$target->$name = \$row[%s] ?? null;", $name);
 			}
 			$w->writeln("\$target->dataLoaded = true;");
-		}
-		$w->endMethod();
-
-
-		$w->writeln('private static $hydratorClosure = null;');
-
-		$w->beginStaticMethod('hydrateClosureFromArray', ['self $target', 'array $row'], 'void');
-		{
-			$w->beginBlock("\$hydratorClosure = self::\$hydratorClosure ?? function(array \$row): void");
-			{
-				foreach ($sourceClassReflection->getProperties() as $property) {
-					$name = $property->getName();
-					$w->writeln("\$this->$name = \$row[%s];", $name);
-				}
-				$w->writeln("\$this->dataLoaded = true;");
-			}
-			$w->endBlock(';');
-			$w->writeln('$hydratorClosure->call($target, $row);');
 		}
 		$w->endMethod();
 
@@ -267,7 +215,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$w->writeln("\$target = new self(\$smalldb, \$machineProvider, \$dataSource);");
 				foreach ($sourceClassReflection->getProperties() as $property) {
 					$name = $property->getName();
-					$w->writeln("\$target->$name = \$$name;");
+					$w->writeln("\$target->$name = \$$name ?? null;");
 				}
 				$w->writeln("\$target->dataLoaded = true;");
 				$w->writeln("return \$target;");

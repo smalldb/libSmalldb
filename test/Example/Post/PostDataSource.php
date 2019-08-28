@@ -68,7 +68,7 @@ class PostDataSource implements ReferenceDataSourceInterface
 	/**
 	 * Load data for the state machine and set the state
 	 */
-	public function loadData($id, ?string &$state)
+	public function loadData($id, ?string &$state): array
 	{
 		if (isset($this->preloadedDataSet[$id])) {
 			$data = $this->preloadedDataSet[$id];
@@ -81,7 +81,7 @@ class PostDataSource implements ReferenceDataSourceInterface
 			");
 			$stmt->execute(['id' => $id]);
 			($this->onQueryCallback)($stmt->rowCount());
-			$data = $stmt->fetchObject(PostDataImmutable::class);
+			$data = $stmt->fetch(PDO::FETCH_ASSOC);
 		}
 
 		if ($data) {

@@ -27,7 +27,6 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
 class PostRepository implements SmalldbRepositoryInterface
@@ -115,8 +114,8 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	public $fetchMode = 5;
-	const FETCH_MODES = [3, 4, '4c', '4d', '4b', 5, 6];
+	public $fetchMode = 4;
+	const FETCH_MODES = [4, 5];
 
 	/**
 	 * @return Post[]
@@ -125,42 +124,12 @@ class PostRepository implements SmalldbRepositoryInterface
 	{
 		// Test various implementations
 		switch ($this->fetchMode) {
-			case 3: return $this->fetchAllReferences3($stmt);
 			case 4: return $this->fetchAllReferences4($stmt);
-			case '4c': return $this->fetchAllReferences4c($stmt);
-			case '4b': return $this->fetchAllReferences4b($stmt);
-			case '4d': return $this->fetchAllReferences4d($stmt);
 			case 5: return $this->fetchAllReferences5($stmt);
-			case 6: return $this->fetchAllReferences6($stmt);
 			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');  // @codeCoverageIgnore
 		}
 	}
 
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences3(PDOStatement $stmt): array
-	{
-		$hydrator = function(array $src): void {
-			$this->id = $src['id'];
-			$this->title = $src['title'];
-			$this->slug = $src['slug'];
-			$this->summary = $src['summary'];
-			$this->content = $src['content'];
-			$this->publishedAt = $src['publishedAt'];
-			$this->authorId = $src['authorId'];
-			$this->dataLoaded = true;
-		};
-
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
-			$hydrator->call($post, $row);
-			$posts[] = $post;
-		}
-		return $posts;
-	}
 
 	/**
 	 * @return Post[]
@@ -180,71 +149,10 @@ class PostRepository implements SmalldbRepositoryInterface
 	/**
 	 * @return Post[]
 	 */
-	private function fetchAllReferences4c(PDOStatement $stmt): array
-	{
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
-			($this->refClass)::hydrateFromArrayIfSet($post, $row);
-			$posts[] = $post;
-		}
-		return $posts;
-	}
-
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences4d(PDOStatement $stmt): array
-	{
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
-			($this->refClass)::hydrateFromArrayOrNull($post, $row);
-			$posts[] = $post;
-		}
-		return $posts;
-	}
-
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences4b(PDOStatement $stmt): array
-	{
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
-			($this->refClass)::hydrateClosureFromArray($post, $row);
-			$posts[] = $post;
-		}
-		return $posts;
-	}
-
-
-	/**
-	 * @return Post[]
-	 */
 	private function fetchAllReferences5(PDOStatement $stmt): array
 	{
 		$hydrator = ($this->refClass)::createHydrator($this->smalldb, $this->machineProvider, $this->postDataSource);
-
 		$posts = $stmt->fetchAll(PDO::FETCH_FUNC, $hydrator);
-		return $posts;
-	}
-
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences6(PDOStatement $stmt): array
-	{
-		$hydrator = ($this->refClass)::createHydrator($this->smalldb, $this->machineProvider, $this->postDataSource);
-
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$posts[] = $hydrator(...array_values($row));
-		}
 		return $posts;
 	}
 
