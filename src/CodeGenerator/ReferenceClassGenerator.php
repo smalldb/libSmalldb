@@ -68,7 +68,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
-			$this->generateHydratorMethods($w, $sourceClassReflection);
+			$this->generateHydratorMethod($w, $sourceClassReflection);
 
 			$w->endClass();
 		}
@@ -183,7 +183,8 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		}
 	}
 
-	private function generateHydratorMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
+
+	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
 	{
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
 		{
@@ -192,35 +193,6 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$w->writeln("\$target->$name = \$row[%s] ?? null;", $name);
 			}
 			$w->writeln("\$target->dataLoaded = true;");
-		}
-		$w->endMethod();
-
-
-		$args = [
-			$w->useClass(Smalldb::class) . ' $smalldb',
-			'?' . $w->useClass(SmalldbProviderInterface::class) . ' $machineProvider',
-			$w->useClass(ReferenceDataSourceInterface::class) . ' $dataSource'
-		];
-		$useArgs = ['$smalldb', '$machineProvider', '$dataSource'];
-
-		$w->beginStaticMethod('createHydrator', $args, $w->useClass(\Closure::class));
-		{
-			$closureArgs = [];
-			foreach ($sourceClassReflection->getProperties() as $property) {
-				$closureArgs[] = '$' . $property->getName();
-			}
-
-			$w->beginBlock('return function (' . join(', ', $closureArgs) . ') use (' . join(', ', $useArgs) . '): self');
-			{
-				$w->writeln("\$target = new self(\$smalldb, \$machineProvider, \$dataSource);");
-				foreach ($sourceClassReflection->getProperties() as $property) {
-					$name = $property->getName();
-					$w->writeln("\$target->$name = \$$name ?? null;");
-				}
-				$w->writeln("\$target->dataLoaded = true;");
-				$w->writeln("return \$target;");
-			}
-			$w->endBlock(';');
 		}
 		$w->endMethod();
 	}

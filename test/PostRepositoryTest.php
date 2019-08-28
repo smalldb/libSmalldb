@@ -150,28 +150,9 @@ class PostRepositoryTest extends TestCase
 	}
 
 
-	/**
-	 * Baseline test for testFindLatest benchmark
-	 */
-	public function testAssertBenchmark()
+	public function testFindLatest()
 	{
 		$N = 1000;
-		$foo = 0;
-		for ($i = 0; $i < 25 * $N; $i++) {
-			$post = new PostData();
-			$post->setTitle('Foo');
-			$foo |= empty($post->getTitle());
-		}
-		$this->assertEmpty($foo);
-		$this->assertEquals($N, 1000, 'Just counting.');
-	}
-
-
-	/** @dataProvider fetchMode */
-	public function testFindLatest($fetchMode)
-	{
-		$N = 1000;
-		$this->postRepository->fetchMode = $fetchMode;
 		$hasEmptyTitle = 0;
 
 		for ($i = 0; $i < $N; $i++) {
@@ -187,14 +168,7 @@ class PostRepositoryTest extends TestCase
 
 		// One query to load everything; data source should not query any additional data.
 		$queryCount = $this->postRepository->getDataSourceQueryCount();
-		$this->assertEquals($N, $queryCount, "Unexpected query count: $queryCount (should be $N; fetch mode $fetchMode)");
-	}
-
-	public function fetchMode()
-	{
-		foreach (PostRepository::FETCH_MODES as $fetchMode) {
-			yield "Fetch mode $fetchMode" => [$fetchMode];
-		}
+		$this->assertEquals($N, $queryCount, "Unexpected query count: $queryCount (should be $N)");
 	}
 
 }

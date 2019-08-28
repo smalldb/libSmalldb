@@ -114,27 +114,10 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	public $fetchMode = 4;
-	const FETCH_MODES = [4, 5];
-
 	/**
 	 * @return Post[]
 	 */
 	protected function fetchAllReferences(PDOStatement $stmt): array
-	{
-		// Test various implementations
-		switch ($this->fetchMode) {
-			case 4: return $this->fetchAllReferences4($stmt);
-			case 5: return $this->fetchAllReferences5($stmt);
-			default: throw new \LogicException('Invalid PostRepository::$fetchMode.');  // @codeCoverageIgnore
-		}
-	}
-
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences4(PDOStatement $stmt): array
 	{
 		$posts = [];
 		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
@@ -145,16 +128,6 @@ class PostRepository implements SmalldbRepositoryInterface
 		return $posts;
 	}
 
-
-	/**
-	 * @return Post[]
-	 */
-	private function fetchAllReferences5(PDOStatement $stmt): array
-	{
-		$hydrator = ($this->refClass)::createHydrator($this->smalldb, $this->machineProvider, $this->postDataSource);
-		$posts = $stmt->fetchAll(PDO::FETCH_FUNC, $hydrator);
-		return $posts;
-	}
 
 }
 
