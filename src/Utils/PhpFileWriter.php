@@ -328,6 +328,15 @@ class PhpFileWriter
 		return $this;
 	}
 
+	public function beginStaticMethod(string $name, array $args = [], string $returnType = ''): self
+	{
+		$this->definedMethodNames[$name] = $name;
+		$this->writeln('');
+		$this->writeln("public static function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType"));
+		$this->beginBlock();
+		return $this;
+	}
+
 
 	public function endMethod(): self
 	{

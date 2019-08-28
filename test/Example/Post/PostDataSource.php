@@ -103,4 +103,12 @@ class PostDataSource implements ReferenceDataSourceInterface
 		}
 	}
 
+	/**
+	 * @param null $preloadedDataSet
+	 */
+	public function setPreloadedDataSet(array $preloadedDataSet): void
+	{
+		$this->preloadedDataSet = $preloadedDataSet;
+	}
+
 }

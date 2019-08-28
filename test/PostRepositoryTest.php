@@ -162,10 +162,11 @@ class PostRepositoryTest extends TestCase
 	/** @dataProvider fetchMode */
 	public function testFindLatest($fetchMode)
 	{
+		$N = 1000;
 		$this->postRepository->fetchMode = $fetchMode;
 		$hasEmptyTitle = 0;
 
-		for ($i = 0; $i < 1000; $i++) {
+		for ($i = 0; $i < $N; $i++) {
 			$latestPosts = $this->postRepository->findLatest();
 
 			// Make sure each reference has its data loaded
@@ -177,14 +178,15 @@ class PostRepositoryTest extends TestCase
 		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
 
 		// One query to load everything; data source should not query any additional data.
-		//$this->assertEquals(0, $this->postRepository->getDataSourceQueryCount());
-		echo "Query count [mode $fetchMode]: ", $this->postRepository->getDataSourceQueryCount(), "\n";
+		$queryCount = $this->postRepository->getDataSourceQueryCount();
+		$this->assertEquals($N, $queryCount, "Unexpected query count: $queryCount (should be $N; fetch mode $fetchMode)");
 	}
 
 	public function fetchMode()
 	{
-		yield 'Fetch mode 1' => [1];
-		yield 'Fetch mode 2' => [2];
+		foreach (PostRepository::FETCH_MODES as $fetchMode) {
+			yield "Fetch mode $fetchMode" => [$fetchMode];
+		}
 	}
 
 }

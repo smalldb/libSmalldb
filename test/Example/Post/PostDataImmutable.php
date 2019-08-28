@@ -52,7 +52,7 @@ class PostDataImmutable
 	{
 		if ($src !== null) {
 			if (is_array($src)) {
-				$this->copyFromArray($src);
+				static::hydrate($this, $src);
 			} else {
 				$this->copyProperties($src);
 			}
@@ -61,28 +61,19 @@ class PostDataImmutable
 
 	protected function copyProperties(PostDataImmutable $src): void
 	{
-		$this->id = $src->getId();
-		$this->title = $src->getTitle();
-		$this->slug = $src->getSlug();
-		$this->summary = $src->getSummary();
-		$this->content = $src->getContent();
-		$this->publishedAt = $src->getPublishedAt();
-		$this->authorId = $src->getAuthorId();
+		$src->loadData();
+		$this->id = $src->id;
+		$this->title = $src->title;
+		$this->slug = $src->slug;
+		$this->summary = $src->summary;
+		$this->content = $src->content;
+		$this->publishedAt = $src->publishedAt;
+		$this->authorId = $src->authorId;
 	}
 
-
-	/**
-	 * FIXME: This should be in a separate hydrator.
-	 */
-	protected function copyFromArray(array $src): void
+	protected function loadData(): void
 	{
-		$this->id = $src['id'];
-		$this->title = $src['title'];
-		$this->slug = $src['slug'];
-		$this->summary = $src['summary'];
-		$this->content = $src['content'];
-		$this->publishedAt = $src['publishedAt'];
-		$this->authorId = $src['authorId'];
+		// No-op.
 	}
 
 

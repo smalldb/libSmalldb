@@ -22,9 +22,12 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\RuntimeException;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -65,6 +68,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
+			$this->generateHydrator($w, $sourceClassReflection);
 
 			$w->endClass();
 		}
@@ -132,17 +136,18 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		}
 		$w->endMethod();
 
-		$w->beginPrivateMethod('loadData', [], 'void');
+		$w->beginProtectedMethod('loadData', [], 'void');
 		{
 			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getId(), \$this->state);");
 			$w->beginBlock("if (\$data !== null)");
 			{
 				$w->writeln("if (is_array(\$data)) {");
-				$w->writeln("\t\$this->copyFromArray(\$data);");
+				$w->writeln("\tstatic::hydrate(\$this, \$data);");
 				$w->writeln("} else {");
 				$w->writeln("\t\$this->copyProperties(\$data);");
 				$w->writeln("}");
 			}
+			$w->writeln("\$this->dataLoaded = true;");
 			$w->endBlock();
 		}
 		$w->endMethod();
@@ -173,7 +178,6 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$w->beginMethod($methodName, $argMethod, $returnType);
 				$w->beginBlock("if (!\$this->dataLoaded)");
 				{
-					$w->writeln("\$this->dataLoaded = true;");
 					$w->writeln("\$this->loadData();");
 				}
 				$w->endBlock();
@@ -181,6 +185,48 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 				$w->endMethod();
 			}
 		}
+	}
+
+	private function generateHydrator(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
+	{
+		$w->beginStaticMethod('hydrate', ['self $target', 'array $row'], 'void');
+		{
+			foreach ($sourceClassReflection->getProperties() as $property) {
+				$name = $property->getName();
+				$w->writeln("\$target->$name = \$row[%s];", $name);
+			}
+			$w->writeln("\$target->dataLoaded = true;");
+		}
+		$w->endMethod();
+
+
+		$args = [
+			$w->useClass(Smalldb::class) . ' $smalldb',
+			'?' . $w->useClass(SmalldbProviderInterface::class) . ' $machineProvider',
+			$w->useClass(ReferenceDataSourceInterface::class) . ' $dataSource'
+		];
+		$useArgs = ['$smalldb', '$machineProvider', '$dataSource'];
+
+		$w->beginStaticMethod('createFetchHydrator', $args, $w->useClass(\Closure::class));
+		{
+			$closureArgs = [];
+			foreach ($sourceClassReflection->getProperties() as $property) {
+				$closureArgs[] = '$' . $property->getName();
+			}
+
+			$w->beginBlock('return function (' . join(', ', $closureArgs) . ') use (' . join(', ', $useArgs) . '): self');
+			{
+				$w->writeln("\$target = new self(\$smalldb, \$machineProvider, \$dataSource);");
+				foreach ($sourceClassReflection->getProperties() as $property) {
+					$name = $property->getName();
+					$w->writeln("\$target->$name = \$$name;");
+				}
+				$w->writeln("\$target->dataLoaded = true;");
+				$w->writeln("return \$target;");
+			}
+			$w->endBlock(';');
+		}
+		$w->endMethod();
 	}
 
 }
