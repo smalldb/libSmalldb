@@ -19,15 +19,9 @@
 namespace Smalldb\StateMachine\CodeGenerator;
 
 use ReflectionClass;
-use ReflectionException;
-use ReflectionParameter;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
-use Smalldb\StateMachine\RuntimeException;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -38,6 +32,8 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	 * Generate a new class implementing the missing methods in $sourceReferenceClassName.
 	 *
 	 * @return string Class name of the implementation.
+	 * @throws ReflectionException
+	 * @throws LogicException
 	 */
 	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
 	{
@@ -73,8 +69,8 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$w->endClass();
 		}
 		// @codeCoverageIgnoreStart
-		catch (ReflectionException $ex) {
-			throw new RuntimeException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
+		catch (\ReflectionException $ex) {
+			throw new ReflectionException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
 		}
 		// @codeCoverageIgnoreEnd
 
@@ -92,7 +88,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 
 	/**
-	 * @throws ReflectionException
+	 * @throws \ReflectionException
 	 */
 	private function generateTransitionMethods(PhpFileWriter $w, StateMachineDefinition $definition,
 		ReflectionClass $sourceClassReflection): void
@@ -122,7 +118,8 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	}
 
 	/**
-	 * @throws ReflectionException
+	 * @throws \ReflectionException
+	 * @throws LogicException
 	 */
 	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection)
 	{
@@ -191,7 +188,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 		if (!$sourceClassReflection->hasMethod('setId') && !$w->hasMethod('setId')) {
 			$className = $sourceClassReflection->getName();
-			throw new \LogicException("Protected method $className::setId() is not defined. It is required by ReferenceTrait.");
+			throw new LogicException("Protected method $className::setId() is not defined. It is required by ReferenceTrait.");
 		}
 	}
 
