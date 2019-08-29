@@ -44,6 +44,7 @@
         "phpunit/phpunit": "^8.0"
     },
     "suggest": {
-        "smalldb/flupdo": "SQL database support"
+        "smalldb/flupdo": "SQL database support",
+        "ext-pdo": "SQL database support"
     }
 }
