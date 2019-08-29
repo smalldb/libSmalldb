@@ -99,7 +99,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	public function getMachineType(): string
 	{
-		return $this->getDefinition()->getMachineType();
+		return $this->getDefinition()->getMachineType();  // @codeCoverageIgnore
 	}
 
 
