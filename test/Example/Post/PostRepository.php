@@ -107,15 +107,10 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	/**
-	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
-	 */
 	public function ref($id): Post
 	{
-		$refClass = $this->getReferenceClass();
-		$ref = new $refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataLoader(), $id);
+		/** @var Post $ref */
+		$ref = $this->getPostDataLoader()->ref($id);
 		return $ref;
 	}
 

@@ -47,6 +47,12 @@ class PdoDataLoader extends PdoDataSource
 	}
 
 
+	public function ref($id): ReferenceInterface
+	{
+		return new $this->refClass($this->smalldb, $this->machineProvider, $this, $id);
+	}
+
+
 	public function fetch(PDOStatement $stmt): ?ReferenceInterface
 	{
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
