@@ -40,12 +40,8 @@ class SmalldbExtension extends Extension
 		$config = $this->processConfiguration(new Configuration(), $configs);
 
 		// Define Smalldb entry point
-		if ($container->has(Smalldb::class)) {
-			$smalldb = $container->getDefinition(Smalldb::class);
-		} else {
-			$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
-				->setPublic(true);
-		}
+		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
+			->setPublic(true);
 
 		// Load all state machine definitions
 		$definitionBag = new SmalldbDefinitionBag();
