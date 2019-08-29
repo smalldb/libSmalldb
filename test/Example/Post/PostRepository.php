@@ -22,6 +22,7 @@ namespace Smalldb\StateMachine\Test\Example\Post;
 use PDO;
 use PDOStatement;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\PdoDataSource;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
@@ -44,12 +45,12 @@ class PostRepository implements SmalldbRepositoryInterface
 	private $pdo;
 	private $table = 'symfony_demo_post';
 
-	/** @var PostDataSource */
+	/** @var PdoDataSource */
 	private $postDataSource = null;
 
 	private $queryCount = 0;
 
-	const POST_SELECT_COLUMNS = '"Exists" as state, id, author_id as authorId, title, slug, summary, content, published_at as publishedAt';
+	private $selectColumns = '"Exists" as state, id, author_id as authorId, title, slug, summary, content, published_at as publishedAt';
 
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
@@ -71,11 +72,31 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function getPostDataSource($preloadedDataSet = null): PostDataSource
+	private function getPostDataSource(): PdoDataSource
 	{
-		return $this->postDataSource ?? ($this->postDataSource
-			= new PostDataSource($this->pdo, $this->table, $preloadedDataSet,
-				function($rowCount) { $this->queryCount++; }));
+		return $this->postDataSource ?? ($this->postDataSource = $this->createPostDataSource());
+	}
+
+
+	private function createPostDataSource($preloadedDataSet = null): PdoDataSource
+	{
+		$dataSource = new PdoDataSource();
+		$dataSource->setStateSelectPreparedStatement($this->pdo->prepare("
+			SELECT 'Exists' AS state
+			FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		"));
+		$dataSource->setLoadDataPreparedStatement($this->pdo->prepare("
+			SELECT $this->selectColumns
+			FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		"));
+		$dataSource->setOnQueryCallback(function(PDOStatement $stmt) {
+			$this->queryCount++;
+		});
+		return $dataSource;
 	}
 
 
@@ -101,7 +122,7 @@ class PostRepository implements SmalldbRepositoryInterface
 	public function findBySlug(string $slug): ?Post
 	{
 		$stmt = $this->pdo->prepare("
-			SELECT " . static::POST_SELECT_COLUMNS . "
+			SELECT $this->selectColumns
 			FROM $this->table
 			WHERE slug = :slug
 			LIMIT 1
@@ -125,7 +146,7 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageOffset = $page * $pageSize;
 
 		$stmt = $this->pdo->prepare("
-			SELECT " . static::POST_SELECT_COLUMNS . "
+			SELECT $this->selectColumns
 			FROM $this->table
 			ORDER BY published_at DESC, id DESC
 			LIMIT :pageSize OFFSET :pageOffset
