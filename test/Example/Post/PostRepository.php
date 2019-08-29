@@ -38,30 +38,44 @@ class PostRepository implements SmalldbRepositoryInterface
 	private $machineProvider = null;
 
 	/** @var string */
-	private $refClass;
+	private $refClass = null;
 
 	/** @var PDO */
 	private $pdo;
 	private $table = 'symfony_demo_post';
 
 	/** @var PostDataSource */
-	private $postDataSource;
+	private $postDataSource = null;
 
 	private $queryCount = 0;
+
+	const POST_SELECT_COLUMNS = '"Exists" as state, id, author_id as authorId, title, slug, summary, content, published_at as publishedAt';
 
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
 	{
 		$this->smalldb = $smalldb;
 		$this->pdo = $pdo;
-		$this->postDataSource = $this->createDataSource();
 	}
 
 
-	private function createDataSource($preloadedDataSet = null): PostDataSource
+	public function getMachineProvider(): SmalldbProviderInterface
 	{
-		return new PostDataSource($this->pdo, $this->table, $preloadedDataSet,
-			function($rowCount) { $this->queryCount++; });
+		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(Post::class));
+	}
+
+
+	public function getReferenceClass(): string
+	{
+		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
+	}
+
+
+	private function getPostDataSource($preloadedDataSet = null): PostDataSource
+	{
+		return $this->postDataSource ?? ($this->postDataSource
+			= new PostDataSource($this->pdo, $this->table, $preloadedDataSet,
+				function($rowCount) { $this->queryCount++; }));
 	}
 
 
@@ -78,10 +92,25 @@ class PostRepository implements SmalldbRepositoryInterface
 	 */
 	public function ref($id): Post
 	{
-		$provider = $this->smalldb->getMachineProvider(Post::class);
-		$refClass = $provider->getReferenceClass();
-		$ref = new $refClass($this->smalldb, $provider, $this->postDataSource, $id);
+		$refClass = $this->getReferenceClass();
+		$ref = new $refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataSource(), $id);
 		return $ref;
+	}
+
+
+	public function findBySlug(string $slug): ?Post
+	{
+		$stmt = $this->pdo->prepare("
+			SELECT " . static::POST_SELECT_COLUMNS . "
+			FROM $this->table
+			WHERE slug = :slug
+			LIMIT 1
+		");
+
+		$stmt->execute(['slug' => $slug]);
+		$this->queryCount++;
+
+		return $this->fetchSingle($stmt);
 	}
 
 
@@ -95,13 +124,8 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageSize = 25;
 		$pageOffset = $page * $pageSize;
 
-		if (!$this->machineProvider) {
-			$this->machineProvider = $this->smalldb->getMachineProvider(Post::class);
-			$this->refClass = $this->machineProvider->getReferenceClass();
-		}
-
 		$stmt = $this->pdo->prepare("
-			SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
+			SELECT " . static::POST_SELECT_COLUMNS . "
 			FROM $this->table
 			ORDER BY published_at DESC, id DESC
 			LIMIT :pageSize OFFSET :pageOffset
@@ -119,15 +143,31 @@ class PostRepository implements SmalldbRepositoryInterface
 	 */
 	protected function fetchAllReferences(PDOStatement $stmt): array
 	{
+		$machineProvider = $this->getMachineProvider();
+		$refClass = $this->getReferenceClass();
+		$postDataSource = $this->getPostDataSource();
+
 		$posts = [];
 		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $this->refClass($this->smalldb, $this->machineProvider, $this->postDataSource);
+			$post = new $refClass($this->smalldb, $machineProvider, $postDataSource);
 			($this->refClass)::hydrateFromArray($post, $row);
 			$posts[] = $post;
 		}
 		return $posts;
 	}
 
+
+	protected function fetchSingle(PDOStatement $stmt): ?Post
+	{
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		if ($row === false) {
+			return null;
+		} else {
+			$post = new $this->refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataSource());
+			($this->refClass)::hydrateFromArray($post, $row);
+			return $post;
+		}
+	}
 
 }
 

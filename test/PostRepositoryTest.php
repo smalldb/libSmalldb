@@ -150,6 +150,30 @@ class PostRepositoryTest extends TestCase
 	}
 
 
+	public function testFindBySlug()
+	{
+		$slug = 'vae-humani-generis';  // Post ID 20 in the test database
+		$expectedPostId = 20;
+
+		// Check test data that the slug exists
+		$testRef = $this->postRepository->ref($expectedPostId);
+		$existingSlug = $testRef->getSlug();
+		$this->assertEquals($slug, $existingSlug);
+
+		$this->assertQueryCount(1);
+
+		// Try to find
+		$foundRef = $this->postRepository->findBySlug($slug);
+		$this->assertInstanceOf(Post::class, $foundRef);
+		$this->assertEquals(Post::EXISTS, $foundRef->getState());
+		$this->assertEquals($slug, $foundRef->getSlug());
+		$this->assertNotEmpty($foundRef->getTitle());
+
+		// Single query to both find the Post and load the data.
+		$this->assertQueryCount(2);
+	}
+
+
 	public function testFindLatest()
 	{
 		$N = 1000;
@@ -167,8 +191,14 @@ class PostRepositoryTest extends TestCase
 		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
 
 		// One query to load everything; data source should not query any additional data.
-		$queryCount = $this->postRepository->getDataSourceQueryCount();
-		$this->assertEquals($N, $queryCount, "Unexpected query count: $queryCount (should be $N)");
+		$this->assertQueryCount($N);
+	}
+
+
+	private function assertQueryCount(int $expected): void
+	{
+		$actual = $this->postRepository->getDataSourceQueryCount();
+		$this->assertEquals($expected, $actual, "Unexpected query count: $actual (should be $expected)");
 	}
 
 }

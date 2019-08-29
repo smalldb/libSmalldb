@@ -74,7 +74,7 @@ class PostDataSource implements ReferenceDataSourceInterface
 			$data = $this->preloadedDataSet[$id];
 		} else {
 			$stmt = $this->pdo->prepare("
-				SELECT id, author_id as authorId, title, slug, summary, content, published_at as publishedAt
+				SELECT " . PostRepository::POST_SELECT_COLUMNS . "
 				FROM $this->table
 				WHERE id = :id
 				LIMIT 1
@@ -82,6 +82,7 @@ class PostDataSource implements ReferenceDataSourceInterface
 			$stmt->execute(['id' => $id]);
 			($this->onQueryCallback)($stmt->rowCount());
 			$data = $stmt->fetch(PDO::FETCH_ASSOC);
+			$stmt->closeCursor();
 		}
 
 		if ($data) {

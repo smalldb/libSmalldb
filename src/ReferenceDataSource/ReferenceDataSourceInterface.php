@@ -24,6 +24,8 @@ interface ReferenceDataSourceInterface
 
 	/**
 	 * Return the state of the refered state machine.
+	 *
+	 * TODO: Add locking mode so that we can lock an entity before invoking a transition.
 	 */
 	public function getState($id): string;
 

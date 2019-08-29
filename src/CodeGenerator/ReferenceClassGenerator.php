@@ -193,6 +193,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	}
 
 
+	/**
+	 * @throws \ReflectionException
+	 */
 	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
 	{
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
@@ -202,14 +205,10 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 				// Get a typehint from getter return type
 				$getterName = 'get' . ucfirst($name);
-				try {
-					$returnType = $sourceClassReflection->getMethod($getterName)->getReturnType();
-					$typehint = $returnType ? $returnType->getName() : null;
-				}
-				catch (ReflectionException $e) {
-					// No getter, no conversion.
-					$typehint = null;
-				}
+				$returnType = $sourceClassReflection->hasMethod($getterName)
+					? $sourceClassReflection->getMethod($getterName)->getReturnType()
+					: null;
+				$typehint = $returnType ? $returnType->getName() : null;
 
 				// Convert value to fit the typehint
 				switch ($typehint) {
@@ -230,6 +229,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 						break;
 				}
 			}
+			$w->writeln();
+
+			$w->writeln("\$target->state = isset(\$row['state']) ? (string) \$row['state'] : null;");
 			$w->writeln("\$target->dataLoaded = true;");
 		}
 		$w->endMethod();
