@@ -176,7 +176,7 @@ class PostRepositoryTest extends TestCase
 
 	public function testFindLatest()
 	{
-		$N = 1000;
+		$N = 100;
 		$hasEmptyTitle = 0;
 
 		for ($i = 0; $i < $N; $i++) {
@@ -192,6 +192,21 @@ class PostRepositoryTest extends TestCase
 
 		// One query to load everything; data source should not query any additional data.
 		$this->assertQueryCount($N);
+	}
+
+
+	public function testFindAll()
+	{
+		$hasEmptyTitle = 0;
+
+		foreach ($this->postRepository->findLatest() as $post) {
+			$hasEmptyTitle |= empty($post->getTitle());
+		}
+
+		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
+
+		// One query to load everything; data source should not query any additional data.
+		$this->assertQueryCount(1);
 	}
 
 

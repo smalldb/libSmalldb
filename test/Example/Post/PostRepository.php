@@ -22,6 +22,7 @@ namespace Smalldb\StateMachine\Test\Example\Post;
 use PDO;
 use PDOStatement;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\PdoDataLoader;
 use Smalldb\StateMachine\ReferenceDataSource\PdoDataSource;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
@@ -45,8 +46,8 @@ class PostRepository implements SmalldbRepositoryInterface
 	private $pdo;
 	private $table = 'symfony_demo_post';
 
-	/** @var PdoDataSource */
-	private $postDataSource = null;
+	/** @var PdoDataLoader */
+	private $postDataLoader = null;
 
 	private $queryCount = 0;
 
@@ -72,31 +73,31 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function getPostDataSource(): PdoDataSource
+	private function getPostDataLoader(): PdoDataLoader
 	{
-		return $this->postDataSource ?? ($this->postDataSource = $this->createPostDataSource());
+		return $this->postDataLoader ?? ($this->postDataLoader = $this->createPostDataLoader());
 	}
 
 
-	private function createPostDataSource($preloadedDataSet = null): PdoDataSource
+	private function createPostDataLoader($preloadedDataSet = null): PdoDataLoader
 	{
-		$dataSource = new PdoDataSource();
-		$dataSource->setStateSelectPreparedStatement($this->pdo->prepare("
+		$dataLoader = new PdoDataLoader($this->smalldb, $this->getMachineProvider());
+		$dataLoader->setStateSelectPreparedStatement($this->pdo->prepare("
 			SELECT 'Exists' AS state
 			FROM $this->table
 			WHERE id = :id
 			LIMIT 1
 		"));
-		$dataSource->setLoadDataPreparedStatement($this->pdo->prepare("
+		$dataLoader->setLoadDataPreparedStatement($this->pdo->prepare("
 			SELECT $this->selectColumns
 			FROM $this->table
 			WHERE id = :id
 			LIMIT 1
 		"));
-		$dataSource->setOnQueryCallback(function(PDOStatement $stmt) {
+		$dataLoader->setOnQueryCallback(function(PDOStatement $stmt) {
 			$this->queryCount++;
 		});
-		return $dataSource;
+		return $dataLoader;
 	}
 
 
@@ -114,7 +115,7 @@ class PostRepository implements SmalldbRepositoryInterface
 	public function ref($id): Post
 	{
 		$refClass = $this->getReferenceClass();
-		$ref = new $refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataSource(), $id);
+		$ref = new $refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataLoader(), $id);
 		return $ref;
 	}
 
@@ -131,7 +132,9 @@ class PostRepository implements SmalldbRepositoryInterface
 		$stmt->execute(['slug' => $slug]);
 		$this->queryCount++;
 
-		return $this->fetchSingle($stmt);
+		/** @var Post|null $post */
+		$post = $this->getPostDataLoader()->fetch($stmt);
+		return $post;
 	}
 
 
@@ -154,40 +157,23 @@ class PostRepository implements SmalldbRepositoryInterface
 		$stmt->execute(['pageSize' => $pageSize, 'pageOffset' => $pageOffset]);
 		$this->queryCount++;
 
-		$posts = $this->fetchAllReferences($stmt);
+		$posts = $this->getPostDataLoader()->fetchAll($stmt);
 		return $posts;
 	}
 
 
-	/**
-	 * @return Post[]
-	 */
-	protected function fetchAllReferences(PDOStatement $stmt): array
+	public function findAll(): iterable
 	{
-		$machineProvider = $this->getMachineProvider();
-		$refClass = $this->getReferenceClass();
-		$postDataSource = $this->getPostDataSource();
+		$stmt = $this->pdo->prepare("
+			SELECT $this->selectColumns
+			FROM $this->table
+			ORDER BY published_at DESC, id DESC
+		");
+		$stmt->execute();
+		$this->queryCount++;
 
-		$posts = [];
-		while (($row = $stmt->fetch(PDO::FETCH_ASSOC))) {
-			$post = new $refClass($this->smalldb, $machineProvider, $postDataSource);
-			($this->refClass)::hydrateFromArray($post, $row);
-			$posts[] = $post;
-		}
+		$posts = $this->getPostDataLoader()->fetchAll($stmt);
 		return $posts;
-	}
-
-
-	protected function fetchSingle(PDOStatement $stmt): ?Post
-	{
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		if ($row === false) {
-			return null;
-		} else {
-			$post = new $this->refClass($this->smalldb, $this->getMachineProvider(), $this->getPostDataSource());
-			($this->refClass)::hydrateFromArray($post, $row);
-			return $post;
-		}
 	}
 
 }

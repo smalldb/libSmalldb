@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -195,7 +196,7 @@ class BasicMachineTest extends TestCase
 		$this->assertEquals(null, $ref->getId());
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
-		$this->expectException(\LogicException::class);
+		$this->expectException(NotExistsException::class);
 		$ref->getTitle();
 	}
 
