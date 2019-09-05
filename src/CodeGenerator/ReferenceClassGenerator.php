@@ -198,6 +198,10 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	 */
 	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
 	{
+		if ($sourceClassReflection->hasMethod('hydrateFromArray')) {
+			throw new LogicException('Method hydrateFromArray already defined in class ' . $sourceClassReflection->getName() . '.');
+		}
+
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
 		{
 			foreach ($sourceClassReflection->getProperties() as $property) {
