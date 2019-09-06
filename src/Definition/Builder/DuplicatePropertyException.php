@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 
-class DuplicateStateException extends DuplicateException
+class DuplicatePropertyException extends DuplicateException
 {
 	// Just an exception.
 }

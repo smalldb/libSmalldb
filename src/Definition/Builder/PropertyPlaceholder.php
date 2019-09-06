@@ -18,8 +18,37 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
+use Smalldb\StateMachine\Definition\PropertyDefinition;
 
-class DuplicateStateException extends DuplicateException
+
+/**
+ * Class PropertyPlaceholder
+ *
+ * @internal
+ */
+class PropertyPlaceholder
 {
-	// Just an exception.
+	/** @var string */
+	public $name;
+
+	/** @var string */
+	public $type;
+
+	/** @var bool */
+	public $isNullable;
+
+
+	public function __construct(string $name, string $type, bool $isNullable)
+	{
+		$this->name = $name;
+		$this->type = $type;
+		$this->isNullable = $isNullable;
+	}
+
+
+	public function buildPropertyDefinition(): PropertyDefinition
+	{
+		return new PropertyDefinition($this->name, $this->type, $this->isNullable);
+	}
+
 }

@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 
-class DuplicateStateException extends DuplicateException
+interface PropertyPlaceholderApplyInterface
 {
-	// Just an exception.
+	public function applyToPropertyPlaceholder(PropertyPlaceholder $placeholder): void;
 }

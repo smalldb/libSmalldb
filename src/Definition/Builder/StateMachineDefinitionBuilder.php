@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Definition\Builder;
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\DebugDataBag;
 use Smalldb\StateMachine\Definition\DefinitionError;
+use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
@@ -40,6 +41,9 @@ class StateMachineDefinitionBuilder
 
 	/** @var TransitionPlaceholder[][] */
 	private $transitionsByState = [];
+
+	/** @var PropertyPlaceholder[] */
+	private $properties = [];
 
 	/** @var string */
 	private $machineType;
@@ -102,7 +106,14 @@ class StateMachineDefinitionBuilder
 			$actions[$action->getName()] = $action;
 		}
 
-		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $this->errors,
+		/** @var PropertyDefinition[] $properties */
+		$properties = [];
+		foreach ($this->properties as $propertyPlaceholder) {
+			$property = $this->buildPropertyDefinition($propertyPlaceholder);
+			$properties[$property->getName()] = $property;
+		}
+
+		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $properties, $this->errors,
 			$this->referenceClass, $this->transitionsClass, $this->repositoryClass, $this->debugData);
 	}
 
@@ -138,6 +149,12 @@ class StateMachineDefinitionBuilder
 	}
 
 
+	protected function buildPropertyDefinition(PropertyPlaceholder $propertyPlaceholder): PropertyDefinition
+	{
+		return $propertyPlaceholder->buildPropertyDefinition();
+	}
+
+
 	/**
 	 * Sort everything to make changes in generated definitions more stable when the source changes.
 	 */
@@ -149,6 +166,9 @@ class StateMachineDefinitionBuilder
 		foreach ($this->transitionsByState as & $t) {
 			ksort($t);
 		}
+
+		// TODO: Sort properties too?
+		//ksort($this->properties);
 	}
 
 
@@ -188,6 +208,17 @@ class StateMachineDefinitionBuilder
 		}
 	}
 
+
+	public function addProperty(string $name, string $type, bool $isNullable): PropertyPlaceholder
+	{
+		if (isset($this->properties[$name])) {
+			throw new DuplicatePropertyException("Property already exists: $name");
+		} else {
+			return ($this->properties[$name] = new PropertyPlaceholder($name, $type, $isNullable));
+		}
+	}
+
+
 	public function setMachineType(string $machineType)
 	{
 		$this->machineType = $machineType;
@@ -204,6 +235,7 @@ class StateMachineDefinitionBuilder
 	{
 		return ($this->errors[] = new DefinitionError($errorMessage));
 	}
+
 
 	/**
 	 * @return string[]

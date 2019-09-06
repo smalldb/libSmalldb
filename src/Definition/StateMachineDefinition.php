@@ -49,6 +49,9 @@ class StateMachineDefinition
 	/** @var StateMachineGraph|null */
 	private $stateMachineGraph = null;
 
+	/** @var PropertyDefinition[] */
+	private $properties;
+
 	/** @var DefinitionError[] */
 	private $errors;
 
@@ -68,21 +71,28 @@ class StateMachineDefinition
 	/**
 	 * StateMachineDefinition constructor.
 	 *
-	 * @internal
 	 * @param string $machineType
 	 * @param StateDefinition[] $states
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
+	 * @param array $properties
 	 * @param DefinitionError[] $errors
+	 * @param string|null $referenceClass
+	 * @param string|null $transitionsClass
+	 * @param string|null $repositoryClass
 	 * @param DebugDataBag[] $debugData
+	 * @internal
 	 */
-	public function __construct(string $machineType, array $states, array $actions, array $transitions, array $errors,
-		?string $referenceClass = null, ?string $transitionsClass = null, ?string $repositoryClass = null, array $debugData = [])
+	public function __construct(string $machineType, array $states, array $actions, array $transitions,
+		array $properties, array $errors,
+		?string $referenceClass = null, ?string $transitionsClass = null, ?string $repositoryClass = null,
+		array $debugData = [])
 	{
 		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;
+		$this->properties = $properties;
 		$this->errors = $errors;
 		$this->referenceClass = $referenceClass;
 		$this->transitionsClass = $transitionsClass;
@@ -157,6 +167,15 @@ class StateMachineDefinition
 			$sourceState = $this->getState($sourceState);
 		}
 		return $action->getTransition($sourceState);
+	}
+
+
+	/**
+	 * @return PropertyDefinition[]
+	 */
+	public function getProperties(): array
+	{
+		return $this->properties;
 	}
 
 
