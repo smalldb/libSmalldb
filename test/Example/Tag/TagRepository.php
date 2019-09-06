@@ -16,16 +16,91 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
+use PDO;
+use PDOStatement;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\PdoDataLoader;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudRepository;
+use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 
 
-class TagRepository extends AbstractCrudRepository implements SmalldbRepositoryInterface
+class TagRepository implements SmalldbRepositoryInterface
 {
-	protected const MACHINE_TYPE = 'tag';
-	protected const REFERENCE_CLASS = Tag::class;
-}
+	/** @var Smalldb */
+	private $smalldb;
 
+	/** @var SmalldbProviderInterface */
+	private $machineProvider = null;
+
+	/** @var string */
+	private $refClass = null;
+
+	/** @var PdoDataLoader */
+	private $dataLoader = null;
+
+	/** @var PDO */
+	private $pdo;
+
+
+	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
+	{
+		$this->smalldb = $smalldb;
+		$this->pdo = $pdo;
+	}
+
+
+	public function getMachineProvider(): SmalldbProviderInterface
+	{
+		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(Tag::class));
+	}
+
+
+	public function getReferenceClass(): string
+	{
+		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
+	}
+
+
+	private function getDataLoader(): PdoDataLoader
+	{
+		return $this->dataLoader ?? ($this->dataLoader = $this->createDataLoader());
+	}
+
+
+	// TODO: Load this from the definition
+	private $table = 'symfony_demo_tag';
+	private $selectColumns = 'id, name';
+
+	private function createDataLoader($preloadedDataSet = null): PdoDataLoader
+	{
+		$dataLoader = new PdoDataLoader($this->smalldb, $this->getMachineProvider());
+		$dataLoader->setStateSelectPreparedStatement($this->pdo->prepare("
+			SELECT 'Exists' AS state
+			FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		"));
+		$dataLoader->setLoadDataPreparedStatement($this->pdo->prepare("
+			SELECT $this->selectColumns
+			FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		"));
+		$dataLoader->setOnQueryCallback(function (PDOStatement $stmt) {
+			//$this->queryCount++;
+		});
+		return $dataLoader;
+	}
+
+
+	public function ref($id): Tag
+	{
+		/** @var Tag $ref */
+		$ref = $this->getDataLoader()->ref($id);
+		return $ref;
+	}
+
+}

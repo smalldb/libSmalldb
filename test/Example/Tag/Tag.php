@@ -18,10 +18,11 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
+use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
+use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
@@ -30,8 +31,28 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(TagRepository::class)
  * @UseTransitions(TagTransitions::class)
  */
-interface Tag extends CrudMachine, ReferenceInterface
+abstract class Tag extends TagDataImmutable implements ReferenceInterface
 {
+
+	/**
+	 * @State(color = "#def")
+	 */
+	const EXISTS = "Exists";
+
+	/**
+	 * @Transition("", {"Exists"}, color = "#4a0")
+	 */
+	abstract public function create(TagDataImmutable $itemData);
+
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 */
+	abstract public function update(TagDataImmutable $itemData);
+
+	/**
+	 * @Transition("Exists", {""}, color = "#a40")
+	 */
+	abstract public function delete();
 
 }
 

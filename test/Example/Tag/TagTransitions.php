@@ -18,17 +18,87 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
-use Smalldb\StateMachine\Test\Example\CrudItem\AbstractCrudTransitions;
+use PDO;
+use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-class TagTransitions extends AbstractCrudTransitions implements TransitionDecorator
+class TagTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
+	/** @var PDO */
+	private $pdo;
+	private $table = 'symfony_demo_tag';
 
-	public function __construct(TagRepository $repository, ArrayDaoTables $dao)
+	public function __construct(PDO $pdo)
 	{
-		parent::__construct($repository, $dao);
+		parent::__construct();
+		$this->pdo = $pdo;
 	}
+
+
+	protected function create(TransitionEvent $transitionEvent, Tag $ref, TagDataImmutable $data): int
+	{
+		$stmt = $this->pdo->prepare("
+			INSERT INTO $this->table (id, name)
+			VALUES (:id, :name)
+		");
+
+		$id = $ref->getId();
+		$stmt->execute([
+			'id' => $id,
+			'name' => $data->getName(),
+		]);
+
+		if ($id === null) {
+			$newId = (int) $this->pdo->lastInsertId();
+			$transitionEvent->setNewId($newId);
+			return $newId;
+		} else {
+			return $id;
+		}
+	}
+
+
+	protected function update(TransitionEvent $transitionEvent, Tag $ref, TagData $data): void
+	{
+		$stmt = $this->pdo->prepare("
+			UPDATE $this->table
+			SET
+				id = :newId,
+				name = :name,
+			WHERE
+				id = :oldId
+			LIMIT 1
+		");
+
+		$oldId = $ref->getId();
+		$newId =  $data->getId();
+		$stmt->execute([
+			'oldId' => $oldId,
+			'newId' => $newId,
+			'name' => $data->getName(),
+		]);
+
+		if ($oldId != $newId) {
+			$transitionEvent->setNewId($newId);
+		}
+	}
+
+
+	protected function delete(TransitionEvent $transitionEvent, Tag $ref): void
+	{
+		$id = $ref->getId();
+		$stmt = $this->pdo->prepare("
+			DELETE FROM $this->table
+			WHERE id = :id
+			LIMIT 1
+		");
+		$stmt->execute([
+			'id' => $id,
+		]);
+		$transitionEvent->setNewId(null);
+	}
+
 
 }

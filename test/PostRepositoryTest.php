@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PDO;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;

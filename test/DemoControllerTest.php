@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Example\Tag\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
@@ -150,17 +151,12 @@ class DemoControllerTest extends TestCase
 		/** @var TagRepository $tags */
 		$tags = $container->get(TagRepository::class);
 
-		$postData = new PostData();
-		$postData->setTitle('Foo');
-		$postData->setSlug('foo');
-		$postData->setAuthorId(1);
-		$postData->setPublishedAt(new \DateTimeImmutable());
-		$postData->setSummary('Foo, foo.');
-		$postData->setContent('Foo. Foo. Foo.');
+		$tagData = new TagData();
+		$tagData->setName('Foo');
 
 		/** @var Tag $ref */
 		$ref = $tags->ref(null);
-		$ref->create($postData);
+		$ref->create($tagData);
 
 		$this->indexController(0, $tagName, $posts, $tags);
 	}
