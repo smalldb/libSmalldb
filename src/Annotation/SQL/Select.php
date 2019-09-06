@@ -16,48 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition;
+namespace Smalldb\StateMachine\Annotation\SQL;
 
-
-class PropertyDefinition
+/**
+ * SQL expression annotation -- the property is read-only and its value
+ * is obtained using an SQL expression.
+ *
+ * @Annotation
+ * @Target({"PROPERTY"})
+ */
+class Select
 {
 	/** @var string */
-	private $name;
-
-	/** @var string|null */
-	private $type;
-
-	/** @var bool|null */
-	private $isNullable;
-
-	/**
-	 * PropertyDefinition constructor.
-	 *
-	 * @internal
-	 */
-	public function __construct(string $name, ?string $type, ?bool $isNullable)
-	{
-		$this->name = $name;
-		$this->type = $type;
-		$this->isNullable = $isNullable;
-	}
-
-
-	public function getName(): string
-	{
-		return $this->name;
-	}
-
-
-	public function getType(): ?string
-	{
-		return $this->type;
-	}
-
-
-	public function isNullable(): ?bool
-	{
-		return $this->isNullable;
-	}
-
+	public $expression;
 }

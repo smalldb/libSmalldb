@@ -25,6 +25,7 @@ use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Definition\Builder\ActionPlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
@@ -106,6 +107,10 @@ class AnnotationReader
 			$this->processMethodAnnotations($reflectionMethod, $reader->getMethodAnnotations($reflectionMethod));
 		}
 
+		foreach ($reflectionClass->getProperties() as $reflectionProperty) {
+			$this->processPropertyAnnotations($reflectionProperty, $reader->getPropertyAnnotations($reflectionProperty));
+		}
+
 	}
 
 	public function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations): void
@@ -179,6 +184,18 @@ class AnnotationReader
 				foreach ($transitionPlaceholders as $placeholder) {
 					$annotation->applyToTransitionPlaceholder($placeholder);
 				}
+			}
+		}
+	}
+
+
+	public function processPropertyAnnotations(\ReflectionProperty $reflectionProperty, array $annotations): void
+	{
+		$placeholder = $this->builder->addProperty($reflectionProperty->getName());
+
+		foreach ($annotations as $annotation) {
+			if ($annotation instanceof PropertyPlaceholderApplyInterface) {
+				$annotation->applyToPropertyPlaceholder($placeholder);
 			}
 		}
 	}

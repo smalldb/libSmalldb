@@ -31,14 +31,26 @@ class PropertyPlaceholder
 	/** @var string */
 	public $name;
 
-	/** @var string */
+	/** @var string|null */
 	public $type;
 
-	/** @var bool */
+	/** @var bool|null */
 	public $isNullable;
 
+	/**
+	 * @var ?string
+	 * TODO: Separate sql* attributes to some kind of extension.
+	 */
+	public $sqlColumn;
 
-	public function __construct(string $name, string $type, bool $isNullable)
+	/**
+	 * @var ?string
+	 * TODO: Separate sql* attributes to some kind of extension.
+	 */
+	public $sqlSelect;
+
+
+	public function __construct(string $name, ?string $type = null, ?bool $isNullable = null)
 	{
 		$this->name = $name;
 		$this->type = $type;

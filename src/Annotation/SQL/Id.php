@@ -16,48 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition;
+namespace Smalldb\StateMachine\Annotation\SQL;
 
-
-class PropertyDefinition
+/**
+ * SQL column annotation -- the property is mapped 1:1 to an SQL column.
+ *
+ * @Annotation
+ * @Target({"PROPERTY"})
+ */
+class Id
 {
-	/** @var string */
-	private $name;
-
-	/** @var string|null */
-	private $type;
-
-	/** @var bool|null */
-	private $isNullable;
-
-	/**
-	 * PropertyDefinition constructor.
-	 *
-	 * @internal
-	 */
-	public function __construct(string $name, ?string $type, ?bool $isNullable)
-	{
-		$this->name = $name;
-		$this->type = $type;
-		$this->isNullable = $isNullable;
-	}
-
-
-	public function getName(): string
-	{
-		return $this->name;
-	}
-
-
-	public function getType(): ?string
-	{
-		return $this->type;
-	}
-
-
-	public function isNullable(): ?bool
-	{
-		return $this->isNullable;
-	}
-
 }

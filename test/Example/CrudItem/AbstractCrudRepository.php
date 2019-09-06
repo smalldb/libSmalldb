@@ -137,25 +137,4 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 		}
 	}
 
-
-	/**
-	 * @return ReferenceInterface[]
-	 */
-	public function findLatest(?int $page, ?ReferenceInterface $tag): array
-	{
-		$table = $this->dao->table($this->table);
-		$pageSize = 10;
-		$offset = $page * $pageSize;
-
-		if ($tag) {
-			$items = $table->getFilteredSlice(function ($item) use ($tag) {
-				return in_array($tag->getId(), $item['tags']);
-			}, $offset, $pageSize);
-		} else {
-			$items = $table->getSlice($offset, $pageSize);
-		}
-
-		return $this->createPreheatedReferenceCollection($items);
-	}
-
 }

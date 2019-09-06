@@ -209,7 +209,7 @@ class StateMachineDefinitionBuilder
 	}
 
 
-	public function addProperty(string $name, string $type, bool $isNullable): PropertyPlaceholder
+	public function addProperty(string $name, string $type = null, bool $isNullable = null): PropertyPlaceholder
 	{
 		if (isset($this->properties[$name])) {
 			throw new DuplicatePropertyException("Property already exists: $name");

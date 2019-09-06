@@ -16,7 +16,6 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\ReferenceDataSource;
 
 use PDO;

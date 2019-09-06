@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 
 
 interface ReferenceInterface
@@ -65,11 +64,5 @@ interface ReferenceInterface
 	 * Invoke transition of the state machine.
 	 */
 	public function invokeTransition(string $transitionName, ...$args);
-
-	/**
-	 * Get state data of the state machine -- the representation from
-	 * which getState() calculates the state.
-	 */
-	//public function getData();
 
 }

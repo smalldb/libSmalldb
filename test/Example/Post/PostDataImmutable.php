@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\Annotation\SQL as SQL;
 use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
@@ -26,26 +27,53 @@ class PostDataImmutable
 {
 	use CopyConstructorTrait;
 
-	/** @var int */
+	/**
+	 * @var int
+	 * @SQL\Id
+	 */
 	protected $id;
 
-	/** @var string */
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
 	protected $title;
 
-	/** @var string */
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
 	protected $slug;
 
-	/** @var string */
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
 	protected $summary;
 
-	/** @var string */
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
 	protected $content;
 
-	/** @var DateTimeImmutable */
+	/**
+	 * @var DateTimeImmutable
+	 * @SQL\Column("published_at")
+	 */
 	protected $publishedAt;
 
-	/** @var int */
+	/**
+	 * @var int
+	 * @SQL\Column("author_id")
+	 */
 	protected $authorId;
+
+	/**
+	 * @var int|null
+	 * @SQL\Select("SELECT COUNT(*) FROM symfony_demo_comment WHERE symfony_demo_comment.post_id = this.id")
+	 */
+	protected $commentCount = null;
 
 
 	public function getId(): ?int
@@ -89,6 +117,12 @@ class PostDataImmutable
 	public function getSummary(): string
 	{
 		return $this->summary;
+	}
+
+
+	public function getCommentCount(): ?int
+	{
+		return $this->commentCount;
 	}
 
 }
