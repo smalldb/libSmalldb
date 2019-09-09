@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\TransitionDefinition;
  *
  * @internal
  */
-class TransitionPlaceholder
+class TransitionPlaceholder extends ExtensiblePlaceholder
 {
 	/** @var string */
 	public $name;
@@ -42,8 +42,9 @@ class TransitionPlaceholder
 	public $color;
 
 
-	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null)
+	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null, array $extensionPlaceholders = [])
 	{
+		parent::__construct($extensionPlaceholders);
 		$this->name = $transitionName;
 		$this->sourceState = $sourceStateName;
 		$this->targetStates = $targetStateNames;
@@ -53,7 +54,7 @@ class TransitionPlaceholder
 
 	public function buildTransitionDefinition(StateDefinition $sourceState, array $targetStates): TransitionDefinition
 	{
-		return new TransitionDefinition($this->name, $sourceState, $targetStates, $this->color);
+		return new TransitionDefinition($this->name, $sourceState, $targetStates, $this->color, $this->buildExtensions());
 	}
 
 }

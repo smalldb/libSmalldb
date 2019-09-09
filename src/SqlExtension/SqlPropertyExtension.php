@@ -16,43 +16,47 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition;
+namespace Smalldb\StateMachine\SqlExtension;
+
+use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 
-class StateDefinition extends ExtensibleDefinition
+class SqlPropertyExtension implements ExtensionInterface
 {
-	/** @var string */
-	private $name;
 
-	/** @var ?string */
-	private $color;
+	/** @var string|null */
+	private $sqlColumn;
+
+	/** @var string|null */
+	private $sqlSelect;
+
+	/** @var bool */
+	private $isId;
 
 
-	/**
-	 * StateDefinition constructor.
-	 *
-	 * @param string $name
-	 * @param string|null $color
-	 * @param ExtensionInterface[] $extensions
-	 * @internal
-	 */
-	public function __construct(string $name, ?string $color = null, array $extensions = [])
+	public function __construct(?string $sqlColumn = null, ?string $sqlSelect = null, bool $isId = false)
 	{
-		parent::__construct($extensions);
-		$this->name = $name;
-		$this->color = $color;
+		$this->sqlColumn = $sqlColumn;
+		$this->sqlSelect = $sqlSelect;
+		$this->isId = $isId;
 	}
 
 
-	public function getName(): string
+	public function getSqlColumn(): ?string
 	{
-		return $this->name;
+		return $this->sqlColumn;
 	}
 
 
-	public function getColor(): ?string
+	public function getSqlSelect(): ?string
 	{
-		return $this->color;
+		return $this->sqlSelect;
+	}
+
+
+	public function isId(): bool
+	{
+		return $this->isId;
 	}
 
 }

@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-interface DefinitionExtensionInterface
+interface ExtensionInterface
 {
 
 }

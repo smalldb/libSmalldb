@@ -37,7 +37,7 @@ class PropertyDefinition extends ExtensibleDefinition
 	 * @param string $name
 	 * @param string|null $type
 	 * @param bool|null $isNullable
-	 * @param DefinitionExtensionInterface[] $extensions
+	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
 	public function __construct(string $name, ?string $type, ?bool $isNullable, array $extensions = [])

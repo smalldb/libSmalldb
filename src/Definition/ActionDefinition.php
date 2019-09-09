@@ -34,7 +34,7 @@ class ActionDefinition extends ExtensibleDefinition
 	 * @internal
 	 * @param string $name
 	 * @param TransitionDefinition[] $transitions
-	 * @param DefinitionExtensionInterface[] $extensions
+	 * @param ExtensionInterface[] $extensions
 	 */
 	public function __construct(string $name, array $transitions, array $extensions = [])
 	{

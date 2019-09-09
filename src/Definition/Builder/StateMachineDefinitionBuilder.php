@@ -178,17 +178,17 @@ class StateMachineDefinitionBuilder
 	}
 
 
-	public function addAction(string $name): ActionPlaceholder
+	public function addAction(string $name, ?string $color = null): ActionPlaceholder
 	{
 		if (isset($this->actions[$name])) {
 			throw new DuplicateActionException("Action already exists: $name");
 		} else {
-			return ($this->actions[$name] = new ActionPlaceholder($name));
+			return ($this->actions[$name] = new ActionPlaceholder($name, $color));
 		}
 	}
 
 
-	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames): TransitionPlaceholder
+	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null): TransitionPlaceholder
 	{
 		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
 			throw new DuplicateTransitionException("Transition \"$transitionName\" already exists in state \"$sourceStateName\".");
@@ -197,7 +197,7 @@ class StateMachineDefinitionBuilder
 				$this->addAction($transitionName);
 			}
 
-			$placeholder = new TransitionPlaceholder($transitionName, $sourceStateName, $targetStateNames);
+			$placeholder = new TransitionPlaceholder($transitionName, $sourceStateName, $targetStateNames, $color);
 			$this->transitionsByState[$sourceStateName][$transitionName] = $placeholder;
 			$this->transitions[] = $placeholder;
 			return $placeholder;

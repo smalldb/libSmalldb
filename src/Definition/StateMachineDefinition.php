@@ -77,7 +77,7 @@ class StateMachineDefinition extends ExtensibleDefinition
 	 * @param string|null $referenceClass
 	 * @param string|null $transitionsClass
 	 * @param string|null $repositoryClass
-	 * @param DefinitionExtensionInterface[] $extensions
+	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
 	public function __construct(string $machineType, array $states, array $actions, array $transitions,

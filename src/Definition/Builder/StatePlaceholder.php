@@ -26,7 +26,7 @@ use Smalldb\StateMachine\Definition\StateDefinition;
  *
  * @internal
  */
-class StatePlaceholder
+class StatePlaceholder extends ExtensiblePlaceholder
 {
 	/** @var string */
 	public $name;
@@ -35,8 +35,9 @@ class StatePlaceholder
 	public $color;
 
 
-	public function __construct(string $name, ?string $color = null)
+	public function __construct(string $name, ?string $color = null, array $extensionPlaceholders = [])
 	{
+		parent::__construct($extensionPlaceholders);
 		$this->name = $name;
 		$this->color = $color;
 	}
@@ -44,7 +45,7 @@ class StatePlaceholder
 
 	public function buildStateDefinition(): StateDefinition
 	{
-		return new StateDefinition($this->name, $this->color);
+		return new StateDefinition($this->name, $this->color, $this->buildExtensions());
 	}
 
 }

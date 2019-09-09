@@ -47,7 +47,7 @@ class TransitionDefinition extends ExtensibleDefinition
 	 * @param StateDefinition $sourceState
 	 * @param array $targetStates
 	 * @param string|null $color
-	 * @param DefinitionExtensionInterface[] $extensions
+	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
 	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, ?string $color = null, array $extensions = [])

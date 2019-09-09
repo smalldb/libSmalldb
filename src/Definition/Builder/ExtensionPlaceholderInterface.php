@@ -16,14 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\SQL;
+namespace Smalldb\StateMachine\Definition\Builder;
 
-/**
- * SQL column annotation -- the property is mapped 1:1 to an SQL column.
- *
- * @Annotation
- * @Target({"PROPERTY"})
- */
-class Id
+use Smalldb\StateMachine\Definition\ExtensionInterface;
+
+
+interface ExtensionPlaceholderInterface
 {
+
+	public function __construct();
+
+	public function buildExtension(): ExtensionInterface;
+
 }

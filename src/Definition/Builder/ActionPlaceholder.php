@@ -26,20 +26,24 @@ use Smalldb\StateMachine\Definition\ActionDefinition;
  *
  * @internal
  */
-class ActionPlaceholder
+class ActionPlaceholder extends ExtensiblePlaceholder
 {
 	/** @var string */
 	public $name;
 
-	public function __construct(string $name)
+	/** @var string|null */
+	public $color;
+
+	public function __construct(string $name, ?string $color = null, array $extensionPlaceholders = [])
 	{
+		parent::__construct($extensionPlaceholders);
 		$this->name = $name;
 	}
 
 
 	public function buildActionDefinition(array $transitions): ActionDefinition
 	{
-		return new ActionDefinition($this->name, $transitions);
+		return new ActionDefinition($this->name, $transitions, $this->color, $this->buildExtensions());
 	}
 
 }

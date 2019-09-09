@@ -16,10 +16,39 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition\Builder;
+namespace Smalldb\StateMachine\SqlExtension;
+
+use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
+use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 
-interface PropertyPlaceholderApplyInterface
+class SqlPropertyExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void;
+
+	/**
+	 * @var bool
+	 */
+	public $isId = false;
+
+	/**
+	 * @var ?string
+	 */
+	public $sqlColumn;
+
+	/**
+	 * @var ?string
+	 */
+	public $sqlSelect;
+
+
+	public function __construct()
+	{
+	}
+
+
+	public function buildExtension(): ExtensionInterface
+	{
+		return new SqlPropertyExtension($this->sqlColumn, $this->sqlSelect, $this->isId);
+	}
+
 }

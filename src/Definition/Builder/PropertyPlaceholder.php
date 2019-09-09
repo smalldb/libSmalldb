@@ -26,7 +26,7 @@ use Smalldb\StateMachine\Definition\PropertyDefinition;
  *
  * @internal
  */
-class PropertyPlaceholder
+class PropertyPlaceholder extends ExtensiblePlaceholder
 {
 	/** @var string */
 	public $name;
@@ -37,21 +37,10 @@ class PropertyPlaceholder
 	/** @var bool|null */
 	public $isNullable;
 
-	/**
-	 * @var ?string
-	 * TODO: Separate sql* attributes to some kind of extension.
-	 */
-	public $sqlColumn;
 
-	/**
-	 * @var ?string
-	 * TODO: Separate sql* attributes to some kind of extension.
-	 */
-	public $sqlSelect;
-
-
-	public function __construct(string $name, ?string $type = null, ?bool $isNullable = null)
+	public function __construct(string $name, ?string $type = null, ?bool $isNullable = null, array $extensionPlaceholders = [])
 	{
+		parent::__construct($extensionPlaceholders);
 		$this->name = $name;
 		$this->type = $type;
 		$this->isNullable = $isNullable;
@@ -60,7 +49,7 @@ class PropertyPlaceholder
 
 	public function buildPropertyDefinition(): PropertyDefinition
 	{
-		return new PropertyDefinition($this->name, $this->type, $this->isNullable);
+		return new PropertyDefinition($this->name, $this->type, $this->isNullable, $this->buildExtensions());
 	}
 
 }

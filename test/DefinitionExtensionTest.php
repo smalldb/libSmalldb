@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\ActionDefinition;
-use Smalldb\StateMachine\Definition\DefinitionExtensionInterface;
+use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Definition\ExtensibleDefinition;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
@@ -62,7 +62,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testDefinitionExtension(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(DefinitionExtensionInterface::class);
+		$extMock =  $this->createMock(ExtensionInterface::class);
 		$extClassName = get_class($extMock);
 
 		$extensions = [
@@ -88,7 +88,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testInvalidListOfExtensions(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(DefinitionExtensionInterface::class);
+		$extMock =  $this->createMock(ExtensionInterface::class);
 
 		$extensions = [$extMock];  // Array not indexed properly.
 
@@ -102,7 +102,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testInvalidDefinitionExtension(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(DefinitionExtensionInterface::class);
+		$extMock =  $this->createMock(ExtensionInterface::class);
 
 		$extensions = [
 			'Foo' => $extMock,

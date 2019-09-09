@@ -21,16 +21,16 @@ namespace Smalldb\StateMachine\Definition;
 
 abstract class ExtensibleDefinition
 {
-	/** @var DefinitionExtensionInterface[] */
+
+	/** @var ExtensionInterface[] */
 	private $extensions = [];
 
 
 	/**
 	 * ExtensibleDefinition constructor.
-	 *
 	 * Note: $extensions is an array of objects indexed by their respective class names.
 	 *
-	 * @param DefinitionExtensionInterface[] $extensions
+	 * @param ExtensionInterface[] $extensions
 	 */
 	public function __construct(array $extensions)
 	{
@@ -48,7 +48,7 @@ abstract class ExtensibleDefinition
 	}
 
 
-	public function getExtension(string $extensionClassName): DefinitionExtensionInterface
+	public function getExtension(string $extensionClassName): ExtensionInterface
 	{
 		$ext = $this->extensions[$extensionClassName] ?? null;
 

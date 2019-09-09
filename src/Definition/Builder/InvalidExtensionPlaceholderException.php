@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 
-interface PropertyPlaceholderApplyInterface
+class InvalidExtensionPlaceholderException extends \RuntimeException
 {
-	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void;
+	// Just an exception
 }

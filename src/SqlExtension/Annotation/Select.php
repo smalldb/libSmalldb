@@ -16,7 +16,12 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\SQL;
+namespace Smalldb\StateMachine\SqlExtension\Annotation;
+
+use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
+use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
+use Smalldb\StateMachine\SqlExtension\SqlPropertyExtensionPlaceholder;
+
 
 /**
  * SQL expression annotation -- the property is read-only and its value
@@ -25,8 +30,22 @@ namespace Smalldb\StateMachine\Annotation\SQL;
  * @Annotation
  * @Target({"PROPERTY"})
  */
-class Select
+class Select implements PropertyPlaceholderApplyInterface
 {
 	/** @var string */
 	public $expression;
+
+
+	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void
+	{
+		/** @var SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
+		$sqlExtensionPlaceholder = $propertyPlaceholder->getExtensionPlaceholder(SqlPropertyExtensionPlaceholder::class);
+
+		if ($sqlExtensionPlaceholder->sqlColumn !== null) {
+			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Select and Column are mutually exclusive.");
+		}
+
+		$sqlExtensionPlaceholder->sqlSelect = $this->expression;
+	}
+
 }

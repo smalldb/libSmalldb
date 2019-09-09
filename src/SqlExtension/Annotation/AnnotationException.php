@@ -16,16 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\SQL;
+namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
-/**
- * SQL column annotation -- the property is mapped 1:1 to an SQL column.
- *
- * @Annotation
- * @Target({"PROPERTY"})
- */
-class Column
+
+class AnnotationException extends \InvalidArgumentException
 {
-	/** @var string */
-	public $name;
+	// Just an exception.
 }
