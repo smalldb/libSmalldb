@@ -64,7 +64,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			$this->generateReferenceMethods($w, $definition);
 			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 			$this->generateDataGetterMethods($w, $sourceClassReflection);
-			$this->generateHydratorMethod($w, $sourceClassReflection);
+			$this->generateHydratorMethod($w, $definition, $sourceClassReflection);
 
 			$w->endClass();
 		}
@@ -196,7 +196,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	/**
 	 * @throws \ReflectionException
 	 */
-	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection): void
+	private function generateHydratorMethod(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection): void
 	{
 		if ($sourceClassReflection->hasMethod('hydrateFromArray')) {
 			throw new LogicException('Method hydrateFromArray already defined in class ' . $sourceClassReflection->getName() . '.');
@@ -204,15 +204,21 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
 		{
-			foreach ($sourceClassReflection->getProperties() as $property) {
+			foreach ($definition->getProperties() as $property) {
 				$name = $property->getName();
+				$typehint = $property->getType();
 
-				// Get a typehint from getter return type
-				$getterName = 'get' . ucfirst($name);
-				$returnType = $sourceClassReflection->hasMethod($getterName)
-					? $sourceClassReflection->getMethod($getterName)->getReturnType()
-					: null;
-				$typehint = $returnType ? $returnType->getName() : null;
+				// Fallback: Get a typehint from getter return type
+				if ($typehint === null) {
+					$getterName = 'get' . ucfirst($name);
+					$returnType = $sourceClassReflection->hasMethod($getterName)
+						? $sourceClassReflection->getMethod($getterName)->getReturnType()
+						: null;
+					$typehint = $returnType ? $returnType->getName() : null;
+				}
+
+				// TODO: Support mapping of multiple SQL columns into a single machine property.
+				// TODO: Support mapping of a single SQL column (e.g., JSON object) into multiple machine properties.
 
 				// Convert value to fit the typehint
 				switch ($typehint) {

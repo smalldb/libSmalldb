@@ -18,8 +18,6 @@
 
 namespace Smalldb\StateMachine;
 
-use Doctrine\Common\Annotations\AnnotationReader as DoctrineAnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
 use ReflectionClass;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\State;
@@ -172,7 +170,18 @@ class AnnotationReader
 
 	public function processPropertyAnnotations(\ReflectionProperty $reflectionProperty, array $annotations): void
 	{
-		$placeholder = $this->builder->addProperty($reflectionProperty->getName());
+		$name = $reflectionProperty->getName();
+
+		// Get getter type as default property type
+		// TODO: When PHP 7.4 comes, use property typehint first.
+		$getterName = 'get' . ucfirst($name);
+		$classReflection = $reflectionProperty->getDeclaringClass();
+		if ($classReflection->hasMethod($getterName)) {
+			$type = $classReflection->getMethod($getterName)->getReturnType();
+			$placeholder = $this->builder->addProperty($name, $type->getName(), $type->allowsNull());
+		} else {
+			$placeholder = $this->builder->addProperty($name);
+		}
 
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof PropertyPlaceholderApplyInterface) {
