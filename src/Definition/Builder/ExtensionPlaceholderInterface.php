@@ -26,6 +26,6 @@ interface ExtensionPlaceholderInterface
 
 	public function __construct();
 
-	public function buildExtension(): ExtensionInterface;
+	public function buildExtension(): ?ExtensionInterface;
 
 }

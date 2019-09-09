@@ -21,32 +21,22 @@ namespace Smalldb\StateMachine\SqlExtension;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 
-class SqlPropertyExtension implements ExtensionInterface
+class SqlCalculatedPropertyExtension implements ExtensionInterface
 {
 
 	/** @var string|null */
-	private $sqlColumn;
-
-	/** @var bool */
-	private $isId;
+	private $sqlSelect;
 
 
-	public function __construct(?string $sqlColumn = null, bool $isId = false)
+	public function __construct(?string $sqlSelect = null)
 	{
-		$this->sqlColumn = $sqlColumn;
-		$this->isId = $isId;
+		$this->sqlSelect = $sqlSelect;
 	}
 
 
-	public function getSqlColumn(): ?string
+	public function getSqlSelect(): ?string
 	{
-		return $this->sqlColumn;
-	}
-
-
-	public function isId(): bool
-	{
-		return $this->isId;
+		return $this->sqlSelect;
 	}
 
 }

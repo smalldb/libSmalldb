@@ -78,7 +78,9 @@ abstract class ExtensiblePlaceholder
 		$extensions = [];
 		foreach ($this->extensionPlaceholders as $placeholder) {
 			$extension = $placeholder->buildExtension();
-			$extensions[get_class($extension)] = $extension;
+			if ($extension !== null) {
+				$extensions[get_class($extension)] = $extension;
+			}
 		}
 		return $extensions;
 	}
