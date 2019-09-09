@@ -23,6 +23,11 @@ use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
 use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
+/**
+ * Class PostDataImmutable
+ *
+ * @SQL\Table("symfony_demo_post")
+ */
 class PostDataImmutable
 {
 	use CopyConstructorTrait;
