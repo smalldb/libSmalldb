@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 
 
-class StateMachineDefinitionBuilder
+class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
 	/** @var StatePlaceholder[] */
 	private $states = [];
@@ -62,6 +62,7 @@ class StateMachineDefinitionBuilder
 
 	public function __construct()
 	{
+		parent::__construct([]);
 	}
 
 
@@ -110,7 +111,7 @@ class StateMachineDefinitionBuilder
 		}
 
 		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $properties, $this->errors,
-			$this->referenceClass, $this->transitionsClass, $this->repositoryClass);
+			$this->referenceClass, $this->transitionsClass, $this->repositoryClass, $this->buildExtensions());
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
