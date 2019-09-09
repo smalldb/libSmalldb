@@ -19,40 +19,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-class StateDefinition extends ExtensibleDefinition
+interface DefinitionExtensionInterface
 {
-	/** @var string */
-	private $name;
-
-	/** @var ?string */
-	private $color;
-
-
-	/**
-	 * StateDefinition constructor.
-	 *
-	 * @param string $name
-	 * @param string|null $color
-	 * @param DefinitionExtensionInterface[] $extensions
-	 * @internal
-	 */
-	public function __construct(string $name, ?string $color = null, array $extensions = [])
-	{
-		parent::__construct($extensions);
-		$this->name = $name;
-		$this->color = $color;
-	}
-
-
-	public function getName(): string
-	{
-		return $this->name;
-	}
-
-
-	public function getColor(): ?string
-	{
-		return $this->color;
-	}
 
 }

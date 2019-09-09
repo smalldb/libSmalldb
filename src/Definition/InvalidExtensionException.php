@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-interface DebugDataBag
+class InvalidExtensionException extends \RuntimeException
 {
-
+	// Just an exception
 }

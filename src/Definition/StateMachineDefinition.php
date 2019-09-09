@@ -16,13 +16,13 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Definition;
 
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Graph\GraphSearch;
 use Smalldb\StateMachine\Graph\Node;
+
 
 /**
  * Smalldb State Machine Definition -- a non-deterministic persistent finite automaton.
@@ -32,7 +32,7 @@ use Smalldb\StateMachine\Graph\Node;
  * transitions of the same name; an action name is an input symbol of
  * the machine.
  */
-class StateMachineDefinition
+class StateMachineDefinition extends ExtensibleDefinition
 {
 	/** @var string */
 	private $machineType;
@@ -54,9 +54,6 @@ class StateMachineDefinition
 
 	/** @var DefinitionError[] */
 	private $errors;
-
-	/** @var DebugDataBag[] */
-	private $debugData;
 
 	/** @var string|null */
 	private $referenceClass;
@@ -80,14 +77,15 @@ class StateMachineDefinition
 	 * @param string|null $referenceClass
 	 * @param string|null $transitionsClass
 	 * @param string|null $repositoryClass
-	 * @param DebugDataBag[] $debugData
+	 * @param DefinitionExtensionInterface[] $extensions
 	 * @internal
 	 */
 	public function __construct(string $machineType, array $states, array $actions, array $transitions,
 		array $properties, array $errors,
 		?string $referenceClass = null, ?string $transitionsClass = null, ?string $repositoryClass = null,
-		array $debugData = [])
+		array $extensions = [])
 	{
+		parent::__construct($extensions);
 		$this->machineType = $machineType;
 		$this->states = $states;
 		$this->actions = $actions;
@@ -97,7 +95,6 @@ class StateMachineDefinition
 		$this->referenceClass = $referenceClass;
 		$this->transitionsClass = $transitionsClass;
 		$this->repositoryClass = $repositoryClass;
-		$this->debugData = $debugData;
 	}
 
 
@@ -118,6 +115,7 @@ class StateMachineDefinition
 		return $this->states;
 	}
 
+
 	public function getState(string $name): StateDefinition
 	{
 		if (isset($this->states[$name])) {
@@ -127,6 +125,7 @@ class StateMachineDefinition
 		}
 	}
 
+
 	/**
 	 * @return ActionDefinition[]
 	 */
@@ -134,6 +133,7 @@ class StateMachineDefinition
 	{
 		return $this->actions;
 	}
+
 
 	public function getAction(string $name): ActionDefinition
 	{
@@ -143,6 +143,7 @@ class StateMachineDefinition
 			throw new UndefinedActionException("Undefined action: $name");
 		}
 	}
+
 
 	/**
 	 * @return TransitionDefinition[]
@@ -182,15 +183,6 @@ class StateMachineDefinition
 	public function getGraph(): StateMachineGraph
 	{
 		return $this->stateMachineGraph ?? ($this->stateMachineGraph = new StateMachineGraph($this));
-	}
-
-
-	/**
-	 * @return DebugDataBag[]
-	 */
-	public function getDebugData(): array
-	{
-		return $this->debugData;
 	}
 
 

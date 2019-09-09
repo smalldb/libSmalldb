@@ -16,11 +16,10 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Definition;
 
 
-class ActionDefinition
+class ActionDefinition extends ExtensibleDefinition
 {
 	/** @var string */
 	private $name;
@@ -28,23 +27,28 @@ class ActionDefinition
 	/** @var TransitionDefinition[] */
 	private $transitions;
 
+
 	/**
 	 * ActionDefinition constructor.
 	 *
 	 * @internal
 	 * @param string $name
 	 * @param TransitionDefinition[] $transitions
+	 * @param DefinitionExtensionInterface[] $extensions
 	 */
-	public function __construct(string $name, array $transitions)
+	public function __construct(string $name, array $transitions, array $extensions = [])
 	{
+		parent::__construct($extensions);
 		$this->name = $name;
 		$this->transitions = $transitions;
 	}
+
 
 	public function getName(): string
 	{
 		return $this->name;
 	}
+
 
 	/**
 	 * @return TransitionDefinition[]
@@ -53,6 +57,7 @@ class ActionDefinition
 	{
 		return $this->transitions;
 	}
+
 
 	public function getTransition(StateDefinition $sourceState): TransitionDefinition
 	{

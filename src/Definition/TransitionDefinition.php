@@ -16,8 +16,8 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Definition;
+
 
 /**
  * Definition of a state machine transition.
@@ -25,7 +25,7 @@ namespace Smalldb\StateMachine\Definition;
  * There may be multiple definitions of transitions with same names
  * but different source states.
  */
-class TransitionDefinition
+class TransitionDefinition extends ExtensibleDefinition
 {
 	/** @var string */
 	private $name;
@@ -43,20 +43,28 @@ class TransitionDefinition
 	/**
 	 * TransitionDefinition constructor.
 	 *
+	 * @param string $name
+	 * @param StateDefinition $sourceState
+	 * @param array $targetStates
+	 * @param string|null $color
+	 * @param DefinitionExtensionInterface[] $extensions
 	 * @internal
 	 */
-	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, ?string $color = null)
+	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, ?string $color = null, array $extensions = [])
 	{
+		parent::__construct($extensions);
 		$this->name = $name;
 		$this->sourceState = $sourceState;
 		$this->targetStates = $targetStates;
 		$this->color = $color;
 	}
 
+
 	public function getName(): string
 	{
 		return $this->name;
 	}
+
 
 	/**
 	 * Get source states of the transition.
@@ -65,6 +73,7 @@ class TransitionDefinition
 	{
 		return $this->sourceState;
 	}
+
 
 	/**
 	 * Get target states for the given source state.

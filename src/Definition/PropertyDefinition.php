@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition;
 
 
-class PropertyDefinition
+class PropertyDefinition extends ExtensibleDefinition
 {
 	/** @var string */
 	private $name;
@@ -30,13 +30,19 @@ class PropertyDefinition
 	/** @var bool|null */
 	private $isNullable;
 
+
 	/**
 	 * PropertyDefinition constructor.
 	 *
+	 * @param string $name
+	 * @param string|null $type
+	 * @param bool|null $isNullable
+	 * @param DefinitionExtensionInterface[] $extensions
 	 * @internal
 	 */
-	public function __construct(string $name, ?string $type, ?bool $isNullable)
+	public function __construct(string $name, ?string $type, ?bool $isNullable, array $extensions = [])
 	{
+		parent::__construct($extensions);
 		$this->name = $name;
 		$this->type = $type;
 		$this->isNullable = $isNullable;
