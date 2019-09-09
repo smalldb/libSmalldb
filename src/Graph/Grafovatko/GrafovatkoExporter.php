@@ -27,6 +27,9 @@ use Smalldb\StateMachine\Graph\Node;
 
 class GrafovatkoExporter
 {
+	/** @var Graph */
+	private $graph;
+
 	public static $grafovatkoJsLink = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
 
 	/** @var ProcessorInterface[] */
@@ -40,8 +43,9 @@ class GrafovatkoExporter
 	private $prefix = '';
 
 
-	public function __construct()
+	public function __construct(Graph $graph)
 	{
+		$this->graph = $graph;
 	}
 
 
@@ -52,12 +56,12 @@ class GrafovatkoExporter
 	}
 
 
-	public function export(Graph $graph): array
+	public function export(): array
 	{
-		$jsonObject = $this->exportNestedGraph($graph);
+		$jsonObject = $this->exportNestedGraph($this->graph);
 
 		foreach ($this->processors as $processor) {
-			$extraSvg = $processor->getExtraSvgElements($graph, $this->prefix);
+			$extraSvg = $processor->getExtraSvgElements($this->graph, $this->prefix);
 			if (!empty($extraSvg)) {
 				foreach ($extraSvg as $el) {
 					$jsonObject['extraSvg'][] = $el;
@@ -69,17 +73,17 @@ class GrafovatkoExporter
 	}
 
 
-	public function exportJsonString(Graph $graph, int $jsonOptions = 0): string
+	public function exportJsonString(int $jsonOptions = 0): string
 	{
-		$jsonObject = $this->export($graph);
+		$jsonObject = $this->export();
 		$jsonString = json_encode($jsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
 		return $jsonString;
 	}
 
 
-	public function exportJsonFile(Graph $graph, string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
+	public function exportJsonFile(string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
 	{
-		$jsonString = $this->exportJsonString($graph, $jsonOptions);
+		$jsonString = $this->exportJsonString($jsonOptions);
 
 		if ($jsonString !== false) {
 			if (!file_put_contents($targetFileName, $jsonString)) {
@@ -91,9 +95,9 @@ class GrafovatkoExporter
 	}
 
 
-	public function exportSvgElement(Graph $graph, array $attrs = []): string
+	public function exportSvgElement(array $attrs = []): string
 	{
-		$jsonString = $this->exportJsonString($graph, JSON_HEX_APOS | JSON_HEX_AMP);
+		$jsonString = $this->exportJsonString(JSON_HEX_APOS | JSON_HEX_AMP);
 		if ($jsonString === false) {
 			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
 		}
@@ -109,14 +113,14 @@ class GrafovatkoExporter
 	}
 
 
-	public function exportHtmlFile(Graph $graph, string $targetFileName, ?string $title = null): void
+	public function exportHtmlFile(string $targetFileName, ?string $title = null): void
 	{
 		$titleHtml = htmlspecialchars($title ?? basename($targetFileName));
 		$grafovatkoJsFile = basename(static::$grafovatkoJsLink);
 		$grafovatkoJsLink = file_exists(dirname($targetFileName) . '/' . $grafovatkoJsFile)
 			? $grafovatkoJsFile : static::$grafovatkoJsLink;
 
-		$svgElement = $this->exportSvgElement($graph, ['id' => 'graph']);
+		$svgElement = $this->exportSvgElement(['id' => 'graph']);
 
 		$html = <<<EOF
 			<!DOCTYPE HTML>

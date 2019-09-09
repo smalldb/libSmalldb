@@ -19,7 +19,7 @@
 
 namespace Smalldb\StateMachine\Test\TestTemplate;
 
-use Smalldb\StateMachine\Definition\Renderer\StateMachineRenderer;
+use Smalldb\StateMachine\Definition\Renderer\StateMachineExporter;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 
@@ -94,8 +94,8 @@ class TestOutputTemplate extends TestOutput implements Template
 	{
 		$this->addGrafovatko();
 
-		$renderer = new StateMachineRenderer($horizontalLayout);
-		$this->addHtml("\n" . $renderer->renderSvgElement($definition, ['class' => 'graph']));
+		$renderer = new StateMachineExporter($definition, $horizontalLayout);
+		$this->addHtml("\n" . $renderer->exportSvgElement(['class' => 'graph']));
 		return $this;
 	}
 

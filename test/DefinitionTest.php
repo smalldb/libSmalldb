@@ -170,8 +170,7 @@ class DefinitionTest extends TestCase
 		[$edgeUpdate] = $updateEdges;
 		$this->assertEquals($tUpdate, $edgeUpdate->getTransition());
 
-		$export = new GrafovatkoExporter();
-		$jsonObject = $export->export($g);
+		$jsonObject = (new GrafovatkoExporter($g))->export();
 		$this->assertIsArray($jsonObject);
 	}
 

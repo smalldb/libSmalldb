@@ -697,11 +697,11 @@ class BpmnTest extends TestCase
 		}
 
 		// Render BPMN diagram using Grafovatko
-		$renderer = new GrafovatkoExporter();
+		$renderer = new GrafovatkoExporter($bpmnGraph);
 		$renderer->addProcessor(new GrafovatkoProcessor());
 		$output->addGrafovatko();
 		$output->addHtml(Html::h2([], 'Graph of the BPMN Diagram'));
-		$output->addHtml($renderer->exportSvgElement($bpmnGraph, ['class' => 'graph']));
+		$output->addHtml($renderer->exportSvgElement(['class' => 'graph']));
 
 		return $output;
 	}

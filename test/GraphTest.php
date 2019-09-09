@@ -167,8 +167,7 @@ class GraphTest extends TestCase
 	 */
 	public function testGrafovatkoExport(Graph $g)
 	{
-		$export = new GrafovatkoExporter();
-		$jsonObject = $export->export($g);
+		$jsonObject = (new GrafovatkoExporter($g))->export();
 
 		$this->assertNotEmpty($jsonObject['nodes']);
 		$this->assertNotEmpty($jsonObject['edges']);
