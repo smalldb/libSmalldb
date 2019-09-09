@@ -106,7 +106,7 @@ class TestOutputTemplate extends TestOutput implements Template
 			Html::fragment(
 			Html::h2([], 'Properties'),
 			Html::pre([],
-				Html::text(json_encode($definition->getProperties(), JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK)))));
+				Html::text(json_encode($definition, JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK)))));
 		return $this;
 	}
 

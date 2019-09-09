@@ -91,4 +91,10 @@ class TransitionDefinition extends ExtensibleDefinition
 		return $this->color;
 	}
 
+
+	public function jsonSerialize()
+	{
+		return array_merge(get_object_vars($this), parent::jsonSerialize());
+	}
+
 }

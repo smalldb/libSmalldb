@@ -247,4 +247,10 @@ class StateMachineDefinition extends ExtensibleDefinition
 		return $reachableStates;
 	}
 
+
+	public function jsonSerialize()
+	{
+		return array_merge(get_object_vars($this), parent::jsonSerialize());
+	}
+
 }

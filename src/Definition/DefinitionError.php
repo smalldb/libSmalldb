@@ -18,9 +18,13 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use JsonSerializable;
+use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
-class DefinitionError
+
+class DefinitionError implements JsonSerializable
 {
+	use SimpleJsonSerializableTrait;
 
 	/** @var string */
 	private $message;
