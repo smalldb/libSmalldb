@@ -183,7 +183,7 @@ class StateMachineDefinitionBuilder
 		if (isset($this->actions[$name])) {
 			throw new DuplicateActionException("Action already exists: $name");
 		} else {
-			return ($this->actions[$name] = new ActionPlaceholder($name, $color));
+			return ($this->actions[$name] = new ActionPlaceholder($name));
 		}
 	}
 

@@ -31,10 +31,8 @@ class ActionPlaceholder extends ExtensiblePlaceholder
 	/** @var string */
 	public $name;
 
-	/** @var string|null */
-	public $color;
 
-	public function __construct(string $name, ?string $color = null, array $extensionPlaceholders = [])
+	public function __construct(string $name, array $extensionPlaceholders = [])
 	{
 		parent::__construct($extensionPlaceholders);
 		$this->name = $name;
@@ -43,7 +41,7 @@ class ActionPlaceholder extends ExtensiblePlaceholder
 
 	public function buildActionDefinition(array $transitions): ActionDefinition
 	{
-		return new ActionDefinition($this->name, $transitions, $this->color, $this->buildExtensions());
+		return new ActionDefinition($this->name, $transitions, $this->buildExtensions());
 	}
 
 }

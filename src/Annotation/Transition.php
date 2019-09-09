@@ -18,10 +18,6 @@
 
 namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\ActionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\ActionPlaceholderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 
 /**
  * Transition annotation
@@ -29,7 +25,7 @@ use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
  * @Annotation
  * @Target({"METHOD"})
  */
-class Transition implements TransitionPlaceholderApplyInterface, ActionPlaceholderApplyInterface
+class Transition
 {
 	/**
 	 * @var string|null
@@ -69,16 +65,6 @@ class Transition implements TransitionPlaceholderApplyInterface, ActionPlacehold
 	public function definesTransition(): bool
 	{
 		return $this->source !== null && !empty($this->targets);
-	}
-
-	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
-	{
-		$placeholder->color = $this->color;
-	}
-
-	public function applyToActionPlaceholder(ActionPlaceholder $placeholder): void
-	{
-		// TODO: Configure the action
 	}
 
 }
