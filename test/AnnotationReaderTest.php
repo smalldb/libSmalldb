@@ -17,12 +17,15 @@
  */
 namespace Smalldb\StateMachine\Test;
 
+use Doctrine\Common\Annotations\AnnotationException;
 use PHPUnit\Framework\TestCase;
+use ReflectionException;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
 
 class AnnotationReaderTest extends TestCase
@@ -40,4 +43,110 @@ class AnnotationReaderTest extends TestCase
 		$this->assertInstanceOf(TransitionDefinition::class, $definition->getTransition('update', $existsState));
 	}
 
+
+	private function assertAnnotations1to4(array $annotations): void
+	{
+		$annotationClassNames = array_map(function($a) { return get_class($a); }, $annotations);
+		$this->assertEquals([Annotation1::class, Annotation2::class, Annotation3::class, Annotation4::class], $annotationClassNames);
+	}
+
+
+	/**
+	 * @throws AnnotationException
+	 * @throws ReflectionException
+	 */
+	public function testDeepReader()
+	{
+		$reader = new DeepAnnotationReader();
+
+		$class = new \ReflectionClass(ChildAnnotatedClass::class);
+		$this->assertAnnotations1to4($reader->getClassAnnotations($class));
+
+		$method = $class->getMethod('foo');
+		$this->assertAnnotations1to4($reader->getMethodAnnotations($method));
+
+		$property = $class->getProperty('foo');
+		$this->assertAnnotations1to4($reader->getPropertyAnnotations($property));
+
+		$constant = $class->getReflectionConstant('FOO');
+		$this->assertAnnotations1to4($reader->getConstantAnnotations($constant));
+
+	}
+
 }
+
+
+/**
+ * @Annotation
+ */
+class Annotation1 {
+}
+
+/**
+ * @Annotation
+ */
+class Annotation2 {
+}
+
+/**
+ * @Annotation
+ */
+class Annotation3 {
+}
+
+/**
+ * @Annotation
+ */
+class Annotation4 {
+}
+
+/**
+ * Class ParentAnnotatedClass
+ * @Annotation1
+ * @Annotation2
+ */
+abstract class ParentAnnotatedClass {
+	/**
+	 * @Annotation1
+	 * @Annotation2
+	 */
+	const FOO = 1;
+
+	/**
+	 * @Annotation1
+	 * @Annotation2
+	 */
+	public $foo;
+
+	/**
+	 * @Annotation1
+	 * @Annotation2
+	 */
+	abstract public function foo();
+}
+
+/**
+ * Class ChildAnnotatedClass
+ * @Annotation3
+ * @Annotation4
+ */
+abstract class ChildAnnotatedClass extends ParentAnnotatedClass {
+	/**
+	 * @Annotation3
+	 * @Annotation4
+	 */
+	const FOO = 2;
+
+	/**
+	 * @Annotation3
+	 * @Annotation4
+	 */
+	public $foo;
+
+	/**
+	 * @Annotation3
+	 * @Annotation4
+	 */
+	abstract public function foo();
+}
+

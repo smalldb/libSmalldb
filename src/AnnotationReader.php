@@ -31,6 +31,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
 
 /**
@@ -61,31 +62,11 @@ class AnnotationReader
 	 */
 	private $builder;
 
-	/**
-	 *
-	 * @var bool
-	 */
-	private static $needAnnotationsInitialization = true;
-
 
 	public function __construct(string $className)
 	{
 		$this->className = $className;
 
-	}
-
-
-	private function createAnnotationReader(): DoctrineAnnotationReader
-	{
-		// Use autoloader to load annotations
-		if (static::$needAnnotationsInitialization) {
-			static::$needAnnotationsInitialization = false;
-			if (class_exists(AnnotationRegistry::class)) {
-				AnnotationRegistry::registerUniqueLoader('class_exists');
-			}
-		}
-
-		return new DoctrineAnnotationReader();
 	}
 
 
@@ -95,7 +76,7 @@ class AnnotationReader
 		$this->baseDir = dirname($this->classFileName);
 		$this->builder->setReferenceClass($reflectionClass->getName());
 
-		$reader = $this->createAnnotationReader();
+		$reader = new DeepAnnotationReader();
 
 		$this->processClassAnnotations($reflectionClass, $reader->getClassAnnotations($reflectionClass));
 
