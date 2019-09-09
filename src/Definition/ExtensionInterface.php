@@ -18,8 +18,10 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use JsonSerializable;
 
-interface ExtensionInterface
+
+interface ExtensionInterface extends JsonSerializable
 {
 
 }

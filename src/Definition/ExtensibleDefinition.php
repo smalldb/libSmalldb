@@ -18,8 +18,10 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use JsonSerializable;
 
-abstract class ExtensibleDefinition
+
+abstract class ExtensibleDefinition implements JsonSerializable
 {
 
 	/** @var ExtensionInterface[] */
@@ -68,6 +70,14 @@ abstract class ExtensibleDefinition
 			throw new InvalidExtensionException("Unexpected extension type: $extensionClassName"
 				. " should not be an instance of " . get_class($ext));
 		}
+	}
+
+
+	public function jsonSerialize()
+	{
+		return [
+			'extensions' => $this->extensions,
+		];
 	}
 
 }

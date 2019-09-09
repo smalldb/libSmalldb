@@ -19,10 +19,12 @@
 namespace Smalldb\StateMachine\SqlExtension;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
 class SqlPropertyExtension implements ExtensionInterface
 {
+	use SimpleJsonSerializableTrait;
 
 	/** @var string|null */
 	private $sqlColumn;

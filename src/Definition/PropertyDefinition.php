@@ -18,8 +18,10 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use JsonSerializable;
 
-class PropertyDefinition extends ExtensibleDefinition
+
+class PropertyDefinition extends ExtensibleDefinition implements JsonSerializable
 {
 	/** @var string */
 	private $name;
@@ -64,6 +66,12 @@ class PropertyDefinition extends ExtensibleDefinition
 	public function isNullable(): ?bool
 	{
 		return $this->isNullable;
+	}
+
+
+	public function jsonSerialize()
+	{
+		return array_merge(get_object_vars($this), parent::jsonSerialize());
 	}
 
 }

@@ -16,29 +16,20 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension;
-
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+namespace Smalldb\StateMachine\Utils;
 
 
-class SqlCalculatedPropertyExtension implements ExtensionInterface
+/**
+ * Trait SimpleJsonSerializableTrait
+ *
+ * @implements JsonSerializable
+ */
+trait SimpleJsonSerializableTrait // implements JsonSerializable
 {
-	use SimpleJsonSerializableTrait;
 
-	/** @var string|null */
-	private $sqlSelect;
-
-
-	public function __construct(?string $sqlSelect = null)
+	public function jsonSerialize()
 	{
-		$this->sqlSelect = $sqlSelect;
-	}
-
-
-	public function getSqlSelect(): ?string
-	{
-		return $this->sqlSelect;
+		return get_object_vars($this);
 	}
 
 }
