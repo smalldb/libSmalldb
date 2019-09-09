@@ -100,6 +100,17 @@ class TestOutputTemplate extends TestOutput implements Template
 	}
 
 
+	public function addStateMachineDefinitionDump(StateMachineDefinition $definition): self
+	{
+		$this->addHtml(
+			Html::fragment(
+			Html::h2([], 'Properties'),
+			Html::pre([],
+				Html::text(json_encode($definition->getProperties(), JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK)))));
+		return $this;
+	}
+
+
 	public function writeHtmlFile(string $targetFileName): void
 	{
 		$this->outputFilename = basename($targetFileName);

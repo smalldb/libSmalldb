@@ -93,6 +93,7 @@ class DemoControllerTest extends TestCase
 			$output = new TestOutputTemplate();
 			$output->setTitle('Demo App: ' . ucfirst($machineType));
 			$output->addStateMachineGraph($definition);
+			$output->addStateMachineDefinitionDump($definition);
 			$output->writeHtmlFile('demo_' . $machineType . '.html');
 		}
 	}

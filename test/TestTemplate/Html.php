@@ -142,6 +142,11 @@ class Html
 		return static::blockPairElement('div', $attrs, $children);
 	}
 
+	public static function pre(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('pre', $attrs, $children);
+	}
+
 	public static function h1(array $attrs = [], ...$children): string
 	{
 		return static::blockPairElement('h1', $attrs, $children);
