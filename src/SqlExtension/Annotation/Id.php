@@ -36,6 +36,15 @@ class Id implements PropertyPlaceholderApplyInterface
 	{
 		/** @var SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $propertyPlaceholder->getExtensionPlaceholder(SqlPropertyExtensionPlaceholder::class);
+
+		if ($sqlExtensionPlaceholder->sqlSelect !== null) {
+			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Id and Select are mutually exclusive.");
+		}
+
+		if ($sqlExtensionPlaceholder->sqlColumn === null) {
+			$sqlExtensionPlaceholder->sqlColumn = $propertyPlaceholder->name;
+		}
+
 		$sqlExtensionPlaceholder->isId = true;
 	}
 }

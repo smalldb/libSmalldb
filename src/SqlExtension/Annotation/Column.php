@@ -40,11 +40,11 @@ class Column implements PropertyPlaceholderApplyInterface
 		/** @var SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $propertyPlaceholder->getExtensionPlaceholder(SqlPropertyExtensionPlaceholder::class);
 
-		if ($sqlExtensionPlaceholder->sqlColumn !== null) {
-			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Select and Column are mutually exclusive.");
+		if ($sqlExtensionPlaceholder->sqlSelect !== null) {
+			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Column and Select are mutually exclusive.");
 		}
 
-		$sqlExtensionPlaceholder->sqlColumn = $this->name;
+		$sqlExtensionPlaceholder->sqlColumn = $this->name ?? $propertyPlaceholder->name;
 	}
 
 }

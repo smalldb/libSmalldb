@@ -42,12 +42,20 @@ abstract class ExtensibleDefinition
 	}
 
 
+	/**
+	 * Return true if an extension of given type is defined for this element.
+	 */
 	public function hasExtension(string $extensionClassName): bool
 	{
 		return isset($this->extensions[$extensionClassName]);
 	}
 
 
+	/**
+	 * Get an extension of given type.
+	 *
+	 * It would be nice to write getExtension<T>(): T ...
+	 */
 	public function getExtension(string $extensionClassName): ExtensionInterface
 	{
 		$ext = $this->extensions[$extensionClassName] ?? null;
