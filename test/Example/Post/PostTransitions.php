@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use PDO;
+use Doctrine\DBAL\Connection;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
@@ -26,20 +26,20 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 
 class PostTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-	/** @var PDO */
-	private $pdo;
+	/** @var Connection */
+	private $db;
 	private $table = 'symfony_demo_post';
 
-	public function __construct(PDO $pdo)
+	public function __construct(Connection $db)
 	{
 		parent::__construct();
-		$this->pdo = $pdo;
+		$this->db = $db;
 	}
 
 
 	protected function create(TransitionEvent $transitionEvent, Post $ref, PostDataImmutable $data): int
 	{
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			INSERT INTO $this->table (id, author_id, title, slug, summary, content, published_at)
 			VALUES (:id, :authorId, :title, :slug, :summary, :content, :publishedAt)
 		");
@@ -56,7 +56,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 		]);
 
 		if ($id === null) {
-			$newId = (int) $this->pdo->lastInsertId();
+			$newId = (int) $this->db->lastInsertId();
 			$transitionEvent->setNewId($newId);
 			return $newId;
 		} else {
@@ -67,7 +67,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 
 	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data): void
 	{
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			UPDATE $this->table
 			SET
 				id = :newId,
@@ -104,7 +104,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	protected function delete(TransitionEvent $transitionEvent, Post $ref): void
 	{
 		$id = $ref->getId();
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			DELETE FROM $this->table
 			WHERE id = :id
 			LIMIT 1

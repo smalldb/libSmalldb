@@ -130,6 +130,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		{
 			$w->writeln('$this->state = null;');
 			$w->writeln('$this->dataLoaded = false;');
+			$w->writeln('$this->dataSource->invalidateCache($this->getId());');
 		}
 		$w->endMethod();
 

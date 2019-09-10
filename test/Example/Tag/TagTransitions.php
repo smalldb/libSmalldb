@@ -30,10 +30,10 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	private $pdo;
 	private $table = 'symfony_demo_tag';
 
-	public function __construct(PDO $pdo)
+	public function __construct(PDO $db)
 	{
 		parent::__construct();
-		$this->pdo = $pdo;
+		$this->pdo = $db;
 	}
 
 

@@ -17,12 +17,15 @@
  */
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
+use Doctrine\DBAL\Connection;
+use PDO;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -56,8 +59,14 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$c->autowire(TestOutput::class);
 		$c->autowire(SymfonyDemoDatabase::class)
 			->setPublic(true);
-		$c->setAlias(\PDO::class, SymfonyDemoDatabase::class)
+		$c->setAlias(PDO::class, SymfonyDemoDatabase::class)
 			->setPublic(true);
+
+		// Symfony Demo Database using Doctrine DBAL
+		$c->autowire(SymfonyDemoDatabaseFactory::class);
+		$c->autowire(Connection::class)
+			->setPublic(true)
+			->setFactory([new Reference(SymfonyDemoDatabaseFactory::class), 'connect']);
 
 		// Register & Autowire all state machine components
 		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {

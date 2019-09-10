@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -42,6 +43,11 @@ class PostRepositoryTest extends TestCase
 		$container = $containerFactory->createContainer();
 		$this->postRepository = $container->get(PostRepository::class);
 		$this->smalldb = $container->get(Smalldb::class);
+
+		/** @var Connection $dbal */
+		$dbal = $container->get(Connection::class);
+		$stmt = $dbal->query("SELECT COUNT(*) FROM symfony_demo_post");
+		$this->assertGreaterThan(0, $stmt->fetchColumn());
 	}
 
 

@@ -18,16 +18,19 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use PDO;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\Query\QueryBuilder;
 use PDOStatement;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\DoctrineDbalDataLoader;
 use Smalldb\StateMachine\ReferenceDataSource\PdoDataLoader;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
 use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
 use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
-use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 
 
@@ -42,19 +45,19 @@ class PostRepository implements SmalldbRepositoryInterface
 	/** @var string */
 	private $refClass = null;
 
-	/** @var PDO */
-	private $pdo;
+	/** @var Connection */
+	private $db;
 
-	/** @var PdoDataLoader */
+	/** @var DoctrineDbalDataLoader */
 	private $postDataLoader = null;
 
 	private $queryCount = 0;
 
 
-	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
+	public function __construct(Smalldb $smalldb, Connection $db)
 	{
 		$this->smalldb = $smalldb;
-		$this->pdo = $pdo;
+		$this->db = $db;
 	}
 
 
@@ -70,19 +73,20 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function getPostDataLoader(): PdoDataLoader
+	private function getPostDataLoader(): DoctrineDbalDataLoader
 	{
 		return $this->postDataLoader ?? ($this->postDataLoader = $this->createPostDataLoader());
 	}
 
 
-	private function prepareQuery(string $sqlQuery): PDOStatement
+	private function prepareQuery(string $sqlQuery): Statement
 	{
 		try {
-			return $this->pdo->prepare($sqlQuery);
+			return $this->db->prepare($sqlQuery);
 		}
-		catch(\PDOException $ex) {
-			throw new \PDOException($ex->getMessage() . "\n" . $sqlQuery, 0, $ex);
+		catch(DBALException $ex) {
+			// Re-throw the exception with SQL query attached to the message
+			throw new DBALException($ex->getMessage() . "\n" . $sqlQuery, 0, $ex);
 		}
 	}
 
@@ -119,23 +123,10 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function createPostDataLoader($preloadedDataSet = null): PdoDataLoader
+	private function createPostDataLoader($preloadedDataSet = null): DoctrineDbalDataLoader
 	{
-
-		$dataLoader = new PdoDataLoader($this->smalldb, $this->getMachineProvider());
-		$dataLoader->setStateSelectPreparedStatement($this->prepareQuery(<<<end
-			SELECT 'Exists' AS state
-			FROM {$this->getSqlTable()} AS this
-			WHERE id = :id
-			LIMIT 1
-			end));
-		$dataLoader->setLoadDataPreparedStatement($this->prepareQuery(<<<end
-			SELECT {$this->getSelectColumns()}
-			FROM {$this->getSqlTable()} AS this
-			WHERE id = :id
-			LIMIT 1
-			end));
-		$dataLoader->setOnQueryCallback(function(PDOStatement $stmt) {
+		$dataLoader = new DoctrineDbalDataLoader($this->smalldb, Post::class, $this->db);
+		$dataLoader->setOnQueryCallback(function(QueryBuilder $q) {
 			$this->queryCount++;
 		});
 		return $dataLoader;
@@ -158,14 +149,15 @@ class PostRepository implements SmalldbRepositoryInterface
 
 	public function findBySlug(string $slug): ?Post
 	{
-		$stmt = $this->pdo->prepare(<<<end
-			SELECT {$this->getSelectColumns()}
-			FROM {$this->getSqlTable()} AS this
-			WHERE slug = :slug
-			LIMIT 1
-			end);
+		// TODO: Create a proper query object, which returns hydrated ReferenceInterface.
 
-		$stmt->execute(['slug' => $slug]);
+		$q = $this->getPostDataLoader()->createQueryBuilder();
+		$q->where('slug = :slug');
+		$q->setMaxResults(1);
+
+		$q->setParameter('slug', $slug);
+		$stmt = $q->execute();
+
 		$this->queryCount++;
 
 		/** @var Post|null $post */
@@ -184,13 +176,14 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageSize = 25;
 		$pageOffset = $page * $pageSize;
 
-		$stmt = $this->pdo->prepare(<<<end
-			SELECT {$this->getSelectColumns()}
-			FROM {$this->getSqlTable()} AS this
-			ORDER BY published_at DESC, id DESC
-			LIMIT :pageSize OFFSET :pageOffset
-			end);
-		$stmt->execute(['pageSize' => $pageSize, 'pageOffset' => $pageOffset]);
+		$q = $this->getPostDataLoader()->createQueryBuilder();
+		$q->where('true');
+		$q->orderBy('published_at', 'DESC');
+		$q->addOrderBy('id', 'DESC');
+		$q->setFirstResult($pageOffset);
+		$q->setMaxResults($pageSize);
+		$stmt = $q->execute();
+
 		$this->queryCount++;
 
 		$posts = $this->getPostDataLoader()->fetchAll($stmt);
@@ -200,12 +193,12 @@ class PostRepository implements SmalldbRepositoryInterface
 
 	public function findAll(): iterable
 	{
-		$stmt = $this->pdo->prepare(<<<end
-			SELECT {$this->getSelectColumns()}
-			FROM {$this->getSqlTable()} AS this
-			ORDER BY published_at DESC, id DESC
-			end);
-		$stmt->execute();
+		$q = $this->getPostDataLoader()->createQueryBuilder();
+		$q->where('true');
+		$q->orderBy('published_at', 'DESC');
+		$q->addOrderBy('id', 'DESC');
+		$stmt = $q->execute();
+
 		$this->queryCount++;
 
 		$posts = $this->getPostDataLoader()->fetchAll($stmt);

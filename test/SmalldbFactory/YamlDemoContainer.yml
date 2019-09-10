@@ -38,4 +38,10 @@ services:
     Smalldb\StateMachine\Test\TestTemplate\TestOutput:
         autowire: true
 
+    # Test database using Doctrine DBAL
+    Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory:
+        autowire: true
+    Doctrine\DBAL\Connection:
+        autowire: true
+        factory: [Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory, connect]
 
