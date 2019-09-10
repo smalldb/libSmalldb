@@ -41,9 +41,11 @@
         "symfony/dependency-injection": "~4.2",
         "symfony/config": "~4.2",
         "symfony/yaml": "~4.2",
+        "doctrine/dbal": "~2.9",
         "phpunit/phpunit": "^8.0"
     },
     "suggest": {
+        "doctrine/dbal": "SQL database support",
         "smalldb/flupdo": "SQL database support",
         "ext-pdo": "SQL database support"
     }
