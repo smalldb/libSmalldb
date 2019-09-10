@@ -19,45 +19,39 @@
 namespace Smalldb\StateMachine\Test\Database;
 
 use PDO;
-use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use PDOException;
+
 
 /**
  * Demo database connection which creates ephemeral copy of the database.
  */
-class SymfonyDemoDatabase extends \PDO
+class SymfonyDemoDatabase extends PDO
 {
-	/**
-	 * @var string
-	 */
-	private $dbFileName;
 
-
-	public function __construct(TestOutput $output, string $dbFileName = 'symfony_demo_database.sqlite')
+	public function __construct()
 	{
-		// FIXME: This expects tests to run only one at once
-		$this->dbFileName = $output->outputPath($output->resource($dbFileName));
-
-		parent::__construct('sqlite:' . $this->dbFileName, null, null, [
+		parent::__construct('sqlite::memory:', null, null, [
 			PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
 		]);
+
+		$this->importDatabase($this);
 	}
 
 
-	public function __destruct()
+	public static function importDatabase(PDO $conn): void
 	{
-		// FIXME: Allow parallel runs of the tests
-		if (file_exists($this->dbFileName)) {
-			unlink($this->dbFileName);
+		$sqlFile = __DIR__ . "/../resources/symfony_demo_database.sqlite.sql";
+		if (!file_exists($sqlFile)) {
+			throw new \RuntimeException("Database SQL file does not exist: $sqlFile");
 		}
-	}
 
-
-	/**
-	 * @return string
-	 */
-	public function getDbFileName(): string
-	{
-		return $this->dbFileName;
+		$sqlQueries = file_get_contents($sqlFile);
+		try {
+			$conn->exec($sqlQueries);
+		}
+		catch (PDOException $ex) {
+			throw new \RuntimeException("Failed to import database: " . $ex->getMessage(), 0, $ex);
+		}
 	}
 
 }
