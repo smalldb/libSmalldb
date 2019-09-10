@@ -94,7 +94,10 @@ class TransitionDefinition extends ExtensibleDefinition
 
 	public function jsonSerialize()
 	{
-		return array_merge(get_object_vars($this), parent::jsonSerialize());
+		$obj = get_object_vars($this);
+		$obj['sourceState'] = $this->sourceState->getName();
+		$obj['targetStates'] = array_values(array_map(function(StateDefinition $s) { return $s->getName(); }, $this->targetStates));
+		return array_merge($obj, parent::jsonSerialize());
 	}
 
 }

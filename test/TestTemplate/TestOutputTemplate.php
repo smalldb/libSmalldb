@@ -104,7 +104,7 @@ class TestOutputTemplate extends TestOutput implements Template
 	{
 		$this->addHtml(
 			Html::fragment(
-			Html::h2([], 'Properties'),
+			Html::h2([], 'State Machine Definition'),
 			Html::pre([],
 				Html::text(json_encode($definition, JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK)))));
 		return $this;

@@ -76,7 +76,7 @@ abstract class ExtensibleDefinition implements JsonSerializable
 	public function jsonSerialize()
 	{
 		return [
-			'extensions' => $this->extensions,
+			'extensions' => $this->extensions ?: (object) [],
 		];
 	}
 
