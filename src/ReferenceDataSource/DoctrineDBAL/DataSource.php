@@ -16,20 +16,18 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource;
+namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Query\QueryBuilder;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
+use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
 
 
-class DoctrineDbalDataSource implements ReferenceDataSourceInterface
+class DataSource implements ReferenceDataSourceInterface
 {
 
 	/** @var Smalldb */
@@ -48,13 +46,12 @@ class DoctrineDbalDataSource implements ReferenceDataSourceInterface
 	private $onQueryCallback = null;
 
 
-	public function __construct(Smalldb $smalldb, string $machineType, Connection $db)
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, Connection $db)
 	{
 		$this->smalldb = $smalldb;
-		$this->db = $db;
-
-		$this->machineProvider = $this->smalldb->getMachineProvider($machineType);
+		$this->machineProvider = $machineProvider;
 		$this->refClass = $this->machineProvider->getReferenceClass();
+		$this->db = $db;
 	}
 
 
@@ -72,7 +69,7 @@ class DoctrineDbalDataSource implements ReferenceDataSourceInterface
 
 	public function createQueryBuilder(): ReferenceQueryBuilder
 	{
-		return new ReferenceQueryBuilder($this->db, $this->machineProvider);
+		return new ReferenceQueryBuilder($this->db, $this->smalldb, $this->machineProvider, $this);
 	}
 
 

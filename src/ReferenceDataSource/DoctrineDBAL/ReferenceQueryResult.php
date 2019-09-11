@@ -16,19 +16,39 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource;
+namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
-use Doctrine\DBAL\FetchMode;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\FetchMode;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 
 
-class DoctrineDbalDataLoader extends DoctrineDbalDataSource
+class ReferenceQueryResult extends DataSource
 {
 
-	public function fetch(Statement $stmt): ?ReferenceInterface
+	/** @var Statement */
+	private $stmt;
+
+
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, Connection $db, Statement $stmt)
 	{
-		$row = $stmt->fetch(FetchMode::ASSOCIATIVE);
+		parent::__construct($smalldb, $machineProvider, $db);
+		$this->stmt = $stmt;
+	}
+
+
+	public function getWrappedStatement(): Statement
+	{
+		return $this->stmt;
+	}
+
+
+	public function fetch(): ?ReferenceInterface
+	{
+		$row = $this->stmt->fetch(FetchMode::ASSOCIATIVE);
 		if ($row === false) {
 			return null;
 		} else {
@@ -43,10 +63,10 @@ class DoctrineDbalDataLoader extends DoctrineDbalDataSource
 	/**
 	 * @return ReferenceInterface[]
 	 */
-	public function fetchAll(Statement $stmt): array
+	public function fetchAll(): array
 	{
 		$list = [];
-		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $this->stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
 			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);
@@ -61,9 +81,9 @@ class DoctrineDbalDataLoader extends DoctrineDbalDataSource
 	 *
 	 * TODO: Return a proper collection which provides rowCount() and other useful features.
 	 */
-	public function fetchAllIter(Statement $stmt): iterable
+	public function fetchAllIter(): iterable
 	{
-		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $this->stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
 			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);

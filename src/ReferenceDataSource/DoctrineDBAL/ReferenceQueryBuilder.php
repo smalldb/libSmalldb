@@ -16,13 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource;
+namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Driver\Statement;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Query\QueryBuilder as DoctrineQueryBuilder;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\LogicException;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
 use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
 use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
@@ -30,6 +34,8 @@ use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
 
 class ReferenceQueryBuilder extends DoctrineQueryBuilder
 {
+	/** @var Smalldb */
+	private $smalldb;
 
 	/** @var SmalldbProviderInterface */
 	private $machineProvider;
@@ -40,18 +46,35 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 	/** @var string */
 	private $refClass;
 
+	/** @var DataSource */
+	private $dataSource;
+
 	/** @var string */
 	private $tableAlias = 'this';
 
 
-	public function __construct(Connection $connection, SmalldbProviderInterface $machineProvider, string $tableAlias = 'this')
+	public function __construct(Connection $connection, Smalldb $smalldb, SmalldbProviderInterface $machineProvider, DataSource $dataSource, string $tableAlias = 'this')
 	{
 		parent::__construct($connection);
 
+		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
 		$this->definition = $this->machineProvider->getDefinition();
 		$this->refClass = $this->machineProvider->getReferenceClass();
+		$this->dataSource = $dataSource;
 		$this->tableAlias = $tableAlias;
+	}
+
+
+	public function executeRef(): ReferenceQueryResult
+	{
+		$stmt = parent::execute();
+		if ($stmt instanceof Statement) {
+			// Wrap statement with something we can use to fetch references
+			return new ReferenceQueryResult($this->smalldb, $this->machineProvider, $this->getConnection(), $stmt);
+		} else {
+			throw new LogicException("Executed statement returns unexpected result.");
+		}
 	}
 
 
