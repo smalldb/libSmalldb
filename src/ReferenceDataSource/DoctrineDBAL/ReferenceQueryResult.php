@@ -18,12 +18,9 @@
 
 namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Smalldb;
 
 
 class ReferenceQueryResult extends DataSource
@@ -33,9 +30,9 @@ class ReferenceQueryResult extends DataSource
 	private $stmt;
 
 
-	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, Connection $db, Statement $stmt)
+	public function __construct(?DataSource $originalDataSource, Statement $stmt)
 	{
-		parent::__construct($smalldb, $machineProvider, $db);
+		parent::__construct($originalDataSource);
 		$this->stmt = $stmt;
 	}
 

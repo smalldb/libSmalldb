@@ -18,14 +18,11 @@
 
 namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Query\QueryBuilder as DoctrineQueryBuilder;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\LogicException;
-use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
 use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
@@ -53,9 +50,9 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 	private $tableAlias = 'this';
 
 
-	public function __construct(Connection $connection, Smalldb $smalldb, SmalldbProviderInterface $machineProvider, DataSource $dataSource, string $tableAlias = 'this')
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, DataSource $dataSource, string $tableAlias = 'this')
 	{
-		parent::__construct($connection);
+		parent::__construct($dataSource->getConnection());
 
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
@@ -71,7 +68,7 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 		$stmt = parent::execute();
 		if ($stmt instanceof Statement) {
 			// Wrap statement with something we can use to fetch references
-			return new ReferenceQueryResult($this->smalldb, $this->machineProvider, $this->getConnection(), $stmt);
+			return new ReferenceQueryResult($this->dataSource, $stmt);
 		} else {
 			throw new LogicException("Executed statement returns unexpected result.");
 		}

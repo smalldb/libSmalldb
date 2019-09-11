@@ -46,12 +46,23 @@ class DataSource implements ReferenceDataSourceInterface
 	private $onQueryCallback = null;
 
 
-	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, Connection $db)
+	public function __construct(?DataSource $originalDataSource, Smalldb $smalldb = null, SmalldbProviderInterface $machineProvider = null, Connection $db = null)
 	{
-		$this->smalldb = $smalldb;
-		$this->machineProvider = $machineProvider;
-		$this->refClass = $this->machineProvider->getReferenceClass();
-		$this->db = $db;
+		if ($originalDataSource === null) {
+			if ($smalldb && $machineProvider && $db) {
+				$this->smalldb = $smalldb;
+				$this->machineProvider = $machineProvider;
+				$this->refClass = $this->machineProvider->getReferenceClass();
+				$this->db = $db;
+			} else {
+				throw new \InvalidArgumentException("Missing argument(s).");
+			}
+		} else {
+			$this->smalldb = $originalDataSource->smalldb;
+			$this->machineProvider = $originalDataSource->machineProvider;
+			$this->refClass = $originalDataSource->refClass;
+			$this->db = $originalDataSource->db;
+		}
 	}
 
 
@@ -67,9 +78,9 @@ class DataSource implements ReferenceDataSourceInterface
 	}
 
 
-	public function createQueryBuilder(): ReferenceQueryBuilder
+	public function createQueryBuilder(string $tableAlias = 'this'): ReferenceQueryBuilder
 	{
-		return new ReferenceQueryBuilder($this->db, $this->smalldb, $this->machineProvider, $this);
+		return new ReferenceQueryBuilder($this->smalldb, $this->machineProvider, $this, $tableAlias);
 	}
 
 
@@ -123,6 +134,15 @@ class DataSource implements ReferenceDataSourceInterface
 	public function invalidateCache($id = null)
 	{
 		// No caching nor preloading.
+	}
+
+
+	/**
+	 * @return Connection
+	 */
+	public function getConnection(): Connection
+	{
+		return $this->db;
 	}
 
 }
