@@ -16,30 +16,28 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension;
+namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\SqlExtension\SqlTableExtensionPlaceholder;
 
 
-class SqlTableExtensionPlaceholder implements ExtensionPlaceholderInterface
+/**
+ * @Annotation
+ * @Target({"CLASS"})
+ */
+class StateSelect implements StateMachineBuilderApplyInterface
 {
-
-	/** @var string */
-	public $sqlTable;
-
 	/** @var string */
 	public $sqlStateSelect;
 
 
-	public function __construct()
+	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-	}
-
-
-	public function buildExtension(): ?ExtensionInterface
-	{
-		return new SqlTableExtension($this->sqlTable, $this->sqlStateSelect);
+		/** @var SqlTableExtensionPlaceholder $sqlExtensionPlaceholder */
+		$sqlExtensionPlaceholder = $builder->getExtensionPlaceholder(SqlTableExtensionPlaceholder::class);
+		$sqlExtensionPlaceholder->sqlStateSelect = $this->sqlStateSelect;
 	}
 
 }

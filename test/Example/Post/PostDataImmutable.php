@@ -27,6 +27,7 @@ use Smalldb\StateMachine\Utils\CopyConstructorTrait;
  * Class PostDataImmutable
  *
  * @SQL\Table("symfony_demo_post")
+ * @SQL\StateSelect("'Exists'")
  */
 class PostDataImmutable
 {

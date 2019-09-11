@@ -29,16 +29,25 @@ class SqlTableExtension implements ExtensionInterface
 	/** @var string */
 	private $sqlTable;
 
+	/** @var string */
+	private $sqlStateSelect;
 
-	public function __construct($sqlTable)
+	public function __construct(string $sqlTable, string $sqlStateSelect)
 	{
 		$this->sqlTable = $sqlTable;
+		$this->sqlStateSelect = $sqlStateSelect;
 	}
 
 
 	public function getSqlTable(): string
 	{
 		return $this->sqlTable;
+	}
+
+
+	public function getSqlStateSelect(): string
+	{
+		return $this->sqlStateSelect;
 	}
 
 }
