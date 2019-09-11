@@ -70,55 +70,9 @@ class DoctrineDbalDataSource implements ReferenceDataSourceInterface
 	}
 
 
-
-	public function createQueryBuilder(bool $stateOnly = false, string $tableAlias = 'this'): QueryBuilder
+	public function createQueryBuilder(): ReferenceQueryBuilder
 	{
-		$q = new QueryBuilder($this->db);
-
-		$definition = $this->machineProvider->getDefinition();
-		if ($definition->hasExtension(SqlTableExtension::class)) {
-			/** @var SqlTableExtension $ext */
-			$ext = $definition->getExtension(SqlTableExtension::class);
-			$table = $ext->getSqlTable();
-			$q->from($table, $tableAlias);
-		}
-
-		// TODO: State expression
-		$q->addSelect('"Exists" as state');
-
-		$properties = $definition->getProperties();
-		$pk = [];
-		foreach ($properties as $property) {
-			if ($property->hasExtension(SqlPropertyExtension::class)) {
-				/** @var SqlPropertyExtension $ext */
-				$ext = $property->getExtension(SqlPropertyExtension::class);
-				$column = $ext->getSqlColumn();
-				$sqlColumn = $this->db->quoteIdentifier($tableAlias) . '.' . $this->db->quoteIdentifier($column);
-
-				if (!$stateOnly) {
-					$q->addSelect($sqlColumn . ' AS ' . $this->db->quoteIdentifier($property->getName()));
-				}
-
-				if ($ext->isId()) {
-					$pk[$property->getName()] = $sqlColumn;
-				}
-			}
-			if (!$stateOnly && $property->hasExtension(SqlCalculatedPropertyExtension::class)) {
-				/** @var SqlCalculatedPropertyExtension $ext */
-				$ext = $property->getExtension(SqlCalculatedPropertyExtension::class);
-				$expr = $ext->getSqlSelect();
-				$q->addSelect("($expr) AS " . $this->db->quoteIdentifier($property->getName()));
-			}
-		}
-
-		if (empty($pk)) {
-			throw new LogicException('Missing primary key for ' . $definition->getMachineType());
-		}
-		foreach ($pk as $propertyName => $columnExpr) {
-			$q->andWhere($columnExpr . ' = ?');
-		}
-
-		return $q;
+		return new ReferenceQueryBuilder($this->db, $this->machineProvider);
 	}
 
 
@@ -127,8 +81,9 @@ class DoctrineDbalDataSource implements ReferenceDataSourceInterface
 	 */
 	public function getState($id): string
 	{
-		$q = $this->createQueryBuilder(true);
-		$q->setParameter(0, $id);
+		$q = $this->createQueryBuilder()
+			->addSelectFromStatements(true)
+			->andWhereId($id);
 
 		if ($this->onQueryCallback) {
 			($this->onQueryCallback)($q);
@@ -145,8 +100,9 @@ class DoctrineDbalDataSource implements ReferenceDataSourceInterface
 	 */
 	public function loadData($id, string &$state = null)
 	{
-		$q = $this->createQueryBuilder(false);
-		$q->setParameter(0, $id);
+		$q = $this->createQueryBuilder()
+			->addSelectFromStatements()
+			->andWhereId($id);
 
 		if ($this->onQueryCallback) {
 			($this->onQueryCallback)($q);

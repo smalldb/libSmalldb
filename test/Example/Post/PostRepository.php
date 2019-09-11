@@ -22,15 +22,10 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\Query\QueryBuilder;
-use PDOStatement;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\DoctrineDbalDataLoader;
-use Smalldb\StateMachine\ReferenceDataSource\PdoDataLoader;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 
 
@@ -91,38 +86,6 @@ class PostRepository implements SmalldbRepositoryInterface
 	}
 
 
-	private function getSqlTable(): string
-	{
-		$machineDefinition = $this->getMachineProvider()->getDefinition();
-
-		/** @var SqlTableExtension $ext */
-		$ext = $machineDefinition->getExtension(SqlTableExtension::class);
-		return $ext->getSqlTable();
-	}
-
-
-	private function getSelectColumns(): string
-	{
-		$selectColumns = ['"Exists" as state'];
-		$machineDefinition = $this->getMachineProvider()->getDefinition();
-		foreach ($machineDefinition->getProperties() as $property) {
-			if ($property->hasExtension(SqlPropertyExtension::class)) {
-				/** @var SqlPropertyExtension $ext */
-				$ext = $property->getExtension(SqlPropertyExtension::class);
-				$column = $ext->getSqlColumn();
-				$selectColumns[] = "this." . $column . " as " . $property->getName();
-			}
-			if ($property->hasExtension(SqlCalculatedPropertyExtension::class)) {
-				/** @var SqlCalculatedPropertyExtension $ext */
-				$ext = $property->getExtension(SqlCalculatedPropertyExtension::class);
-				$selectExpr = $ext->getSqlSelect();
-				$selectColumns[] = "(" . $selectExpr . ") as " . $property->getName();
-			}
-		}
-		return join(', ', $selectColumns);
-	}
-
-
 	private function createPostDataLoader($preloadedDataSet = null): DoctrineDbalDataLoader
 	{
 		$dataLoader = new DoctrineDbalDataLoader($this->smalldb, Post::class, $this->db);
@@ -151,7 +114,8 @@ class PostRepository implements SmalldbRepositoryInterface
 	{
 		// TODO: Create a proper query object, which returns hydrated ReferenceInterface.
 
-		$q = $this->getPostDataLoader()->createQueryBuilder();
+		$q = $this->getPostDataLoader()->createQueryBuilder()
+			->addSelectFromStatements();
 		$q->where('slug = :slug');
 		$q->setMaxResults(1);
 
@@ -176,8 +140,8 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageSize = 25;
 		$pageOffset = $page * $pageSize;
 
-		$q = $this->getPostDataLoader()->createQueryBuilder();
-		$q->where('true');
+		$q = $this->getPostDataLoader()->createQueryBuilder()
+			->addSelectFromStatements();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
 		$q->setFirstResult($pageOffset);
@@ -193,8 +157,8 @@ class PostRepository implements SmalldbRepositoryInterface
 
 	public function findAll(): iterable
 	{
-		$q = $this->getPostDataLoader()->createQueryBuilder();
-		$q->where('true');
+		$q = $this->getPostDataLoader()->createQueryBuilder()
+			->addSelectFromStatements();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
 		$stmt = $q->execute();
