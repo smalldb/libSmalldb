@@ -1,0 +1,47 @@
+smalldb:
+    class_generator:
+        namespace: Smalldb\GeneratedCode
+        path: '%generated_output_dir%'
+    machine_references:
+        - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
+        - 'Smalldb\StateMachine\Test\Example\Post\Post'
+        - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
+        - 'Smalldb\StateMachine\Test\Example\User\User'
+
+parameters:
+    generated_output_dir: ~ # Set by the test
+
+services:
+    #Smalldb\StateMachine\Test\Example\:
+    #    resource: '../Example/'
+    #    autowire: true
+
+    repositories:
+        namespace: Smalldb\StateMachine\Test\Example\
+        resource: '../Example/*/*Repository.php'
+        autowire: true
+
+    transitions:
+        namespace: Smalldb\StateMachine\Test\Example\
+        resource: '../Example/*/*Transitions.php'
+        autowire: true
+
+    # Dummy Database
+    Smalldb\StateMachine\Test\Database\ArrayDaoTables:
+        autowire: true
+
+    # Symfony Test Database
+    Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase:
+        autowire: true
+    PDO:
+        alias: Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase
+    Smalldb\StateMachine\Test\TestTemplate\TestOutput:
+        autowire: true
+
+    # Test database using Doctrine DBAL
+    Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory:
+        autowire: true
+    Doctrine\DBAL\Connection:
+        autowire: true
+        factory: [Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory, connect]
+

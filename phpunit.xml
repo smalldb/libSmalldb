@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.0/phpunit.xsd"
+	bootstrap="vendor/autoload.php"
+	defaultTestSuite="unit-tests"
+	executionOrder="default"
+	forceCoversAnnotation="false"
+	beStrictAboutCoversAnnotation="true"
+	beStrictAboutOutputDuringTests="true"
+	beStrictAboutTodoAnnotatedTests="true"
+	verbose="true">
+
+	<testsuites>
+		<testsuite name="unit-tests">
+			<directory suffix="Test.php">test</directory>
+			<exclude>test/BpmnBenchmarkTest.php</exclude>
+			<exclude>test/output</exclude>
+		</testsuite>
+		<testsuite name="benchmark">
+			<file>test/BpmnBenchmarkTest.php</file>
+		</testsuite>
+	</testsuites>
+
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="true">
+			<directory suffix=".php">src</directory>
+			<directory suffix=".php">test/Database</directory>
+			<directory suffix=".php">test/SmalldbFactory</directory>
+			<directory suffix=".php">test/Example</directory>
+		</whitelist>
+	</filter>
+</phpunit>

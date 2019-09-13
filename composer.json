@@ -10,17 +10,43 @@
         }
     ],
     "autoload": {
-        "psr-4": { "Smalldb\\StateMachine\\": "class/" }
+        "psr-4": {
+            "Smalldb\\StateMachine\\": "src/"
+        }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/jkufner/annotations"
+        }
+    ],
     "require": {
-        "php": ">=7.0",
-        "psr/container": ">=1.0"
+        "php": ">=7.3",
+        "ext-dom": "*",
+        "ext-json": "*",
+        "doctrine/annotations": "dev-constants as 1.7.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Smalldb\\StateMachine\\Test\\": "test/",
+            "Smalldb\\GeneratedCode\\": "test/output/generated/"
+        }
     },
     "require-dev": {
-        "smalldb/doc-tools": "dev-master"
+        "smalldb/doc-tools": "dev-master",
+        "psr/container": ">=1.0",
+        "psr/event-dispatcher": ">=1.0",
+        "ext-pdo": "*",
+        "ext-sqlite3": "*",
+        "symfony/dependency-injection": "~4.2",
+        "symfony/config": "~4.2",
+        "symfony/yaml": "~4.2",
+        "doctrine/dbal": "~2.9",
+        "phpunit/phpunit": "^8.0"
     },
     "suggest": {
-        "smalldb/flupdo": "SQL database support"
+        "doctrine/dbal": "SQL database support",
+        "smalldb/flupdo": "SQL database support",
+        "ext-pdo": "SQL database support"
     }
 }
-
