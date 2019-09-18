@@ -23,3 +23,19 @@ doc:
                 - 'make doc'
                 - 'rsync -r --stats "./doc/doxygen/html/" "$DOC_INSTALL_DESTINATION/$CI_BUILD_REF_NAME/"'
 
+tests:
+        stage: post-deploy
+        only:
+                - tags
+                - master
+        script:
+                - 'make test'
+
+analyze:
+        stage: post-deploy
+        only:
+                - tags
+                - master
+        script:
+                - 'make analyze'
+

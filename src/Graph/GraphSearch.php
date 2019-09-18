@@ -28,10 +28,14 @@ class GraphSearch
 {
 	private $graph;
 
+	/** @var callable(Node): bool */
 	private $processNodeCb;
+	/** @var callable(Node): bool */
 	private $processNodeCbDefault;
 
+	/** @var callable(Node, Edge, Node, bool): bool */
 	private $checkEdgeCb;
+	/** @var callable(Node, Edge, Node, bool): bool */
 	private $checkArrowCbDefault;
 
 	private $strategy;
@@ -161,10 +165,9 @@ class GraphSearch
 					$currentNode = array_shift($queue);
 					break;
 				default:
-					// @codeCoverageIgnoreStart
-					throw new InvalidArgumentException('Invalid strategy.');
-					// @codeCoverageIgnoreEnd
+					throw new InvalidArgumentException('Invalid strategy.'); // @codeCoverageIgnore
 			}
+
 			$seen[$currentNode->getId()] = true;
 
 			// Process node
@@ -191,10 +194,8 @@ class GraphSearch
 
 				// Check next node whether it is worth processing
 				$next_node_seen = !empty($seen[$nextNodeId]);
-				if ($checkEdgeCb($currentNode, $edge, $nextNode, $next_node_seen)) {
-					if (!$next_node_seen) {
-						$queue[] = $nextNode;
-					}
+				if ($checkEdgeCb($currentNode, $edge, $nextNode, $next_node_seen) && !$next_node_seen) {
+					$queue[] = $nextNode;
 				}
 				$seen[$nextNodeId] = true;
 			}

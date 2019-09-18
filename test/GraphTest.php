@@ -18,6 +18,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\Graph\DuplicateEdgeException;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
@@ -159,6 +160,20 @@ class GraphTest extends TestCase
 	{
 		$this->expectException(\InvalidArgumentException::class);
 		GraphSearch::BFS($g)->start(['X']);
+	}
+
+
+	public function testDuplicateEdge()
+	{
+		$g = new Graph();
+
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$c = $g->createNode('C');
+
+		$g->createEdge('e1', $a, $b);
+		$this->expectException(DuplicateEdgeException::class);
+		$g->createEdge('e1', $b, $c);
 	}
 
 
