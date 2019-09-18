@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * Transition aborted by pre-check method.
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class TransitionPreCheckException extends TransitionException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

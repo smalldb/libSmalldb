@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * Invalid reference requested
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class InvalidReferenceException extends \InvalidArgumentException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

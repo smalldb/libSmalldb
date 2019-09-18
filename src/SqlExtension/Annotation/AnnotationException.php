@@ -18,8 +18,14 @@
 
 namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
+use Throwable;
+
 
 class AnnotationException extends \InvalidArgumentException
 {
 	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }

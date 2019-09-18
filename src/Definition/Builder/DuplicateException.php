@@ -18,8 +18,14 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
+use Throwable;
+
 
 abstract class DuplicateException extends \RuntimeException
 {
 	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }

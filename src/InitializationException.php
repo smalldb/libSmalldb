@@ -19,11 +19,17 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
 
 /**
  * Something is wrong with initialization -- not initialized yet, or already initialized.
  */
 class InitializationException extends RuntimeException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }

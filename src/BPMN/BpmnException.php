@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine\BPMN;
 
+use Throwable;
+
+
 /**
  * Something went wrong when parsing BPMN file.
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class BpmnException extends \InvalidArgumentException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

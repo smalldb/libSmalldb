@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * Something is wrong with current transition.
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class TransitionException extends \DomainException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

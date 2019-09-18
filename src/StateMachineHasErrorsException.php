@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * State machine has errors
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class StateMachineHasErrorsException extends \RuntimeException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

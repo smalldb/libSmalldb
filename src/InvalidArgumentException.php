@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * Wrong data passed to state machine.
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class InvalidArgumentException extends \InvalidArgumentException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

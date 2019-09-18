@@ -20,9 +20,14 @@
 namespace Smalldb\StateMachine\Graph;
 
 use Smalldb\StateMachine\InvalidArgumentException;
+use Throwable;
 
 
 class DuplicateElementException extends InvalidArgumentException
 {
 	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }

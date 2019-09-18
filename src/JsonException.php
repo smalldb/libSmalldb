@@ -18,8 +18,15 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 class JsonException extends \InvalidArgumentException
 {
-	// Nothing here.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 

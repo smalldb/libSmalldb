@@ -18,13 +18,19 @@
 
 namespace Smalldb\StateMachine;
 
+use Throwable;
+
+
 /**
  * Unknown filters detected when creating filters
- *
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
 class UnknownFiltersException extends \InvalidArgumentException
 {
-	// Empty.
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		parent::__construct($message, $code, $previous);
+	}
 }
 
