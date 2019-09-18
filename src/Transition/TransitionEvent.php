@@ -133,9 +133,7 @@ class TransitionEvent
 	public function onNewId(callable $callback): Hook
 	{
 		$hook = $this->onNewIdHook ?? ($this->onNewIdHook = new Hook());
-		if ($callback) {
-			$hook->addListener($callback);
-		}
+		$hook->addListener($callback);
 		return $hook;
 	}
 

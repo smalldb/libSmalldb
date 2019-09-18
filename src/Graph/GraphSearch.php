@@ -104,7 +104,7 @@ class GraphSearch
 	 *
 	 * @param callable $callback function(Node $current_node)
 	 */
-	public function onNode(callable $callback): self
+	public function onNode(?callable $callback): self
 	{
 		$this->processNodeCb = $callback ? : $this->processNodeCbDefault;
 		return $this;
@@ -118,7 +118,7 @@ class GraphSearch
 	 *
 	 * @param callable $callback function(Node $current_node, Edge $edge, Node $next_node, bool $next_node_seen)
 	 */
-	public function onEdge(callable $callback): self
+	public function onEdge(?callable $callback): self
 	{
 		$this->checkEdgeCb = $callback ? : $this->checkEdgeCb;
 		return $this;

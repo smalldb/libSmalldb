@@ -39,14 +39,14 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	/** @var Smalldb */
 	private $smalldb;
 
-	/** @var string */
-	private $refClass;
+	/** @var string|null */
+	private $refClass = null;
 
 	/** @var ArrayDaoTables */
 	private $dao;
 
-	/** @var SmalldbProviderInterface */
-	private $machineProvider;
+	/** @var SmalldbProviderInterface|null */
+	private $machineProvider = null;
 
 	/** @var DaoDataSource */
 	private $dataSource;

@@ -37,7 +37,7 @@ class SmalldbClassGenerator
 	/** @var string[] */
 	private $classFiles = [];
 
-	/** @var ReferenceClassGenerator */
+	/** @var ReferenceClassGenerator|null */
 	private $referenceClassGenerator = null;
 
 

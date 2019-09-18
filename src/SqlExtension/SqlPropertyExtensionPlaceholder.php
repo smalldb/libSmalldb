@@ -48,7 +48,7 @@ class SqlPropertyExtensionPlaceholder implements ExtensionPlaceholderInterface
 
 	public function buildExtension(): ?ExtensionInterface
 	{
-		if ($this->sqlColumn !== null || $this->isId) {
+		if ($this->sqlColumn !== null) {
 			return new SqlPropertyExtension($this->sqlColumn, $this->isId);
 		} else if ($this->sqlSelect !== null) {
 			return new SqlCalculatedPropertyExtension($this->sqlSelect);

@@ -77,6 +77,9 @@ class GrafovatkoExporter
 	{
 		$jsonObject = $this->export();
 		$jsonString = json_encode($jsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
+		if ($jsonString === false) {
+			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
+		}
 		return $jsonString;
 	}
 
@@ -84,13 +87,8 @@ class GrafovatkoExporter
 	public function exportJsonFile(string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
 	{
 		$jsonString = $this->exportJsonString($jsonOptions);
-
-		if ($jsonString !== false) {
-			if (!file_put_contents($targetFileName, $jsonString)) {
-				throw new \RuntimeException('Failed to write graph.');
-			}
-		} else {
-			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
+		if (!file_put_contents($targetFileName, $jsonString)) {
+			throw new \RuntimeException('Failed to write graph.');
 		}
 	}
 
@@ -98,9 +96,6 @@ class GrafovatkoExporter
 	public function exportSvgElement(array $attrs = []): string
 	{
 		$jsonString = $this->exportJsonString(JSON_HEX_APOS | JSON_HEX_AMP);
-		if ($jsonString === false) {
-			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
-		}
 
 		$attrsHtml = "";
 		foreach ($attrs as $attr => $value) {

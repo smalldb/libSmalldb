@@ -52,7 +52,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			'slug' => $data->getSlug(),
 			'summary' => $data->getSummary(),
 			'content' => $data->getContent(),
-			'publishedAt' => $data->getPublishedAt()->format(DATE_ISO8601),
+			'publishedAt' => ($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null,
 		]);
 
 		if ($id === null) {
@@ -92,7 +92,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			'slug' => $data->getSlug(),
 			'summary' => $data->getSummary(),
 			'content' => $data->getContent(),
-			'publishedAt' => $data->getPublishedAt()->format(DATE_ISO8601),
+			'publishedAt' => ($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null,
 		]);
 
 		if ($oldId != $newId) {

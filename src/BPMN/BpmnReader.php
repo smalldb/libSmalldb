@@ -38,8 +38,8 @@ use Smalldb\StateMachine\RuntimeException;
  */
 class BpmnReader
 {
-	/** @var Graph|null */
-	private $bpmnGraph = null;
+	/** @var Graph */
+	private $bpmnGraph;
 
 	/** @var string|null */
 	private $bpmnFileName = null;
@@ -349,10 +349,12 @@ class BpmnReader
 			}
 		}
 
-		$errorNodeId = '_error_'.md5($message).'_'.count($errors);
-		$errorNode = $errorGraph->createNode($errorNodeId, ['label' => $message, 'type' => 'error']);
-		foreach ($nodes as $node) {
-			$errorGraph->createEdge(null, $errorNode, $node, ['type' => 'error']);
+		if ($errorGraph) {
+			$errorNodeId = '_error_' . md5($message) . '_' . count($errors);
+			$errorNode = $errorGraph->createNode($errorNodeId, ['label' => $message, 'type' => 'error']);
+			foreach ($nodes as $node) {
+				$errorGraph->createEdge(null, $errorNode, $node, ['type' => 'error']);
+			}
 		}
 	}
 
@@ -378,10 +380,6 @@ class BpmnReader
 		$this->logTimeStart('start');
 
 		$errors = [];
-
-		if (!$this->bpmnGraph) {
-			throw new \LogicException('BPMN graph is not loaded yet.');
-		}
 
 		// Index node and edge type
 		$this->bpmnGraph->indexNodeAttr('type');
@@ -550,6 +548,9 @@ class BpmnReader
 					}
 
 					if ($rewriteGraph && $rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
+						if ($invoking_arrow === null) {
+							throw new \LogicException("Missing invoking arrow. This should not happen.");
+						}
 						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
 
@@ -863,9 +864,9 @@ class BpmnReader
 			$builder->addState($state);
 		}
 		foreach ($actions as $action_name => $action_transitions) {
-			$builder->addAction($action_name);
+			$builder->addAction((string) $action_name);
 			foreach ($action_transitions as $source_state => $target_states) {
-				$builder->addTransition($action_name, $source_state, $target_states);
+				$builder->addTransition((string) $action_name, (string) $source_state, $target_states);
 			}
 		}
 		$this->logTime('4-def');

@@ -20,8 +20,6 @@ namespace Smalldb\StateMachine\Provider;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
-use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
@@ -39,7 +37,7 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 	/** @var string|null */
 	private $machineType;
 
-	/** @var string|null */
+	/** @var string */
 	private $referenceClass;
 
 	/** @var SmalldbDefinitionBagInterface|null */

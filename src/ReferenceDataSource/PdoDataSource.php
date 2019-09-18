@@ -31,7 +31,7 @@ class PdoDataSource implements ReferenceDataSourceInterface
 	/** @var PDOStatement */
 	private $loadDataStmt;
 
-	/** @var callable */
+	/** @var callable|null */
 	private $onQueryCallback = null;
 
 
@@ -72,7 +72,7 @@ class PdoDataSource implements ReferenceDataSourceInterface
 
 		$state = $stmt->fetchColumn(0);
 		$stmt->closeCursor();
-		return $state === false ? '' : $state;
+		return $state === false || $state === null ? '' : $state;
 	}
 
 

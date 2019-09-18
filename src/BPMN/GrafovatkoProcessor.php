@@ -42,7 +42,7 @@ class GrafovatkoProcessor implements ProcessorInterface
 				'sortNodes' => true,
 			];
 		} else if ($parentNodeType === 'participant') {
-			if ($graph->getParentNode()->getAttr('_is_state_machine', false)) {
+			if ($parentNode->getAttr('_is_state_machine', false)) {
 				$exportedGraph['layout'] = 'row';
 				$exportedGraph['layoutOptions'] = [
 					'sortNodes' => 'attr',

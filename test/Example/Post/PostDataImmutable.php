@@ -34,7 +34,7 @@ class PostDataImmutable
 	use CopyConstructorTrait;
 
 	/**
-	 * @var int
+	 * @var int|null
 	 * @SQL\Id
 	 */
 	protected $id;

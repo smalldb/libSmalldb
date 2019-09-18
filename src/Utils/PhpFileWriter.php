@@ -166,7 +166,7 @@ class PhpFileWriter
 
 	public function getIdentifier(string $name, string $suffix = null): string
 	{
-		$identifier = preg_replace('/[^a-zA-Z0-9]/', '_', $name . ($suffix === null ? '' : '_' . $suffix));
+		$identifier = (string) preg_replace('/[^a-zA-Z0-9]/', '_', $name . ($suffix === null ? '' : '_' . $suffix));
 
 		if (isset($this->usedIdentifiersCounter[$identifier])) {
 			$identifier .= '_' . ($this->usedIdentifiersCounter[$identifier]++);

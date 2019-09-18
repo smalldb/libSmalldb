@@ -70,7 +70,11 @@ class AnnotationReader
 
 	private function processClassReflection(ReflectionClass $reflectionClass): void
 	{
-		$this->classFileName = $reflectionClass->getFileName();
+		$filename = $reflectionClass->getFileName();
+		if ($filename === false) {
+			throw new InvalidArgumentException("Cannot process PHP core or extension class: " . $reflectionClass->getName());  //@codeCoverageIgnore
+		}
+		$this->classFileName = $filename;
 		$this->baseDir = dirname($this->classFileName);
 		$this->builder->setReferenceClass($reflectionClass->getName());
 
@@ -176,8 +180,7 @@ class AnnotationReader
 		// TODO: When PHP 7.4 comes, use property typehint first.
 		$getterName = 'get' . ucfirst($name);
 		$classReflection = $reflectionProperty->getDeclaringClass();
-		if ($classReflection->hasMethod($getterName)) {
-			$type = $classReflection->getMethod($getterName)->getReturnType();
+		if ($classReflection->hasMethod($getterName) && ($type = $classReflection->getMethod($getterName)->getReturnType())) {
 			$placeholder = $this->builder->addProperty($name, $type->getName(), $type->allowsNull());
 		} else {
 			$placeholder = $this->builder->addProperty($name);

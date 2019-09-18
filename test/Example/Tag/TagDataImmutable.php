@@ -25,7 +25,7 @@ class TagDataImmutable
 {
 	use CopyConstructorTrait;
 
-	/** @var int */
+	/** @var int|null */
 	protected $id;
 
 	/** @var string */

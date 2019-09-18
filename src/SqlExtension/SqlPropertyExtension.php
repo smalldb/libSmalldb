@@ -26,21 +26,21 @@ class SqlPropertyExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string|null */
+	/** @var string */
 	private $sqlColumn;
 
 	/** @var bool */
 	private $isId;
 
 
-	public function __construct(?string $sqlColumn = null, bool $isId = false)
+	public function __construct(string $sqlColumn, bool $isId = false)
 	{
 		$this->sqlColumn = $sqlColumn;
 		$this->isId = $isId;
 	}
 
 
-	public function getSqlColumn(): ?string
+	public function getSqlColumn(): string
 	{
 		return $this->sqlColumn;
 	}

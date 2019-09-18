@@ -49,6 +49,9 @@ class SymfonyDemoDatabaseFactory
 		}
 
 		$sqlQueries = file_get_contents($sqlFile);
+		if ($sqlQueries === false) {
+			throw new \RuntimeException("Failed to read database SQL file: $sqlFile");
+		}
 		try {
 			$conn->exec($sqlQueries);
 		}

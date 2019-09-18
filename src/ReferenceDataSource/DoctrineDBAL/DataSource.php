@@ -19,8 +19,10 @@
 namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\ReferenceDataSource\LogicException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -33,16 +35,16 @@ class DataSource implements ReferenceDataSourceInterface
 	/** @var Smalldb */
 	protected $smalldb;
 
-	/** @var SmalldbProviderInterface|null */
-	protected $machineProvider = null;
+	/** @var SmalldbProviderInterface */
+	protected $machineProvider;
 
 	/** @var string */
-	protected $refClass = null;
+	protected $refClass;
 
 	/** @var Connection */
 	private $db;
 
-	/** @var callable */
+	/** @var callable|null */
 	private $onQueryCallback = null;
 
 
@@ -98,8 +100,12 @@ class DataSource implements ReferenceDataSourceInterface
 		}
 
 		$stmt = $q->execute();
-		$state = $stmt->fetchColumn();
-		return $state !== false ? (string) $state : '';
+		if ($stmt instanceof Statement) {
+			$state = $stmt->fetchColumn();
+			return $state !== false ? (string)$state : '';
+		} else {
+			throw new LogicException("State select does not return a result set.");
+		}
 	}
 
 
@@ -117,7 +123,11 @@ class DataSource implements ReferenceDataSourceInterface
 		}
 
 		$stmt = $q->execute();
-		$data = $stmt->fetch(FetchMode::ASSOCIATIVE);
+		if ($stmt instanceof Statement) {
+			$data = $stmt->fetch(FetchMode::ASSOCIATIVE);
+		} else {
+			throw new LogicException("Load data select does not return a result set.");
+		}
 
 		$state = $data['state'] ?? null;
 		if (empty($data) || $state === '') {
@@ -125,7 +135,7 @@ class DataSource implements ReferenceDataSourceInterface
 			throw new NotExistsException('Cannot load data in the Not Exists state.');
 		}
 		return $data;
-	}
+}
 
 
 	/**
