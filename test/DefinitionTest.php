@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -154,8 +154,15 @@ class DefinitionTest extends TestCase
 		$this->assertInstanceOf(StateMachineNode::class, $end);
 		$this->assertNotEquals($begin, $end);
 
-		$this->assertInstanceOf(StateMachineNode::class,
-			$g->getNodeByState($stateMachine->getState('Exists'), StateMachineNode::SOURCE));
+		$this->assertTrue($begin->isSourceNode());
+		$this->assertFalse($begin->isTargetNode());
+		$this->assertFalse($end->isSourceNode());
+		$this->assertTrue($end->isTargetNode());
+
+		$existsNode = $g->getNodeByState($stateMachine->getState('Exists'), StateMachineNode::SOURCE);
+		$this->assertInstanceOf(StateMachineNode::class, $existsNode);
+		$this->assertTrue($existsNode->isSourceNode());
+		$this->assertTrue($existsNode->isTargetNode());
 
 		$this->assertContainsOnlyInstancesOf(StateMachineEdge::class,
 			$g->getEdgesByTransition($stateMachine->getTransition('create', '')));
