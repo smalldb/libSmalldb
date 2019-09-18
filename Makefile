@@ -4,7 +4,7 @@ test: test-example ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox
 
 test-coverage: test-example ./vendor/bin/phpunit
-	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage
+	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage --coverage-php test/output/coverage/coverage.php
 	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'
 
 benchmark: test-example ./vendor/bin/phpunit
@@ -16,8 +16,11 @@ test-example:
 ./vendor/bin/phpunit:
 	composer install --dev
 
-analyze: ./vendor/bin/phpstan
-	./vendor/bin/phpstan analyse -l 0 src/ test/[A-Z]*
+analyze: ./vendor/bin/phpstan test/output/covered-files.list
+	./vendor/bin/phpstan analyse -l 0 --paths-file=test/output/covered-files.list
+
+test/output/covered-files.list: ./test/covered-files.php test/output/coverage/coverage.php
+	./test/covered-files.php > test/output/covered-files.list
 
 ./vendor/bin/phpstan:
 	composer install --dev
