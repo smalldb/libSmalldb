@@ -137,7 +137,7 @@ class BpmnReader
 		$dom->load($bpmnFileName);
 
 		// Prepare XPath query engine
-		$xpath = new \DOMXpath($dom);
+		$xpath = new \DOMXPath($dom);
 		$xpath->registerNameSpace('bpmn', 'http://www.omg.org/spec/BPMN/20100524/MODEL');
 
 		// Create the Graph
@@ -659,7 +659,7 @@ class BpmnReader
 
 			GraphSearch::DFS($this->bpmnGraph)
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
-					use ($state_machine_process_id, $receiving_node_id, $receiving_node, & $next_invoking_nodes)
+					use ($state_machine_process_id, $receiving_node_id, & $next_invoking_nodes)
 				{
 					// Don't follow message flows. Don't enter state machine participant.
 					if ($edge['type'] == 'messageFlow' || $next_node['process'] == $state_machine_process_id) {
@@ -685,7 +685,7 @@ class BpmnReader
 			GraphSearch::DFS($this->bpmnGraph)
 				->runBackward()
 				->onEdge(function(Node $cur_node, Edge $edge, Node $next_node, bool $seen)
-					use ($receiving_node_id, $receiving_node, & $next_invoking_nodes, & $next_annotations)
+					use ($receiving_node_id, & $next_annotations)
 				{
 					if (!isset($edge['_state_from'][$receiving_node_id]) || $edge['_state_from'][$receiving_node_id] !== false) {
 						// Visit only what we visited on the forward run
