@@ -19,12 +19,18 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
+use Smalldb\StateMachine\Definition\Builder\DuplicatePropertyException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateStateException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateTransitionException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\DefinitionError;
+use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
+use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\Post\PostRepository;
+use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
 
 
 class DefinitionBuilderTest extends TestCase
@@ -87,6 +93,44 @@ class DefinitionBuilderTest extends TestCase
 	}
 
 
+	public function testDefinitionClasses()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('Foo');
+		$this->assertEquals('Foo', $builder->getMachineType());
+
+		$builder->setReferenceClass(Post::class);
+		$this->assertEquals(Post::class, $builder->getReferenceClass());
+
+		$builder->setTransitionsClass(PostTransitions::class);
+		$this->assertEquals(PostTransitions::class, $builder->getTransitionsClass());
+
+		$builder->setRepositoryClass(PostRepository::class);
+		$this->assertEquals(PostRepository::class, $builder->getRepositoryClass());
+	}
+
+
+	public function testErrors()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('Foo');
+
+		$this->assertFalse($builder->hasErrors());
+
+		$errMessage = "Foo is broken.";
+		$error = new DefinitionError($errMessage);
+		$builder->addError($error);
+
+		$this->assertTrue($builder->hasErrors());
+		$this->assertEquals([$error], $builder->getErrors());
+		$this->assertEquals($errMessage, $error->getMessage());
+
+		$definition = $builder->build();
+		$builtErrors = $definition->getErrors();
+		$this->assertEquals([$error], $builtErrors);
+	}
+
+
 	public function testMissingMachineType()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -120,6 +164,42 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addTransition('a', 'A', ['B']);
 		$this->expectException(DuplicateTransitionException::class);
 		$builder->addTransition('a', 'A', ['C']);
+	}
+
+	public function testProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('Foo');
+		$foo = $builder->addProperty("foo", "string", true);
+		$bar = $builder->addProperty("bar", "int", false);
+
+		$this->assertEquals('string', $foo->type);
+		$this->assertTrue($foo->isNullable);
+
+		$this->assertEquals('int', $bar->type);
+		$this->assertFalse($bar->isNullable);
+		$definition = $builder->build();
+
+		$properties = $definition->getProperties();
+
+		$this->assertInstanceOf(PropertyDefinition::class, $properties['foo']);
+		$this->assertEquals('foo', $properties['foo']->getName());
+		$this->assertEquals('string', $properties['foo']->getType());
+		$this->assertTrue($properties['foo']->isNullable());
+
+		$this->assertInstanceOf(PropertyDefinition::class, $properties['bar']);
+		$this->assertEquals('bar', $properties['bar']->getName());
+		$this->assertEquals('int', $properties['bar']->getType());
+		$this->assertFalse($properties['bar']->isNullable());
+	}
+
+	public function testDuplicateProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+		$builder->addProperty('a');
+		$this->expectException(DuplicatePropertyException::class);
+		$builder->addProperty('a');
 	}
 
 	public function testMissingSourceState()

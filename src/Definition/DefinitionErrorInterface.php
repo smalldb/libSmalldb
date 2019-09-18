@@ -18,26 +18,11 @@
 
 namespace Smalldb\StateMachine\Definition;
 
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+use JsonSerializable;
 
 
-class DefinitionError implements DefinitionErrorInterface
+interface DefinitionErrorInterface extends JsonSerializable
 {
-	use SimpleJsonSerializableTrait;
-
-	/** @var string */
-	private $message;
-
-
-	public function __construct(string $message)
-	{
-		$this->message = $message;
-	}
-
-
-	public function getMessage(): string
-	{
-		return $this->message;
-	}
-
+	public function __construct(string $message);
+	public function getMessage(): string;
 }

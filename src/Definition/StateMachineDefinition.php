@@ -52,7 +52,7 @@ class StateMachineDefinition extends ExtensibleDefinition
 	/** @var PropertyDefinition[] */
 	private $properties;
 
-	/** @var DefinitionError[] */
+	/** @var DefinitionErrorInterface[] */
 	private $errors;
 
 	/** @var string|null */
@@ -73,7 +73,7 @@ class StateMachineDefinition extends ExtensibleDefinition
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
 	 * @param array $properties
-	 * @param DefinitionError[] $errors
+	 * @param DefinitionErrorInterface[] $errors
 	 * @param string|null $referenceClass
 	 * @param string|null $transitionsClass
 	 * @param string|null $repositoryClass
@@ -193,7 +193,7 @@ class StateMachineDefinition extends ExtensibleDefinition
 
 
 	/**
-	 * @return DefinitionError[]
+	 * @return DefinitionErrorInterface[]
 	 */
 	public function getErrors(): array
 	{

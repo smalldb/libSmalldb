@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 use Smalldb\StateMachine\Definition\ActionDefinition;
-use Smalldb\StateMachine\Definition\DefinitionError;
+use Smalldb\StateMachine\Definition\DefinitionErrorInterface;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
@@ -47,7 +47,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	/** @var string */
 	private $machineType;
 
-	/** @var DefinitionError[] */
+	/** @var DefinitionErrorInterface[] */
 	private $errors = [];
 
 	/** @var string|null */
@@ -216,20 +216,26 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
+	public function getMachineType(): string
+	{
+		return $this->machineType;
+	}
+
+
 	public function setMachineType(string $machineType)
 	{
 		$this->machineType = $machineType;
 	}
 
 
-	public function addError(string $errorMessage): DefinitionError
+	public function addError(DefinitionErrorInterface $error): void
 	{
-		return ($this->errors[] = new DefinitionError($errorMessage));
+		$this->errors[] = $error;
 	}
 
 
 	/**
-	 * @return DefinitionError[]
+	 * @return DefinitionErrorInterface[]
 	 */
 	public function getErrors(): array
 	{

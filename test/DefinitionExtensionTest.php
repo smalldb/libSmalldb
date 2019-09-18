@@ -62,7 +62,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testDefinitionExtension(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(ExtensionInterface::class);
+		$extMock = $this->createMock(ExtensionInterface::class);
 		$extClassName = get_class($extMock);
 
 		$extensions = [
@@ -88,7 +88,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testInvalidListOfExtensions(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(ExtensionInterface::class);
+		$extMock = $this->createMock(ExtensionInterface::class);
 
 		$extensions = [$extMock];  // Array not indexed properly.
 
@@ -102,7 +102,7 @@ class DefinitionExtensionTest extends TestCase
 	 */
 	public function testInvalidDefinitionExtension(callable $definitionFactory)
 	{
-		$extMock =  $this->createMock(ExtensionInterface::class);
+		$extMock = $this->createMock(ExtensionInterface::class);
 
 		$extensions = [
 			'Foo' => $extMock,
