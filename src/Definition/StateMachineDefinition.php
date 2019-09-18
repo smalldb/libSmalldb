@@ -155,8 +155,8 @@ class StateMachineDefinition extends ExtensibleDefinition
 
 
 	/**
-	 * @param string|ActionDefinition $actionName
-	 * @param string|StateDefinition $sourceStateName
+	 * @param string|ActionDefinition $action
+	 * @param string|StateDefinition $sourceState
 	 * @return TransitionDefinition
 	 */
 	public function getTransition($action, $sourceState): TransitionDefinition

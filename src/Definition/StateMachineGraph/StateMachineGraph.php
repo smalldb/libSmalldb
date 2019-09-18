@@ -49,8 +49,6 @@ class StateMachineGraph extends Graph
 		foreach ($stateMachine->getTransitions() as $transition) {
 			$this->createStateMachineEdges($transition);
 		}
-
-		return $this;
 	}
 
 

@@ -17,7 +17,7 @@ test-example:
 	composer install --dev
 
 analyze: ./vendor/bin/phpstan test/output/covered-files.list
-	./vendor/bin/phpstan analyse -l 0 --paths-file=test/output/covered-files.list
+	./vendor/bin/phpstan analyse -l 3 --paths-file=test/output/covered-files.list
 
 test/output/covered-files.list: ./test/covered-files.php test/output/coverage/coverage.php
 	./test/covered-files.php > test/output/covered-files.list

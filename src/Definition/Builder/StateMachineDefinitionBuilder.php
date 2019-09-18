@@ -229,7 +229,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 
 	/**
-	 * @return string[]
+	 * @return DefinitionError[]
 	 */
 	public function getErrors(): array
 	{

@@ -117,10 +117,6 @@ class Node extends AbstractElement
 
 	/**
 	 * Handle change of an attribute.
-	 *
-	 * @param string $key
-	 * @param $oldValue
-	 * @param $newValue
 	 */
 	protected function onAttrChanged(string $key, $oldValue, $newValue)
 	{

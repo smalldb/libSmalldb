@@ -44,7 +44,7 @@ class PostRepository implements SmalldbRepositoryInterface
 	/** @var Connection */
 	private $db;
 
-	/** @var \Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL\DataLoader */
+	/** @var DataSource */
 	private $postDataSource = null;
 
 	private $queryCount = 0;
@@ -137,6 +137,7 @@ class PostRepository implements SmalldbRepositoryInterface
 
 		$this->queryCount++;
 
+		/** @var Post[] $posts */
 		$posts = $result->fetchAll();
 		return $posts;
 	}

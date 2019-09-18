@@ -38,7 +38,7 @@ class PhpFileWriter
 	/** @var int[] */
 	private $usedAliasesCounter = [];
 
-	/** @var int[][] */
+	/** @var int[] */
 	private $usedIdentifiersCounter = [];
 
 	/** @var string[] */

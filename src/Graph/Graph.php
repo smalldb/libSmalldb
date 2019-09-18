@@ -26,6 +26,7 @@ class Graph extends NestedGraph
 	public function __construct()
 	{
 		parent::__construct(null);
+		$this->rootGraph = $this;
 
 		$this->nodeAttrIndex = new ElementAttrIndex(Node::class);
 		$this->edgeAttrIndex = new ElementAttrIndex(Edge::class);
@@ -66,7 +67,9 @@ class Graph extends NestedGraph
 	 */
 	public function getAllNodes(): array
 	{
-		return $this->nodeAttrIndex->getAllElements();
+		/** @var Node[] $nodes */
+		$nodes = $this->nodeAttrIndex->getAllElements();
+		return $nodes;
 	}
 
 
@@ -77,7 +80,9 @@ class Graph extends NestedGraph
 	 */
 	public function getAllEdges(): array
 	{
-		return $this->edgeAttrIndex->getAllElements();
+		/** @var Edge[] $edges */
+		$edges = $this->edgeAttrIndex->getAllElements();
+		return $edges;
 	}
 
 

@@ -45,7 +45,7 @@ class NestedGraph
 	 *
 	 * @var Graph
 	 */
-	protected $rootGraph;
+	protected $rootGraph = null;
 
 	/**
 	 * Node index
@@ -72,8 +72,6 @@ class NestedGraph
 			$this->rootGraph = $this->parentNode->getGraph()->getRootGraph();
 			$this->nodeAttrIndex = $this->rootGraph->nodeAttrIndex;
 			$this->edgeAttrIndex = $this->rootGraph->edgeAttrIndex;
-		} else {
-			$this->rootGraph = $this;
 		}
 	}
 

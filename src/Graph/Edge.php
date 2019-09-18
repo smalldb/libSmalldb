@@ -102,18 +102,14 @@ class Edge extends AbstractElement
 		if ($this->start !== $this->end) {
 			$this->end->disconnectEdge($this);
 		}
-		$this->start = null;
-		$this->end = null;
+		//$this->start = null;
+		//$this->end = null;
 		return $this;
 	}
 
 
 	/**
 	 * Handle change of an attribute.
-	 *
-	 * @param string $key
-	 * @param $oldValue
-	 * @param $newValue
 	 */
 	protected function onAttrChanged(string $key, $oldValue, $newValue)
 	{
