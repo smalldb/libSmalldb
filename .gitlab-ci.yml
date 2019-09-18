@@ -31,11 +31,3 @@ tests:
         script:
                 - 'make test'
 
-analyze:
-        stage: post-deploy
-        only:
-                - tags
-                - master
-        script:
-                - 'make analyze'
-

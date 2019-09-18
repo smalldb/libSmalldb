@@ -19,6 +19,8 @@ test-example:
 analyze: ./vendor/bin/phpstan test/output/covered-files.list
 	./vendor/bin/phpstan analyse -l 7 -c phpstan.neon --paths-file=test/output/covered-files.list
 
+test/output/coverage/coverage.php: test-coverage
+
 test/output/covered-files.list: ./test/covered-files.php test/output/coverage/coverage.php
 	./test/covered-files.php > test/output/covered-files.list
 
