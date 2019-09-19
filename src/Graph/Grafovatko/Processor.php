@@ -25,7 +25,10 @@ use Smalldb\StateMachine\Graph\NestedGraph;
 use Smalldb\StateMachine\Graph\Node;
 
 
-abstract class Processor implements ProcessorInterface
+/**
+ * A dummy graph processor which implements no-op on everything.
+ */
+class Processor implements ProcessorInterface
 {
 
 	/**
@@ -33,7 +36,7 @@ abstract class Processor implements ProcessorInterface
 	 */
 	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
 	{
-		return $exportedGraph;
+		return $exportedGraph;  // @codeCoverageIgnore
 	}
 
 	/**
@@ -41,7 +44,7 @@ abstract class Processor implements ProcessorInterface
 	 */
 	public function processNodeAttrs(Node $node, array $exportedNode, string $prefix): array
 	{
-		return $exportedNode;
+		return $exportedNode;  // @codeCoverageIgnore
 	}
 
 	/**
@@ -49,7 +52,7 @@ abstract class Processor implements ProcessorInterface
 	 */
 	public function processEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix): array
 	{
-		return $exportedEdge;
+		return $exportedEdge;  // @codeCoverageIgnore
 	}
 
 	/**
@@ -57,6 +60,6 @@ abstract class Processor implements ProcessorInterface
 	 */
 	public function getExtraSvgElements(Graph $graph, $prefix): array
 	{
-		return [];
+		return [];  // @codeCoverageIgnore
 	}
 }

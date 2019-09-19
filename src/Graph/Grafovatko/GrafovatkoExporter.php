@@ -78,18 +78,9 @@ class GrafovatkoExporter
 		$jsonObject = $this->export();
 		$jsonString = json_encode($jsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
 		if ($jsonString === false) {
-			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());
+			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());  // @codeCoverageIgnore
 		}
 		return $jsonString;
-	}
-
-
-	public function exportJsonFile(string $targetFileName, int $jsonOptions = JSON_PRETTY_PRINT): void
-	{
-		$jsonString = $this->exportJsonString($jsonOptions);
-		if (!file_put_contents($targetFileName, $jsonString)) {
-			throw new \RuntimeException('Failed to write graph.');
-		}
 	}
 
 
@@ -122,7 +113,7 @@ class GrafovatkoExporter
 			<html>
 			<head>
 				<title>$titleHtml</title>
-				<meta charset="UTF-8">
+				<meta charset="UTF-8" />
 				<style type="text/css">
 					html, body {
 						display: flex;
@@ -145,10 +136,11 @@ class GrafovatkoExporter
 					window.graphView = new G.GraphView('#graph');
 				</script>
 			</body>
+			</html>
 			EOF;
 
 		if (!file_put_contents($targetFileName, $html)) {
-			throw new \RuntimeException('Failed to write graph.');
+			throw new \RuntimeException('Failed to write graph.');  //@codeCoverageIgnore
 		}
 	}
 
@@ -196,8 +188,13 @@ class GrafovatkoExporter
 	/**
 	 * Debug: Dump plain text representation of the graph hierarchy
 	 */
-	public function dumpNodeTree(NestedGraph $graph, $indent = "", $withEdges = true)
+	public function dumpNodeTree(NestedGraph $graph = null, $indent = "", $withEdges = true): void
 	{
+		if ($graph === null) {
+			$this->dumpNodeTree($this->graph);
+			return;
+		}
+
 		if ($withEdges) {
 			foreach ($graph->getEdges() as $edge) {
 				echo $indent, "- ", $edge->getId(), ' (', $edge->getStart()->getId(), ' -> ', $edge->getEnd()->getId(), ")\n";
