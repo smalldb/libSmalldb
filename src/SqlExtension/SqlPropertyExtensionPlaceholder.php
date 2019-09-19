@@ -53,7 +53,7 @@ class SqlPropertyExtensionPlaceholder implements ExtensionPlaceholderInterface
 		} else if ($this->sqlSelect !== null) {
 			return new SqlCalculatedPropertyExtension($this->sqlSelect);
 		} else {
-			return null;
+			return null;  // @codeCoverageIgnore
 		}
 	}
 

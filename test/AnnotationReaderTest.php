@@ -17,13 +17,18 @@
  */
 namespace Smalldb\StateMachine\Test;
 
-use Doctrine\Common\Annotations\AnnotationException;
+use Doctrine\Common\Annotations\AnnotationException as DoctrineAnnotationException;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use Smalldb\StateMachine\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
+use Smalldb\StateMachine\SqlExtension\Annotation\AnnotationException as SqlAnnotationException;
+use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations;
+use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations2;
+use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
+use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
@@ -52,7 +57,7 @@ class AnnotationReaderTest extends TestCase
 
 
 	/**
-	 * @throws AnnotationException
+	 * @throws DoctrineAnnotationException
 	 * @throws ReflectionException
 	 */
 	public function testDeepReader()
@@ -70,7 +75,25 @@ class AnnotationReaderTest extends TestCase
 
 		$constant = $class->getReflectionConstant('FOO');
 		$this->assertAnnotations1to4($reader->getConstantAnnotations($constant));
+	}
 
+
+	/**
+	 * @dataProvider conflictingAnnotationClassesProvider
+	 */
+	public function testConflictingAnnotations(string $className)
+	{
+		$reader = new AnnotationReader($className);
+		$this->expectException(SqlAnnotationException::class);
+		$reader->getStateMachineDefinition();
+	}
+
+	public function conflictingAnnotationClassesProvider()
+	{
+		yield ConflictingAnnotations::class => [ConflictingAnnotations::class];
+		yield ConflictingAnnotations2::class => [ConflictingAnnotations2::class];
+		yield ConflictingAnnotationsWithId::class => [ConflictingAnnotationsWithId::class];
+		yield ConflictingAnnotationsWithId2::class => [ConflictingAnnotationsWithId2::class];
 	}
 
 }
