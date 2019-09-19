@@ -91,7 +91,7 @@ class ElementAttrIndex
 				$value = $element->getAttr($key);
 				$this->index[$key][$value][$id] = $element;
 			} else {
-				throw new \InvalidArgumentException("Indexed element must be instance of " . $this->elementClassName);
+				throw new \InvalidArgumentException("Indexed element must be instance of " . $this->elementClassName);  // @codeCoverageIgnore
 			}
 		}
 	}
@@ -103,13 +103,13 @@ class ElementAttrIndex
 	public function insertElement(AbstractElement $element)
 	{
 		if (!($element instanceof $this->elementClassName)) {
-			throw new \InvalidArgumentException("Indexed element must be instance of " . $this->elementClassName);
+			throw new \InvalidArgumentException("Indexed element must be instance of " . $this->elementClassName);  // @codeCoverageIgnore
 		}
 
 		$id = $element->getId();
 
 		if (isset($this->elements[$id])) {
-			throw new DuplicateElementException("Element \"$id\" already indexed.");
+			throw new DuplicateElementException("Element \"$id\" already indexed.");  // @codeCoverageIgnore
 		}
 
 		$this->elements[$id] = $element;
@@ -129,7 +129,7 @@ class ElementAttrIndex
 		$id = $element->getId();
 
 		if (!isset($this->elements[$id])) {
-			throw new MissingElementException("Element \"$id\" is not indexed.");
+			throw new MissingElementException("Element \"$id\" is not indexed.");  // @codeCoverageIgnore
 		}
 
 		unset($this->elements[$id]);
@@ -147,7 +147,7 @@ class ElementAttrIndex
 	public function update(string $key, $oldValue, $newValue, AbstractElement $element)
 	{
 		if (!isset($this->index[$key])) {
-			throw new MissingAttrIndexException("Attribute index \"$key\" is not defined.");
+			throw new MissingAttrIndexException("Attribute index \"$key\" is not defined.");  // @codeCoverageIgnore
 		}
 
 		$id = $element->getId();
@@ -155,7 +155,7 @@ class ElementAttrIndex
 		if (isset($this->index[$key][$oldValue][$id])) {
 			unset($this->index[$key][$oldValue][$id]);
 		} else {
-			throw new MissingElementException("Old value of \"$id\" is not indexed. Updating an uninitialized indexed attribute?");
+			throw new MissingElementException("Old value of \"$id\" is not indexed. Updating an uninitialized indexed attribute?");  // @codeCoverageIgnore
 		}
 
 		$this->index[$key][$newValue][$id] = $element;

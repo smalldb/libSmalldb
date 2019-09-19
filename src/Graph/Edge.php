@@ -40,11 +40,6 @@ class Edge extends AbstractElement
 		$this->end = $end;
 
 		$this->getGraph()->addEdge($this);
-
-		$this->start->connectEdge($this);
-		if ($this->start !== $this->end) {
-			$this->end->connectEdge($this);
-		}
 	}
 
 
@@ -102,8 +97,6 @@ class Edge extends AbstractElement
 		if ($this->start !== $this->end) {
 			$this->end->disconnectEdge($this);
 		}
-		//$this->start = null;
-		//$this->end = null;
 		return $this;
 	}
 

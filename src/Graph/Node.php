@@ -59,7 +59,7 @@ class Node extends AbstractElement
 	{
 		$id = $edge->getId();
 		if (isset($this->connectedEdges[$id])) {
-			throw new DuplicateEdgeException(sprintf("Edge \"%s\" already connected to node \"%s\".", $id, $this->getId()));
+			throw new DuplicateEdgeException(sprintf("Edge \"%s\" already connected to node \"%s\".", $id, $this->getId()));  //@codeCoverageIgnore
 		} else {
 			$this->connectedEdges[$id] = $edge;
 			return $this;
@@ -74,7 +74,7 @@ class Node extends AbstractElement
 			unset($this->connectedEdges[$id]);
 			return $this;
 		} else {
-			throw new MissingEdgeException(sprintf("Edge \"%s\" is not connected to node \"%s\".", $id, $this->getId()));
+			throw new MissingEdgeException(sprintf("Edge \"%s\" is not connected to node \"%s\".", $id, $this->getId()));  //@codeCoverageIgnore
 		}
 	}
 

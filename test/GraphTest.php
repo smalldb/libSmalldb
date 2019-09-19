@@ -18,13 +18,26 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\Graph\DuplicateAttrIndexException;
 use Smalldb\StateMachine\Graph\DuplicateEdgeException;
+use Smalldb\StateMachine\Graph\DuplicateNodeException;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\GraphSearch;
+use Smalldb\StateMachine\Graph\MissingAttrIndexException;
+use Smalldb\StateMachine\Graph\MissingEdgeException;
+use Smalldb\StateMachine\Graph\MissingElementException;
+use Smalldb\StateMachine\Graph\MissingNodeException;
 use Smalldb\StateMachine\Graph\Node;
 
+
+/**
+ * Graph Tests
+ *
+ * TODO: These tests do not cover manipulation with nested graphs.
+ *
+ */
 class GraphTest extends TestCase
 {
 	private function buildSimpleGraph(): Graph
@@ -54,12 +67,27 @@ class GraphTest extends TestCase
 		return $g;
 	}
 
+
+	private function assertNodes(array $expectedNodes, $graph): void
+	{
+		$this->assertEquals($expectedNodes, array_values($graph instanceof Graph ? $graph->getAllNodes() : $graph));
+	}
+
+
+	private function assertEdges(array $expectedEdges, $graph): void
+	{
+		$this->assertEquals($expectedEdges, array_values($graph instanceof Graph ? $graph->getAllEdges() : $graph));
+	}
+
+
 	public function testSimpleGraph()
 	{
 		$g = $this->buildSimpleGraph();
 		$this->assertInstanceOf(Graph::class, $g);
 		$this->assertEquals(5, count($g->getAllEdges()));
 		$this->assertEquals(6, count($g->getAllNodes()));
+
+		$this->assertSame($g, $g->getRootGraph());
 	}
 
 	/**
@@ -163,10 +191,19 @@ class GraphTest extends TestCase
 	}
 
 
+	public function testDuplicateNode()
+	{
+		$g = new Graph();
+		$g->createNode('A');
+
+		$this->expectException(DuplicateNodeException::class);
+		$g->createNode('A');
+	}
+
+
 	public function testDuplicateEdge()
 	{
 		$g = new Graph();
-
 		$a = $g->createNode('A');
 		$b = $g->createNode('B');
 		$c = $g->createNode('C');
@@ -174,6 +211,75 @@ class GraphTest extends TestCase
 		$g->createEdge('e1', $a, $b);
 		$this->expectException(DuplicateEdgeException::class);
 		$g->createEdge('e1', $b, $c);
+	}
+
+
+	public function testDuplicateNodeAttrIndex()
+	{
+		$g = new Graph();
+		$g->indexNodeAttr('foo');
+
+		$this->expectException(DuplicateAttrIndexException::class);
+		$g->indexNodeAttr('foo');
+	}
+
+
+	public function testDuplicateEdgeAttrIndex()
+	{
+		$g = new Graph();
+		$g->indexEdgeAttr('foo');
+
+		$this->expectException(DuplicateAttrIndexException::class);
+		$g->indexEdgeAttr('foo');
+	}
+
+
+	public function testChangeIndexedAttr()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A', ['foo' => 1]);
+		$b = $g->createNode('B', ['foo' => 1]);
+		$c = $g->createNode('C', ['foo' => 2]);
+		$e1 = $g->createEdge(null, $a, $b, ['bar' => 1]);
+		$e2 = $g->createEdge(null, $b, $c, ['bar' => 1]);
+
+		$g->indexNodeAttr('foo');
+		$this->assertCount(2, $g->getNodesByAttr('foo', 1));
+
+		$b->setAttr('foo', 2);
+		$this->assertCount(1, $g->getNodesByAttr('foo', 1));
+		$this->assertCount(2, $g->getNodesByAttr('foo', 2));
+
+		$g->indexEdgeAttr('bar');
+		$this->assertCount(0, $g->getEdgesByAttr('bar', 2));
+
+		$e2->setAttr('bar', 2);
+		$this->assertCount(1, $g->getEdgesByAttr('bar', 2));
+	}
+
+
+	public function testMagicAttr()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B', ['foo' => 1]);
+		$c = $g->createNode('C', ['foo' => 2]);
+		$g->indexNodeAttr('foo');
+		$this->assertCount(1, $g->getNodesByAttr('foo', 2));
+
+		$this->assertFalse(isset($a['foo']));
+		$this->assertTrue(isset($b['foo']));
+		$this->assertEquals(1, $b['foo']);
+
+		$a['foo'] = 2;
+
+		$this->assertTrue(isset($a['foo']));
+
+		$this->assertCount(2, $g->getNodesByAttr('foo', 2));
+
+		unset($a['foo']);
+
+		$this->assertCount(1, $g->getNodesByAttr('foo', 2));
 	}
 
 
@@ -190,6 +296,205 @@ class GraphTest extends TestCase
 		$this->assertEquals(count($g->getAllNodes()), count($jsonObject['nodes']));
 		$this->assertEquals(count($g->getAllEdges()), count($jsonObject['edges']));
 
+	}
+
+
+	public function testGetNode()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$g->createEdge(null, $a, $b);
+
+		$this->assertSame($a, $g->getNode('A'));
+
+		$this->expectException(MissingElementException::class);
+		$g->getNode('X');
+	}
+
+
+	public function testGetNodeById()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$g->createEdge(null, $a, $b);
+
+		$this->assertSame($a, $g->getNodeById('A'));
+
+		$this->expectException(MissingElementException::class);
+		$g->getNodeById('X');
+	}
+
+
+	public function testGetEdge()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$e1 = $g->createEdge('e1', $a, $b);
+
+		$this->assertSame($e1, $g->getEdge('e1'));
+
+		$this->expectException(MissingElementException::class);
+		$g->getEdge('e2');
+	}
+
+	public function testGetEdgeById()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$e1 = $g->createEdge('e1', $a, $b);
+
+		$this->assertSame($e1, $g->getEdgeById('e1'));
+
+		$this->expectException(MissingElementException::class);
+		$g->getEdgeById('e2');
+	}
+
+
+	public function testGetNodesByAttr()
+	{
+		$g = new Graph();
+		$g->indexNodeAttr('foo');
+		$a = $g->createNode('A', ['foo' => 1]);
+		$b = $g->createNode('B', ['foo' => 2]);
+
+		$this->assertNodes([$a], $g->getNodesByAttr('foo', 1));
+		$this->assertEdges([$b], $g->getNodesByAttr('foo', 2));
+
+		$this->expectException(MissingAttrIndexException::class);
+		$g->getNodesByAttr('bar', 1);
+	}
+
+
+	public function testGetEdgeByAttr()
+	{
+		$g = new Graph();
+		$g->indexEdgeAttr('foo');
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$e1 = $g->createEdge('e1', $a, $b, ['foo' => 1]);
+		$e2 = $g->createEdge('e2', $b, $a, ['foo' => 2]);
+
+		$this->assertEdges([$e1], $g->getEdgesByAttr('foo', 1));
+		$this->assertEdges([$e2], $g->getEdgesByAttr('foo', 2));
+
+		$this->expectException(MissingAttrIndexException::class);
+		$g->getEdgesByAttr('bar', 1);
+	}
+
+
+	public function testNodeRemove()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A', ['foo' => 1]);
+		$b = $g->createNode('B', ['foo' => 2]);
+		$c = $g->createNode('C', ['foo' => 2]);
+		$e1 = $g->createEdge(null, $a, $b);
+		$e2 = $g->createEdge(null, $a, $c);
+		$e3 = $g->createEdge(null, $b, $c);
+		$g->indexNodeAttr('foo');
+
+		$this->assertCount(3, $g->getAllNodes());
+		$this->assertCount(3, $g->getAllEdges());
+		$this->assertCount(2, $g->getNodesByAttr('foo', 2));
+
+		$c->remove();
+
+		$this->assertEdges([$e1], $g);
+		$this->assertNodes([$a, $b], $g);
+		$this->assertCount(1, $g->getNodesByAttr('foo', 2));
+
+		$this->assertEmpty($c->getConnectedEdges());
+
+		$g2 = new Graph();
+		$x = $g2->createNode('X');
+		$this->expectException(MissingNodeException::class);
+		$g->removeNode($x);
+	}
+
+
+	public function testEdgeRemove()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$c = $g->createNode('C');
+		$e1 = $g->createEdge(null, $a, $b);
+		$e2 = $g->createEdge(null, $a, $c);
+		$e3 = $g->createEdge(null, $b, $c);
+		$e4 = $g->createEdge(null, $c, $c);
+
+		$this->assertCount(3, $g->getAllNodes());
+		$this->assertCount(4, $g->getAllEdges());
+
+		$g->removeEdge($e2);
+
+		$this->assertEdges([$e1, $e3, $e4], $g);
+		$this->assertNodes([$a, $b, $c], $g);
+
+		$g->removeEdge($e3);
+
+		$this->assertEdges([$e1, $e4], $g);
+		$this->assertNodes([$a, $b, $c], $g);
+		$this->assertEdges([$e4], $c->getConnectedEdges());
+
+		$g->removeEdge($e4);
+
+		$this->assertEmpty($c->getConnectedEdges());
+
+		$g2 = new Graph();
+		$ee = $g2->createEdge('non-existent-edge', $g2->createNode('X'), $g2->createNode('Y'));
+		$this->expectException(MissingEdgeException::class);
+		$g->removeEdge($ee);
+	}
+
+
+	public function testReturnEdge()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$e1 = $g->createEdge(null, $a, $b);
+
+		$this->assertEdges([$e1], $a->getConnectedEdges());
+		$this->assertEdges([$e1], $b->getConnectedEdges());
+
+		$g->removeEdge($e1);
+
+		$this->assertEmpty($a->getConnectedEdges());
+		$this->assertEmpty($b->getConnectedEdges());
+
+		$g->addEdge($e1);
+
+		$this->assertEdges([$e1], $a->getConnectedEdges());
+		$this->assertEdges([$e1], $b->getConnectedEdges());
+	}
+
+
+	public function testReconnectEdge()
+	{
+		$g = new Graph();
+		$a = $g->createNode('A');
+		$b = $g->createNode('B');
+		$c = $g->createNode('C');
+		$d = $g->createNode('D');
+		$e1 = $g->createEdge(null, $a, $b);
+
+		$this->assertEdges([$e1], $a->getConnectedEdges());
+		$this->assertEdges([$e1], $b->getConnectedEdges());
+		$this->assertEmpty($c->getConnectedEdges());
+		$this->assertEmpty($d->getConnectedEdges());
+
+		$e1->setStart($c);
+		$e1->setEnd($d);
+
+		$this->assertEmpty($a->getConnectedEdges());
+		$this->assertEmpty($b->getConnectedEdges());
+		$this->assertEdges([$e1], $c->getConnectedEdges());
+		$this->assertEdges([$e1], $d->getConnectedEdges());
 	}
 
 }

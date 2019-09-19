@@ -174,7 +174,7 @@ class NestedGraph
 			$this->nodeAttrIndex->removeElement($node);
 			return $this;
 		} else {
-			throw new MissingEdgeException(sprintf("Node \"%s\" not found in the graph.", $id));
+			throw new MissingNodeException(sprintf("Node \"%s\" not found in the graph.", $id));
 		}
 	}
 
@@ -208,9 +208,17 @@ class NestedGraph
 	public function addEdge(Edge $edge): self
 	{
 		$id = $edge->getId();
+		$start = $edge->getStart();
+		$end = $edge->getEnd();
 
 		if (isset($this->rootGraph->edges[$id])) {
 			throw new DuplicateEdgeException(sprintf("Edge \"%s\" already present in the graph.", $id));
+		}
+
+		// Connect the edge to the nodes
+		$start->connectEdge($edge);
+		if ($start !== $end) {
+			$end->connectEdge($edge);
 		}
 
 		// Add element
@@ -249,6 +257,9 @@ class NestedGraph
 	{
 		$id = $edge->getId();
 		if (isset($this->edges[$id])) {
+			if ($this->edges[$id] !== $edge) {
+				throw new MissingEdgeException(sprintf("Edge \"%s\" found in the graph is not the expected edge.", $id));  // @codeCoverageIgnore
+			}
 			$this->edges[$id]->disconnectNodes();
 			unset($this->edges[$id]);
 			$this->edgeAttrIndex->removeElement($edge);
