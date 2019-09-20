@@ -25,6 +25,7 @@ use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
+use Smalldb\StateMachine\InvalidArgumentException;
 
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
@@ -206,12 +207,19 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 	public function getAction(string $name): ActionPlaceholder
 	{
+		if ($name === '') {
+			throw new InvalidArgumentException("Empty action name.");
+		}
 		return $this->actions[$name] ?? ($this->actions[$name] = new ActionPlaceholder($name));
 	}
 
 
 	public function addAction(string $name, ?string $color = null): ActionPlaceholder
 	{
+		if ($name === '') {
+			throw new InvalidArgumentException("Empty action name.");
+		}
+
 		if (isset($this->actions[$name])) {
 			throw new DuplicateActionException("Action already exists: $name");
 		} else {
@@ -222,6 +230,10 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 	public function getTransition(string $transitionName, string $sourceStateName): TransitionPlaceholder
 	{
+		if ($transitionName === '') {
+			throw new InvalidArgumentException("Empty transition name.");
+		}
+
 		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
 			return $this->transitionsByState[$sourceStateName][$transitionName];
 		} else {
@@ -232,6 +244,9 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null): TransitionPlaceholder
 	{
+		if ($transitionName === '') {
+			throw new InvalidArgumentException("Empty transition name.");
+		}
 		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
 			throw new DuplicateTransitionException("Transition \"$transitionName\" already exists in state \"$sourceStateName\".");
 		} else {
@@ -249,6 +264,9 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 	public function getProperty(string $name): PropertyPlaceholder
 	{
+		if ($name === '') {
+			throw new InvalidArgumentException("Empty property name.");
+		}
 		if (isset($this->properties[$name])) {
 			return $this->properties[$name];
 		} else {
@@ -259,6 +277,9 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 	public function addProperty(string $name, string $type = null, bool $isNullable = null): PropertyPlaceholder
 	{
+		if ($name === '') {
+			throw new InvalidArgumentException("Empty property name.");
+		}
 		if (isset($this->properties[$name])) {
 			throw new DuplicatePropertyException("Property already exists: $name");
 		} else {

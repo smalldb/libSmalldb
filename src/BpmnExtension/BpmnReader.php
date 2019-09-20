@@ -375,7 +375,8 @@ class BpmnReader
 	}
 
 
-	public function inferStateMachine(string $state_machine_participant_id, bool $rewriteGraph = false): StateMachineDefinitionBuilder
+	public function inferStateMachine(StateMachineDefinitionBuilder $builder,
+		string $state_machine_participant_id, bool $rewriteGraph = false): StateMachineDefinitionBuilder
 	{
 		$this->logTimeStart('start');
 
@@ -859,9 +860,10 @@ class BpmnReader
 		$this->logTime('4-T');
 
 		// We have everything ready, time to build the state machine definition.
-		$builder = new StateMachineDefinitionBuilder();
 		foreach ($states as $state) {
-			$builder->addState($state);
+			if ($state !== '') {
+				$builder->addState($state);
+			}
 		}
 		foreach ($actions as $action_name => $action_transitions) {
 			$builder->addAction((string) $action_name);

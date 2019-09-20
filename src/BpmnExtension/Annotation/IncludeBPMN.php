@@ -16,13 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine\GraphMLExtension\Annotation;
+namespace Smalldb\StateMachine\BpmnExtension\Annotation;
 
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
+use Smalldb\StateMachine\BpmnExtension\BpmnExtensionPlaceholder;
+use Smalldb\StateMachine\BpmnExtension\DefinitionPreprocessor;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\GraphMLExtension\GraphMLExtensionPlaceholder;
-use Smalldb\StateMachine\GraphMLExtension\DefinitionPreprocessor;
 
 
 /**
@@ -31,7 +31,7 @@ use Smalldb\StateMachine\GraphMLExtension\DefinitionPreprocessor;
  * @Annotation
  * @Target({"CLASS"})
  */
-class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
+class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
 {
 	/**
 	 * @var string
@@ -39,18 +39,26 @@ class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBu
 	 */
 	public $fileName;
 
+	/**
+	 * @var string
+	 * @Required
+	 */
+	public $targetParticipant;
+
 	/** @var string|null */
-	public $group = null;
+	public $svgFile = null;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		/** @var GraphMLExtensionPlaceholder $placeholder */
-		$placeholder = $builder->getExtensionPlaceholder(GraphMLExtensionPlaceholder::class);
+		/** @var BpmnExtensionPlaceholder $placeholder */
+		$placeholder = $builder->getExtensionPlaceholder(BpmnExtensionPlaceholder::class);
 		$placeholder->fileName = $this->canonizeFileName($this->fileName);
-		$placeholder->group = $this->group;
+		$placeholder->targetParticipant = $this->targetParticipant;
+		$placeholder->svgFile = $this->canonizeFileName($this->svgFile);
 
-		$builder->addPreprocessor(new DefinitionPreprocessor($placeholder->fileName, $placeholder->group));
+		$builder->addPreprocessor(new DefinitionPreprocessor($placeholder->fileName,
+			$placeholder->targetParticipant, $placeholder->svgFile));
 	}
 
 }

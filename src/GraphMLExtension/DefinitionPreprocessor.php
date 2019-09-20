@@ -16,14 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine\GraphMLExtension\Annotation;
+namespace Smalldb\StateMachine\GraphMLExtension;
 
 use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\GraphMLExtension\GraphMLReader;
 
 
-class GraphMLPreprocessor implements PreprocessorInterface
+class DefinitionPreprocessor implements PreprocessorInterface
 {
 	/**
 	 * @var string

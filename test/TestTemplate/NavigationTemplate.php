@@ -44,7 +44,8 @@ class NavigationTemplate implements Template
 				$this->item('demo_user.html', 'User'),
 			),
 			Html::ul([],
-				$this->item('demo_supervisor-process.html', 'Supervisor Process'),
+				$this->item('demo_supervisor-process.html', 'Supervisor Process (GraphML)'),
+				$this->item('demo_pizza-delivery.html', 'Pizza Delivery (BPMN)'),
 			),
 			Html::ul([],
 				...$this->bpmnItems()

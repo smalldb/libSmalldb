@@ -95,7 +95,7 @@ class BpmnTest extends TestCase
 
 		// Read BPMN diagram
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
-		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
+		$definitionBuilder = $bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
 		$definitionBuilder->setMachineType($machineType);
 
 		// Infer the state machine
@@ -536,7 +536,7 @@ class BpmnTest extends TestCase
 	{
 		$bpmnGraph = $bpmnGraphGenerator(9);
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
-		$definitionBuilder = $bpmnReader->inferStateMachine("Participant_StateMachine");
+		$definitionBuilder = $bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
 		$definitionBuilder->setMachineType($machineType);
 		$definition = $definitionBuilder->build();
 
@@ -574,7 +574,7 @@ class BpmnTest extends TestCase
 		$tStart = getrusage();
 
 		$bpmnReader->enableTimeLog();
-		$bpmnReader->inferStateMachine("Participant_StateMachine");
+		$bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
 
 		$tEnd = getrusage();
 		$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)

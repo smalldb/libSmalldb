@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 
 
@@ -30,6 +31,16 @@ class DefinitionIncludesTest extends TestCase
 	public function testGraphML()
 	{
 		$reader = new AnnotationReader(SupervisorProcess::class);
+		$definition = $reader->getStateMachineDefinition();
+		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$this->assertNotEmpty($definition->getStates());
+		$this->assertNotEmpty($definition->getTransitions());
+	}
+
+
+	public function testBPMN()
+	{
+		$reader = new AnnotationReader(PizzaDelivery::class);
 		$definition = $reader->getStateMachineDefinition();
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertNotEmpty($definition->getStates());

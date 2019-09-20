@@ -8,6 +8,7 @@ smalldb:
         - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
         - 'Smalldb\StateMachine\Test\Example\User\User'
         - 'Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess'
+        - 'Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery'
 
 parameters:
     generated_output_dir: ~ # Set by the test

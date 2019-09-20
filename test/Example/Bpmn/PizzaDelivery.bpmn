@@ -5,7 +5,7 @@
     <bpmn:participant id="Participant_StateMachine" name="Pizza Order State Machine" processRef="Process_StateMachine" />
     <bpmn:participant id="Participant_0ppjswo" name="Pizzeria" processRef="Process_1tm5vx0" />
     <bpmn:messageFlow id="MessageFlow_0x9t38n" name="setAddress" sourceRef="Task_0vgg9g6" targetRef="Participant_StateMachine" />
-    <bpmn:messageFlow id="MessageFlow_00bwrkv" name="" sourceRef="Task_1n3o30g" targetRef="Task_0l8cznd" />
+    <bpmn:messageFlow id="MessageFlow_00bwrkv" name="submit" sourceRef="Task_1n3o30g" targetRef="Task_0l8cznd" />
     <bpmn:messageFlow id="MessageFlow_1hp1b76" name="create" sourceRef="Task_1o36s7r" targetRef="Participant_StateMachine" />
     <bpmn:messageFlow id="MessageFlow_0yx7biy" name="delete" sourceRef="Task_0657xmx" targetRef="Participant_StateMachine" />
     <bpmn:messageFlow id="MessageFlow_03safh4" name="confirm" sourceRef="Task_0mtnzxw" targetRef="Participant_StateMachine" />
@@ -301,7 +301,7 @@
         <di:waypoint xsi:type="dc:Point" x="722" y="491" />
         <di:waypoint xsi:type="dc:Point" x="722" y="653" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="692" y="485" width="90" height="12" />
+          <dc:Bounds x="727" y="583" width="33" height="12" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_037pbon_di" bpmnElement="SequenceFlow_037pbon">
