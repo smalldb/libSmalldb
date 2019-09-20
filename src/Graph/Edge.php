@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Graph;
 
 
-class Edge extends AbstractElement
+class Edge extends AbstractGraphElement
 {
 	/**
 	 * @var Node

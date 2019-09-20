@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2018, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,11 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Graph;
 
 
 abstract class AbstractElement implements \ArrayAccess
 {
-	/**
-	 * @var string
-	 */
-	private $id;
-
-	/**
-	 * @var NestedGraph
-	 */
-	private $graph;
 
 	/**
 	 * @var array
@@ -38,38 +28,21 @@ abstract class AbstractElement implements \ArrayAccess
 	private $attrs;
 
 
-	public function __construct(NestedGraph $graph, string $id, array $attrs)
+	public function __construct(array $attrs = [])
 	{
-		$this->graph = $graph;
-		$this->id = $id;
 		$this->attrs = $attrs;
 	}
 
 
-	public function getId(): string
+	public function offsetSet($key, $value)
 	{
-		return $this->id;
+		return $this->setAttr($key, $value);
 	}
 
 
-	public function getGraph(): NestedGraph
+	public function & offsetGet($key)
 	{
-		return $this->graph;
-	}
-
-
-	public function getRootGraph(): Graph
-	{
-		return $this->graph->getRootGraph();
-	}
-
-
-	public function setAttr(string $key, $newValue): self
-	{
-		$oldValue = $this->attrs[$key] ?? null;
-		$this->attrs[$key] = $newValue;
-		$this->onAttrChanged($key, $oldValue, $newValue);
-		return $this;
+		return $this->attrs[$key];
 	}
 
 
@@ -79,11 +52,38 @@ abstract class AbstractElement implements \ArrayAccess
 	}
 
 
-	public function removeAttr(string $key): self
+	public function offsetUnset($key)
+	{
+		$this->removeAttr($key);
+	}
+
+
+	/**
+	 * @return $this
+	 */
+	public function setAttr(string $key, $newValue)
+	{
+		$oldValue = $this->attrs[$key] ?? null;
+		$this->attrs[$key] = $newValue;
+		$this->onAttrChanged($key, $oldValue, $newValue);
+		return $this;
+	}
+
+
+	/**
+	 * @return $this
+	 */
+	public function removeAttr(string $key)
 	{
 		$this->setAttr($key, null);
 		unset($this->attrs[$key]);
 		return $this;
+	}
+
+
+	public function offsetExists($key)
+	{
+		return isset($this->attrs[$key]);
 	}
 
 
@@ -94,29 +94,4 @@ abstract class AbstractElement implements \ArrayAccess
 
 
 	abstract protected function onAttrChanged(string $key, $oldValue, $newValue);
-
-
-	public function offsetExists($key)
-	{
-		return isset($this->attrs[$key]);
-	}
-
-
-	public function & offsetGet($key)
-	{
-		return $this->attrs[$key];
-	}
-
-
-	public function offsetSet($key, $value)
-	{
-		return $this->setAttr($key, $value);
-	}
-
-
-	public function offsetUnset($key)
-	{
-		$this->removeAttr($key);
-	}
-
 }

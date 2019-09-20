@@ -23,9 +23,9 @@ namespace Smalldb\StateMachine\Graph;
 class Graph extends NestedGraph
 {
 
-	public function __construct()
+	public function __construct(array $attrs = [])
 	{
-		parent::__construct(null);
+		parent::__construct(null, $attrs);
 		$this->rootGraph = $this;
 
 		$this->nodeAttrIndex = new ElementAttrIndex(Node::class);

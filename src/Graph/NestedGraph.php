@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Graph;
 
-class NestedGraph
+class NestedGraph extends AbstractElement
 {
 
 	/**
@@ -65,8 +65,9 @@ class NestedGraph
 	/**
 	 * Constructor.
 	 */
-	protected function __construct(Node $parentNode = null)
+	protected function __construct(Node $parentNode = null, array $attrs = [])
 	{
+		parent::__construct($attrs);
 		if ($parentNode) {
 			$this->parentNode = $parentNode;
 			$this->rootGraph = $this->parentNode->getGraph()->getRootGraph();
@@ -154,6 +155,15 @@ class NestedGraph
 		} else {
 			throw new MissingNodeException(sprintf("Node \"%s\" not found in the graph.", $id));
 		}
+	}
+
+
+	/**
+	 * Returns true if a given node exists within the graph.
+	 */
+	public function hasNode(string $id): bool
+	{
+		return isset($this->nodes[$id]);
 	}
 
 
@@ -248,6 +258,15 @@ class NestedGraph
 
 
 	/**
+	 * Returns true if a given edge exists within the graph.
+	 */
+	public function hasEdge(string $id): bool
+	{
+		return isset($this->edges[$id]);
+	}
+
+
+	/**
 	 * Remove edge from the graph and disconnect it from nodes.
 	 *
 	 * @param Edge $edge
@@ -276,6 +295,9 @@ class NestedGraph
 	}
 
 
+	/**
+	 * @internal
+	 */
 	public function nodeAttrChanged($node, $key, $oldValue, $newValue)
 	{
 		if ($this->nodeAttrIndex->hasAttrIndex($key)) {
@@ -284,11 +306,24 @@ class NestedGraph
 	}
 
 
+	/**
+	 * @internal
+	 */
 	public function edgeAttrChanged($node, $key, $oldValue, $newValue)
 	{
 		if ($this->edgeAttrIndex->hasAttrIndex($key)) {
 			$this->edgeAttrIndex->update($key, $oldValue, $newValue, $node);
 		}
+	}
+
+	/**
+	 * Handle change of an attribute.
+	 *
+	 * @codeCoverageIgnore
+	 */
+	protected function onAttrChanged(string $key, $oldValue, $newValue)
+	{
+		// No-op.
 	}
 
 }

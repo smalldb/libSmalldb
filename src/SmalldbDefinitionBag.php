@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 

@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
@@ -51,6 +52,7 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$definitionBag->addFromAnnotatedClass(Post::class);
 		$definitionBag->addFromAnnotatedClass(Tag::class);
 		$definitionBag->addFromAnnotatedClass(User::class);
+		$definitionBag->addFromAnnotatedClass(SupervisorProcess::class);
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);

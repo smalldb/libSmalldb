@@ -195,6 +195,7 @@ class GraphTest extends TestCase
 	{
 		$g = new Graph();
 		$g->createNode('A');
+		$this->assertTrue($g->hasNode('A'));
 
 		$this->expectException(DuplicateNodeException::class);
 		$g->createNode('A');
@@ -209,6 +210,7 @@ class GraphTest extends TestCase
 		$c = $g->createNode('C');
 
 		$g->createEdge('e1', $a, $b);
+		$this->assertTrue($g->hasEdge('e1'));
 		$this->expectException(DuplicateEdgeException::class);
 		$g->createEdge('e1', $b, $c);
 	}

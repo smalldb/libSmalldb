@@ -22,6 +22,7 @@ use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
 use Smalldb\StateMachine\Definition\Builder\DuplicatePropertyException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateStateException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateTransitionException;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\DefinitionError;
@@ -139,6 +140,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder->build();
 	}
 
+
 	public function testDuplicateState()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -147,6 +149,7 @@ class DefinitionBuilderTest extends TestCase
 		$this->expectException(DuplicateStateException::class);
 		$builder->addState('S');
 	}
+
 
 	public function testDuplicateAction()
 	{
@@ -157,6 +160,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addAction('a');
 	}
 
+
 	public function testDuplicateTransition()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -165,6 +169,38 @@ class DefinitionBuilderTest extends TestCase
 		$this->expectException(DuplicateTransitionException::class);
 		$builder->addTransition('a', 'A', ['C']);
 	}
+
+
+	public function testGetState()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+
+		$a1 = $builder->getState('A');  // State created
+		$a2 = $builder->getState('A');
+		$this->assertSame($a1, $a2);
+	}
+
+
+	public function testGetAction()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+		$a1 = $builder->getAction('a');
+		$a2 = $builder->getAction('a');
+		$this->assertSame($a1, $a2);
+	}
+
+
+	public function testGetTransition()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+		$t1 = $builder->getTransition('a', 'A');
+		$t2 = $builder->getTransition('a', 'A');
+		$this->assertSame($t1, $t2);
+	}
+
 
 	public function testProperty()
 	{
@@ -193,6 +229,7 @@ class DefinitionBuilderTest extends TestCase
 		$this->assertFalse($properties['bar']->isNullable());
 	}
 
+
 	public function testDuplicateProperty()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -202,6 +239,17 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addProperty('a');
 	}
 
+
+	public function testGetProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+		$builder->setMachineType('foo');
+		$p1 = $builder->getProperty('a');
+		$p2 = $builder->getProperty('a');
+		$this->assertSame($p1, $p2);
+	}
+
+
 	public function testMissingSourceState()
 	{
 		$builder = new StateMachineDefinitionBuilder();
@@ -210,6 +258,7 @@ class DefinitionBuilderTest extends TestCase
 		$this->expectException(UndefinedStateException::class); // A is missing
 		$builder->build();
 	}
+
 
 	public function testMissingTargetState()
 	{
@@ -221,6 +270,7 @@ class DefinitionBuilderTest extends TestCase
 		$this->expectException(UndefinedStateException::class); // C is missing
 		$builder->build();
 	}
+
 
 	public function testExtraNode()
 	{
@@ -242,5 +292,20 @@ class DefinitionBuilderTest extends TestCase
 		$this->assertEquals($definition->getStates(), $reachableStates);
 	}
 
+
+	public function testPreprocessor()
+	{
+		$builder = new StateMachineDefinitionBuilder();
+
+		$preprocessor = $this->createMock(PreprocessorInterface::class);
+		$preprocessor->expects($this->once())->method('preprocessDefinition')->with($builder);
+
+		$builder->setMachineType('Foo');
+		$builder->addState('A');
+		$builder->addState('B');
+		$builder->addTransition('t', 'A', ['B']);
+		$builder->addPreprocessor($preprocessor);
+		$builder->build();
+	}
 
 }

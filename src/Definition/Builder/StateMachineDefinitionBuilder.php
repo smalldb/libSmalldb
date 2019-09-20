@@ -29,6 +29,9 @@ use Smalldb\StateMachine\Definition\UndefinedStateException;
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
+	/** @var PreprocessorInterface[] */
+	private $preprocessorQueue = [];
+
 	/** @var StatePlaceholder[] */
 	private $states = [];
 
@@ -66,8 +69,24 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
+	public function addPreprocessor(PreprocessorInterface $preprocessor): void
+	{
+		$this->preprocessorQueue[] = $preprocessor;
+	}
+
+
+	public function runPreprocessors(): void
+	{
+		while (($preprocessor = array_shift($this->preprocessorQueue))) {
+			$preprocessor->preprocessDefinition($this);
+		}
+	}
+
+
 	public function build(): StateMachineDefinition
 	{
+		$this->runPreprocessors();
+
 		if (empty($this->machineType)) {
 			throw new StateMachineBuilderException("Machine type not set.");
 		}
@@ -169,6 +188,12 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
+	public function getState(string $name): StatePlaceholder
+	{
+		return $this->states[$name] ?? ($this->states[$name] = new StatePlaceholder($name));
+	}
+
+
 	public function addState(string $name): StatePlaceholder
 	{
 		if (isset($this->states[$name])) {
@@ -179,12 +204,28 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
+	public function getAction(string $name): ActionPlaceholder
+	{
+		return $this->actions[$name] ?? ($this->actions[$name] = new ActionPlaceholder($name));
+	}
+
+
 	public function addAction(string $name, ?string $color = null): ActionPlaceholder
 	{
 		if (isset($this->actions[$name])) {
 			throw new DuplicateActionException("Action already exists: $name");
 		} else {
 			return ($this->actions[$name] = new ActionPlaceholder($name));
+		}
+	}
+
+
+	public function getTransition(string $transitionName, string $sourceStateName): TransitionPlaceholder
+	{
+		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
+			return $this->transitionsByState[$sourceStateName][$transitionName];
+		} else {
+			return $this->addTransition($transitionName, $sourceStateName, []);
 		}
 	}
 
@@ -202,6 +243,16 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 			$this->transitionsByState[$sourceStateName][$transitionName] = $placeholder;
 			$this->transitions[] = $placeholder;
 			return $placeholder;
+		}
+	}
+
+
+	public function getProperty(string $name): PropertyPlaceholder
+	{
+		if (isset($this->properties[$name])) {
+			return $this->properties[$name];
+		} else {
+			return $this->addProperty($name);
 		}
 	}
 

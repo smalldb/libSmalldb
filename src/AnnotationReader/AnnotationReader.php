@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\AnnotationReader;
 
 use ReflectionClass;
 use Smalldb\StateMachine\Annotation\StateMachine;
@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
 
@@ -68,6 +69,14 @@ class AnnotationReader
 	}
 
 
+	public function getStateMachineDefinition(): StateMachineDefinition
+	{
+		$this->builder = new StateMachineDefinitionBuilder();
+		$this->processClassReflection(new ReflectionClass($this->className));
+		return $this->builder->build();
+	}
+
+
 	private function processClassReflection(ReflectionClass $reflectionClass): void
 	{
 		$filename = $reflectionClass->getFileName();
@@ -99,6 +108,9 @@ class AnnotationReader
 	public function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations): void
 	{
 		foreach ($annotations as $annotation) {
+			if ($annotation instanceof ReflectionClassAwareAnnotationInterface) {
+				$annotation->setReflectionClass($reflectionClass);
+			}
 			if ($annotation instanceof StateMachineBuilderApplyInterface) {
 				$annotation->applyToBuilder($this->builder);
 			}
@@ -110,6 +122,9 @@ class AnnotationReader
 		// Find & use @State annotation and make sure there is only one of the kind
 		$placeholder = null;
 		foreach ($annotations as $annotation) {
+			if ($annotation instanceof ReflectionConstantAwareAnnotationInterface) {
+				$annotation->setReflectionConstant($reflectionConstant);
+			}
 			if ($annotation instanceof State) {
 				if ($placeholder) {
 					throw new \InvalidArgumentException("Multiple @State annotations at " . $reflectionConstant->getName() . " constant.");
@@ -140,6 +155,9 @@ class AnnotationReader
 		$isTransition = false;
 		$transitionName = $reflectionMethod->getName();
 		foreach ($annotations as $annotation) {
+			if ($annotation instanceof ReflectionMethodAwareAnnotationInterface) {
+				$annotation->setReflectionMethod($reflectionMethod);
+			}
 			if ($annotation instanceof Transition) {
 				$isTransition = true;
 				if ($annotation->definesTransition()) {
@@ -174,6 +192,12 @@ class AnnotationReader
 
 	public function processPropertyAnnotations(\ReflectionProperty $reflectionProperty, array $annotations): void
 	{
+		foreach ($annotations as $annotation) {
+			if ($annotation instanceof ReflectionPropertyAwareAnnotationInterface) {
+				$annotation->setReflectionProperty($reflectionProperty);
+			}
+		}
+
 		$name = $reflectionProperty->getName();
 
 		// Get getter type as default property type
@@ -191,14 +215,6 @@ class AnnotationReader
 				$annotation->applyToPropertyPlaceholder($placeholder);
 			}
 		}
-	}
-
-
-	public function getStateMachineDefinition(): StateMachineDefinition
-	{
-		$this->builder = new StateMachineDefinitionBuilder();
-		$this->processClassReflection(new ReflectionClass($this->className));
-		return $this->builder->build();
 	}
 
 }

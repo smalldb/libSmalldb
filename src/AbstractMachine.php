@@ -22,6 +22,7 @@ use Smalldb\StateMachine\BPMN\BpmnReader;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Node;
 use Smalldb\StateMachine\Graph\GraphSearch;
+use Smalldb\StateMachine\GraphMLExtension\GraphMLReader;
 use Smalldb\StateMachine\Utils\Utils;
 
 

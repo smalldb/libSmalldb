@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\Definition\Builder;
 
-
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+
 
 /**
  * Class ExtensiblePlaceholder

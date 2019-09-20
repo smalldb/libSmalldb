@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Graph;
 
 
-class Node extends AbstractElement
+class Node extends AbstractGraphElement
 {
 
 	/**

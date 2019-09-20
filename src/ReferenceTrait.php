@@ -48,7 +48,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	//protected $id;
 
 	/** @var string */
-	private $state = null;
+	protected $state = null;
 
 
 	/**

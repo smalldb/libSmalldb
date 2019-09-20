@@ -23,12 +23,12 @@ namespace Smalldb\StateMachine\Graph;
 class ElementAttrIndex
 {
 	/**
-	 * @var AbstractElement[][][]
+	 * @var AbstractGraphElement[][][]
 	 */
 	private $index = [];
 
 	/**
-	 * @var AbstractElement[]
+	 * @var AbstractGraphElement[]
 	 */
 	private $elements = [];
 
@@ -42,13 +42,13 @@ class ElementAttrIndex
 	/**
 	 * ElementAttrIndex constructor.
 	 */
-	public function __construct($elementClassName = AbstractElement::class)
+	public function __construct($elementClassName = AbstractGraphElement::class)
 	{
 		$this->elementClassName = $elementClassName;
 	}
 
 
-	public function getElementById(string $id): AbstractElement
+	public function getElementById(string $id): AbstractGraphElement
 	{
 		if (!isset($this->elements[$id])) {
 			throw new MissingElementException("Element \"$id\" is not indexed.");
@@ -100,7 +100,7 @@ class ElementAttrIndex
 	/**
 	 * Insert element into index (all keys has changed).
 	 */
-	public function insertElement(AbstractElement $element)
+	public function insertElement(AbstractGraphElement $element)
 	{
 		if (!($element instanceof $this->elementClassName)) {
 			throw new \InvalidArgumentException("Indexed element must be instance of " . $this->elementClassName);  // @codeCoverageIgnore
@@ -124,7 +124,7 @@ class ElementAttrIndex
 	/**
 	 * Remove element from index
 	 */
-	public function removeElement(AbstractElement $element)
+	public function removeElement(AbstractGraphElement $element)
 	{
 		$id = $element->getId();
 
@@ -144,7 +144,7 @@ class ElementAttrIndex
 	/**
 	 * Update indices to match the changed attribute of the element
 	 */
-	public function update(string $key, $oldValue, $newValue, AbstractElement $element)
+	public function update(string $key, $oldValue, $newValue, AbstractGraphElement $element)
 	{
 		if (!isset($this->index[$key])) {
 			throw new MissingAttrIndexException("Attribute index \"$key\" is not defined.");  // @codeCoverageIgnore
@@ -165,7 +165,7 @@ class ElementAttrIndex
 	/**
 	 * Get all elements.
 	 *
-	 * @return AbstractElement[]
+	 * @return AbstractGraphElement[]
 	 */
 	public function getAllElements(): array
 	{

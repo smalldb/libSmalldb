@@ -20,6 +20,8 @@
 namespace Smalldb\StateMachine;
 
 
+use Smalldb\StateMachine\GraphMLExtension\GraphMLReader;
+
 class JsonDirReader
 {
 	private $base_dir;
