@@ -16,8 +16,7 @@
  *
  */
 
-
-namespace Smalldb\StateMachine\BPMN;
+namespace Smalldb\StateMachine\BpmnExtension;
 
 use Smalldb\StateMachine\AbstractMachine;
 use Smalldb\StateMachine\Graph\Edge;

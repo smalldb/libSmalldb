@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\BPMN;
+namespace Smalldb\StateMachine\BpmnExtension;
 
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\Node;

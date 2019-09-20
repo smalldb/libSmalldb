@@ -19,9 +19,9 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\BPMN\GrafovatkoProcessor;
-use Smalldb\StateMachine\BPMN\BpmnReader;
-use Smalldb\StateMachine\BPMN\SvgPainter;
+use Smalldb\StateMachine\BpmnExtension\GrafovatkoProcessor;
+use Smalldb\StateMachine\BpmnExtension\BpmnReader;
+use Smalldb\StateMachine\BpmnExtension\SvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
