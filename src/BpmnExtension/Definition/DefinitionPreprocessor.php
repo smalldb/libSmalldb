@@ -16,8 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\BpmnExtension;
+namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
+use Smalldb\StateMachine\BpmnExtension\BpmnReader;
 use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 

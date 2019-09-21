@@ -16,12 +16,19 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource;
+namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
 use PDO;
 use PDOStatement;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
+use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 
 
+/**
+ * Class PdoDataSource
+ *
+ * @deprecated
+ */
 class PdoDataSource implements ReferenceDataSourceInterface
 {
 

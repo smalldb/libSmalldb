@@ -16,12 +16,12 @@
  *
  */
 
-namespace Smalldb\StateMachine\BpmnExtension;
-
+namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use JsonSerializable;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+
 
 class DiagramInfo implements JsonSerializable
 {

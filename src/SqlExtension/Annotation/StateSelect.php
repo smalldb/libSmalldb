@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\SqlExtension\SqlTableExtensionPlaceholder;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtensionPlaceholder;
 
 
 /**

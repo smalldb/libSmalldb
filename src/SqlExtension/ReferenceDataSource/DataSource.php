@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
+namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;

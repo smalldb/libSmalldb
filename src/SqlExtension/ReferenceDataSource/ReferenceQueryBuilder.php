@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
+namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\Query\QueryBuilder as DoctrineQueryBuilder;
@@ -24,9 +24,9 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\LogicException;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SqlExtension\SqlCalculatedPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlPropertyExtension;
-use Smalldb\StateMachine\SqlExtension\SqlTableExtension;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlCalculatedPropertyExtension;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtension;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtension;
 
 
 class ReferenceQueryBuilder extends DoctrineQueryBuilder
@@ -97,7 +97,7 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 		$properties = $this->definition->getProperties();
 		foreach ($properties as $property) {
 			if ($property->hasExtension(SqlPropertyExtension::class)) {
-				/** @var SqlPropertyExtension $ext */
+				/** @var \Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtension $ext */
 				$ext = $property->getExtension(SqlPropertyExtension::class);
 				$column = $ext->getSqlColumn();
 				$sqlColumn = $this->quoteIdentifier($this->tableAlias) . '.' . $this->quoteIdentifier($column);

@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
-use Smalldb\StateMachine\SqlExtension\SqlPropertyExtensionPlaceholder;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder;
 
 
 /**

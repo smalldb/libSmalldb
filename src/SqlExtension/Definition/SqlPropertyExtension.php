@@ -16,34 +16,39 @@
  *
  */
 
-namespace Smalldb\StateMachine\BpmnExtension;
+namespace Smalldb\StateMachine\SqlExtension\Definition;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
+class SqlPropertyExtension implements ExtensionInterface
 {
+	use SimpleJsonSerializableTrait;
 
-	/** @var DiagramInfo[] */
-	public $diagramInfo;
+	/** @var string */
+	private $sqlColumn;
+
+	/** @var bool */
+	private $isId;
 
 
-	public function __construct()
+	public function __construct(string $sqlColumn, bool $isId = false)
 	{
+		$this->sqlColumn = $sqlColumn;
+		$this->isId = $isId;
 	}
 
 
-	public function buildExtension(): ?ExtensionInterface
+	public function getSqlColumn(): string
 	{
-		return new BpmnExtension($this->diagramInfo);
+		return $this->sqlColumn;
 	}
 
-	public function addDiagramInfo(string $bpmnFilename, string $targetParticipant, ?string $svgFile, Graph $bpmnGraph)
-	{
-		$this->diagramInfo[] = new DiagramInfo($bpmnFilename, $targetParticipant, $svgFile, $bpmnGraph);
-	}
 
+	public function isId(): bool
+	{
+		return $this->isId;
+	}
 
 }

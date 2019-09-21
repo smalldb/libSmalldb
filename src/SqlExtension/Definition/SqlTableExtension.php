@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension;
+namespace Smalldb\StateMachine\SqlExtension\Definition;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;

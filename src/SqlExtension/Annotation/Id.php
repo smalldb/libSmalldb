@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\SqlExtension\Annotation;
 
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
-use Smalldb\StateMachine\SqlExtension\SqlPropertyExtensionPlaceholder;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder;
 
 
 /**
@@ -34,7 +34,7 @@ class Id implements PropertyPlaceholderApplyInterface
 
 	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void
 	{
-		/** @var SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
+		/** @var \Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $propertyPlaceholder->getExtensionPlaceholder(SqlPropertyExtensionPlaceholder::class);
 
 		if ($sqlExtensionPlaceholder->sqlSelect !== null) {

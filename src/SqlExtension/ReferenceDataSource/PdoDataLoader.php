@@ -16,24 +16,54 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
+namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
-use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Driver\Statement;
+use PDO;
+use PDOStatement;
+use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 
 
-class DataLoader extends DataSource
+/**
+ * Class PdoDataLoader
+ *
+ * @deprecated
+ */
+class PdoDataLoader extends PdoDataSource
 {
+	/** @var Smalldb */
+	private $smalldb;
 
-	public function fetch(Statement $stmt): ?ReferenceInterface
+	/** @var SmalldbProviderInterface */
+	private $machineProvider;
+
+	/** @var string */
+	private $refClass;
+
+
+	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider)
 	{
-		$row = $stmt->fetch(FetchMode::ASSOCIATIVE);
+		parent::__construct();
+		$this->smalldb = $smalldb;
+		$this->machineProvider = $machineProvider;
+		$this->refClass = $machineProvider->getReferenceClass();
+	}
+
+
+	public function ref($id): ReferenceInterface
+	{
+		return new $this->refClass($this->smalldb, $this->machineProvider, $this, $id);
+	}
+
+
+	public function fetch(PDOStatement $stmt): ?ReferenceInterface
+	{
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		if ($row === false) {
 			return null;
 		} else {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
-			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);
 			return $ref;
 		}
@@ -43,12 +73,11 @@ class DataLoader extends DataSource
 	/**
 	 * @return ReferenceInterface[]
 	 */
-	public function fetchAll(Statement $stmt): array
+	public function fetchAll(PDOStatement $stmt): array
 	{
 		$list = [];
-		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
-			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);
 			$list[] = $ref;
 		}
@@ -61,11 +90,10 @@ class DataLoader extends DataSource
 	 *
 	 * TODO: Return a proper collection which provides rowCount() and other useful features.
 	 */
-	public function fetchAllIter(Statement $stmt): iterable
+	public function fetchAllIter(PDOStatement $stmt): iterable
 	{
-		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
-			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);
 			yield $ref;
 		}

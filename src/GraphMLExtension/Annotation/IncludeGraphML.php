@@ -21,7 +21,6 @@ namespace Smalldb\StateMachine\GraphMLExtension\Annotation;
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\GraphMLExtension\GraphMLExtensionPlaceholder;
 use Smalldb\StateMachine\GraphMLExtension\DefinitionPreprocessor;
 
 

@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Test\Example\Tag;
 use PDO;
 use PDOStatement;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\ReferenceDataSource\PdoDataLoader;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\PdoDataLoader;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;

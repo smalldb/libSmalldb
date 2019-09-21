@@ -16,29 +16,45 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension;
+namespace Smalldb\StateMachine\SqlExtension\Definition;
 
+use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class SqlCalculatedPropertyExtension implements ExtensionInterface
+class SqlPropertyExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	use SimpleJsonSerializableTrait;
 
-	/** @var string|null */
-	private $sqlSelect;
+	/**
+	 * @var bool
+	 */
+	public $isId = false;
+
+	/**
+	 * @var ?string
+	 */
+	public $sqlColumn;
+
+	/**
+	 * @var ?string
+	 */
+	public $sqlSelect;
 
 
-	public function __construct(?string $sqlSelect = null)
+	public function __construct()
 	{
-		$this->sqlSelect = $sqlSelect;
 	}
 
 
-	public function getSqlSelect(): ?string
+	public function buildExtension(): ?ExtensionInterface
 	{
-		return $this->sqlSelect;
+		if ($this->sqlColumn !== null) {
+			return new SqlPropertyExtension($this->sqlColumn, $this->isId);
+		} else if ($this->sqlSelect !== null) {
+			return new SqlCalculatedPropertyExtension($this->sqlSelect);
+		} else {
+			return null;  // @codeCoverageIgnore
+		}
 	}
 
 }

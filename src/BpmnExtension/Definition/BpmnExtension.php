@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\BpmnExtension;
+namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;

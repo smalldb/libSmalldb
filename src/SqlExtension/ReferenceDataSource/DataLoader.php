@@ -16,36 +16,19 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource\DoctrineDBAL;
+namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
-use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
+use Doctrine\DBAL\Driver\Statement;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
-class ReferenceQueryResult extends DataSource
+class DataLoader extends DataSource
 {
 
-	/** @var Statement */
-	private $stmt;
-
-
-	public function __construct(?DataSource $originalDataSource, Statement $stmt)
+	public function fetch(Statement $stmt): ?ReferenceInterface
 	{
-		parent::__construct($originalDataSource);
-		$this->stmt = $stmt;
-	}
-
-
-	public function getWrappedStatement(): Statement
-	{
-		return $this->stmt;
-	}
-
-
-	public function fetch(): ?ReferenceInterface
-	{
-		$row = $this->stmt->fetch(FetchMode::ASSOCIATIVE);
+		$row = $stmt->fetch(FetchMode::ASSOCIATIVE);
 		if ($row === false) {
 			return null;
 		} else {
@@ -60,10 +43,10 @@ class ReferenceQueryResult extends DataSource
 	/**
 	 * @return ReferenceInterface[]
 	 */
-	public function fetchAll(): array
+	public function fetchAll(Statement $stmt): array
 	{
 		$list = [];
-		while (($row = $this->stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
 			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);
@@ -78,9 +61,9 @@ class ReferenceQueryResult extends DataSource
 	 *
 	 * TODO: Return a proper collection which provides rowCount() and other useful features.
 	 */
-	public function fetchAllIter(): iterable
+	public function fetchAllIter(Statement $stmt): iterable
 	{
-		while (($row = $this->stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
+		while (($row = $stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);
 			/** @noinspection PhpUndefinedMethodInspection */
 			($this->refClass)::hydrateFromArray($ref, $row);

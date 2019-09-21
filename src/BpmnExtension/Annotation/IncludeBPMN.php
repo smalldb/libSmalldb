@@ -19,8 +19,7 @@
 namespace Smalldb\StateMachine\BpmnExtension\Annotation;
 
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
-use Smalldb\StateMachine\BpmnExtension\BpmnExtensionPlaceholder;
-use Smalldb\StateMachine\BpmnExtension\DefinitionPreprocessor;
+use Smalldb\StateMachine\BpmnExtension\Definition\DefinitionPreprocessor;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
