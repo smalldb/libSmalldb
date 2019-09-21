@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Test\Example\User;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\Definition\CrudMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
@@ -30,7 +30,7 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(UserRepository::class)
  * @UseTransitions(UserTransitions::class)
  */
-interface User extends CrudMachine, ReferenceInterface
+interface User extends CrudMachineDefinition, ReferenceInterface
 {
 
 }

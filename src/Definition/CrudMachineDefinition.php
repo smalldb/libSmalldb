@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CrudMachine;
+namespace Smalldb\StateMachine\Definition;
 
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -25,23 +25,23 @@ use Smalldb\StateMachine\Annotation\Transition;
 /**
  * CrudMachine -- a basic CRUD state machine definition.
  */
-interface CrudMachine
+interface CrudMachineDefinition
 {
 
 	/**
-	 * @State()
+	 * @State
 	 */
 	const EXISTS = "Exists";
 
 	/**
 	 * @Transition("", {"Exists"})
 	 */
-	public function create($itemData);
+	public function create($data);
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 */
-	public function update($itemData);
+	public function update($data);
 
 	/**
 	 * @Transition("Exists", {""})

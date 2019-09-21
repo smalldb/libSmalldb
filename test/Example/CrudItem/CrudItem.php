@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test\Example\CrudItem;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\CrudMachine\CrudMachine;
+use Smalldb\StateMachine\Definition\CrudMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
@@ -29,7 +29,7 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(CrudItemRepository::class)
  * @UseTransitions(CrudItemTransitions::class)
  */
-interface CrudItem extends CrudMachine, ReferenceInterface
+interface CrudItem extends CrudMachineDefinition, ReferenceInterface
 {
 
 }
