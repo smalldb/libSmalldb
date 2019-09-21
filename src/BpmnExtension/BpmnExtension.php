@@ -26,39 +26,27 @@ class BpmnExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $fileName;
-
-	/** @var string */
-	private $targetParticipant;
-
-	/** @var string|null */
-	private $svgFile;
+	/**
+	 * @var DiagramInfo[]
+	 */
+	private $diagramInfo;
 
 
-	public function __construct(string $fileName, string $targetParticipant, ?string $svgFile = null)
+	/**
+	 * @param DiagramInfo[] $diagramInfo
+	 */
+	public function __construct(array $diagramInfo)
 	{
-		$this->fileName = $fileName;
-		$this->targetParticipant = $targetParticipant;
-		$this->svgFile = $svgFile;
+		$this->diagramInfo = $diagramInfo;
 	}
 
 
-	public function getFileName(): string
+	/**
+	 * @return DiagramInfo[]
+	 */
+	public function getDiagramInfo(): array
 	{
-		return $this->fileName;
-	}
-
-
-	public function getTargetParticipant(): string
-	{
-		return $this->targetParticipant;
-	}
-
-
-	public function getSvgFile(): ?string
-	{
-		return $this->svgFile;
+		return $this->diagramInfo;
 	}
 
 }

@@ -45,5 +45,11 @@ class DefinitionPreprocessor implements PreprocessorInterface
 	{
 		$reader = BpmnReader::readBpmnFile($this->bpmnFilename);
 		$reader->inferStateMachine($builder, $this->targetParticipant);
+
+		/** @var BpmnExtensionPlaceholder $placeholder */
+		$placeholder = $builder->getExtensionPlaceholder(BpmnExtensionPlaceholder::class);
+		$placeholder->addDiagramInfo($this->bpmnFilename, $this->targetParticipant,
+			$this->svgFile, $reader->getBpmnGraph());
+
 	}
 }

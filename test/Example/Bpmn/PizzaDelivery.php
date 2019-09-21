@@ -25,7 +25,9 @@ use Smalldb\StateMachine\ReferenceInterface;
 
 /**
  * @StateMachine("pizza-delivery")
- * @IncludeBPMN("PizzaDelivery.bpmn", targetParticipant="Participant_StateMachine")
+ * @IncludeBPMN("PizzaDelivery.bpmn",
+ *         targetParticipant="Participant_StateMachine",
+ *         svgFileName="PizzaDelivery.svg")
  */
 abstract class PizzaDelivery implements ReferenceInterface
 {

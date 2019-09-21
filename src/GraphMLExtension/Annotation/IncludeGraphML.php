@@ -39,18 +39,13 @@ class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBu
 	 */
 	public $fileName;
 
-	/** @var string|null */
+	/** @var string */
 	public $group = null;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		/** @var GraphMLExtensionPlaceholder $placeholder */
-		$placeholder = $builder->getExtensionPlaceholder(GraphMLExtensionPlaceholder::class);
-		$placeholder->fileName = $this->canonizeFileName($this->fileName);
-		$placeholder->group = $this->group;
-
-		$builder->addPreprocessor(new DefinitionPreprocessor($placeholder->fileName, $placeholder->group));
+		$builder->addPreprocessor(new DefinitionPreprocessor($this->canonizeFileName($this->fileName), $this->group));
 	}
 
 }

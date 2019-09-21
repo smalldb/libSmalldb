@@ -42,6 +42,11 @@ class GraphMLReader
 	 */
 	private $builder;
 
+
+	/** @var Graph */
+	private $graph = null;
+
+
 	public function __construct(StateMachineDefinitionBuilder $builder)
 	{
 		$this->builder = $builder;
@@ -53,7 +58,8 @@ class GraphMLReader
 		// Load GraphML into DOM
 		$dom = new DOMDocument;
 		$dom->load($fileName);
-		return $this->buildStateMachine($this->parseDomToGraph($dom, $graphml_group_name));
+		$this->graph = $this->parseDomToGraph($dom, $graphml_group_name);
+		return $this->buildStateMachine($this->graph);
 	}
 
 
@@ -227,6 +233,12 @@ class GraphMLReader
 	private function str2key($str)
 	{
 		return strtr(mb_strtolower($str), ' ', '_');
+	}
+
+
+	public function getGraph(): Graph
+	{
+		return $this->graph;
 	}
 
 }

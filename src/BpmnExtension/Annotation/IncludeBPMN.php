@@ -37,7 +37,7 @@ class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuild
 	 * @var string
 	 * @Required
 	 */
-	public $fileName;
+	public $bpmnFileName;
 
 	/**
 	 * @var string
@@ -45,20 +45,14 @@ class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuild
 	 */
 	public $targetParticipant;
 
-	/** @var string|null */
-	public $svgFile = null;
+	/** @var string */
+	public $svgFileName = null;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		/** @var BpmnExtensionPlaceholder $placeholder */
-		$placeholder = $builder->getExtensionPlaceholder(BpmnExtensionPlaceholder::class);
-		$placeholder->fileName = $this->canonizeFileName($this->fileName);
-		$placeholder->targetParticipant = $this->targetParticipant;
-		$placeholder->svgFile = $this->canonizeFileName($this->svgFile);
-
-		$builder->addPreprocessor(new DefinitionPreprocessor($placeholder->fileName,
-			$placeholder->targetParticipant, $placeholder->svgFile));
+		$builder->addPreprocessor(new DefinitionPreprocessor($this->canonizeFileName($this->bpmnFileName),
+			$this->targetParticipant, $this->canonizeFileName($this->svgFileName)));
 	}
 
 }

@@ -20,19 +20,14 @@ namespace Smalldb\StateMachine\BpmnExtension;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Graph\Graph;
 
 
 class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
 
-	/** @var string */
-	public $fileName;
-
-	/** @var string */
-	public $targetParticipant;
-
-	/** @var string|null */
-	public $svgFile;
+	/** @var DiagramInfo[] */
+	public $diagramInfo;
 
 
 	public function __construct()
@@ -42,7 +37,13 @@ class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
 
 	public function buildExtension(): ?ExtensionInterface
 	{
-		return new BpmnExtension($this->fileName, $this->targetParticipant, $this->svgFile);
+		return new BpmnExtension($this->diagramInfo);
 	}
+
+	public function addDiagramInfo(string $bpmnFilename, string $targetParticipant, ?string $svgFile, Graph $bpmnGraph)
+	{
+		$this->diagramInfo[] = new DiagramInfo($bpmnFilename, $targetParticipant, $svgFile, $bpmnGraph);
+	}
+
 
 }

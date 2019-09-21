@@ -26,29 +26,20 @@ class GraphMLExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $fileName;
-
-	/** @var string|null */
-	private $group;
+	/** @var DiagramInfo */
+	public $diagramInfo = [];
 
 
-	public function __construct(string $fileName, ?string $group)
+	public function __construct(array $diagramInfo)
 	{
-		$this->fileName = $fileName;
-		$this->group = $group;
+		$this->diagramInfo = $diagramInfo;
 	}
 
 
-	public function getFileName(): string
+	public function getDiagramInfo(): DiagramInfo
 	{
-		return $this->fileName;
+		return $this->diagramInfo;
 	}
 
-
-	public function getGroup(): ?string
-	{
-		return $this->group;
-	}
 
 }

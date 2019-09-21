@@ -46,5 +46,10 @@ class DefinitionPreprocessor implements PreprocessorInterface
 	{
 		$reader = new GraphMLReader($builder);
 		$reader->parseGraphMLFile($this->graphmlFilename, $this->group);
+
+		/** @var GraphMLExtensionPlaceholder $placeholder */
+		$placeholder = $builder->getExtensionPlaceholder(GraphMLExtensionPlaceholder::class);
+		$placeholder->addDiagramInfo($this->graphmlFilename, $this->group, $reader->getGraph());
+
 	}
 }

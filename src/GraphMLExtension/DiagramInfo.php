@@ -18,31 +18,53 @@
 
 namespace Smalldb\StateMachine\GraphMLExtension;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
+
+use JsonSerializable;
 use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
-
-class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
+class DiagramInfo implements JsonSerializable
 {
+	use SimpleJsonSerializableTrait;
 
-	/** @var DiagramInfo */
-	public $diagramInfo = [];
+	/**
+	 * @var string
+	 */
+	private $graphmlFileName;
+	/**
+	 * @var string|null
+	 */
+	private $group;
+	/**
+	 * @var Graph|null
+	 */
+	private $graph;
 
 
-	public function __construct()
+	public function __construct(string $graphmlFileName, ?string $group, ?Graph $graph)
 	{
+
+		$this->graphmlFileName = $graphmlFileName;
+		$this->group = $group;
+		$this->graph = $graph;
 	}
 
 
-	public function buildExtension(): ?ExtensionInterface
+	public function getGraphmlFileName(): string
 	{
-		return new GraphMLExtension($this->diagramInfo);
+		return $this->graphmlFileName;
 	}
 
-	public function addDiagramInfo(string $graphmlFilename, ?string $group, ?Graph $graph)
+
+	public function getGroup(): ?string
 	{
-		$this->diagramInfo[] = new DiagramInfo($graphmlFilename, $group, $graph);
+		return $this->group;
+	}
+
+
+	public function getGraph(): ?Graph
+	{
+		return $this->graph;
 	}
 
 }
