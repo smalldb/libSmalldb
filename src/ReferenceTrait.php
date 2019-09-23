@@ -28,6 +28,7 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
  * Trait ReferenceTrait
  *
  * @implements ReferenceInterface
+ * @internal
  */
 trait ReferenceTrait // implements ReferenceInterface
 {

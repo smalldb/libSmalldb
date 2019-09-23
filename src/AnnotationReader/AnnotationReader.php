@@ -96,11 +96,15 @@ class AnnotationReader
 		}
 
 		foreach ($reflectionClass->getMethods() as $reflectionMethod) {
-			$this->processMethodAnnotations($reflectionMethod, $reader->getMethodAnnotations($reflectionMethod));
+			if (!$reflectionMethod->isStatic()) {
+				$this->processMethodAnnotations($reflectionMethod, $reader->getMethodAnnotations($reflectionMethod));
+			}
 		}
 
 		foreach ($reflectionClass->getProperties() as $reflectionProperty) {
-			$this->processPropertyAnnotations($reflectionProperty, $reader->getPropertyAnnotations($reflectionProperty));
+			if (!$reflectionProperty->isStatic()) {
+				$this->processPropertyAnnotations($reflectionProperty, $reader->getPropertyAnnotations($reflectionProperty));
+			}
 		}
 
 	}

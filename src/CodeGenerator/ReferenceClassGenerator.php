@@ -164,7 +164,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 					$w->writeln("\$this->id = \$id;");
 				}
 				$w->endMethod();
-			} else if (strncmp('get', $methodName, 3) === 0 && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
+			} else if (strncmp('get', $methodName, 3) === 0 && $method->isPublic() && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
 				$argMethod = [];
 				$argCall = [];
 				foreach ($method->getParameters() as $param) {
