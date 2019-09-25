@@ -58,7 +58,6 @@
     },
     "suggest": {
         "doctrine/dbal": "SQL database support",
-        "smalldb/flupdo": "SQL database support",
         "ext-pdo": "SQL database support"
     }
 }
