@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\SymfonyDI;
 
+use Smalldb\StateMachine\CodeGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
@@ -33,11 +34,21 @@ class SmalldbExtension extends Extension
 {
 	protected const PROVIDER_CLASS = LambdaProvider::class;
 
+	/**
+	 * Create bundle configuration. Smalldb Bundle overrides this with
+	 * an extended configuration class.
+	 *
+	 * @return Configuration
+	 */
+	public function getConfiguration(array $config, ContainerBuilder $container)
+	{
+		return new Configuration();
+	}
 
 	public function load(array $configs, ContainerBuilder $container)
 	{
 		// Get configuration
-		$config = $this->processConfiguration(new Configuration(), $configs);
+		$config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
 		if (!isset($config['class_generator']) || !isset($config['machine_references'])) {
 			return;
 		}
@@ -52,9 +63,16 @@ class SmalldbExtension extends Extension
 			$definitionBag->addFromAnnotatedClass($refClass);
 		}
 
+		// Register autoloader for generated classes
+		$genNamespace = $config['class_generator']['namespace'];
+		$genPath = $config['class_generator']['path'];
+		$smalldb->addMethodCall('registerGeneratedClassAutoloader', [$genNamespace, $genPath]);
+		$autoloader = new GeneratedClassAutoloader($genNamespace, $genPath);
+		$autoloader->registerLoader();
+
 		// Generate everything
 		$this->generateClasses($container, $smalldb, $definitionBag,
-			$config['class_generator']['namespace'], $config['class_generator']['path']);
+			$genNamespace, $genPath);
 	}
 
 

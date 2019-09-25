@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
+use Smalldb\StateMachine\CodeGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
@@ -52,6 +53,17 @@ class Smalldb
 	 */
 	public function __construct()
 	{
+	}
+
+
+	/**
+	 * Helper method to register autoloader for generated classes when setting up a DI container.
+	 */
+	public function registerGeneratedClassAutoloader(string $namespace, string $directory): GeneratedClassAutoloader
+	{
+		$autoloader = new GeneratedClassAutoloader($namespace, $directory);
+		$autoloader->registerLoader();
+		return $autoloader;
 	}
 
 

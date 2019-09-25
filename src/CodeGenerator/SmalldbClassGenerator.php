@@ -45,6 +45,10 @@ class SmalldbClassGenerator
 	{
 		$this->classNamespace = trim($classNamespace, '\\');
 		$this->classDirectory = $classDirectory;
+
+		if (!is_dir($this->classDirectory)) {
+			mkdir($this->classDirectory);
+		}
 	}
 
 
@@ -97,7 +101,7 @@ class SmalldbClassGenerator
 	private function checkGeneratedClass(string $generatedClass)
 	{
 		if (!class_exists($generatedClass)) {
-			throw new \RuntimeException("Generated class $generatedClass not found. Is class loader configured to load the generated classes?");  // @codeCoverageIgnore
+			throw new \RuntimeException("Generated class $generatedClass not found. Is class loader configured to load the generated classes? Configure PSR-4 loader to load $this->classNamespace from $this->classDirectory");  // @codeCoverageIgnore
 		}
 	}
 
