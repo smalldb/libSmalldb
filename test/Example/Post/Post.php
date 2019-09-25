@@ -18,39 +18,54 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
+use Smalldb\StateMachine\Annotation\Access as Access;
+use Smalldb\StateMachine\Annotation\Color;
+use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
-use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
 
 
 /**
  * @StateMachine("post")
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
+ * @Access\Policy("Author",
+ *         @SQL\RequireOwner("authorId"),
+ *         @Color("#4a0"))
+ * @Access\Policy("Editor",
+ *         @Access\RequireRole("ROLE_EDITOR"))
+ * @Access\DefaultPolicy("Author")
  */
 abstract class Post extends PostDataImmutable implements ReferenceInterface
 {
 
 	/**
-	 * @State(color = "#def")
+	 * @State
+	 * @Color("#def")
 	 */
 	const EXISTS = "Exists";
 
 	/**
-	 * @Transition("", {"Exists"}, color = "#4a0")
+	 * @Transition("", {"Exists"})
+	 * @Color("#4a0")
+	 * @Access\AllowPolicy("Editor")
 	 */
 	abstract public function create(PostDataImmutable $itemData);
 
 	/**
 	 * @Transition("Exists", {"Exists"})
+	 * @Access\AllowPolicy("Author")
 	 */
 	abstract public function update(PostDataImmutable $itemData);
 
 	/**
-	 * @Transition("Exists", {""}, color = "#a40")
+	 * @Transition("Exists", {""})
+	 * @Color("#a40")
+	 * @Access\AllowPolicy("Author")
 	 */
 	abstract public function delete();
 
