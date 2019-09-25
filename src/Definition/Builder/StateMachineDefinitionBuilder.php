@@ -119,7 +119,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 		/** @var ActionDefinition[] $actions */
 		$actions = [];
 		foreach ($this->actions as $actionPlaceholder) {
-			$action = $this->buildActionDefinition($actionPlaceholder, $transitionsByAction[$actionPlaceholder->name]);
+			$action = $this->buildActionDefinition($actionPlaceholder, $transitionsByAction[$actionPlaceholder->name] ?? []);
 			$actions[$action->getName()] = $action;
 		}
 

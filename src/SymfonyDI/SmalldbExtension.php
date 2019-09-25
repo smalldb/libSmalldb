@@ -62,6 +62,9 @@ class SmalldbExtension extends Extension
 		foreach ($config['machine_references'] as $refClass) {
 			$definitionBag->addFromAnnotatedClass($refClass);
 		}
+		foreach ($config['machine_reference_psr4_dirs'] as $dirConfig) {
+			$definitionBag->addFromPsr4Directory($dirConfig['namespace'], $dirConfig['path']);
+		}
 
 		// Register autoloader for generated classes
 		$genNamespace = $config['class_generator']['namespace'];

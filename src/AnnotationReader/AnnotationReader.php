@@ -111,13 +111,22 @@ class AnnotationReader
 
 	public function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations): void
 	{
+		$isStateMachine = false;
+
 		foreach ($annotations as $annotation) {
+			if ($annotation instanceof StateMachine) {
+				$isStateMachine = true;
+			}
 			if ($annotation instanceof ReflectionClassAwareAnnotationInterface) {
 				$annotation->setReflectionClass($reflectionClass);
 			}
 			if ($annotation instanceof StateMachineBuilderApplyInterface) {
 				$annotation->applyToBuilder($this->builder);
 			}
+		}
+
+		if (!$isStateMachine) {
+			throw new MissingStateMachineAnnotationException("No @StateMachine annotation found: " . $reflectionClass->getName());
 		}
 	}
 

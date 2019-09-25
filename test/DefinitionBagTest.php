@@ -22,7 +22,10 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 
 
 class DefinitionBagTest extends TestCase
@@ -131,6 +134,19 @@ class DefinitionBagTest extends TestCase
 
 		$this->expectException(InvalidArgumentException::class);
 		$bag->addAlias('F', 'bar');
+	}
+
+
+	public function testAddFromPsr4Directory()
+	{
+		$bag = new SmalldbDefinitionBag();
+		$foundDefs = $bag->addFromPsr4Directory('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example');
+		$this->assertNotEmpty($foundDefs);
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(CrudItem::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition('crud-item'));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(Post::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(PizzaDelivery::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(SupervisorProcess::class));
 	}
 
 }

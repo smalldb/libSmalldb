@@ -37,6 +37,7 @@ class YamlDemoContainer extends AbstractSmalldbContainerFactory implements Small
 		$loader = new YamlFileLoader($c, $fileLocator);
 		$loader->load('YamlDemoContainer.yml');
 
+		$c->setParameter('kernel.project_dir', dirname(dirname(__DIR__)));
 		$c->setParameter('generated_output_dir', $this->out->mkdir('generated'));
 		return $c;
 	}

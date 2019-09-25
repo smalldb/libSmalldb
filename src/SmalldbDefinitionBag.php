@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\AnnotationReader\MissingStateMachineAnnotationException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 
@@ -106,6 +107,38 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 		$machineType = $this->addDefinition($definition);
 		$this->addAlias($className, $machineType);
 		return $definition;
+	}
+
+	public function addFromPsr4Directory(string $namespace, string $directory, array &$foundDefinitions = []): array
+	{
+		if (!is_dir($directory)) {
+			throw new InvalidArgumentException("Not a directory: $directory");
+		}
+
+		if ($namespace[-1] !== "\\") {
+			$namespace .= "\\";
+		}
+
+		foreach (scandir($directory) as $f) {
+			if ($f[0] === '.') {
+				continue;
+			}
+			$fullPath = "$directory/$f";
+			$dotPos = strpos($f, '.');
+			$className = $namespace . ($dotPos ? substr($f, 0, $dotPos) : $f);
+			if (is_dir($fullPath)) {
+				$this->addFromPsr4Directory($className, $fullPath, $foundDefinitions);
+			} else if ($dotPos && substr($f, $dotPos) === '.php' && (class_exists($className) || interface_exists($className))) {
+				try {
+					$foundDefinitions[$className] = $this->addFromAnnotatedClass($className);
+				}
+				catch (MissingStateMachineAnnotationException $ex) {
+					// Ignore classes without @StateMachine annotation.
+				}
+			}
+		}
+
+		return $foundDefinitions;
 	}
 
 }

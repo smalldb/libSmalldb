@@ -50,6 +50,20 @@ class Configuration implements ConfigurationInterface
 			->info('State machine references & definitions (annotated classes)')
 			->scalarPrototype();
 
+		$children->arrayNode('machine_reference_psr4_dirs')
+			->info('PSR-4 directory with state machine references & definitions (annotated classes)')
+			->arrayPrototype()
+			->children()
+				->scalarNode('namespace')
+					->info('Namespace of the classes')
+					->cannotBeEmpty()
+				->end()
+				->scalarNode('path')
+					->info('Directory where the classes are placed')
+					->cannotBeEmpty()
+				->end()
+			->end();
+
 		$this->addNodes($children);
 
 		// @formatter:on
