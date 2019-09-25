@@ -50,7 +50,8 @@ class SmalldbExtension extends Extension
 		// Get configuration
 		$config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
 		if (!isset($config['class_generator']) || !isset($config['machine_references'])) {
-			return;
+			// Stop if configuration is missing.
+			return null;
 		}
 
 		// Define Smalldb entry point
@@ -76,6 +77,8 @@ class SmalldbExtension extends Extension
 		// Generate everything
 		$this->generateClasses($container, $smalldb, $definitionBag,
 			$genNamespace, $genPath);
+
+		return $config;
 	}
 
 
