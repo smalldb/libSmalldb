@@ -22,7 +22,3 @@ parameters:
         -
             message: '/Parameter #1 \$constant of method Doctrine\\Common\\Annotations\\AnnotationReader::getConstantAnnotations() expects ReflectionClassConstant, ReflectionClassConstant|false given./'
             path: 'src/Utils/DeepAnnotationReader.php'
-
-        -
-            message: '/Call to an undefined method Symfony\\Component\\Config\\Definition\\Builder\\NodeDefinition::canBeEnabled()./'
-            path: 'src/SymfonyDI/Configuration.php'

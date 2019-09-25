@@ -17,42 +17,50 @@
  */
 namespace Smalldb\StateMachine\SymfonyDI;
 
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 
 class Configuration implements ConfigurationInterface
 {
+
 	public function getConfigTreeBuilder()
 	{
 		// @formatter:off
 		$treeBuilder = new TreeBuilder('smalldb');
-		$treeBuilder->getRootNode()
-			->canBeEnabled()
+		$children = $treeBuilder->getRootNode()->children();
+
+		$children->arrayNode('class_generator')
+			->info('Definition bag & References generator')
 			->children()
-				->arrayNode('class_generator')
-					->info('Definition bag & References generator')
-					->children()
-						->scalarNode('namespace')
-							->info('Namespace of the generated classes')
-							->defaultValue('Smalldb\\GeneratedCode\\')
-							->cannotBeEmpty()
-						->end()
-						->scalarNode('path')
-							->info('Directory where generated PHP files will be stored')
-							->defaultValue('%kernel.cache_dir%/smalldb')
-							->cannotBeEmpty()
-						->end()
-					->end()
+				->scalarNode('namespace')
+					->info('Namespace of the generated classes')
+					->defaultValue('Smalldb\\GeneratedCode\\')
+					->cannotBeEmpty()
 				->end()
-				->arrayNode('machine_references')
-					->info('State machine references & definitions (annotated classes)')
-					->scalarPrototype()
+				->scalarNode('path')
+					->info('Directory where generated PHP files will be stored')
+					->defaultValue('%kernel.cache_dir%/smalldb')
+					->cannotBeEmpty()
 				->end()
 			->end();
+
+		$children->arrayNode('machine_references')
+			->info('State machine references & definitions (annotated classes)')
+			->scalarPrototype();
+
+		$this->addNodes($children);
 
 		// @formatter:on
 		return $treeBuilder;
 	}
+
+
+	protected function addNodes(NodeBuilder $children)
+	{
+		// Smalldb Bundle adds more nodes here.
+	}
+
 }
 
