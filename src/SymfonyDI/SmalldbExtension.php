@@ -38,6 +38,9 @@ class SmalldbExtension extends Extension
 	{
 		// Get configuration
 		$config = $this->processConfiguration(new Configuration(), $configs);
+		if (!isset($config['class_generator']) || !isset($config['machine_references'])) {
+			return;
+		}
 
 		// Define Smalldb entry point
 		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
