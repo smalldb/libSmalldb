@@ -95,11 +95,12 @@ class DataSource implements ReferenceDataSourceInterface
 			->addSelectFromStatements(true)
 			->andWhereId($id);
 
+		$stmt = $q->execute();
+
 		if ($this->onQueryCallback) {
 			($this->onQueryCallback)($q);
 		}
 
-		$stmt = $q->execute();
 		if ($stmt instanceof Statement) {
 			$state = $stmt->fetchColumn();
 			return $state !== false ? (string)$state : '';
@@ -118,11 +119,12 @@ class DataSource implements ReferenceDataSourceInterface
 			->addSelectFromStatements()
 			->andWhereId($id);
 
+		$stmt = $q->execute();
+
 		if ($this->onQueryCallback) {
 			($this->onQueryCallback)($q);
 		}
 
-		$stmt = $q->execute();
 		if ($stmt instanceof Statement) {
 			$data = $stmt->fetch(FetchMode::ASSOCIATIVE);
 		} else {

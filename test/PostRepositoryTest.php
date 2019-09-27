@@ -58,7 +58,7 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('Exists', $state);
 
 		// One query to load the state
-		$this->assertEquals(1, $this->postRepository->getDataSourceQueryCount());
+		$this->assertEquals(1, $this->postRepository->getQueryCount());
 	}
 
 
@@ -71,7 +71,7 @@ class PostRepositoryTest extends TestCase
 		$this->assertNotEmpty($ref->getTitle());
 
 		// One query to load the state, second to load data. One would be better.
-		$this->assertLessThanOrEqual(2, $this->postRepository->getDataSourceQueryCount());
+		$this->assertLessThanOrEqual(2, $this->postRepository->getQueryCount());
 	}
 
 	public function testPostObjects()
@@ -217,7 +217,7 @@ class PostRepositoryTest extends TestCase
 
 	private function assertQueryCount(int $expected): void
 	{
-		$actual = $this->postRepository->getDataSourceQueryCount();
+		$actual = $this->postRepository->getQueryCount();
 		$this->assertEquals($expected, $actual, "Unexpected query count: $actual (should be $expected)");
 	}
 

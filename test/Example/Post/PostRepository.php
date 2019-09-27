@@ -18,90 +18,27 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Statement;
-use Doctrine\DBAL\Query\QueryBuilder;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataLoader;
-use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Misc\AbstractCountingSqlRepository;
 
 
-class PostRepository implements SmalldbRepositoryInterface
+class PostRepository extends AbstractCountingSqlRepository implements SmalldbRepositoryInterface
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider = null;
-
-	/** @var string */
-	private $refClass = null;
-
-	/** @var Connection */
-	private $db;
-
-	/** @var DataSource */
-	private $postDataSource = null;
-
-	private $queryCount = 0;
-
-
-	public function __construct(Smalldb $smalldb, Connection $db)
-	{
-		$this->smalldb = $smalldb;
-		$this->db = $db;
-	}
-
-
-	public function getMachineProvider(): SmalldbProviderInterface
-	{
-		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(Post::class));
-	}
-
-
-	public function getReferenceClass(): string
-	{
-		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
-	}
-
-
-	private function getPostDataSource(): DataSource
-	{
-		return $this->postDataSource ?? ($this->postDataSource = $this->createPostDataSource());
-	}
-
-
-	private function createPostDataSource(): DataSource
-	{
-		$dataSource = new DataSource(null, $this->smalldb, $this->smalldb->getMachineProvider(Post::class), $this->db);
-		$dataSource->setOnQueryCallback(function(QueryBuilder $q) {
-			$this->queryCount++;
-		});
-		return $dataSource;
-	}
-
-
-	public function getDataSourceQueryCount(): int
-	{
-		return $this->queryCount;
-	}
+	protected const REF_CLASS = Post::class;
 
 
 	public function ref($id): Post
 	{
 		/** @var Post $ref */
-		$ref = $this->getPostDataSource()->ref($id);
+		$ref = $this->getDataSource()->ref($id);
 		return $ref;
 	}
 
 
 	public function findBySlug(string $slug): ?Post
 	{
-		$q = $this->getPostDataSource()->createQueryBuilder()
+		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
 		$q->where('slug = :slug');
 		$q->setMaxResults(1);
@@ -109,7 +46,7 @@ class PostRepository implements SmalldbRepositoryInterface
 		$q->setParameter('slug', $slug);
 
 		$result = $q->executeRef();
-		$this->queryCount++;
+		$this->onQuery($q);
 
 		/** @var Post|null $post */
 		$post = $result->fetch();
@@ -127,15 +64,14 @@ class PostRepository implements SmalldbRepositoryInterface
 		$pageSize = 25;
 		$pageOffset = $page * $pageSize;
 
-		$q = $this->getPostDataSource()->createQueryBuilder()
+		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
 		$q->setFirstResult($pageOffset);
 		$q->setMaxResults($pageSize);
 		$result = $q->executeRef();
-
-		$this->queryCount++;
+		$this->onQuery($q);
 
 		/** @var Post[] $posts */
 		$posts = $result->fetchAll();
@@ -145,13 +81,12 @@ class PostRepository implements SmalldbRepositoryInterface
 
 	public function findAll(): iterable
 	{
-		$q = $this->getPostDataSource()->createQueryBuilder()
+		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
 		$result = $q->executeRef();
-
-		$this->queryCount++;
+		$this->onQuery($q);
 
 		$posts = $result->fetchAll();
 		return $posts;
