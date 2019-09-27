@@ -19,6 +19,7 @@
 
 namespace Smalldb\StateMachine\Graph\Grafovatko;
 
+use RuntimeException;
 use Smalldb\StateMachine\Graph\Edge;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Graph\NestedGraph;
@@ -52,6 +53,7 @@ class GrafovatkoExporter
 	public function addProcessor(ProcessorInterface $processor): self
 	{
 		$this->processors[] = $processor;
+		$processor->setPrefix($this->prefix);
 		return $this;
 	}
 
@@ -61,7 +63,7 @@ class GrafovatkoExporter
 		$jsonObject = $this->exportNestedGraph($this->graph);
 
 		foreach ($this->processors as $processor) {
-			$extraSvg = $processor->getExtraSvgElements($this->graph, $this->prefix);
+			$extraSvg = $processor->getExtraSvgElements($this->graph);
 			if (!empty($extraSvg)) {
 				foreach ($extraSvg as $el) {
 					$jsonObject['extraSvg'][] = $el;
@@ -78,7 +80,7 @@ class GrafovatkoExporter
 		$jsonObject = $this->export();
 		$jsonString = json_encode($jsonObject, JSON_NUMERIC_CHECK | $jsonOptions);
 		if ($jsonString === false) {
-			throw new \RuntimeException('Failed to serialize graph: ' . json_last_error_msg());  // @codeCoverageIgnore
+			throw new RuntimeException('Failed to serialize graph: ' . json_last_error_msg());  // @codeCoverageIgnore
 		}
 		return $jsonString;
 	}
@@ -140,7 +142,7 @@ class GrafovatkoExporter
 			EOF;
 
 		if (!file_put_contents($targetFileName, $html)) {
-			throw new \RuntimeException('Failed to write graph.');  //@codeCoverageIgnore
+			throw new RuntimeException('Failed to write graph.');  //@codeCoverageIgnore
 		}
 	}
 
@@ -154,6 +156,9 @@ class GrafovatkoExporter
 	public function setPrefix(string $prefix): self
 	{
 		$this->prefix = $prefix;
+		foreach ($this->processors as $processor) {
+			$processor->setPrefix($prefix);
+		}
 		return $this;
 	}
 
@@ -161,7 +166,7 @@ class GrafovatkoExporter
 	protected function processGraph(NestedGraph $graph, array $exportedGraph): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedGraph = $processor->processGraph($graph, $exportedGraph, $this->prefix);
+			$exportedGraph = $processor->processGraph($graph, $exportedGraph);
 		}
 		return $exportedGraph;
 	}
@@ -170,7 +175,7 @@ class GrafovatkoExporter
 	protected function processNodeAttrs(Node $node, array $exportedNode): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedNode = $processor->processNodeAttrs($node, $exportedNode, $this->prefix);
+			$exportedNode = $processor->processNodeAttrs($node, $exportedNode);
 		}
 		return $exportedNode;
 	}
@@ -179,7 +184,7 @@ class GrafovatkoExporter
 	protected function processEdgeAttrs(Edge $edge, array $exportedEdge): array
 	{
 		foreach ($this->processors as $processor) {
-			$exportedEdge = $processor->processEdgeAttrs($edge, $exportedEdge, $this->prefix);
+			$exportedEdge = $processor->processEdgeAttrs($edge, $exportedEdge);
 		}
 		return $exportedEdge;
 	}

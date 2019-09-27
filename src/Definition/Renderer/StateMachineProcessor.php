@@ -30,7 +30,12 @@ use Smalldb\StateMachine\Graph\Node;
 
 class StateMachineProcessor implements ProcessorInterface
 {
+	/** @var string */
+	private $prefix;
+
+	/** @var bool */
 	private $horizontalLayout;
+
 
 	public function __construct(bool $horizontalLayout = false)
 	{
@@ -38,10 +43,20 @@ class StateMachineProcessor implements ProcessorInterface
 	}
 
 
+	public function setPrefix(string $prefix): void
+	{
+		$this->prefix = $prefix;
+	}
+
+
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
+	 *
+	 * @param NestedGraph $graph
+	 * @param array $exportedGraph
+	 * @return array
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
+	public function processGraph(NestedGraph $graph, array $exportedGraph): array
 	{
 		if ($graph instanceof StateMachineGraph) {
 			$exportedGraph['layoutOptions']['rankdir'] = $this->horizontalLayout ? 'LR' : 'TB';
@@ -53,7 +68,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode, string $prefix): array
+	public function processNodeAttrs(Node $node, array $exportedNode): array
 	{
 		if ($node instanceof StateMachineNode) {
 			$state = $node->getState();
@@ -83,7 +98,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix): array
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
 	{
 		if ($edge instanceof StateMachineEdge) {
 			$transition = $edge->getTransition();
@@ -96,7 +111,7 @@ class StateMachineProcessor implements ProcessorInterface
 	/**
 	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
 	 */
-	public function getExtraSvgElements(Graph $graph, $prefix): array
+	public function getExtraSvgElements(Graph $graph): array
 	{
 		return [];
 	}

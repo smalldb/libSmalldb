@@ -30,11 +30,24 @@ use Smalldb\StateMachine\Graph\Node;
  */
 class Processor implements ProcessorInterface
 {
+	/** @var string */
+	private $prefix;
+
+
+	public function setPrefix(string $prefix): void
+	{
+		$this->prefix = $prefix;
+	}
+
 
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
+	 *
+	 * @param NestedGraph $graph
+	 * @param array $exportedGraph
+	 * @return array
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
+	public function processGraph(NestedGraph $graph, array $exportedGraph): array
 	{
 		return $exportedGraph;  // @codeCoverageIgnore
 	}
@@ -42,7 +55,7 @@ class Processor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode, string $prefix): array
+	public function processNodeAttrs(Node $node, array $exportedNode): array
 	{
 		return $exportedNode;  // @codeCoverageIgnore
 	}
@@ -50,7 +63,7 @@ class Processor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix): array
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
 	{
 		return $exportedEdge;  // @codeCoverageIgnore
 	}
@@ -58,7 +71,7 @@ class Processor implements ProcessorInterface
 	/**
 	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
 	 */
-	public function getExtraSvgElements(Graph $graph, $prefix): array
+	public function getExtraSvgElements(Graph $graph): array
 	{
 		return [];  // @codeCoverageIgnore
 	}

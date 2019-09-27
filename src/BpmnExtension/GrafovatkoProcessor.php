@@ -27,11 +27,35 @@ use Smalldb\StateMachine\Graph\Node;
 
 class GrafovatkoProcessor implements ProcessorInterface
 {
+	/** @var string */
+	private $prefix = '';
+
+	/** @var string|null */
+	private $targetParticipant = null;
+
+
+	public function __construct(?string $targetParticipant = null)
+	{
+		$this->targetParticipant = $targetParticipant;
+	}
+
+
+	public function setPrefix(string $prefix): void
+	{
+		$this->prefix = $prefix;
+	}
+
+
+	public function setTargetParticipant(?string $targetParticipant): void
+	{
+		$this->targetParticipant = $targetParticipant;
+	}
+
 
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph, string $prefix): array
+	public function processGraph(NestedGraph $graph, array $exportedGraph): array
 	{
 		$parentNode = $graph->getParentNode();
 		$parentNodeType = $parentNode ? $parentNode->getAttr('type') : null;
@@ -62,7 +86,7 @@ class GrafovatkoProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode, string $prefix): array
+	public function processNodeAttrs(Node $node, array $exportedNode): array
 	{
 		$exportedNode['fill'] = "#fff";
 
@@ -94,6 +118,9 @@ class GrafovatkoProcessor implements ProcessorInterface
 				break;
 
 			case 'participant':
+				if ($this->targetParticipant && $node->getId() === $this->targetParticipant) {
+					$exportedNode['fill'] = "#ddffbb";
+				}
 				break;
 
 			case 'startEvent':
@@ -170,14 +197,14 @@ class GrafovatkoProcessor implements ProcessorInterface
 
 		// Receiving/invoking background
 		if ($node['_invoking'] && $node['_receiving']) {
-			$exportedNode['fill'] = 'url(#' . $prefix . '_gradient_rcv_inv)';
+			$exportedNode['fill'] = 'url(#' . $this->prefix . '_gradient_rcv_inv)';
 		} else if ($node['_invoking']) {
 			$exportedNode['fill'] = '#ffff88';
 		} else if ($node['_receiving']) {
 			$exportedNode['fill'] = '#aaddff';
 		} else if ($node['_potential_receiving']) {
 			$exportedNode['fill'] = '#eeeeff';
-			$exportedNode['fill'] = 'url(#' . $prefix . '_gradient_pos_rcv)';
+			$exportedNode['fill'] = 'url(#' . $this->prefix . '_gradient_pos_rcv)';
 		}
 
 		return $exportedNode;
@@ -186,7 +213,7 @@ class GrafovatkoProcessor implements ProcessorInterface
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge, string $prefix): array
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
 	{
 		if (isset($edge['name'])) {
 			$label = trim($edge['name']);
@@ -246,15 +273,15 @@ class GrafovatkoProcessor implements ProcessorInterface
 	}
 
 
-	public function getExtraSvgElements(Graph $graph, $prefix): array
+	public function getExtraSvgElements(Graph $graph): array
 	{
 		return [
 			['defs', [], [
-				['linearGradient', ['id' => $prefix . '_gradient_rcv_inv'], [
+				['linearGradient', ['id' => $this->prefix . '_gradient_rcv_inv'], [
 					['stop', ['offset' => '50%', 'stop-color' => '#ff8']],
 					['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 				]],
-				['linearGradient', ['id' => $prefix . '_gradient_pos_rcv'], [
+				['linearGradient', ['id' => $this->prefix . '_gradient_pos_rcv'], [
 					['stop', ['offset' => '50%', 'stop-color' => '#fff']],
 					['stop', ['offset' => '50%', 'stop-color' => '#adf']],
 				]],

@@ -111,7 +111,7 @@ class BpmnTest extends TestCase
 		$this->assertContainsOnlyInstancesOf(StateDefinition::class, $reachableStates);
 		$this->assertGreaterThanOrEqual(2, count($reachableStates), 'Failed to find at least two reachable states.');
 
-		$this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), basename($bpmnFilename), $svgFilename)
+		$this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), basename($bpmnFilename), $svgFilename, "Participant_StateMachine")
 			->writeHtmlFile($bpmnFilename . '.html');
 	}
 
@@ -540,7 +540,7 @@ class BpmnTest extends TestCase
 		$definitionBuilder->setMachineType($machineType);
 		$definition = $definitionBuilder->build();
 
-		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), $title, null, $horizontalLayout);
+		$output = $this->createBpmnPage($definition, $bpmnReader->getBpmnGraph(), $title, null, "Participant_StateMachine", $horizontalLayout);
 		$timesLogFileName = "$machineType-times.json";
 
 		// Clear old results
@@ -673,8 +673,7 @@ class BpmnTest extends TestCase
 		$output->addJs($output->resource('plot.js'));
 	}
 
-	private function createBpmnPage(StateMachineDefinition $definition, Graph $bpmnGraph,
-		string $title, ?string $svgFilename = null, bool $horizontalLayout = false): TestOutputTemplate
+	private function createBpmnPage(StateMachineDefinition $definition, Graph $bpmnGraph, string $title, ?string $svgFilename = null, ?string $participantId = null, bool $horizontalLayout = false): TestOutputTemplate
 	{
 		// Render the infered state machine
 		$output = new TestOutputTemplate();
@@ -688,7 +687,7 @@ class BpmnTest extends TestCase
 			$this->assertFileExists($svgFilename);
 			$svgContent = file_get_contents($svgFilename);
 			$svgPainter = new SvgPainter();
-			$colorizedSvgContent = $svgPainter->colorizeSvgFile($svgContent, $bpmnGraph, [], '');
+			$colorizedSvgContent = $svgPainter->colorizeSvgFile($svgContent, $bpmnGraph, $participantId, [], '');
 
 			$svgUrl = $output->writeResource($svgFilename, $colorizedSvgContent);
 			$output->addHtml(Html::h2([], 'Original BPMN Diagram (an SVG image with STS highlights)'));
@@ -698,7 +697,7 @@ class BpmnTest extends TestCase
 
 		// Render BPMN diagram using Grafovatko
 		$renderer = new GrafovatkoExporter($bpmnGraph);
-		$renderer->addProcessor(new GrafovatkoProcessor());
+		$renderer->addProcessor(new GrafovatkoProcessor($participantId));
 		$output->addGrafovatko();
 		$output->addHtml(Html::h2([], 'Graph of the BPMN Diagram'));
 		$output->addHtml($renderer->exportSvgElement(['class' => 'graph']));

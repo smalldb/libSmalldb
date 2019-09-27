@@ -33,7 +33,7 @@ class SvgPainter
 
 		// Draw provided SVG file as a node (for SVG export from Camunda Modeler)
 		if (isset($fragment['svg_file_contents'])) {
-			$svg_contents_with_style = $this->colorizeSvgFile($fragment['svg_file_contents'], $graph, $errors, $prefix);
+			$svg_contents_with_style = $this->colorizeSvgFile($fragment['svg_file_contents'], $graph, null, $errors, $prefix);
 
 			// Build extras wrapper node
 			$svg_diagram_node = [
@@ -85,14 +85,23 @@ class SvgPainter
 	}
 
 
-	public function colorizeSvgFile(string $svgFileContent, Graph $bpmnGraph, array $errors, string $prefix): string
+	public function colorizeSvgFile(string $svgFileContent, Graph $bpmnGraph, ?string $participantId, array $errors, string $prefix): string
 	{
 		$svg_style = '';
 		$processor = new GrafovatkoProcessor();
+		$processor->setPrefix($prefix);
+		$processor->setTargetParticipant($participantId);
+
+		// Style target participant
+		if ($participantId !== null) {
+			$svg_style .= "djs-element[data-element-id=$participantId] .djs-visual > rect {"
+				. " fill: #ffe !important;"
+				. " }\n";
+		}
 
 		// Style nodes
 		foreach ($bpmnGraph->getAllNodes() as $id => $node) {
-			$nodeAttrs = $processor->processNodeAttrs($node, [], $prefix);
+			$nodeAttrs = $processor->processNodeAttrs($node, []);
 
 			// Don't style annotations
 			if (isset($nodeAttrs['shape']) && $nodeAttrs['shape'] == 'note') {
@@ -114,7 +123,7 @@ class SvgPainter
 
 		// Style arrows
 		foreach ($bpmnGraph->getAllEdges() as $id => $edge) {
-			$edgeAttrs = $processor->processEdgeAttrs($edge, [], $prefix);
+			$edgeAttrs = $processor->processEdgeAttrs($edge, []);
 
 			$svg_style .= ".djs-element[data-element-id=$id] .djs-visual * {";
 			if (isset($edgeAttrs['color'])) {
@@ -140,6 +149,7 @@ class SvgPainter
 		}
 
 		// Gradient definitions
+		//$svg_def_el = $processor->getExtraSvgElements($bpmnGraph);
 		$svg_def_el = '<defs>'
 			. '<linearGradient id="' . $prefix . '_gradient_rcv_inv">'
 			. '<stop offset="50%" stop-color="#ff8" />'
