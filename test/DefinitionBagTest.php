@@ -149,4 +149,12 @@ class DefinitionBagTest extends TestCase
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(SupervisorProcess::class));
 	}
 
+
+	public function testAddFromPsr4DirectoryNoDir()
+	{
+		$bag = new SmalldbDefinitionBag();
+		$this->expectException(InvalidArgumentException::class);
+		$bag->addFromPsr4Directory('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory');
+	}
+
 }
