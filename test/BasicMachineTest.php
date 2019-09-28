@@ -22,6 +22,9 @@ use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtension;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData;
@@ -83,6 +86,40 @@ class BasicMachineTest extends TestCase
 		// Usage: Delete
 		$ref->delete();
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
+	}
+
+
+	/**
+	 * @dataProvider smalldbProvider
+	 */
+	public function testMachineSources(string $smalldbFactoryClass, string $machineType, $testData)
+	{
+		/** @var SmalldbFactory $smalldbFactory */
+		$smalldbFactory = new $smalldbFactoryClass();
+		$smalldb = $smalldbFactory->createSmalldb();
+		$machineProvider = $smalldb->getMachineProvider($machineType);
+		$definition = $machineProvider->getDefinition();
+
+		$this->assertTrue($definition->hasExtension(SourcesExtension::class));
+		/** @var SourcesExtension $ext */
+		$ext = $definition->getExtension(SourcesExtension::class);
+		$this->assertInstanceOf(SourcesExtension::class, $ext);
+
+		$sources = $ext->getSourceFiles();
+		$this->assertNotEmpty($sources);
+		$firstSource = $sources[0];
+
+		// The first source should be the defining PHP class or interface
+		$ref = $smalldb->nullRef($machineType);
+		$this->assertInstanceOf(SourceClassFile::class, $firstSource);
+		$sourceClass = $firstSource->getClassname();
+		$this->assertInstanceOf($sourceClass, $ref);
+
+		// Assert the source file exists
+		foreach ($sources as $source) {
+			$this->assertInstanceOf(SourceFile::class, $source);
+			$this->assertFileExists($source->getFilename());
+		}
 	}
 
 

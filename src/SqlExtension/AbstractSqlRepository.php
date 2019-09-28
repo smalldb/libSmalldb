@@ -26,6 +26,11 @@ use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
 
 
+/**
+ * Class AbstractSqlRepository
+ *
+ * This class implements a simple repository of a single entity class.
+ */
 abstract class AbstractSqlRepository implements SmalldbRepositoryInterface
 {
 
@@ -83,6 +88,10 @@ abstract class AbstractSqlRepository implements SmalldbRepositoryInterface
 
 
 	/**
+	 * Create a reference to a state machine identified by $id.
+	 *
+	 * Override this method to use a proper return type hint.
+	 *
 	 * @return ReferenceInterface
 	 */
 	public function ref($id)
