@@ -50,7 +50,7 @@ class DefinitionTest extends TestCase
 		$aDelete = new ActionDefinition('delete', [$tDelete->getSourceState()->getName() => $tDelete]);
 
 		// State machine
-		$stateMachineDefinition = new StateMachineDefinition('crud-item',
+		$stateMachineDefinition = new StateMachineDefinition('crud-item', time(),
 			['' => $sNotExists, 'Exists' => $sExists],
 			['create' => $aCreate, 'update' => $aUpdate, 'delete' => $aDelete],
 			[$tCreate, $tUpdate, $tDelete], [], []);

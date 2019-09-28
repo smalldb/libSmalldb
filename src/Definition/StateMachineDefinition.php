@@ -37,6 +37,9 @@ class StateMachineDefinition extends ExtensibleDefinition
 	/** @var string */
 	private $machineType;
 
+	/** @var int */
+	private $mtime;
+
 	/** @var StateDefinition[] */
 	private $states;
 
@@ -69,6 +72,7 @@ class StateMachineDefinition extends ExtensibleDefinition
 	 * StateMachineDefinition constructor.
 	 *
 	 * @param string $machineType
+	 * @param int $mtime
 	 * @param StateDefinition[] $states
 	 * @param ActionDefinition[] $actions
 	 * @param TransitionDefinition[] $transitions
@@ -80,13 +84,14 @@ class StateMachineDefinition extends ExtensibleDefinition
 	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
-	public function __construct(string $machineType, array $states, array $actions, array $transitions,
-		array $properties, array $errors,
+	public function __construct(string $machineType, int $mtime,
+		array $states, array $actions, array $transitions, array $properties, array $errors,
 		?string $referenceClass = null, ?string $transitionsClass = null, ?string $repositoryClass = null,
 		array $extensions = [])
 	{
 		parent::__construct($extensions);
 		$this->machineType = $machineType;
+		$this->mtime = $mtime;
 		$this->states = $states;
 		$this->actions = $actions;
 		$this->transitions = $transitions;
@@ -104,6 +109,12 @@ class StateMachineDefinition extends ExtensibleDefinition
 	public function getMachineType(): string
 	{
 		return $this->machineType;
+	}
+
+
+	public function getMTime(): int
+	{
+		return $this->mtime;
 	}
 
 

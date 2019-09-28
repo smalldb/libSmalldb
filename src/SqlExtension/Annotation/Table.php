@@ -35,7 +35,7 @@ class Table implements StateMachineBuilderApplyInterface
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		/** @var \Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtensionPlaceholder $sqlExtensionPlaceholder */
+		/** @var SqlTableExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $builder->getExtensionPlaceholder(SqlTableExtensionPlaceholder::class);
 		$sqlExtensionPlaceholder->sqlTable = $this->sqlTable;
 	}

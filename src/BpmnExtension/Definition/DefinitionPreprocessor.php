@@ -21,6 +21,8 @@ namespace Smalldb\StateMachine\BpmnExtension\Definition;
 use Smalldb\StateMachine\BpmnExtension\BpmnReader;
 use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 
 
 class DefinitionPreprocessor implements PreprocessorInterface
@@ -44,6 +46,11 @@ class DefinitionPreprocessor implements PreprocessorInterface
 
 	public function preprocessDefinition(StateMachineDefinitionBuilder $builder): void
 	{
+		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
+		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
+		$sourcesPlaceholder->addSourceFile(new SourceFile($this->bpmnFilename));
+		$builder->addMTime(filemtime($this->bpmnFilename));
+
 		$reader = BpmnReader::readBpmnFile($this->bpmnFilename);
 		$reader->inferStateMachine($builder, $this->targetParticipant);
 

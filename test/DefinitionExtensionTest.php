@@ -36,7 +36,7 @@ class DefinitionExtensionTest extends TestCase
 	public function definitionFactoryProvider()
 	{
 		yield StateMachineDefinition::class => [function($extensions) {
-			return new StateMachineDefinition('Foo', [], [], [], [], [], null, null, null, $extensions);
+			return new StateMachineDefinition('Foo', time(), [], [], [], [], [], null, null, null, $extensions);
 		}];
 
 		yield StateDefinition::class => [function($extensions) {

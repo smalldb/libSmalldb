@@ -20,6 +20,8 @@ namespace Smalldb\StateMachine\GraphMLExtension;
 
 use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 
 
 class DefinitionPreprocessor implements PreprocessorInterface
@@ -44,6 +46,11 @@ class DefinitionPreprocessor implements PreprocessorInterface
 
 	public function preprocessDefinition(StateMachineDefinitionBuilder $builder): void
 	{
+		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
+		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
+		$sourcesPlaceholder->addSourceFile(new SourceFile($this->graphmlFilename));
+		$builder->addMTime(filemtime($this->graphmlFilename));
+
 		$reader = new GraphMLReader($builder);
 		$reader->parseGraphMLFile($this->graphmlFilename, $this->group);
 

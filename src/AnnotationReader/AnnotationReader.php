@@ -30,6 +30,9 @@ use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
 
@@ -86,6 +89,11 @@ class AnnotationReader
 		$this->classFileName = $filename;
 		$this->baseDir = dirname($this->classFileName);
 		$this->builder->setReferenceClass($reflectionClass->getName());
+		$this->builder->setMTime(filemtime($filename));
+
+		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
+		$sourcesPlaceholder = $this->builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
+		$sourcesPlaceholder->addSourceFile(new SourceClassFile($reflectionClass));
 
 		$reader = new DeepAnnotationReader();
 

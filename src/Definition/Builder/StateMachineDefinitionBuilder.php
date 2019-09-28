@@ -30,6 +30,10 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
+
+	/** @var int|null */
+	private $mtime;
+
 	/** @var PreprocessorInterface[] */
 	private $preprocessorQueue = [];
 
@@ -130,8 +134,10 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 			$properties[$property->getName()] = $property;
 		}
 
-		return new StateMachineDefinition($this->machineType, $states, $actions, $transitions, $properties, $this->errors,
-			$this->referenceClass, $this->transitionsClass, $this->repositoryClass, $this->buildExtensions());
+		return new StateMachineDefinition($this->machineType, $this->mtime ?? time(),
+			$states, $actions, $transitions, $properties, $this->errors,
+			$this->referenceClass, $this->transitionsClass, $this->repositoryClass,
+			$this->buildExtensions());
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
@@ -186,6 +192,29 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 
 		// TODO: Sort properties too?
 		//ksort($this->properties);
+	}
+
+
+	public function getMTime(): ?int
+	{
+		return $this->mtime;
+	}
+
+
+	public function setMTime(?int $mtime): void
+	{
+		$this->mtime = $mtime;
+	}
+
+
+	/**
+	 * Set mtime of the definition if the new value is later, i.e., `max($mtime, $this->mtime)`.
+	 */
+	public function addMTime(int $mtime): void
+	{
+		if ($mtime > $this->mtime) {
+			$this->mtime = $mtime;
+		}
 	}
 
 
@@ -355,6 +384,5 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	{
 		$this->transitionsClass = $transitionsClass;
 	}
-
 
 }
