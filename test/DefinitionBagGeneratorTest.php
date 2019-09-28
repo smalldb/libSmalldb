@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\CodeGenerator\DefinitionBagGenerator;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -45,6 +46,10 @@ class DefinitionBagGeneratorTest extends TestCase
 
 		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $out->mkdir('generated'));
 		$generator = new DefinitionBagGenerator($scg);
+
+		// Setup Smalldb & autoloader for generated classes
+		$smalldb = new Smalldb();
+		$smalldb->registerGeneratedClassAutoloader($scg->getClassNamespace(), $scg->getClassDirecotry(), true);
 
 		$generatedClass = $generator->generateDefinitionBagClass('Smalldb\\GeneratedCode\\GeneratedDefinitionBag_BasicTest', $origBag);
 		$this->assertTrue(class_exists($generatedClass));

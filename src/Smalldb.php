@@ -59,9 +59,9 @@ class Smalldb
 	/**
 	 * Helper method to register autoloader for generated classes when setting up a DI container.
 	 */
-	public function registerGeneratedClassAutoloader(string $namespace, string $directory): GeneratedClassAutoloader
+	public function registerGeneratedClassAutoloader(string $namespace, string $directory, bool $prependAutoloader = false): GeneratedClassAutoloader
 	{
-		$autoloader = new GeneratedClassAutoloader($namespace, $directory);
+		$autoloader = new GeneratedClassAutoloader($namespace, $directory, $prependAutoloader);
 		$autoloader->registerLoader();
 		return $autoloader;
 	}

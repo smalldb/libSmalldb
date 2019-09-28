@@ -38,6 +38,10 @@ class ReferenceClassGeneratorTest extends TestCase
 		$namespace = 'Smalldb\\GeneratedCode';
 		$scg = new SmalldbClassGenerator($namespace, $out->mkdir('generated'));
 
+		// Setup Smalldb & autoloader for generated classes
+		$smalldb = new Smalldb();
+		$smalldb->registerGeneratedClassAutoloader($scg->getClassNamespace(), $scg->getClassDirecotry(), true);
+
 		$origClass = Post::class;
 
 		$definitionBag = new SmalldbDefinitionBag();
@@ -47,7 +51,6 @@ class ReferenceClassGeneratorTest extends TestCase
 		$newClass = $generator->generateReferenceClass($origClass, $definition);
 
 		// Try to create a dummy null reference
-		$smalldb = new Smalldb();
 		$provider = new LambdaProvider();
 		$dataSource = new DummyDataSource();
 		/** @var Post $newClassInstance */

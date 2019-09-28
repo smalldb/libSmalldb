@@ -47,7 +47,7 @@ class SmalldbClassGenerator
 		$this->classDirectory = $classDirectory;
 
 		if (!is_dir($this->classDirectory)) {
-			mkdir($this->classDirectory);
+			mkdir($this->classDirectory);  // @codeCoverageIgnore
 		}
 	}
 
@@ -55,6 +55,12 @@ class SmalldbClassGenerator
 	public function getClassNamespace(): string
 	{
 		return $this->classNamespace;
+	}
+
+
+	public function getClassDirecotry(): string
+	{
+		return $this->classDirectory;
 	}
 
 
