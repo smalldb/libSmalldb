@@ -38,7 +38,7 @@ class GeneratedClassAutoloader
 	public function __construct(string $namespace, string $directory, bool $prependAutoloader = false)
 	{
 		$this->namespace = $namespace[-1] === '\\' ? $namespace : $namespace . "\\";
-		$this->namespaceLen = strlen($namespace);
+		$this->namespaceLen = strlen($this->namespace);
 		$this->directory = $directory[-1] === DIRECTORY_SEPARATOR ? $directory : $directory . DIRECTORY_SEPARATOR;
 		$this->prependAutoloader = $prependAutoloader;
 	}
@@ -48,7 +48,7 @@ class GeneratedClassAutoloader
 	{
 		spl_autoload_register(function($class) {
 			if (strncmp($class, $this->namespace, $this->namespaceLen) === 0) {
-				require $this->directory . substr($class, $this->namespaceLen + 1) . '.php';
+				require $this->directory . substr($class, $this->namespaceLen) . '.php';
 			}
 		}, true, $this->prependAutoloader);
 	}
