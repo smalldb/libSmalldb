@@ -101,43 +101,48 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 			$this->addState('');
 		}
 
-		/** @var StateDefinition[] $states */
-		$states = [];
-		foreach ($this->states as $statePlaceholder) {
-			$state = $this->buildStateDefinition($statePlaceholder);
-			$states[$state->getName()] = $state;
+		try {
+			/** @var StateDefinition[] $states */
+			$states = [];
+			foreach ($this->states as $statePlaceholder) {
+				$state = $this->buildStateDefinition($statePlaceholder);
+				$states[$state->getName()] = $state;
+			}
+
+			/** @var TransitionDefinition[] $transitions */
+			$transitions = [];
+			$transitionsByAction = [];
+			foreach ($this->transitions as $transitionPlaceholder) {
+				$transition = $this->buildTransitionDefinition($transitionPlaceholder, $states);
+				$transitions[] = $transition;
+
+				$transitionName = $transition->getName();
+				$sourceStateName = $transition->getSourceState()->getName();
+				$transitionsByAction[$transitionName][$sourceStateName] = $transition;
+			}
+
+			/** @var ActionDefinition[] $actions */
+			$actions = [];
+			foreach ($this->actions as $actionPlaceholder) {
+				$action = $this->buildActionDefinition($actionPlaceholder, $transitionsByAction[$actionPlaceholder->name] ?? []);
+				$actions[$action->getName()] = $action;
+			}
+
+			/** @var PropertyDefinition[] $properties */
+			$properties = [];
+			foreach ($this->properties as $propertyPlaceholder) {
+				$property = $this->buildPropertyDefinition($propertyPlaceholder);
+				$properties[$property->getName()] = $property;
+			}
+
+			return new StateMachineDefinition($this->machineType, $this->mtime ?? time(),
+				$states, $actions, $transitions, $properties, $this->errors,
+				$this->referenceClass, $this->transitionsClass, $this->repositoryClass,
+				$this->buildExtensions());
 		}
-
-		/** @var TransitionDefinition[] $transitions */
-		$transitions = [];
-		$transitionsByAction = [];
-		foreach ($this->transitions as $transitionPlaceholder) {
-			$transition = $this->buildTransitionDefinition($transitionPlaceholder, $states);
-			$transitions[] = $transition;
-
-			$transitionName = $transition->getName();
-			$sourceStateName = $transition->getSourceState()->getName();
-			$transitionsByAction[$transitionName][$sourceStateName] = $transition;
+		catch (\Exception $ex) {
+			throw new StateMachineBuilderException("Failed to build '$this->machineType' state machine definition: " . $ex->getMessage(), $ex->getCode(), $ex);
 		}
-
-		/** @var ActionDefinition[] $actions */
-		$actions = [];
-		foreach ($this->actions as $actionPlaceholder) {
-			$action = $this->buildActionDefinition($actionPlaceholder, $transitionsByAction[$actionPlaceholder->name] ?? []);
-			$actions[$action->getName()] = $action;
-		}
-
-		/** @var PropertyDefinition[] $properties */
-		$properties = [];
-		foreach ($this->properties as $propertyPlaceholder) {
-			$property = $this->buildPropertyDefinition($propertyPlaceholder);
-			$properties[$property->getName()] = $property;
-		}
-
-		return new StateMachineDefinition($this->machineType, $this->mtime ?? time(),
-			$states, $actions, $transitions, $properties, $this->errors,
-			$this->referenceClass, $this->transitionsClass, $this->repositoryClass,
-			$this->buildExtensions());
 	}
 
 	protected function buildStateDefinition(StatePlaceholder $statePlaceholder): StateDefinition
