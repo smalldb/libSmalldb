@@ -24,9 +24,11 @@
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="true">
 			<directory suffix=".php">src</directory>
-			<directory suffix=".php">test/Database</directory>
-			<directory suffix=".php">test/SmalldbFactory</directory>
 			<directory suffix=".php">test/Example</directory>
+			<directory suffix=".php">test/Misc</directory>
+			<directory suffix=".php">test/SmalldbFactory</directory>
+			<directory suffix=".php">test/SymfonyDemo</directory>
+			<directory suffix=".php">test/Template</directory>
 		</whitelist>
 	</filter>
 </phpunit>

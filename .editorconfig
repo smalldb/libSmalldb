@@ -18,3 +18,7 @@ indent_size = 8
 indent_style = tab
 indent_size = 8
 
+[*.sh]
+indent_style = tab
+indent_size = 8
+
