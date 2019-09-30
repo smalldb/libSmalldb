@@ -255,7 +255,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder = new StateMachineDefinitionBuilder();
 		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B']);
-		$this->expectException(UndefinedStateException::class); // A is missing
+		$this->expectException(StateMachineBuilderException::class); // A is missing
 		$builder->build();
 	}
 
@@ -267,7 +267,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addTransition('a', 'A', ['B', 'C']);
 		$builder->addState('A');
 		$builder->addState('B');
-		$this->expectException(UndefinedStateException::class); // C is missing
+		$this->expectException(StateMachineBuilderException::class); // C is missing
 		$builder->build();
 	}
 
