@@ -20,10 +20,12 @@ namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
+use IteratorAggregate;
 use Smalldb\StateMachine\ReferenceInterface;
+use Traversable;
 
 
-class ReferenceQueryResult extends DataSource
+class ReferenceQueryResult extends DataSource implements IteratorAggregate
 {
 
 	/** @var Statement */
@@ -73,12 +75,7 @@ class ReferenceQueryResult extends DataSource
 	}
 
 
-	/**
-	 * @return iterable<ReferenceInterface>
-	 *
-	 * TODO: Return a proper collection which provides rowCount() and other useful features.
-	 */
-	public function fetchAllIter(): iterable
+	public function getIterator(): Traversable
 	{
 		while (($row = $this->stmt->fetch(FetchMode::ASSOCIATIVE)) !== false) {
 			$ref = new $this->refClass($this->smalldb, $this->machineProvider, $this);

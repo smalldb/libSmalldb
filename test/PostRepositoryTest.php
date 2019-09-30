@@ -186,11 +186,15 @@ class PostRepositoryTest extends TestCase
 
 		for ($i = 0; $i < $N; $i++) {
 			$latestPosts = $this->postRepository->findLatest();
+			$this->assertNotEmpty($latestPosts);
 
 			// Make sure each reference has its data loaded
+			$count = 0;
 			foreach ($latestPosts as $post) {
 				$hasEmptyTitle |= empty($post->getTitle());
+				$count++;
 			}
+			$this->assertGreaterThan(1, $count);
 		}
 
 		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');

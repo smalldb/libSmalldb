@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Misc\AbstractCountingSqlRepository;
 
@@ -57,7 +58,7 @@ class PostRepository extends AbstractCountingSqlRepository implements SmalldbRep
 	/**
 	 * @return Post[]
 	 */
-	public function findLatest(int $page = 0, ?Tag $tag = null): array
+	public function findLatest(int $page = 0, ?Tag $tag = null): ReferenceQueryResult
 	{
 		assert($page >= 0);
 
@@ -73,13 +74,11 @@ class PostRepository extends AbstractCountingSqlRepository implements SmalldbRep
 		$result = $q->executeRef();
 		$this->onQuery($q);
 
-		/** @var Post[] $posts */
-		$posts = $result->fetchAll();
-		return $posts;
+		return $result;
 	}
 
 
-	public function findAll(): iterable
+	public function findAll(): ReferenceQueryResult
 	{
 		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
@@ -87,9 +86,7 @@ class PostRepository extends AbstractCountingSqlRepository implements SmalldbRep
 		$q->addOrderBy('id', 'DESC');
 		$result = $q->executeRef();
 		$this->onQuery($q);
-
-		$posts = $result->fetchAll();
-		return $posts;
+		return $result;
 	}
 
 }
