@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations2;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
+use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Utils\DeepAnnotationReader;
 
@@ -88,12 +89,21 @@ class AnnotationReaderTest extends TestCase
 		$reader->getStateMachineDefinition();
 	}
 
+
 	public function conflictingAnnotationClassesProvider()
 	{
 		yield ConflictingAnnotations::class => [ConflictingAnnotations::class];
 		yield ConflictingAnnotations2::class => [ConflictingAnnotations2::class];
 		yield ConflictingAnnotationsWithId::class => [ConflictingAnnotationsWithId::class];
 		yield ConflictingAnnotationsWithId2::class => [ConflictingAnnotationsWithId2::class];
+	}
+
+
+	public function testUseReferenceTrait()
+	{
+		$reader = new AnnotationReader(UseReferenceTrait::class);
+		$this->expectException(\InvalidArgumentException::class);
+		$reader->getStateMachineDefinition();
 	}
 
 }

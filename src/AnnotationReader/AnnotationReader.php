@@ -30,6 +30,7 @@ use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
@@ -83,12 +84,24 @@ class AnnotationReader
 	private function processClassReflection(ReflectionClass $reflectionClass): void
 	{
 		$filename = $reflectionClass->getFileName();
+		$classname = $reflectionClass->getName();
+
+		// Disallow internal classes
 		if ($filename === false) {
-			throw new InvalidArgumentException("Cannot process PHP core or extension class: " . $reflectionClass->getName());  //@codeCoverageIgnore
+			throw new InvalidArgumentException("Cannot process PHP core or extension class: $classname");  //@codeCoverageIgnore
 		}
+
+		// Disallow the use of ReferenceTrait
+		$traits = $reflectionClass->getTraits();
+		foreach ($traits as $trait) {
+			if ($trait->getName() === ReferenceTrait::class) {
+				throw new InvalidArgumentException("Reference class $classname must not use ReferenceTrait. Use ReferenceProtectedAPI instead.");
+			}
+		}
+
 		$this->classFileName = $filename;
 		$this->baseDir = dirname($this->classFileName);
-		$this->builder->setReferenceClass($reflectionClass->getName());
+		$this->builder->setReferenceClass($classname);
 		$this->builder->setMTime(filemtime($filename));
 
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */

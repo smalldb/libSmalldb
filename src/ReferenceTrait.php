@@ -33,13 +33,13 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 trait ReferenceTrait // implements ReferenceInterface
 {
 	/** @var Smalldb */
-	protected $smalldb;
+	private $smalldb;
 
 	/** @var SmalldbProviderInterface */
 	private $machineProvider = null;
 
 	/** @var ReferenceDataSourceInterface */
-	protected $dataSource = null;
+	private $dataSource = null;
 
 	/**
 	 * Primary key (unique within $machine).
@@ -75,12 +75,23 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
+	protected function getSmalldb(): Smalldb
+	{
+		return $this->smalldb;
+	}
+
 	/**
 	 * Lazy-load the provider from Smalldb
 	 */
 	protected function getMachineProvider(): SmalldbProviderInterface
 	{
 		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider($this->getMachineType()));
+	}
+
+
+	protected function getDataSource(): ReferenceDataSourceInterface
+	{
+		return $this->dataSource;
 	}
 
 
