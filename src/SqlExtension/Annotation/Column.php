@@ -34,6 +34,18 @@ class Column implements PropertyPlaceholderApplyInterface
 	/** @var string */
 	public $name;
 
+	/**
+	 * @var string
+	 * Ignored; for compatibility with the Doctrine annotation.
+	 */
+	public $type;
+
+	/**
+	 * @var bool
+	 * Ignored; for compatibility with the Doctrine annotation.
+	 */
+	public $unique;
+
 
 	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void
 	{
