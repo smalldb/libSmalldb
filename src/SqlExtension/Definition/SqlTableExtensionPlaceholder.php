@@ -29,7 +29,7 @@ class SqlTableExtensionPlaceholder implements ExtensionPlaceholderInterface
 	public $sqlTable;
 
 	/** @var string */
-	public $sqlStateSelect;
+	public $sqlStateSelect = null;
 
 
 	public function __construct()
@@ -39,6 +39,10 @@ class SqlTableExtensionPlaceholder implements ExtensionPlaceholderInterface
 
 	public function buildExtension(): ?ExtensionInterface
 	{
+		if ($this->sqlStateSelect === null) {
+			throw new \InvalidArgumentException("State function not defined.");
+		}
+
 		return new SqlTableExtension($this->sqlTable, $this->sqlStateSelect);
 	}
 
