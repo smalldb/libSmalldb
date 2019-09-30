@@ -50,11 +50,15 @@
         "symfony/config": "~4.2",
         "symfony/yaml": "~4.2",
         "doctrine/dbal": "~2.9",
+        "doctrine/orm": "^2.5.11",
         "phpunit/phpunit": "^8.0",
         "phpstan/phpstan": ">=0.11",
         "phpstan/extension-installer": ">=1.0",
         "phpstan/phpstan-symfony": ">=0.11",
-        "phpstan/phpstan-phpunit": ">=0.11"
+        "phpstan/phpstan-phpunit": ">=0.11",
+        "symfony/validator": "*",
+        "symfony/security-core": "*",
+        "doctrine/doctrine-bundle": "*"
     },
     "suggest": {
         "doctrine/dbal": "SQL database support",
