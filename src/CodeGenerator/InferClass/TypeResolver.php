@@ -19,6 +19,9 @@
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
 
+use ReflectionProperty;
+
+
 class TypeResolver
 {
 
@@ -54,10 +57,18 @@ class TypeResolver
 
 	public function resolveClassName($className): string
 	{
+		$isNullable = ($className[0] === '?');
+		if ($isNullable) {
+			$className = substr($className, 1);
+			$prefix = '?';
+		} else {
+			$prefix = '';
+		}
+
 		// Don't resolve primitive types
 		switch ($className) {
 			case 'self':
-				return $this->class->getName();
+				return $prefix . $this->class->getName();
 			case 'static':
 			case 'array':
 			case 'callable':
@@ -67,7 +78,7 @@ class TypeResolver
 			case 'string':
 			case 'iterable':
 			case 'object':
-				return $className;
+				return $prefix . $className;
 		}
 
 		$slashPos = strpos($className, '\\');
@@ -79,17 +90,17 @@ class TypeResolver
 
 		// Class name without any slash
 		if ($slashPos === false) {
-			return $this->aliases[$className] ?? $this->namespace . '\\' . $className;
+			return $prefix . ($this->aliases[$className] ?? $this->namespace . '\\' . $className);
 		}
 
 		[ $head, $rest ] = explode($className, '\\', 2);
 
 		if (isset($this->aliases[$head])) {
 			// Alliased namespace
-			return $this->aliases[$head] . '\\' . $rest;
+			return $prefix . $this->aliases[$head] . '\\' . $rest;
 		} else {
 			// Current namespace
-			return $this->namespace . '\\' . $className;
+			return $prefix . $this->namespace . '\\' . $className;
 		}
 
 	}
@@ -258,6 +269,40 @@ class TypeResolver
 	{
 		$p = strrpos($class, '\\');
 		return $p === false ? $class : substr($class, $p + 1);
+	}
+
+
+	/**
+	 * Parse '@var' annotation and resolve the specified type hint
+	 */
+	public function getPropertyType(ReflectionProperty $propertyReflection): ?string
+	{
+		$docComment = $propertyReflection->getDocComment();
+		if (preg_match('/@var\s+([^\s]+)/',$docComment, $matches)) {
+			$type = $matches[1];
+			$allowsNull = false;
+			$typeVariants = explode('|', $type);
+			$phpType = null;
+			foreach ($typeVariants as $tv) {
+				if ($tv[0] === '?') {
+					$allowsNull = true;
+					$tv = substr($tv, 1);
+				}
+				if ($tv[-2] === '[' && $tv[-1] === ']') {
+					$tv = 'array';
+				}
+				if ($tv === 'null') {
+					$allowsNull = true;
+				} else if ($phpType === null) {
+					$phpType = $tv;
+				} else {
+					$phpType = null;
+				}
+			}
+			return ($allowsNull ? '?' : '') . $this->resolveClassName($phpType);
+		} else {
+			return null;
+		}
 	}
 
 }

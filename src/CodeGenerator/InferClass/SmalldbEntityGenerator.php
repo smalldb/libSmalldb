@@ -60,7 +60,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		foreach ($sourceClass->getProperties() as $propertyReflection) {
 			$propertyName = $propertyReflection->getName();
 			$getterName = 'get' . ucfirst($propertyName);
-			$type = $this->getPropertyType($propertyReflection);
+			$type = $this->typeResolver->getPropertyType($propertyReflection);
 
 			$w->beginMethod($getterName, [], $w->useClass($type));
 			{
@@ -73,17 +73,5 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		$w->write($targetDir . DIRECTORY_SEPARATOR . $targetShortClassName . '.php');
 	}
 
-
-	private function getPropertyType(ReflectionProperty $propertyReflection): ?string
-	{
-		$docComment = $propertyReflection->getDocComment();
-		if (preg_match('/@var\s+([^\s]+)/',$docComment, $matches)) {
-			$type = $matches[1];
-			// TODO: Support 'foo|null', '?foo', and 'foo[]'
-			return $this->typeResolver->resolveClassName($type);
-		} else {
-			return null;
-		}
-	}
 
 }

@@ -146,6 +146,14 @@ class PhpFileWriter
 
 	public function useClass(string $fqcn): string
 	{
+		$isNullable = ($fqcn[0] === '?');
+		if ($isNullable) {
+			$fqcn = substr($fqcn, 1);
+			$prefix = '?';
+		} else {
+			$prefix = '';
+		}
+
 		// Don't alias primitive types
 		switch ($fqcn) {
 			case 'self':
@@ -158,11 +166,11 @@ class PhpFileWriter
 			case 'string':
 			case 'iterable':
 			case 'object':
-				return $fqcn;
+				return $prefix . $fqcn;
 		}
 
 		if (isset($this->useAliases[$fqcn])) {
-			return $this->useAliases[$fqcn];
+			return $prefix . $this->useAliases[$fqcn];
 		} else {
 			$alias = $this->getShortClassName($fqcn);
 			if (isset($this->usedAliasesCounter[$alias])) {
@@ -174,7 +182,7 @@ class PhpFileWriter
 				$this->usedAliasesCounter[$alias] = 1;
 			}
 			$this->useAliases[$fqcn] = $alias;
-			return $alias;
+			return $prefix . $alias;
 		}
 	}
 

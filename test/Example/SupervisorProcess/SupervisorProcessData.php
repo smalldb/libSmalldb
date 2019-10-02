@@ -65,4 +65,15 @@ abstract class SupervisorProcessData
 	 */
 	protected $modifiedAt;
 
+	/**
+	 * @var ?int
+	 * @SQL\Column("memory_limit")
+	 */
+	protected $memoryLimit;
+
+	/**
+	 * @var string[]|null
+	 */
+	protected $args;
+
 }
