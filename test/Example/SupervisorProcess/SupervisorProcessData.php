@@ -19,38 +19,50 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
+use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
-class SupervisorProcessData extends SupervisorProcessDataImmutable
+/**
+ * A process controlled by Supervisord
+ *
+ * @SQL\Table("supervisor_process")
+ * @SQL\StateSelect("state")
+ * @InferSmalldbEntity()
+ */
+abstract class SupervisorProcessData
 {
+	use CopyConstructorTrait;
 
-	public function setId(int $id): void
-	{
-		$this->id = $id;
-	}
+	/**
+	 * @var int
+	 * @SQL\Id
+	 */
+	protected $id;
 
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
+	protected $state;
 
-	public function setState(string $state): void
-	{
-		$this->state = $state;
-	}
+	/**
+	 * @var string
+	 * @SQL\Column
+	 */
+	protected $command;
 
+	/**
+	 * @var DateTimeImmutable
+	 * @SQL\Column("created_at")
+	 */
+	protected $createdAt;
 
-	public function setCommand(string $command): void
-	{
-		$this->command = $command;
-	}
-
-
-	public function setCreatedAt(DateTimeImmutable $createdAt): void
-	{
-		$this->createdAt = $createdAt;
-	}
-
-
-	public function setModifiedAt(DateTimeImmutable $modifiedAt): void
-	{
-		$this->modifiedAt = $modifiedAt;
-	}
+	/**
+	 * @var DateTimeImmutable
+	 * @SQL\Column("modified_at")
+	 */
+	protected $modifiedAt;
 
 }

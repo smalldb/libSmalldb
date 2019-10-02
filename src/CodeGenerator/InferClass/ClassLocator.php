@@ -16,18 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
+namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
-use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\GraphMLExtension\Annotation\IncludeGraphML;
-use Smalldb\StateMachine\ReferenceInterface;
-
-
-/**
- * @StateMachine("supervisor-process")
- * @IncludeGraphML("SupervisorProcess.graphml")
- */
-abstract class SupervisorProcess extends SupervisorProcessData implements ReferenceInterface
+interface ClassLocator
 {
-
+	public function getClasses(): iterable;
 }

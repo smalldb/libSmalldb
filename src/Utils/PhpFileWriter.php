@@ -146,6 +146,21 @@ class PhpFileWriter
 
 	public function useClass(string $fqcn): string
 	{
+		// Don't alias primitive types
+		switch ($fqcn) {
+			case 'self':
+			case 'static':
+			case 'array':
+			case 'callable':
+			case 'bool':
+			case 'float':
+			case 'int':
+			case 'string':
+			case 'iterable':
+			case 'object':
+				return $fqcn;
+		}
+
 		if (isset($this->useAliases[$fqcn])) {
 			return $this->useAliases[$fqcn];
 		} else {

@@ -16,18 +16,24 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
+namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\GraphMLExtension\Annotation\IncludeGraphML;
-use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\CodeGenerator\InferClass\InferClassAnnotation;
+use Smalldb\StateMachine\CodeGenerator\InferClass\SmalldbEntityGenerator;
 
 
 /**
- * @StateMachine("supervisor-process")
- * @IncludeGraphML("SupervisorProcess.graphml")
+ * InferClass annotation to mark Smalldb entity source class.
+ *
+ * @Annotation
+ * @Target({"CLASS"})
  */
-abstract class SupervisorProcess extends SupervisorProcessData implements ReferenceInterface
+class InferSmalldbEntity implements InferClassAnnotation
 {
+
+	public function getInferClassGeneratorName(): string
+	{
+		return SmalldbEntityGenerator::class;
+	}
 
 }
