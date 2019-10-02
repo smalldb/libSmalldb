@@ -44,6 +44,10 @@ class PhpFileWriter
 	/** @var string[] */
 	private $definedMethodNames = [];
 
+	/** @var bool */
+	private $skipNextEmptyLine = false;
+
+
 	/**
 	 * PhpFileWriter constructor.
 	 */
@@ -146,6 +150,10 @@ class PhpFileWriter
 
 	public function useClass(string $fqcn): string
 	{
+		if ($fqcn === '') {
+			return '';
+		}
+
 		$isNullable = ($fqcn[0] === '?');
 		if ($isNullable) {
 			$fqcn = substr($fqcn, 1);
@@ -240,6 +248,13 @@ class PhpFileWriter
 
 	public function writeln(string $string = '', ...$args): self
 	{
+		if ($this->skipNextEmptyLine) {
+			$this->skipNextEmptyLine = false;
+			if ($string === '') {
+				return $this;
+			}
+		}
+
 		if ($string !== '') {
 			if (!$this->lineIndented) {
 				$this->buffer .= $this->indent;
@@ -315,6 +330,16 @@ class PhpFileWriter
 		return $this;
 	}
 
+	public function docComment(string $comment): self
+	{
+		$this->writeln('');
+		$this->writeln("/**\n" . $this->indent . " * "
+			. str_replace("\n", "\n" . $this->indent . " * ", $comment)
+			. "\n" . $this->indent . " */");
+		$this->skipNextEmptyLine = true;
+		return $this;
+	}
+
 
 	public function setClassName(string $className): self
 	{
@@ -345,15 +370,48 @@ class PhpFileWriter
 	}
 
 
-	public function beginAbstractClass(string $classname): self
+	public function beginAbstractClass(string $classname, ?string $extends = null, array $implements = []): self
 	{
-		$this->writeln("abstract class $classname");
+		$this->writeln("abstract class $classname"
+			. ($extends ? " extends " . $extends : '')
+			. ($implements  ? " implements " . join(', ', $implements) : ''));
 		$this->beginBlock();
 		return $this;
 	}
 
 
 	public function endClass(): self
+	{
+		$this->endBlock();
+		return $this;
+	}
+
+
+	public function beginInterface(string $classname, array $extends = []): self
+	{
+		$this->writeln("interface $classname"
+			. ($extends  ? " extends " . join(', ', $extends) : ''));
+		$this->beginBlock();
+		return $this;
+	}
+
+
+	public function endInterface(): self
+	{
+		$this->endBlock();
+		return $this;
+	}
+
+
+	public function beginTrait(string $classname): self
+	{
+		$this->writeln("trait $classname");
+		$this->beginBlock();
+		return $this;
+	}
+
+
+	public function endTrait(): self
 	{
 		$this->endBlock();
 		return $this;
@@ -412,6 +470,25 @@ class PhpFileWriter
 		$this->writeln('');
 		return $this;
 	}
+
+
+	public function writeAbstractMethod(string $name, array $args = [], string $returnType = ''): self
+	{
+		$this->definedMethodNames[$name] = $name;
+		$this->writeln('');
+		$this->writeln("public abstract function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType") . ";");
+		return $this;
+	}
+
+
+	public function writeInterfaceMethod(string $name, array $args = [], string $returnType = ''): self
+	{
+		$this->definedMethodNames[$name] = $name;
+		$this->writeln('');
+		$this->writeln("public function $name(".join(', ', $args).")".($returnType === '' ? '' : ": $returnType") . ";");
+		return $this;
+	}
+
 
 
 	public function hasMethod(string $methodName)

@@ -41,11 +41,42 @@ class SmalldbEntityGenerator implements InferClassGenerator
 
 		$this->typeResolver = new TypeResolver($sourceClass);
 
-		$this->generateImmutableClass($sourceClass, $annotation, $targetNamespace, $targetDir);
+		$immutableInterfaceName = $this->generateImmutableInterface($sourceClass, $annotation, $targetNamespace, $targetDir);
+		$immutableClassName = $this->generateImmutableClass($sourceClass, $annotation, $targetNamespace, $targetDir, $immutableInterfaceName);
+		$mutableClassName = $this->generateMutableClass($sourceClass, $annotation, $targetNamespace, $targetDir, $immutableClassName);
 	}
 
 
-	private function generateImmutableClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation, string $targetNamespace, string $targetDir)
+	private function generateImmutableInterface(ReflectionClass $sourceClass, InferClassAnnotation $annotation, string $targetNamespace, string $targetDir)
+	{
+		$annotationReflection = new ReflectionClass($annotation);
+
+		$targetShortClassName = $sourceClass->getShortName() . 'ImmutableInterface';
+		$targetClassName = $targetNamespace . '\\' . $targetShortClassName;
+
+		$w = new PhpFileWriter();
+		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
+		$w->setNamespace($targetNamespace);
+		$w->beginInterface($targetShortClassName);
+
+		foreach ($sourceClass->getProperties() as $propertyReflection) {
+			$propertyName = $propertyReflection->getName();
+			$getterName = 'get' . ucfirst($propertyName);
+			$type = $this->typeResolver->getPropertyType($propertyReflection);
+			if ($propertyName == 'id') {
+				$w->docComment("@return " . $type);
+				$type = '';
+			}
+			$w->writeInterfaceMethod($getterName, [], $w->useClass($type));
+		}
+
+		$w->endClass();
+		$w->write($targetDir . DIRECTORY_SEPARATOR . $targetShortClassName . '.php');
+		return $targetClassName;
+	}
+
+
+	private function generateImmutableClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation, string $targetNamespace, string $targetDir, string $immutableInterfaceName)
 	{
 		$annotationReflection = new ReflectionClass($annotation);
 
@@ -55,7 +86,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		$w = new PhpFileWriter();
 		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
 		$w->setNamespace($targetNamespace);
-		$w->beginClass($targetShortClassName, $w->useClass($sourceClass->getName()));
+		$w->beginClass($targetShortClassName, $w->useClass($sourceClass->getName()), [$w->useClass($immutableInterfaceName)]);
 
 		foreach ($sourceClass->getProperties() as $propertyReflection) {
 			$propertyName = $propertyReflection->getName();
@@ -71,6 +102,43 @@ class SmalldbEntityGenerator implements InferClassGenerator
 
 		$w->endClass();
 		$w->write($targetDir . DIRECTORY_SEPARATOR . $targetShortClassName . '.php');
+		return $targetClassName;
+	}
+
+
+	private function generateMutableClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation, string $targetNamespace, string $targetDir, string $immutableClassName)
+	{
+		$annotationReflection = new ReflectionClass($annotation);
+
+		$targetShortClassName = $sourceClass->getShortName() . 'Mutable';
+		$targetClassName = $targetNamespace . '\\' . $targetShortClassName;
+
+		$w = new PhpFileWriter();
+		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
+		$w->setNamespace($targetNamespace);
+		$w->beginClass($targetShortClassName, $w->useClass($immutableClassName));
+
+		foreach ($sourceClass->getProperties() as $propertyReflection) {
+			$propertyName = $propertyReflection->getName();
+			$setterName = 'set' . ucfirst($propertyName);
+			$type = $this->typeResolver->getPropertyType($propertyReflection);
+
+			if ($type) {
+				$arg = $w->useClass($type) . ' $' . $propertyName;
+			} else {
+				$arg = '$' . $propertyName;
+			}
+
+			$w->beginMethod($setterName, [$arg], 'void');
+			{
+				$w->writeln("\$this->$propertyName = \$$propertyName;");
+			}
+			$w->endMethod();
+		}
+
+		$w->endClass();
+		$w->write($targetDir . DIRECTORY_SEPARATOR . $targetShortClassName . '.php');
+		return $targetClassName;
 	}
 
 
