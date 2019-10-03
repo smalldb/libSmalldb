@@ -31,8 +31,8 @@ class InferClassTest extends TestCase
 	public function testLocateClasses()
 	{
 		$inferClass = new InferClass();
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example'));
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\SymfonyDemo\\', __DIR__ . '/SymfonyDemo'));
+		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
+		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\SymfonyDemo\\', __DIR__ . '/SymfonyDemo', []));
 
 		foreach ($inferClass->locateClasses() as $classname) {
 			$this->assertClassOrInterfaceExists($classname);
@@ -47,7 +47,7 @@ class InferClassTest extends TestCase
 		$directory = dirname($supervisorClass->getFileName());
 
 		$inferClass = new InferClass();
-		$inferClass->addClassLocator(new Psr4ClassLocator($namespace, $directory));
+		$inferClass->addClassLocator(new Psr4ClassLocator($namespace, $directory, []));
 		$inferClass->processClasses();
 
 		// Check for the generated classes

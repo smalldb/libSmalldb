@@ -48,6 +48,12 @@ class PathList
 	}
 
 
+	public function isEmpty(): bool
+	{
+		return empty($this->paths);
+	}
+
+
 	public function containsExact(string $path): bool
 	{
 		return isset($this->paths[$this->normalize($path)]);

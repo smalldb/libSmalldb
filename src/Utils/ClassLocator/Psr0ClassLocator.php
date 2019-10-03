@@ -21,9 +21,9 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 class Psr0ClassLocator extends Psr4ClassLocator
 {
 
-	public function __construct(string $directory, array $excludePaths = [])
+	public function __construct(string $directory, array $includePaths = [], array $excludePaths = [])
 	{
-		parent::__construct('\\', $directory, $excludePaths);
+		parent::__construct('\\', $directory, $includePaths, $excludePaths);
 	}
 
 }

@@ -39,8 +39,42 @@ class RealPathList extends PathList
 		if ($path[0] !== $this->separator && $this->prefix !== null) {
 			$path = $this->prefix . $path;
 		}
-		$realpath = realpath($path);
-		return ($realpath === false ? $path : $realpath) . $this->separator;
+		$realpath = $this->realpath($path);
+		return $realpath . $this->separator;
+	}
+
+
+	private function realpath(string $path): string
+	{
+		if ($this->separator === '\\') {
+			$path = strtr($path, '/', $this->separator);
+		}
+
+		$leadingSeparator = ($path[0] === $this->separator ? $this->separator : '');
+
+		$p = explode($this->separator, $path);
+
+		$p = array_filter($p, function (string $f): bool {
+			return $f !== '' && $f !== '.';
+		});
+
+		$r = [];
+		foreach ($p as $i) {
+			if ($i === '..') {
+				if (empty($r)) {
+					throw new \InvalidArgumentException("Invalid path: " . $path);
+				}
+				array_pop($r);
+			} else {
+				$r[] = $i;
+			}
+		}
+
+		if (empty($r)) {
+			throw new \InvalidArgumentException("Invalid path: " . $path);
+		} else {
+			return $leadingSeparator . join($this->separator, $r);
+		}
 	}
 
 }

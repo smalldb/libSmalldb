@@ -68,6 +68,12 @@ class SmalldbExtension extends Extension
 			$definitionClasses = $config['definition_classes'];
 			$baseDir = $container->getParameter('kernel.project_dir');
 
+			if (!empty($definitionClasses['include_dirs'])) {
+				$includeList = new RealPathList($baseDir, $definitionClasses['include_dirs']);
+			} else {
+				$includeList = null;
+			}
+
 			if (!empty($definitionClasses['exclude_dirs'])) {
 				$excludeList = new RealPathList($baseDir, $definitionClasses['exclude_dirs']);
 			} else {
@@ -79,14 +85,14 @@ class SmalldbExtension extends Extension
 			}
 
 			if (!empty($definitionClasses['psr4_dirs'])) {
-				foreach ($definitionClasses['psr4_dirs'] as $dirConfig) {
-					$definitionBag->addFromClassLocator(new Psr4ClassLocator($dirConfig['namespace'], $dirConfig['path'], $excludeList));
+				foreach ($definitionClasses['psr4_dirs'] as $namespace => $dir) {
+					$definitionBag->addFromClassLocator(new Psr4ClassLocator($namespace, $dir));
 				}
 			}
 
 			if (!empty($definitionClasses['use_composer'])) {
 				$excludeVendorDir = !empty($definitionClasses['ignore_vendor_dir']);
-				$definitionBag->addFromClassLocator(new ComposerClassLocator($baseDir, $excludeList, $excludeVendorDir));
+				$definitionBag->addFromClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
 			}
 
 		}

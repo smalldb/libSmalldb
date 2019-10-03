@@ -34,14 +34,23 @@ class ComposerClassLocator implements ClassLocator
 	private $vendorDir;
 
 	/** @var array */
+	private $includePaths;
+
+	/** @var array */
 	private $excludePaths;
 
 
-	public function __construct(string $baseDir, $excludePaths = [], bool $excludeVendor = true, string $vendorDir = 'vendor')
+	public function __construct(string $baseDir, $includePaths = [], $excludePaths = [], bool $excludeVendor = true, string $vendorDir = 'vendor')
 	{
 		$this->baseDir = realpath($baseDir);
 		$this->vendorDir = "$baseDir/$vendorDir";
 		$this->comopserAutoloaderPath = $this->vendorDir . "/autoload.php";
+
+		if ($includePaths instanceof RealPathList) {
+			$this->includePaths = $includePaths;
+		} else {
+			$this->includePaths = new RealPathList($baseDir, $includePaths ?? []);
+		}
 
 		if ($excludePaths instanceof RealPathList) {
 			$this->excludePaths = $excludePaths;
@@ -61,6 +70,9 @@ class ComposerClassLocator implements ClassLocator
 
 		// Class map
 		foreach ($autoloader->getClassMap() as $classname => $filename) {
+			if (!$this->includePaths->isEmpty() && !$this->includePaths->contains($filename)) {
+				continue;
+			}
 			if ($this->excludePaths->contains($filename)) {
 				continue;
 			}
@@ -78,18 +90,20 @@ class ComposerClassLocator implements ClassLocator
 				if ($this->excludePaths->contains($dir)) {
 					continue;
 				}
-				$psr4Locator = new Psr4ClassLocator($prefix, $dir, $this->excludePaths);
+				$psr4Locator = new Psr4ClassLocator($prefix, $dir, $this->includePaths, $this->excludePaths);
 				yield from $psr4Locator->getClasses();
 			}
 		}
 
 		// PSR-0
-		foreach ($autoloader->getPrefixes() as $dir) {
-			if ($this->excludePaths->contains($dir)) {
-				continue;
+		foreach ($autoloader->getPrefixes() as $dirs) {
+			foreach ($dirs as $dir) {
+				if ($this->excludePaths->contains($dir)) {
+					continue;
+				}
+				$psr4Locator = new Psr0ClassLocator($dir, $this->includePaths, $this->excludePaths);
+				yield from $psr4Locator->getClasses();
 			}
-			$psr4Locator = new Psr0ClassLocator($dir, $this->excludePaths);
-			yield from $psr4Locator->getClasses();
 		}
 	}
 

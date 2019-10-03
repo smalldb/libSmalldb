@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -68,12 +69,15 @@ class ClassLocatorTest extends TestCase
 
 		$this->assertFalse($pl->contains(__DIR__));
 		$this->assertFalse($pl->contains(__DIR__ . "/BadExample"));
+
+		$this->assertTrue($pl->contains(__DIR__ . "/BadExample/../Example"));
+		$this->assertFalse($pl->contains(__DIR__ . "/Example/../BadExample"));
 	}
 
 
 	public function testPsr4Locator()
 	{
-		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, ["BadExample", "Database", "output"]);
+		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
 		$classes = iterator_to_array($locator->getClasses(), false);
 
 		// A plain class
@@ -96,12 +100,14 @@ class ClassLocatorTest extends TestCase
 
 	public function testComposerLocator()
 	{
-		$locator = new ComposerClassLocator(dirname(__DIR__), ["test/BadExample", "test/Database", "test/output"]);
+		$locator = new ComposerClassLocator(dirname(__DIR__), ["src/Graph", "test"], ["test/BadExample", "test/Database", "test/output"]);
 		$classes = iterator_to_array($locator->getClasses(), false);
 
 		// A plain class outside tests
+		$this->assertTrue(class_exists(Graph::class));
+		$this->assertContains(Graph::class, $classes);
 		$this->assertTrue(class_exists(Smalldb::class));
-		$this->assertContains(Smalldb::class, $classes);
+		$this->assertNotContains(Smalldb::class, $classes);
 
 		// A plain class
 		$this->assertTrue(class_exists(PostRepository::class));

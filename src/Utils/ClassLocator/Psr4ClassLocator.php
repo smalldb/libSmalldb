@@ -30,17 +30,26 @@ class Psr4ClassLocator implements ClassLocator
 	/** @var string */
 	private $directory;
 
+	/** @var RealPathList */
+	private $includePaths;
+
 	/** @var PathList */
 	private $excludePaths;
 
 
-	public function __construct(string $namespace, string $directory, $excludePaths = [])
+	public function __construct(string $namespace, string $directory, $includePaths = [], $excludePaths = [])
 	{
 		$this->namespace = $namespace === '' ? '\\' : ($namespace[-1] === "\\" ? $namespace : $namespace . "\\");
 		$this->directory = $directory;
 
 		if (!is_dir($this->directory)) {
 			throw new InvalidArgumentException("Not a directory: $this->directory");
+		}
+
+		if ($includePaths instanceof RealPathList) {
+			$this->includePaths = $includePaths;
+		} else {
+			$this->includePaths = new RealPathList($directory, $includePaths ?? []);
 		}
 
 		if ($excludePaths instanceof RealPathList) {
@@ -74,6 +83,9 @@ class Psr4ClassLocator implements ClassLocator
 			if (is_dir($fileAbsPath)) {
 				yield from $this->scanDirectory($className . "\\", $fileAbsPath);
 			} else if ($dotPos && substr($f, $dotPos) === '.php') {
+				if (!$this->includePaths->isEmpty() && !$this->includePaths->contains(dirname($fileAbsPath))) {
+					continue;
+				}
 				if (class_exists($className) || interface_exists($className)) {
 					yield $fileAbsPath => $className;
 				}

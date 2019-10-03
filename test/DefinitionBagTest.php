@@ -141,7 +141,7 @@ class DefinitionBagTest extends TestCase
 
 	public function testAddFromPsr4Directory()
 	{
-		$classLocator = new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example');
+		$classLocator = new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example', []);
 
 		$bag = new SmalldbDefinitionBag();
 		$foundDefs = $bag->addFromClassLocator($classLocator);
@@ -156,7 +156,7 @@ class DefinitionBagTest extends TestCase
 
 	public function testAddFromComposer()
 	{
-		$classLocator = new ComposerClassLocator(dirname(__DIR__), ['test/output', 'test/BadExample']);
+		$classLocator = new ComposerClassLocator(dirname(__DIR__), [], ['test/output', 'test/BadExample']);
 
 		$bag = new SmalldbDefinitionBag();
 		$foundDefs = $bag->addFromClassLocator($classLocator);
@@ -173,7 +173,7 @@ class DefinitionBagTest extends TestCase
 	{
 		$bag = new SmalldbDefinitionBag();
 		$this->expectException(InvalidArgumentException::class);
-		$bag->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory'));
+		$bag->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory', []));
 	}
 
 }
