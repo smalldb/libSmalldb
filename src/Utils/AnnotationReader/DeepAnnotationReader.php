@@ -16,31 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils;
+namespace Smalldb\StateMachine\Utils\AnnotationReader;
 
-use Doctrine\Common\Annotations\AnnotationReader as DoctrineAnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\DocParser;
 use ReflectionClass;
 use ReflectionClassConstant;
-use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
 
 
-class DeepAnnotationReader extends DoctrineAnnotationReader
+class DeepAnnotationReader extends AnnotationReader implements AnnotationReaderInterface
 {
-
-	public function __construct(DocParser $parser = null)
-	{
-		parent::__construct($parser);
-
-		// Use autoloader to load annotations
-		if (class_exists(AnnotationRegistry::class)) {
-			AnnotationRegistry::registerUniqueLoader('class_exists');
-		}
-	}
-
 
 	public function getClassAnnotations(ReflectionClass $class)
 	{

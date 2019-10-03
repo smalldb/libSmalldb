@@ -16,8 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
-
+namespace Smalldb\StateMachine\Utils\AnnotationReader;
 
 use ReflectionProperty;
 
