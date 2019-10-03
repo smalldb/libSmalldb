@@ -42,13 +42,13 @@ class Psr4ClassLocator implements ClassLocator
 	}
 
 
-	public function getClasses(): iterable
+	public function getClasses(): \Generator
 	{
 		yield from $this->scanDirectory($this->namespace, $this->directory);
 	}
 
 
-	private function scanDirectory($namespace, $directory): iterable
+	private function scanDirectory($namespace, $directory): \Generator
 	{
 		foreach (scandir($directory) as $f) {
 			if ($f[0] === '.') {

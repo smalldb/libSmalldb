@@ -21,5 +21,5 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 
 interface ClassLocator
 {
-	public function getClasses(): iterable;
+	public function getClasses(): \Generator;
 }

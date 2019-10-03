@@ -42,7 +42,7 @@ class ComposerClassLocator implements ClassLocator
 	}
 
 
-	public function getClasses(): iterable
+	public function getClasses(): \Generator
 	{
 		$autoloader = $this->loadComposerAutoloader($this->baseDir, $this->comopserAutoloaderPath);
 
