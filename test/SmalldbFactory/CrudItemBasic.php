@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
-use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;

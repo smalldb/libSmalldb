@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\AnnotationReader\ReflectionClassAwareAnnotationInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ReflectionClassAwareAnnotationInterface;
 
 
 abstract class AbstractIncludeAnnotation implements ReflectionClassAwareAnnotationInterface

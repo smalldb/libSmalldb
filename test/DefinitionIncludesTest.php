@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;

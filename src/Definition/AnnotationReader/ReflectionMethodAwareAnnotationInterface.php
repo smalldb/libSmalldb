@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -16,16 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\AnnotationReader;
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
-use Throwable;
-
-
-class MissingStateMachineAnnotationException extends \InvalidArgumentException
+interface ReflectionMethodAwareAnnotationInterface
 {
-	// Just an exception.
-	public function __construct($message = "", $code = 0, Throwable $previous = null)
-	{
-		parent::__construct($message, $code, $previous);
-	}
+	public function setReflectionMethod(\ReflectionMethod $reflectionMethod);
 }

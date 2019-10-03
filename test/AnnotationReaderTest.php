@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 use Doctrine\Common\Annotations\AnnotationException as DoctrineAnnotationException;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
-use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;

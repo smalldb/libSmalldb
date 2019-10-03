@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\AnnotationReader;
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
 use ReflectionClass;
 use ReflectionClassConstant;

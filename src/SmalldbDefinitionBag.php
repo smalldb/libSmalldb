@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\AnnotationReader\AnnotationReader;
-use Smalldb\StateMachine\AnnotationReader\MissingStateMachineAnnotationException;
+use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\AnnotationReader\MissingStateMachineAnnotationException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 

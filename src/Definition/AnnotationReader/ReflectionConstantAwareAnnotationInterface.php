@@ -16,9 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\AnnotationReader;
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
-interface ReflectionPropertyAwareAnnotationInterface
+interface ReflectionConstantAwareAnnotationInterface
 {
-	public function setReflectionProperty(\ReflectionProperty $reflectionProperty);
+	public function setReflectionConstant(\ReflectionClassConstant $reflectionConstant);
 }
