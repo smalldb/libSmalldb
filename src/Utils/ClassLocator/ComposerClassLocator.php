@@ -60,17 +60,14 @@ class ComposerClassLocator implements ClassLocator
 		foreach ($autoloader->getPrefixesPsr4() as $prefix => $dirs) {
 			foreach ($dirs as $dir) {
 				$psr4Locator = new Psr4ClassLocator($prefix, $dir);
-				yield $psr4Locator->getClasses();
+				yield from $psr4Locator->getClasses();
 			}
 		}
 
 		// PSR-0
-		foreach ($autoloader->getPrefixes() as $prefix => $dirs) {
-			foreach ($dirs as $dir) {
-				// TODO: Implement PSR-0 locator
-				$psr4Locator = new Psr4ClassLocator($prefix, $dir);
-				yield $psr4Locator->getClasses();
-			}
+		foreach ($autoloader->getPrefixes() as $dir) {
+			$psr4Locator = new Psr0ClassLocator($dir);
+			yield from $psr4Locator->getClasses();
 		}
 	}
 

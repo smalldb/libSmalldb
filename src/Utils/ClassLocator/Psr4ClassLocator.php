@@ -33,7 +33,7 @@ class Psr4ClassLocator implements ClassLocator
 
 	public function __construct(string $namespace, string $directory)
 	{
-		$this->namespace = $namespace[-1] === "\\" ? $namespace : $namespace . "\\";
+		$this->namespace = $namespace === '' ? '\\' : ($namespace[-1] === "\\" ? $namespace : $namespace . "\\");
 		$this->directory = $directory;
 
 		if (!is_dir($this->directory)) {
