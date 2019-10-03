@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\InferClass\InferClass;
-use Smalldb\StateMachine\CodeGenerator\InferClass\Psr4ClassLocator;
+use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
 

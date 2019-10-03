@@ -16,7 +16,8 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\Utils\ClassLocator;
+
 
 interface ClassLocator
 {

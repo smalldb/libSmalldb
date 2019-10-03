@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\Utils\ClassLocator;
 
 use Smalldb\StateMachine\InvalidArgumentException;
 
