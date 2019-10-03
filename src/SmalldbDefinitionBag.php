@@ -105,8 +105,13 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 	{
 		$reader = new AnnotationReader();
 		$definition = $reader->getStateMachineDefinition($className);
-		$machineType = $this->addDefinition($definition);
-		$this->addAlias($className, $machineType);
+		try {
+			$machineType = $this->addDefinition($definition);
+			$this->addAlias($className, $machineType);
+		}
+		catch(InvalidArgumentException $ex) {
+			throw new InvalidArgumentException($className . ": " . $ex->getMessage(), $ex->getCode(), $ex);
+		}
 		return $definition;
 	}
 

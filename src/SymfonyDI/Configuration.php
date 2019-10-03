@@ -46,27 +46,35 @@ class Configuration implements ConfigurationInterface
 				->end()
 			->end();
 
-		$children->arrayNode('machine_references')
-			->info('State machine references & definitions (annotated classes)')
-			->scalarPrototype();
-
-		$children->arrayNode('machine_reference_psr4_dirs')
-			->info('PSR-4 directory with state machine references & definitions (annotated classes)')
-			->arrayPrototype()
+		$children->arrayNode('definition_classes')
+			->info('How to find state machine definitions?')
 			->children()
-				->scalarNode('namespace')
-					->info('Namespace of the classes')
-					->cannotBeEmpty()
+				->booleanNode('use_composer')
+					->info('Use composer autoloader configuration to scan all classes.')
+					->defaultTrue()
 				->end()
-				->scalarNode('path')
-					->info('Directory where the classes are placed')
-					->cannotBeEmpty()
+				->booleanNode('ignore_vendor_dir')
+					->info('Do not scan classes inside vendor directory (see use_composer)')
+					->defaultTrue()
+				->end()
+				->arrayNode('class_list')
+					->info('List of additional state machine definitions')
+					->scalarPrototype()->end()
+				->end()
+				->arrayNode('psr4_dirs')
+					->info('PSR-4 directories with state machine definitions (map: namespace => directory)')
+					->useAttributeAsKey('name')
+					->scalarPrototype()->end()
+				->end()
+				->arrayNode('exclude_dirs')
+					->info('List of directories which should not be scanned')
+					->scalarPrototype()->end()
 				->end()
 			->end();
 
 		$this->addNodes($children);
-
 		// @formatter:on
+
 		return $treeBuilder;
 	}
 

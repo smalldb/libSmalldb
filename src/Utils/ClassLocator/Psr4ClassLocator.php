@@ -30,14 +30,23 @@ class Psr4ClassLocator implements ClassLocator
 	/** @var string */
 	private $directory;
 
+	/** @var PathList */
+	private $excludePaths;
 
-	public function __construct(string $namespace, string $directory)
+
+	public function __construct(string $namespace, string $directory, $excludePaths = [])
 	{
 		$this->namespace = $namespace === '' ? '\\' : ($namespace[-1] === "\\" ? $namespace : $namespace . "\\");
 		$this->directory = $directory;
 
 		if (!is_dir($this->directory)) {
 			throw new InvalidArgumentException("Not a directory: $this->directory");
+		}
+
+		if ($excludePaths instanceof RealPathList) {
+			$this->excludePaths = $excludePaths;
+		} else {
+			$this->excludePaths = new RealPathList($directory, $excludePaths ?? []);
 		}
 	}
 
@@ -48,20 +57,25 @@ class Psr4ClassLocator implements ClassLocator
 	}
 
 
-	private function scanDirectory($namespace, $directory): \Generator
+	private function scanDirectory($namespace, $absPath): \Generator
 	{
-		foreach (scandir($directory) as $f) {
+		foreach (scandir($absPath) as $f) {
 			if ($f[0] === '.') {
 				continue;
 			}
-			$fullPath = "$directory/$f";
+
+			$fileAbsPath = "$absPath/$f";
+			if ($this->excludePaths->containsExact($fileAbsPath)) {
+				continue;
+			}
+
 			$dotPos = strpos($f, '.');
 			$className = $namespace . ($dotPos ? substr($f, 0, $dotPos) : $f);
-			if (is_dir($fullPath)) {
-				yield from $this->scanDirectory($className . "\\", $fullPath);
+			if (is_dir($fileAbsPath)) {
+				yield from $this->scanDirectory($className . "\\", $fileAbsPath);
 			} else if ($dotPos && substr($f, $dotPos) === '.php') {
 				if (class_exists($className) || interface_exists($className)) {
-					yield $className;
+					yield $fileAbsPath => $className;
 				}
 			}
 		}

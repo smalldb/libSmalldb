@@ -30,6 +30,19 @@ class AnnotationReader extends DoctrineAnnotationReader implements AnnotationRea
 	{
 		parent::__construct($parser);
 
+		// Doxygen annotations
+		$this->addGlobalIgnoredName('copydoc');
+		$this->addGlobalIgnoredName('htmlinclude');
+		$this->addGlobalIgnoredName('implements');
+		$this->addGlobalIgnoredName('link');
+		$this->addGlobalIgnoredName('note');
+		$this->addGlobalIgnoredName('par');
+		$this->addGlobalIgnoredName('see');
+		$this->addGlobalIgnoredName('since');
+		$this->addGlobalIgnoredName('throws');
+		$this->addGlobalIgnoredName('var');
+		$this->addGlobalIgnoredName('warning');
+
 		// Use autoloader to load annotations
 		if (class_exists(AnnotationRegistry::class)) {
 			AnnotationRegistry::registerUniqueLoader('class_exists');

@@ -18,12 +18,29 @@
 
 namespace Smalldb\StateMachine\Utils\ClassLocator;
 
-class Psr0ClassLocator extends Psr4ClassLocator
+class RealPathList extends PathList
 {
+	/** @var ?string */
+	protected $prefix = null;
 
-	public function __construct(string $directory, array $excludePaths = [])
+	/** @var string */
+	protected $separator = DIRECTORY_SEPARATOR;
+
+
+	public function __construct(?string $prefix = null, array $paths = [])
 	{
-		parent::__construct('\\', $directory, $excludePaths);
+		$this->prefix = $prefix !== '' && $prefix !== null ? $this->normalize($prefix) : null;
+		parent::__construct($paths);
+	}
+
+
+	protected function normalize(string $path): string
+	{
+		if ($path[0] !== $this->separator && $this->prefix !== null) {
+			$path = $this->prefix . $path;
+		}
+		$realpath = realpath($path);
+		return ($realpath === false ? $path : $realpath) . $this->separator;
 	}
 
 }

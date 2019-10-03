@@ -2,13 +2,15 @@ smalldb:
     class_generator:
         namespace: Smalldb\GeneratedCode
         path: '%generated_output_dir%'
-    machine_references:
-        - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
-        - 'Smalldb\StateMachine\Test\Example\Post\Post'
-        - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
-        - 'Smalldb\StateMachine\Test\Example\User\User'
-        - 'Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess'
-        - 'Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery'
+    definition_classes:
+        use_composer: false
+        class_list:
+            - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
+            - 'Smalldb\StateMachine\Test\Example\Post\Post'
+            - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
+            - 'Smalldb\StateMachine\Test\Example\User\User'
+            - 'Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess'
+            - 'Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery'
 
 parameters:
     generated_output_dir: ~ # Set by the test

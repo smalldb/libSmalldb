@@ -33,21 +33,37 @@ class ComposerClassLocator implements ClassLocator
 	/** @var string */
 	private $vendorDir;
 
+	/** @var array */
+	private $excludePaths;
 
-	public function __construct(string $baseDir, string $vendorDir = 'vendor')
+
+	public function __construct(string $baseDir, $excludePaths = [], bool $excludeVendor = true, string $vendorDir = 'vendor')
 	{
-		$this->baseDir = $baseDir;
-		$this->vendorDir = $vendorDir;
+		$this->baseDir = realpath($baseDir);
+		$this->vendorDir = "$baseDir/$vendorDir";
 		$this->comopserAutoloaderPath = $this->vendorDir . "/autoload.php";
+
+		if ($excludePaths instanceof RealPathList) {
+			$this->excludePaths = $excludePaths;
+		} else {
+			$this->excludePaths = new RealPathList($baseDir, $excludePaths ?? []);
+		}
+
+		if ($excludeVendor) {
+			$this->excludePaths->add($this->vendorDir);
+		}
 	}
 
 
 	public function getClasses(): \Generator
 	{
-		$autoloader = $this->loadComposerAutoloader($this->baseDir, $this->comopserAutoloaderPath);
+		$autoloader = $this->loadComposerAutoloader($this->comopserAutoloaderPath);
 
 		// Class map
 		foreach ($autoloader->getClassMap() as $classname => $filename) {
+			if ($this->excludePaths->contains($filename)) {
+				continue;
+			}
 			yield $classname;
 		}
 
@@ -59,25 +75,30 @@ class ComposerClassLocator implements ClassLocator
 		// PSR-4
 		foreach ($autoloader->getPrefixesPsr4() as $prefix => $dirs) {
 			foreach ($dirs as $dir) {
-				$psr4Locator = new Psr4ClassLocator($prefix, $dir);
+				if ($this->excludePaths->contains($dir)) {
+					continue;
+				}
+				$psr4Locator = new Psr4ClassLocator($prefix, $dir, $this->excludePaths);
 				yield from $psr4Locator->getClasses();
 			}
 		}
 
 		// PSR-0
 		foreach ($autoloader->getPrefixes() as $dir) {
-			$psr4Locator = new Psr0ClassLocator($dir);
+			if ($this->excludePaths->contains($dir)) {
+				continue;
+			}
+			$psr4Locator = new Psr0ClassLocator($dir, $this->excludePaths);
 			yield from $psr4Locator->getClasses();
 		}
 	}
 
 
-	private function loadComposerAutoloader(string $baseDir, string $composerAutoloaderPath): ClassLoader
+	private function loadComposerAutoloader(string $autoloaderFilename): ClassLoader
 	{
-		$autoloadFile = "$baseDir/$composerAutoloaderPath";
-		$composerAutoloader = require($autoloadFile);
+		$composerAutoloader = require($autoloaderFilename);
 		if (!($composerAutoloader instanceof ClassLoader)) {
-			throw new \RuntimeException("Composer autoloader not found in $autoloadFile");
+			throw new \RuntimeException("Composer autoloader not found in $autoloaderFilename");
 		}
 		return $composerAutoloader;
 	}

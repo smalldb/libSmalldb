@@ -24,7 +24,9 @@ use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
+use Smalldb\StateMachine\Utils\ClassLocator\RealPathList;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -50,7 +52,7 @@ class SmalldbExtension extends Extension
 	{
 		// Get configuration
 		$config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
-		if (!isset($config['class_generator']) || !isset($config['machine_references'])) {
+		if (!isset($config['class_generator'])) {
 			// Stop if configuration is missing.
 			return null;
 		}
@@ -61,9 +63,32 @@ class SmalldbExtension extends Extension
 
 		// Load all state machine definitions
 		$definitionBag = new SmalldbDefinitionBag();
-		$definitionBag->addFromAnnotatedClasses($config['machine_references']);
-		foreach ($config['machine_reference_psr4_dirs'] as $dirConfig) {
-			$definitionBag->addFromClassLocator(new Psr4ClassLocator($dirConfig['namespace'], $dirConfig['path']));
+
+		if (!empty($config['definition_classes'])) {
+			$definitionClasses = $config['definition_classes'];
+			$baseDir = $container->getParameter('kernel.project_dir');
+
+			if (!empty($definitionClasses['exclude_dirs'])) {
+				$excludeList = new RealPathList($baseDir, $definitionClasses['exclude_dirs']);
+			} else {
+				$excludeList = null;
+			}
+
+			if (!empty($definitionClasses['class_list'])) {
+				$definitionBag->addFromAnnotatedClasses($config['definition_classes']['class_list']);
+			}
+
+			if (!empty($definitionClasses['psr4_dirs'])) {
+				foreach ($definitionClasses['psr4_dirs'] as $dirConfig) {
+					$definitionBag->addFromClassLocator(new Psr4ClassLocator($dirConfig['namespace'], $dirConfig['path'], $excludeList));
+				}
+			}
+
+			if (!empty($definitionClasses['use_composer'])) {
+				$excludeVendorDir = !empty($definitionClasses['ignore_vendor_dir']);
+				$definitionBag->addFromClassLocator(new ComposerClassLocator($baseDir, $excludeList, $excludeVendorDir));
+			}
+
 		}
 
 		// Register autoloader for generated classes

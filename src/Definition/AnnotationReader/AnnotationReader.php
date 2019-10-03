@@ -42,9 +42,9 @@ use Smalldb\StateMachine\Utils\AnnotationReader\DeepAnnotationReader;
 
 /**
  * Construct state machine definition from interface annotations.
- *   - The interface with @StateMachine annotation represents the machine.
- *   - Methods with a @Transition annotation are transitions.
- *   - Constants with a @State annotation are states.
+ *   - The interface with `@StateMachine` annotation represents the machine.
+ *   - Methods with a `@Transition` annotation are transitions.
+ *   - Constants with a `@State` annotation are states.
  */
 class AnnotationReader
 {
