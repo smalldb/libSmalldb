@@ -19,6 +19,9 @@
 namespace Smalldb\StateMachine\AnnotationReader;
 
 use ReflectionClass;
+use ReflectionClassConstant;
+use ReflectionMethod;
+use ReflectionProperty;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -32,9 +35,9 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
-use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
-use Smalldb\StateMachine\Utils\DeepAnnotationReader;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use Smalldb\StateMachine\Utils\AnnotationReader\DeepAnnotationReader;
 
 
 /**
@@ -45,43 +48,28 @@ use Smalldb\StateMachine\Utils\DeepAnnotationReader;
  */
 class AnnotationReader
 {
-	/** @var string */
-	private $className;
 
-	/**
-	 * Name of the file where the interface is defined.
-	 * @var string
-	 */
-	private $classFileName;
-
-	/**
-	 * All file paths in the annotations are relative to the $baseDir.
-	 * @var string
-	 */
-	private $baseDir;
-
-	/**
-	 * @var StateMachineDefinitionBuilder
-	 */
-	private $builder;
+	/** @var AnnotationReaderInterface */
+	private $annotationReader;
 
 
-	public function __construct(string $className)
+	public function __construct(?AnnotationReaderInterface $annotationReader = null)
 	{
-		$this->className = $className;
-
+		$this->annotationReader = $annotationReader ?? (new DeepAnnotationReader());
 	}
 
 
-	public function getStateMachineDefinition(): StateMachineDefinition
+	public function getStateMachineDefinition(string $className): StateMachineDefinition
 	{
-		$this->builder = new StateMachineDefinitionBuilder();
-		$this->processClassReflection(new ReflectionClass($this->className));
-		return $this->builder->build();
+		$reflectionClass = new ReflectionClass($className);
+		$builder = new StateMachineDefinitionBuilder();
+		$this->processClassReflection($reflectionClass, $this->annotationReader, $builder);
+		return $builder->build();
 	}
 
 
-	private function processClassReflection(ReflectionClass $reflectionClass): void
+	private function processClassReflection(ReflectionClass $reflectionClass,
+		AnnotationReaderInterface $annotationReader, StateMachineDefinitionBuilder $builder): void
 	{
 		$filename = $reflectionClass->getFileName();
 		$classname = $reflectionClass->getName();
@@ -99,38 +87,39 @@ class AnnotationReader
 			}
 		}
 
-		$this->classFileName = $filename;
-		$this->baseDir = dirname($this->classFileName);
-		$this->builder->setReferenceClass($classname);
-		$this->builder->setMTime(filemtime($filename));
+		$builder->setReferenceClass($classname);
+		$builder->setMTime(filemtime($filename));
 
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
-		$sourcesPlaceholder = $this->builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
+		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
 		$sourcesPlaceholder->addSourceFile(new SourceClassFile($reflectionClass));
 
-		$reader = new DeepAnnotationReader();
-
-		$this->processClassAnnotations($reflectionClass, $reader->getClassAnnotations($reflectionClass));
+		$classAnnotations = $annotationReader->getClassAnnotations($reflectionClass);
+		$this->processClassAnnotations($reflectionClass, $classAnnotations, $builder);
 
 		foreach ($reflectionClass->getReflectionConstants() as $reflectionConstant) {
-			$this->processConstantAnnotations($reflectionConstant, $reader->getConstantAnnotations($reflectionConstant));
+			$constantAnnotations = $annotationReader->getConstantAnnotations($reflectionConstant);
+			$this->processConstantAnnotations($reflectionConstant, $constantAnnotations, $builder);
 		}
 
 		foreach ($reflectionClass->getMethods() as $reflectionMethod) {
 			if (!$reflectionMethod->isStatic()) {
-				$this->processMethodAnnotations($reflectionMethod, $reader->getMethodAnnotations($reflectionMethod));
+				$methodAnnotations = $annotationReader->getMethodAnnotations($reflectionMethod);
+				$this->processMethodAnnotations($reflectionMethod, $methodAnnotations, $builder);
 			}
 		}
 
 		foreach ($reflectionClass->getProperties() as $reflectionProperty) {
 			if (!$reflectionProperty->isStatic()) {
-				$this->processPropertyAnnotations($reflectionProperty, $reader->getPropertyAnnotations($reflectionProperty));
+				$propertyAnnotations = $annotationReader->getPropertyAnnotations($reflectionProperty);
+				$this->processPropertyAnnotations($reflectionProperty, $propertyAnnotations, $builder);
 			}
 		}
 
 	}
 
-	public function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations): void
+	private function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations,
+		StateMachineDefinitionBuilder $builder): void
 	{
 		$isStateMachine = false;
 
@@ -142,7 +131,7 @@ class AnnotationReader
 				$annotation->setReflectionClass($reflectionClass);
 			}
 			if ($annotation instanceof StateMachineBuilderApplyInterface) {
-				$annotation->applyToBuilder($this->builder);
+				$annotation->applyToBuilder($builder);
 			}
 		}
 
@@ -151,7 +140,7 @@ class AnnotationReader
 		}
 	}
 
-	public function processConstantAnnotations(\ReflectionClassConstant $reflectionConstant, array $annotations): void
+	private function processConstantAnnotations(ReflectionClassConstant $reflectionConstant, array $annotations, StateMachineDefinitionBuilder $builder): void
 	{
 		// Find & use @State annotation and make sure there is only one of the kind
 		$placeholder = null;
@@ -164,7 +153,7 @@ class AnnotationReader
 					throw new \InvalidArgumentException("Multiple @State annotations at " . $reflectionConstant->getName() . " constant.");
 				} else {
 					$stateName = $annotation->name ?? (string) $reflectionConstant->getValue();
-					$placeholder = $this->builder->addState($stateName);
+					$placeholder = $builder->addState($stateName);
 				}
 			}
 		}
@@ -181,7 +170,7 @@ class AnnotationReader
 		}
 	}
 
-	public function processMethodAnnotations(\ReflectionMethod $reflectionMethod, array $annotations): void
+	private function processMethodAnnotations(ReflectionMethod $reflectionMethod, array $annotations, StateMachineDefinitionBuilder $builder): void
 	{
 		// Find & use @Transition annotations
 		$transitionPlaceholders = [];
@@ -195,9 +184,9 @@ class AnnotationReader
 			if ($annotation instanceof Transition) {
 				$isTransition = true;
 				if ($annotation->definesTransition()) {
-					$transitionPlaceholders[] = $this->builder->addTransition($transitionName, $annotation->source, $annotation->targets, $annotation->color);
+					$transitionPlaceholders[] = $builder->addTransition($transitionName, $annotation->source, $annotation->targets, $annotation->color);
 				} else {
-					$actionPlaceholders[] = $this->builder->addAction($transitionName);
+					$actionPlaceholders[] = $builder->addAction($transitionName);
 				}
 			}
 		}
@@ -224,7 +213,7 @@ class AnnotationReader
 	}
 
 
-	public function processPropertyAnnotations(\ReflectionProperty $reflectionProperty, array $annotations): void
+	private function processPropertyAnnotations(ReflectionProperty $reflectionProperty, array $annotations, StateMachineDefinitionBuilder $builder): void
 	{
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof ReflectionPropertyAwareAnnotationInterface) {
@@ -239,9 +228,9 @@ class AnnotationReader
 		$getterName = 'get' . ucfirst($name);
 		$classReflection = $reflectionProperty->getDeclaringClass();
 		if ($classReflection->hasMethod($getterName) && ($type = $classReflection->getMethod($getterName)->getReturnType())) {
-			$placeholder = $this->builder->addProperty($name, $type->getName(), $type->allowsNull());
+			$placeholder = $builder->addProperty($name, $type->getName(), $type->allowsNull());
 		} else {
-			$placeholder = $this->builder->addProperty($name);
+			$placeholder = $builder->addProperty($name);
 		}
 
 		foreach ($annotations as $annotation) {

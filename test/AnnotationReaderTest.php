@@ -31,7 +31,7 @@ use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
-use Smalldb\StateMachine\Utils\DeepAnnotationReader;
+use Smalldb\StateMachine\Utils\AnnotationReader\DeepAnnotationReader;
 
 
 class AnnotationReaderTest extends TestCase
@@ -39,8 +39,8 @@ class AnnotationReaderTest extends TestCase
 
 	public function testCrudItem()
 	{
-		$reader = new AnnotationReader(CrudItem::class);
-		$definition = $reader->getStateMachineDefinition();
+		$reader = new AnnotationReader();
+		$definition = $reader->getStateMachineDefinition(CrudItem::class);
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertEquals('crud-item', $definition->getMachineType());
 
@@ -84,9 +84,9 @@ class AnnotationReaderTest extends TestCase
 	 */
 	public function testConflictingAnnotations(string $className)
 	{
-		$reader = new AnnotationReader($className);
+		$reader = new AnnotationReader();
 		$this->expectException(SqlAnnotationException::class);
-		$reader->getStateMachineDefinition();
+		$reader->getStateMachineDefinition($className);
 	}
 
 
@@ -101,9 +101,9 @@ class AnnotationReaderTest extends TestCase
 
 	public function testUseReferenceTrait()
 	{
-		$reader = new AnnotationReader(UseReferenceTrait::class);
+		$reader = new AnnotationReader();
 		$this->expectException(\InvalidArgumentException::class);
-		$reader->getStateMachineDefinition();
+		$reader->getStateMachineDefinition(UseReferenceTrait::class);
 	}
 
 }

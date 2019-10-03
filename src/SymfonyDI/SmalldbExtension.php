@@ -63,6 +63,7 @@ class SmalldbExtension extends Extension
 		foreach ($config['machine_references'] as $refClass) {
 			$definitionBag->addFromAnnotatedClass($refClass);
 		}
+		// TODO: Use ClassLocator
 		foreach ($config['machine_reference_psr4_dirs'] as $dirConfig) {
 			$definitionBag->addFromPsr4Directory($dirConfig['namespace'], $dirConfig['path']);
 		}

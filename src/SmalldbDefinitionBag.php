@@ -102,8 +102,8 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 
 	public function addFromAnnotatedClass(string $className): StateMachineDefinition
 	{
-		$reader = new AnnotationReader($className);
-		$definition = $reader->getStateMachineDefinition();
+		$reader = new AnnotationReader();
+		$definition = $reader->getStateMachineDefinition($className);
 		$machineType = $this->addDefinition($definition);
 		$this->addAlias($className, $machineType);
 		return $definition;
