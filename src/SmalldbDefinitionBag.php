@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\AnnotationReader\MissingStateMachineAnnotationException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 
 
 class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
@@ -109,36 +110,33 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 		return $definition;
 	}
 
-	public function addFromPsr4Directory(string $namespace, string $directory, array &$foundDefinitions = []): array
+
+	/**
+	 * @return StateMachineDefinition[]
+	 */
+	public function addFromAnnotatedClasses(iterable $classNames): array
 	{
-		if (!is_dir($directory)) {
-			throw new InvalidArgumentException("Not a directory: $directory");
-		}
+		$foundDefinitions = [];
 
-		if ($namespace[-1] !== "\\") {
-			$namespace .= "\\";
-		}
-
-		foreach (scandir($directory) as $f) {
-			if ($f[0] === '.') {
-				continue;
+		foreach ($classNames as $className) {
+			try {
+				$foundDefinitions[$className] = $this->addFromAnnotatedClass($className);
 			}
-			$fullPath = "$directory/$f";
-			$dotPos = strpos($f, '.');
-			$className = $namespace . ($dotPos ? substr($f, 0, $dotPos) : $f);
-			if (is_dir($fullPath)) {
-				$this->addFromPsr4Directory($className, $fullPath, $foundDefinitions);
-			} else if ($dotPos && substr($f, $dotPos) === '.php' && (class_exists($className) || interface_exists($className))) {
-				try {
-					$foundDefinitions[$className] = $this->addFromAnnotatedClass($className);
-				}
-				catch (MissingStateMachineAnnotationException $ex) {
-					// Ignore classes without @StateMachine annotation.
-				}
+			catch (MissingStateMachineAnnotationException $ex) {
+				// Ignore classes without @StateMachine annotation.
 			}
 		}
 
 		return $foundDefinitions;
+	}
+
+
+	/**
+	 * @return StateMachineDefinition[]
+	 */
+	public function addFromClassLocator(ClassLocator $classLocator): array
+	{
+		return $this->addFromAnnotatedClasses($classLocator->getClasses());
 	}
 
 }

@@ -24,6 +24,7 @@ use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -60,12 +61,9 @@ class SmalldbExtension extends Extension
 
 		// Load all state machine definitions
 		$definitionBag = new SmalldbDefinitionBag();
-		foreach ($config['machine_references'] as $refClass) {
-			$definitionBag->addFromAnnotatedClass($refClass);
-		}
-		// TODO: Use ClassLocator
+		$definitionBag->addFromAnnotatedClasses($config['machine_references']);
 		foreach ($config['machine_reference_psr4_dirs'] as $dirConfig) {
-			$definitionBag->addFromPsr4Directory($dirConfig['namespace'], $dirConfig['path']);
+			$definitionBag->addFromClassLocator(new Psr4ClassLocator($dirConfig['namespace'], $dirConfig['path']));
 		}
 
 		// Register autoloader for generated classes

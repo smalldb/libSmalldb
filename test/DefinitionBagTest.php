@@ -26,6 +26,7 @@ use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
+use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 
 
 class DefinitionBagTest extends TestCase
@@ -139,8 +140,10 @@ class DefinitionBagTest extends TestCase
 
 	public function testAddFromPsr4Directory()
 	{
+		$classLocator = new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example');
+
 		$bag = new SmalldbDefinitionBag();
-		$foundDefs = $bag->addFromPsr4Directory('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example');
+		$foundDefs = $bag->addFromClassLocator($classLocator);
 		$this->assertNotEmpty($foundDefs);
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(CrudItem::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition('crud-item'));
@@ -154,7 +157,7 @@ class DefinitionBagTest extends TestCase
 	{
 		$bag = new SmalldbDefinitionBag();
 		$this->expectException(InvalidArgumentException::class);
-		$bag->addFromPsr4Directory('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory');
+		$bag->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory'));
 	}
 
 }
