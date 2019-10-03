@@ -19,8 +19,8 @@
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
 use ReflectionClass;
-use ReflectionProperty;
-use Smalldb\StateMachine\Utils\ExtendedReflectionClass;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use Smalldb\StateMachine\Utils\AnnotationReader\TypeResolver;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -31,7 +31,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 	private $typeResolver;
 
 
-	public function processClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation): void
+	public function processClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation, AnnotationReaderInterface $annotationReader): void
 	{
 		$targetNamespace = $sourceClass->getName();
 		$targetDir = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $sourceClass->getShortName();

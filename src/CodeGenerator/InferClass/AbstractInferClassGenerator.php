@@ -18,13 +18,29 @@
 
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
-use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use ReflectionClass;
+use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
-interface InferClassGenerator
+abstract class AbstractInferClassGenerator implements InferClassGenerator
 {
 
-	public function processClass(\ReflectionClass $class, InferClassAnnotation $annotation,
-		AnnotationReaderInterface $annotationReader): void;
+	protected function getTargetDirectory(ReflectionClass $sourceClass): string
+	{
+		$targetDir = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $sourceClass->getShortName();
+		if (!is_dir($targetDir)) {
+			mkdir($targetDir);
+		}
+		return $targetDir;
+	}
+
+
+	protected function createFileWriter(InferClassAnnotation $annotationReflection, string $targetNamespace): PhpFileWriter
+	{
+		$w = new PhpFileWriter();
+		$w->setFileHeader(get_class($this) . ' (@' . get_class($annotationReflection) . ' annotation)');
+		$w->setNamespace($targetNamespace);
+		return $w;
+	}
 
 }

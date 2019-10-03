@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\InferClass\InferClass;
 use Smalldb\StateMachine\CodeGenerator\InferClass\Psr4ClassLocator;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
@@ -31,6 +32,7 @@ class InferClassTest extends TestCase
 	{
 		$inferClass = new InferClass();
 		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example'));
+		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\SymfonyDemo\\', __DIR__ . '/SymfonyDemo'));
 
 		foreach ($inferClass->locateClasses() as $classname) {
 			$this->assertClassOrInterfaceExists($classname);
@@ -40,7 +42,7 @@ class InferClassTest extends TestCase
 
 	public function testProcessSupervisorClass()
 	{
-		$supervisorClass = new \ReflectionClass(SupervisorProcessData::class);
+		$supervisorClass = new ReflectionClass(SupervisorProcessData::class);
 		$namespace = $supervisorClass->getNamespaceName();
 		$directory = dirname($supervisorClass->getFileName());
 
@@ -51,6 +53,18 @@ class InferClassTest extends TestCase
 		// Check for the generated classes
 		$this->assertClassExists(SupervisorProcessData\SupervisorProcessDataImmutable::class);
 	}
+
+
+	/*
+	public function testInferEverything()
+	{
+		$inferClass = new InferClass();
+		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__, __DIR__);
+		$inferClass->processClasses();
+
+		$this->assertClassOrInterfaceExists(Post::class);
+	}
+	*/
 
 
 	private function assertClassOrInterfaceExists(string $className)

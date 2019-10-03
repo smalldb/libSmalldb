@@ -171,10 +171,8 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 					$argMethod[] = $w->getParamAsCode($param);
 					$argCall[] = '$' . $param->name;
 				}
-				$returnType = (string) $method->getReturnType();
-				if (class_exists($returnType)) {
-					$returnType = $w->useClass($returnType);
-				}
+
+				$returnType = $w->getTypeAsCode($method->getReturnType());
 
 				$w->beginMethod($methodName, $argMethod, $returnType);
 				$w->beginBlock("if (!\$this->dataLoaded)");

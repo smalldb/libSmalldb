@@ -18,9 +18,9 @@
 
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
-use Doctrine\Common\Annotations\AnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
 use Psr\Container\ContainerInterface;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 
 
 class InferClass
@@ -29,27 +29,17 @@ class InferClass
 	/** @var ClassLocator[] */
 	private $classLocators;
 
-	/** @var AnnotationReader */
+	/** @var \Smalldb\StateMachine\Utils\\Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface */
 	private $annotationReader;
 
 	/** @var ContainerInterface */
 	private $classGeneratorServiceLocator;
 
 
-	public function __construct(ContainerInterface $classGeneratorServiceLocator = null, AnnotationReader $annotationReader = null)
+	public function __construct(ContainerInterface $classGeneratorServiceLocator = null, AnnotationReaderInterface $annotationReader = null)
 	{
-		if ($annotationReader === null) {
-			$this->annotationReader = new AnnotationReader();
-
-			// Use autoloader to load annotations
-			if (class_exists(AnnotationRegistry::class)) {
-				AnnotationRegistry::registerUniqueLoader('class_exists');
-			}
-		} else {
-			$this->annotationReader = $annotationReader;
-		}
-
 		$this->classGeneratorServiceLocator = $classGeneratorServiceLocator;
+		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
 	}
 
 
@@ -85,7 +75,7 @@ class InferClass
 			if ($annotation instanceof InferClassAnnotation) {
 				$classGeneratorName = $annotation->getInferClassGeneratorName();
 				$classGenerator = $this->getClassGenerator($classGeneratorName);
-				$classGenerator->processClass($class, $annotation);
+				$classGenerator->processClass($class, $annotation, $this->annotationReader);
 			}
 		}
 	}

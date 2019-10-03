@@ -106,7 +106,7 @@ class PhpFileWriter
 
 		if (($type = $param->getType()) !== null) {
 			$type = (string) $type;
-			if (class_exists($type)) {
+			if (class_exists($type) || interface_exists($type)) {
 				$type = $this->useClass($type);
 			}
 			$code = $type . ' ' . $code;
@@ -125,6 +125,25 @@ class PhpFileWriter
 		}
 
 		return $code;
+	}
+
+
+	public function getTypeAsCode(?\ReflectionType $typeReflection): string
+	{
+		if ($typeReflection === null) {
+			return '';
+		} else {
+			$className = $typeReflection->getName();
+			if (class_exists($className) || interface_exists($className)) {
+				$type = $this->useClass($className);
+			} else {
+				$type = $className;
+			}
+			if ($typeReflection->allowsNull()) {
+				$type = '?' . $type;
+			}
+			return $type;
+		}
 	}
 
 
