@@ -25,11 +25,18 @@ abstract class AbstractClassGenerator
 	//      return proper class representation instead.
 
 	/** @var SmalldbClassGenerator */
-	protected $classGenerator;
+	private $classGenerator;
+
 
 	public function __construct(SmalldbClassGenerator $classGenerator)
 	{
 		$this->classGenerator = $classGenerator;
+	}
+
+
+	protected function getClassGenerator(): SmalldbClassGenerator
+	{
+		return $this->classGenerator;
 	}
 
 }

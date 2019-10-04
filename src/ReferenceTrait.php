@@ -59,7 +59,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	 * @param Smalldb $smalldb
 	 * @param SmalldbProviderInterface|null $machineProvider
 	 * @param ReferenceDataSourceInterface $dataSource
-	 * @param null $id
+	 * @param $id
 	 */
 	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null)
 	{

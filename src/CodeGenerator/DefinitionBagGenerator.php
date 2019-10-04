@@ -55,7 +55,7 @@ class DefinitionBagGenerator extends AbstractClassGenerator
 		}
 		$w->endClass();
 
-		$this->classGenerator->addGeneratedClass($className, $w->getPhpCode());
+		$this->getClassGenerator()->addGeneratedClass($className, $w->getPhpCode());
 		return $className;
 	}
 

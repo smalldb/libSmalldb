@@ -28,7 +28,7 @@ use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\Su
  * @StateMachine("supervisor-process")
  * @IncludeGraphML("SupervisorProcess.graphml")
  */
-abstract class SupervisorProcess extends SupervisorProcessData implements ReferenceInterface, SupervisorProcessDataImmutableInterface
+abstract class SupervisorProcess implements ReferenceInterface, SupervisorProcessDataImmutableInterface
 {
 
 }
