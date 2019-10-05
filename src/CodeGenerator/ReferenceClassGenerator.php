@@ -72,7 +72,6 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 	 *
 	 * @return string Class name of the implementation.
 	 * @throws ReflectionException
-	 * @throws LogicException
 	 */
 	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
 	{

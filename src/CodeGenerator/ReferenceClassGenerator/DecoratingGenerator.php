@@ -58,14 +58,14 @@ class DecoratingGenerator extends AbstractGenerator
 		$this->generateIdMethods($w);
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-		$this->generateDataGetterMethods($w, $sourceClassReflection, $dtoInterface);
+		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoInterface);
 
 		$w->endClass();
 		return $targetReferenceClassName;
 	}
 
 
-	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface)
+	private function generateDataGetterMethods(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface)
 	{
 		$dtoInterfaceAlias = $w->useClass($dtoInterface->getName());
 
@@ -111,14 +111,38 @@ class DecoratingGenerator extends AbstractGenerator
 				}
 				$w->endBlock();
 
-				$w->beginBlock("switch (true)");
-				{
-					$w->writeln("case \$this->data instanceof " . $w->useClass(StatefulEntity::class) . ": return \$this->data->getState();");
-					$w->writeln("case isset(\$this->data['state']): return \$this->data['state'];");
-					$w->writeln("case isset(\$this->data->state): return \$this->data->state;");
-					$w->writeln("default: return self::NOT_EXISTS;");
+				$notExists = $w->useClass(ReferenceInterface::class) . '::NOT_EXISTS';
+				$states = $definition->getStates();
+				switch (count($states)) {
+					case 0:
+					case 1:
+						$w->writeln("return $notExists;");
+						break;
+
+					case 2:
+						// There are two states: NOT_EXISTS and EXISTS. If there are any data, it EXISTS.
+						$theOtherState = null;
+						foreach ($states as $state) {
+							if ($state->getName() !== ReferenceInterface::NOT_EXISTS) {
+								$theOtherState = $state->getName();
+								break;
+							}
+						}
+						$w->writeln("return \$this->data === null ? $notExists : %s;", $theOtherState);
+						break;
+
+					default:
+						$w->beginBlock("switch (true)");
+						{
+							$w->writeln("case \$this->data instanceof " . $w->useClass(StatefulEntity::class) . ":"
+								. " return \$this->data->getState() ?: $notExists;");
+							$w->writeln("case is_array(\$this->data): return \$this->data['state'] ?: $notExists;");
+							$w->writeln("case isset(\$this->data->state): return \$this->data->state ?: $notExists;");
+							$w->writeln("default: return $notExists;");
+						}
+						$w->endBlock();
+						break;
 				}
-				$w->endBlock();
 			}
 			$w->endMethod();
 		}

@@ -40,15 +40,4 @@ abstract class PostRef implements ReferenceInterface, PostImmutableInterface
 
 	abstract protected function getData(): ?PostImmutableInterface;
 
-
-	public function getState(): string
-	{
-		$data = $this->getData();
-		if ($data !== null) {
-			return self::EXISTS;
-		} else {
-			return self::NOT_EXISTS;
-		}
-	}
-
 }

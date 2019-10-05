@@ -19,8 +19,6 @@
 namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\LogicException;
-use Smalldb\StateMachine\CodeGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
@@ -56,7 +54,7 @@ class DummyGenerator extends AbstractGenerator
 		$w->endMethod();
 
 		$this->generateFallbackExistsStateFunction($w, $sourceClassReflection, $definition,
-			"(\$id = \$this->getMachineId()) !== null && \$this->dataSource->loadData(\$id) !== null");
+			"\$this->dataSource->loadData(\$this->getMachineId()) !== null");
 	}
 
 }

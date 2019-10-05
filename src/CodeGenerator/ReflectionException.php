@@ -21,6 +21,11 @@ namespace Smalldb\StateMachine\CodeGenerator;
 use Throwable;
 
 
+/**
+ * Class ReflectionException
+ *
+ * @codeCoverageIgnore
+ */
 class ReflectionException extends \ReflectionException
 {
 	// Just an exception.

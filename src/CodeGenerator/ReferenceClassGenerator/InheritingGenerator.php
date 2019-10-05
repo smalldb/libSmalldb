@@ -19,8 +19,8 @@
 namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\LogicException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
@@ -105,7 +105,7 @@ class InheritingGenerator extends AbstractGenerator
 	private function generateHydratorMethod(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection): void
 	{
 		if ($sourceClassReflection->hasMethod('hydrateFromArray')) {
-			throw new LogicException('Method hydrateFromArray already defined in class ' . $sourceClassReflection->getName() . '.');
+			throw new InvalidArgumentException('Method hydrateFromArray already defined in class ' . $sourceClassReflection->getName() . '.');
 		}
 
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');

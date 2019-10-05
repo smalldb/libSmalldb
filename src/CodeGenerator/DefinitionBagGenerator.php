@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\CodeGenerator;
 
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
@@ -122,7 +123,7 @@ class DefinitionBagGenerator extends AbstractClassGenerator
 			}
 
 			$w->writeln('');
-			$w->writeln("default: throw new \\InvalidArgumentException(\"Undefined machine type: \$machineType\");");
+			$w->writeln("default: throw new " . $w->useClass(InvalidArgumentException::class) . "(\"Undefined machine type: \$machineType\");");
 		}
 		$w->endBlock();
 		$w->endMethod();
