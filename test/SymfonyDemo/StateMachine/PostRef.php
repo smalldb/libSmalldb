@@ -16,38 +16,39 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition;
+namespace Smalldb\StateMachine\Test\SymfonyDemo\StateMachine;
 
-use Smalldb\StateMachine\Annotation\State;
-use Smalldb\StateMachine\Annotation\Transition;
+use Smalldb\StateMachine\Annotation as SM;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\SymfonyDemo\EntityInterface\PostImmutableInterface;
+use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepository;
 
 
 /**
- * CrudMachine -- a basic CRUD state machine definition.
+ * Class PostRef
+ *
+ * @SM\StateMachine("doctrine-post")
+ * @SM\UseRepository(SmalldbPostRepository::class)
  */
-interface CrudMachineDefinition extends ReferenceInterface
+abstract class PostRef implements ReferenceInterface, PostImmutableInterface
 {
 
 	/**
-	 * @State
+	 * @SM\State
 	 */
 	const EXISTS = "Exists";
 
-	/**
-	 * @Transition("", {"Exists"})
-	 */
-	public function create($data);
+	abstract protected function getData(): ?PostImmutableInterface;
 
-	/**
-	 * @Transition("Exists", {"Exists"})
-	 */
-	public function update($data);
 
-	/**
-	 * @Transition("Exists", {""})
-	 */
-	public function delete();
+	public function getState(): string
+	{
+		$data = $this->getData();
+		if ($data !== null) {
+			return self::EXISTS;
+		} else {
+			return self::NOT_EXISTS;
+		}
+	}
 
 }
-

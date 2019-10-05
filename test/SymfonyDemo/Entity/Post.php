@@ -14,6 +14,7 @@ namespace Smalldb\StateMachine\Test\SymfonyDemo\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Smalldb\StateMachine\Test\SymfonyDemo\EntityInterface\PostImmutableInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
@@ -31,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @author Javier Eguiluz <javier.eguiluz@gmail.com>
  * @author Yonel Ceruto <yonelceruto@gmail.com>
  */
-class Post
+class Post implements PostImmutableInterface
 {
     /**
      * Use constants to define configuration options that rarely change instead

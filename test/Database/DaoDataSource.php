@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\Test\Database;
 
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
-use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 
 
@@ -47,15 +46,13 @@ class DaoDataSource implements ReferenceDataSourceInterface
 	}
 
 
-	public function loadData($id, & $state)
+	public function loadData($id)
 	{
-		if ($id !== null) {
-			$data = $this->dao->table($this->table)->read($id);
-			$state = CrudItem::EXISTS;
-			return $data;
-		} else {
-			$state = CrudItem::NOT_EXISTS;
+		$daoTable = $this->dao->table($this->table);
+		if ($id === null || !$daoTable->exists($id)) {
 			return null;
+		} else {
+			return $daoTable->read($id);
 		}
 	}
 

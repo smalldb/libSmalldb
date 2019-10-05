@@ -21,7 +21,6 @@ use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\Definition\CrudMachineDefinition;
-use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
@@ -29,7 +28,7 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(CrudItemRepository::class)
  * @UseTransitions(CrudItemTransitions::class)
  */
-interface CrudItem extends CrudMachineDefinition, ReferenceInterface
+interface CrudItem extends CrudMachineDefinition
 {
 
 }

@@ -19,12 +19,11 @@
 namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\LogicException;
-use Smalldb\StateMachine\CodeGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
+use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -33,93 +32,39 @@ class DecoratingGenerator extends AbstractGenerator
 
 	/**
 	 * Generate a new class implementing the missing methods in $sourceReferenceClassName.
-	 *
-	 * @return string Class name of the implementation.
-	 * @throws ReflectionException
-	 * @throws LogicException
 	 */
-	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
+	public function writeReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition): string
 	{
-		try {
-			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
-
-			$targetNamespace = $this->getClassGenerator()->getClassNamespace();
-			$shortTargetClassName = PhpFileWriter::getShortClassName($sourceReferenceClassName);
-			$targetReferenceClassName = $targetNamespace . '\\' . $shortTargetClassName;
-
-			$w = new PhpFileWriter();
-			$w->setFileHeader(__CLASS__);
-			$w->setNamespace($w->getClassNamespace($targetReferenceClassName));
-			$w->setClassName($shortTargetClassName);
-
-			// Detect DTO interface
-			$dtoInterface = null;
-			foreach ($sourceClassReflection->getInterfaces() as $interface) {
-				if (!$interface->implementsInterface(ReferenceInterface::class)) {
-					if ($dtoInterface) {
-						// TODO: This may not be that bad. We may support multiple DTOs.
-						throw new InvalidArgumentException("Multiple DTO interfaces found in " . $sourceReferenceClassName);
-					} else {
-						$dtoInterface = $interface;
-					}
+		// Detect DTO interface
+		$dtoInterface = null;
+		foreach ($sourceClassReflection->getInterfaces() as $interface) {
+			if (!$interface->implementsInterface(ReferenceInterface::class)) {
+				if ($dtoInterface) {
+					// TODO: This may not be that bad. We may support multiple DTOs.
+					throw new InvalidArgumentException("Multiple DTO interfaces found in " . $sourceClassReflection->getName());
+				} else {
+					$dtoInterface = $interface;
 				}
 			}
-			if ($dtoInterface === null) {
-				throw new InvalidArgumentException("No DTO interface found in " . $sourceReferenceClassName);
-			}
-
-			// Create the class
-			$extends = null;
-			$implements = [$w->useClass(ReferenceInterface::class), $w->useClass($dtoInterface->getName())];
-			if ($sourceClassReflection->isInterface()) {
-				$implements[] = $w->useClass($sourceReferenceClassName);
-			} else {
-				$extends = $w->useClass($sourceReferenceClassName);
-			}
-			$w->beginClass($shortTargetClassName, $extends, $implements);
-			$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
-
-			// Create methods
-			$this->generateIdMethods($w);
-			$this->generateReferenceMethods($w, $definition);
-			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-			$this->generateDataGetterMethods($w, $sourceClassReflection, $dtoInterface);
-
-			$w->endClass();
 		}
-		// @codeCoverageIgnoreStart
-		catch (\ReflectionException $ex) {
-			throw new ReflectionException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
+		if ($dtoInterface === null) {
+			throw new InvalidArgumentException("No DTO interface found in " . $sourceClassReflection->getName());
 		}
-		// @codeCoverageIgnoreEnd
 
-		$this->getClassGenerator()->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
+		// Begin the Reference class
+		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection, [$w->useClass($dtoInterface->getName())]);
+
+		// Create methods
+		$this->generateIdMethods($w);
+		$this->generateReferenceMethods($w, $definition);
+		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
+		$this->generateDataGetterMethods($w, $sourceClassReflection, $dtoInterface);
+
+		$w->endClass();
 		return $targetReferenceClassName;
 	}
 
 
-	private function generateIdMethods(PhpFileWriter $w)
-	{
-		$w->writeln('private $machineId = null;');
-
-		$w->beginMethod('getMachineId', [], '');
-		{
-			$w->writeln('return $this->machineId;');
-		}
-		$w->endMethod();
-
-		$w->beginProtectedMethod('setMachineId', ['$machineId'], 'void');
-		{
-			$w->writeln('$this->machineId = $machineId;');
-		}
-		$w->endMethod();
-	}
-
-
-	/**
-	 * @throws \ReflectionException
-	 * @throws LogicException
-	 */
 	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface)
 	{
 		$dtoInterfaceAlias = $w->useClass($dtoInterface->getName());
@@ -129,30 +74,79 @@ class DecoratingGenerator extends AbstractGenerator
 
 		$w->beginMethod('invalidateCache', [], 'void');
 		{
-			$w->writeln('$this->state = null;');
 			$w->writeln('$this->data = null;');
 			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
 
-		$referenceInterfaceReflection = new ReflectionClass(ReferenceInterface::class);
+		// Implement missing methods from $dtoInterface
+		foreach ($dtoInterface->getMethods() as $dtoMethod) {
+			$dtoMethodName = $dtoMethod->getName();
+			$sourceMethod = $sourceClassReflection->getMethod($dtoMethodName);
 
+			if (!$w->hasMethod($dtoMethodName) && $dtoMethod->isPublic() && (!$sourceMethod || $sourceMethod->isAbstract())) {
+				$w->beginMethodOverride($dtoMethod, $parentCallArgs);
+				{
+					$w->beginBlock("if (\$this->data === null && (\$this->data = \$this->dataSource->loadData(\$this->getMachineId())) === null)");
+					{
+						$w->writeln("throw new " . $w->useClass(NotExistsException::class) . "(\"Cannot load data in the Not Exists state.\");");
+					}
+					$w->midBlock("else");
+					{
+						$w->writeln("return \$this->data->$dtoMethodName(" . join(", ", $parentCallArgs) . ");");
+					}
+					$w->endBlock();
+				}
+				$w->endMethod();
+			}
+		}
+
+		// Implement state method
+		if (!$w->hasMethod('getState') && ($stateMethod = $sourceClassReflection->getMethod('getState')) && $stateMethod->isAbstract()) {
+			$w->beginMethod('getState', [], 'string');
+			{
+				$w->beginBlock("if (\$this->data === null)");
+				{
+					$w->writeln("\$this->data = \$this->dataSource->loadData(\$this->getMachineId());");
+				}
+				$w->endBlock();
+
+				$w->beginBlock("switch (true)");
+				{
+					$w->writeln("case \$this->data instanceof " . $w->useClass(StatefulEntity::class) . ": return \$this->data->getState();");
+					$w->writeln("case isset(\$this->data['state']): return \$this->data['state'];");
+					$w->writeln("case isset(\$this->data->state): return \$this->data->state;");
+					$w->writeln("default: return self::NOT_EXISTS;");
+				}
+				$w->endBlock();
+			}
+			$w->endMethod();
+		}
+
+		// Implement the remaining abstract methods
 		foreach ($sourceClassReflection->getMethods() as $method) {
 			$methodName = $method->getName();
-			if (strncmp('get', $methodName, 3) === 0 && $method->isPublic() && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
-				$argMethod = [];
-				$argCall = [];
-				foreach ($method->getParameters() as $param) {
-					$argMethod[] = $w->getParamAsCode($param);
-					$argCall[] = '$' . $param->name;
+
+			if ($method->isAbstract() && !$w->hasMethod($methodName)) {
+				$returnType = $method->getReturnType();
+
+				// Implement data loader methods
+				if ($returnType && $returnType->getName() === $dtoInterface->getName() && empty($method->getParameters())) {
+					$w->beginMethodOverride($method, $parentCallArgs);
+					{
+						$w->beginBlock("if (\$this->data === null && (\$this->data = \$this->dataSource->loadData(\$this->getMachineId())) === null)");
+						{
+							$w->writeln("return null;");
+						}
+						$w->midBlock("else");
+						{
+							// FIXME: To clone or not to clone?
+							$w->writeln("return clone \$this->data;");
+						}
+						$w->endBlock();
+					}
+					$w->endBlock();
 				}
-
-				$returnType = $w->getTypeAsCode($method->getReturnType());
-
-				$w->beginMethod($methodName, $argMethod, $returnType);
-				$w->writeln("return (\$this->data ?? (\$this->data = \$this->dataSource->loadData(\$this->getMachineId(), \$this->state)))"
-					. "->$methodName(" . join(", ", $argCall) . ");");
-				$w->endMethod();
 			}
 		}
 

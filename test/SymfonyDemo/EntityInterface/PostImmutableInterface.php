@@ -16,16 +16,21 @@
  *
  */
 
-namespace Smalldb\StateMachine\ReferenceDataSource;
+namespace Smalldb\StateMachine\Test\SymfonyDemo\EntityInterface;
 
-use Throwable;
+use Doctrine\Common\Collections\Collection;
+use Smalldb\StateMachine\Test\SymfonyDemo\Entity\User;
 
 
-class LogicException extends \LogicException
+interface PostImmutableInterface
 {
-	// Just an exception.
-	public function __construct($message = "", $code = 0, Throwable $previous = null)
-	{
-		parent::__construct($message, $code, $previous);
-	}
+	public function getId(): ?int;
+	public function getTitle(): ?string;
+	public function getSlug(): ?string;
+	public function getContent(): ?string;
+	public function getPublishedAt(): \DateTime;
+	public function getAuthor(): ?User;
+	public function getComments(): Collection;
+	public function getSummary(): ?string;
+	public function getTags(): Collection;
 }

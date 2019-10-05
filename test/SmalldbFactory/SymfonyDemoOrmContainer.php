@@ -34,6 +34,8 @@ use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\TagRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\UserRepository;
+use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepository;
+use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -43,6 +45,13 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class SymfonyDemoOrmContainer extends SymfonyDemoContainer
 {
+
+	protected function createDefinitionBag(): SmalldbDefinitionBag
+	{
+		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBag->addFromAnnotatedClass(PostRef::class);
+		return $definitionBag;
+	}
 
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
@@ -73,6 +82,8 @@ class SymfonyDemoOrmContainer extends SymfonyDemoContainer
 		$c->autowire(PostRepository::class)->setPublic(true);
 		$c->autowire(TagRepository::class)->setPublic(true);
 		$c->autowire(UserRepository::class)->setPublic(true);
+
+		$c->autowire(SmalldbPostRepository::class)->setPublic(true);
 
 		return $c;
 	}

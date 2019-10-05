@@ -23,16 +23,13 @@ interface ReferenceDataSourceInterface
 {
 
 	/**
-	 * Return the state of the refered state machine.
+	 * Load data for the state machine and set the state
+	 *
+	 * @return null|array|object
 	 *
 	 * TODO: Add locking mode so that we can lock an entity before invoking a transition.
 	 */
-	public function getState($id): string;
-
-	/**
-	 * Load data for the state machine and set the state
-	 */
-	public function loadData($id, string & $state);
+	public function loadData($id);
 
 
 	/**

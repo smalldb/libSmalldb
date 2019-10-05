@@ -115,8 +115,9 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		}
 
 		// Compile & register definition bag
+		$bagName = 'GeneratedDefinitionBag_' . preg_replace('/.*\\\\/', '', get_class($this));
 		$c->autowire(SmalldbDefinitionBagInterface::class,
-				$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_SymfonyDemoContainer'))
+				$scg->generateDefinitionBag($definitionBag, $bagName))
 			->setPublic(true);
 		return $c;
 	}

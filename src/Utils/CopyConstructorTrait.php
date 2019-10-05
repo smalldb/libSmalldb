@@ -30,7 +30,7 @@ trait CopyConstructorTrait
 {
 
 	/**
-	 * PostDataImmutable copy constructor.
+	 * The copy constructor.
 	 */
 	public function __construct(self $src = null)
 	{
@@ -43,9 +43,17 @@ trait CopyConstructorTrait
 	}
 
 
-	protected function loadData(): void
+	/**
+	 * Called before copying and getting properties.
+	 *
+	 * Returns true if data are now ok.
+	 *
+	 * FIXME: Do we want this?
+	 */
+	protected function loadData(): bool
 	{
 		// Implement this if this class has lazy children.
+		return true;
 	}
 
 }

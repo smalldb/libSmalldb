@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\LogicException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
@@ -87,34 +88,14 @@ class DataSource implements ReferenceDataSourceInterface
 
 
 	/**
-	 * Return the state of the refered state machine.
-	 */
-	public function getState($id): string
-	{
-		$q = $this->createQueryBuilder()
-			->addSelectFromStatements(true)
-			->andWhereId($id);
-
-		$stmt = $q->execute();
-
-		if ($this->onQueryCallback) {
-			($this->onQueryCallback)($q);
-		}
-
-		if ($stmt instanceof Statement) {
-			$state = $stmt->fetchColumn();
-			return $state !== false ? (string)$state : '';
-		} else {
-			throw new LogicException("State select does not return a result set.");
-		}
-	}
-
-
-	/**
 	 * Load data for the state machine and set the state
 	 */
-	public function loadData($id, string &$state = null)
+	public function loadData($id): ?array
 	{
+		if ($id === null) {
+			return null;
+		}
+
 		$q = $this->createQueryBuilder()
 			->addSelectFromStatements()
 			->andWhereId($id);
@@ -131,13 +112,8 @@ class DataSource implements ReferenceDataSourceInterface
 			throw new LogicException("Load data select does not return a result set.");
 		}
 
-		$state = $data['state'] ?? null;
-		if (empty($data) || $state === '') {
-			$state = '';
-			throw new NotExistsException('Cannot load data in the Not Exists state.');
-		}
-		return $data;
-}
+		return $data ?: null;
+	}
 
 
 	/**

@@ -23,6 +23,7 @@ use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -63,7 +64,7 @@ class ReferenceClassGeneratorTest extends TestCase
 		$this->assertEquals('', $newClassInstance->getState());
 
 		// DummyDataSource: Data should not be available in Not Exists state
-		$this->expectException(\LogicException::class);
+		$this->expectException(NotExistsException::class);
 		$this->assertEquals(null, $newClassInstance->getTitle());
 	}
 

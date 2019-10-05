@@ -147,6 +147,23 @@ class PhpFileWriter
 	}
 
 
+	/**
+	 * @return [string[],string[]]
+	 */
+	public function getMethodParametersCode(\ReflectionMethod $method): array
+	{
+		$argMethod = [];
+		$argCall = [];
+
+		foreach ($method->getParameters() as $param) {
+			$argMethod[$param->name] = $this->getParamAsCode($param);
+			$argCall[$param->name] = '$' . $param->name;
+		}
+
+		return [$argMethod, $argCall];
+	}
+
+
 	public static function toCamelCase(string $identifier): string
 	{
 		return str_replace('_', '', ucwords($identifier, '_'));
@@ -433,6 +450,35 @@ class PhpFileWriter
 	public function endTrait(): self
 	{
 		$this->endBlock();
+		return $this;
+	}
+
+
+	public function beginMethodOverride(\ReflectionMethod $parentMethod, array & $parentCallArgs = null): self
+	{
+		$methodName = $parentMethod->getName();
+
+		if ($parentMethod->isFinal()) {
+			throw new \InvalidArgumentException("Cannot override final method: " . $methodName);
+		}
+
+		if ($parentMethod->isPublic()) {
+			$mods = 'public';
+		} else {
+			$mods = 'protected';
+		}
+
+		if ($parentMethod->isStatic()) {
+			$mods .= ' static';
+		}
+
+		[$parentArgs, $parentCallArgs] = $this->getMethodParametersCode($parentMethod);
+		$returnType = $this->getTypeAsCode($parentMethod->getReturnType());
+
+		$this->definedMethodNames[$methodName] = $methodName;
+		$this->writeln('');
+		$this->writeln("$mods function $methodName(".join(', ', $parentArgs).")".($returnType === '' ? '' : ": $returnType"));
+		$this->beginBlock();
 		return $this;
 	}
 

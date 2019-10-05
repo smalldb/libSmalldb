@@ -22,10 +22,13 @@ use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoOrmContainer;
 use Smalldb\StateMachine\Test\SymfonyDemo\Entity\Post;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 
 
 class DoctrineOrmTest extends TestCase
@@ -33,15 +36,18 @@ class DoctrineOrmTest extends TestCase
 	/** @var ContainerInterface */
 	private $container;
 
+	/** @var Smalldb */
+	private $smalldb;
 
 	public function setUp(): void
 	{
 		parent::setUp();
 		$this->container = (new SymfonyDemoOrmContainer())->createContainer();
+		$this->smalldb = $this->container->get(Smalldb::class);
 	}
 
 
-	public function testInit()
+	public function testDoctrineInit()
 	{
 		$this->assertInstanceOf(ContainerInterface::class, $this->container);
 
@@ -58,6 +64,37 @@ class DoctrineOrmTest extends TestCase
 		$this->assertInstanceOf(Post::class, $post);
 		$this->assertNotEmpty($post->getId());
 		$this->assertNotEmpty($post->getTitle());
+	}
+
+
+	public function testReferenceState()
+	{
+		$this->assertInstanceOf(Smalldb::class, $this->smalldb);
+
+		$nullRef = $this->smalldb->nullRef(PostRef::class);
+		$this->assertEquals(ReferenceInterface::NOT_EXISTS, $nullRef->getState());
+
+		/** @var PostRef $ref */
+		$ref = $this->smalldb->ref(PostRef::class, 1);
+		$this->assertEquals(PostRef::EXISTS, $ref->getState());
+
+		$this->assertEquals(1, $ref->getMachineId());
+		$this->assertEquals(1, $ref->getId());
+
+		$this->assertNotEmpty($ref->getTitle());
+	}
+
+
+	public function testReferenceProperties()
+	{
+		$this->assertInstanceOf(Smalldb::class, $this->smalldb);
+
+		$definition = $this->smalldb->getDefinition(PostRef::class);
+
+		$this->markTestIncomplete();
+
+		$properties = $definition->getProperties();
+		$this->assertNotEmpty($properties);
 	}
 
 }

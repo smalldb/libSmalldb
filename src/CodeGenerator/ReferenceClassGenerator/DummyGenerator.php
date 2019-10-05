@@ -22,8 +22,6 @@ use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\LogicException;
 use Smalldb\StateMachine\CodeGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -32,76 +30,33 @@ class DummyGenerator extends AbstractGenerator
 
 	/**
 	 * Generate a new class implementing the missing methods in $sourceReferenceClassName.
-	 *
-	 * @return string Class name of the implementation.
-	 * @throws ReflectionException
-	 * @throws LogicException
 	 */
-	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
+	public function writeReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition): string
 	{
-		try {
-			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
+		// Begin the Reference class
+		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection);
 
-			$targetNamespace = $this->getClassGenerator()->getClassNamespace();
-			$shortTargetClassName = PhpFileWriter::getShortClassName($sourceReferenceClassName);
-			$targetReferenceClassName = $targetNamespace . '\\' . $shortTargetClassName;
+		// Create methods
+		$this->generateIdMethods($w);
+		$this->generateDummyDataGetterMethods($w, $sourceClassReflection, $definition);
+		$this->generateReferenceMethods($w, $definition);
+		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 
-			$w = new PhpFileWriter();
-			$w->setFileHeader(__CLASS__);
-			$w->setNamespace($w->getClassNamespace($targetReferenceClassName));
-			$w->setClassName($shortTargetClassName);
-
-			// Create the class
-			$extends = null;
-			$implements = [$w->useClass(ReferenceInterface::class)];
-			if ($sourceClassReflection->isInterface()) {
-				$implements[] = $w->useClass($sourceReferenceClassName);
-			} else {
-				$extends = $w->useClass($sourceReferenceClassName);
-			}
-			$w->beginClass($shortTargetClassName, $extends, $implements);
-			$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
-
-			// Create methods
-			$this->generateReferenceMethods($w, $definition);
-			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-			$this->generateDummyId($w, $definition);
-
-			$w->endClass();
-		}
-		// @codeCoverageIgnoreStart
-		catch (\ReflectionException $ex) {
-			throw new ReflectionException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
-		}
-		// @codeCoverageIgnoreEnd
-
-		$this->getClassGenerator()->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
+		$w->endClass();
 		return $targetReferenceClassName;
 	}
 
 
-	private function generateDummyId(PhpFileWriter $w, StateMachineDefinition $definition)
+	private function generateDummyDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition)
 	{
-		$w->writeln('private $machineId = null;');
-
-		$w->beginMethod('getMachineId', [], '');
-		{
-			$w->writeln('return $this->machineId;');
-		}
-		$w->endMethod();
-
-		$w->beginProtectedMethod('setMachineId', ['$machineId'], 'void');
-		{
-			$w->writeln('$this->machineId = $machineId;');
-		}
-		$w->endMethod();
-
 		$w->beginMethod('invalidateCache', [], 'void');
 		{
-			$w->writeln('$this->state = null;');
 			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
+
+		$this->generateFallbackExistsStateFunction($w, $sourceClassReflection, $definition,
+			"(\$id = \$this->getMachineId()) !== null && \$this->dataSource->loadData(\$id) !== null");
 	}
 
 }

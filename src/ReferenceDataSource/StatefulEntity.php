@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -16,21 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\User;
+namespace Smalldb\StateMachine\ReferenceDataSource;
 
-use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Annotation\UseRepository;
-use Smalldb\StateMachine\Annotation\UseTransitions;
-use Smalldb\StateMachine\Definition\CrudMachineDefinition;
-
-
-/**
- * @StateMachine("user")
- * @UseRepository(UserRepository::class)
- * @UseTransitions(UserTransitions::class)
- */
-interface User extends CrudMachineDefinition
+interface StatefulEntity
 {
-
+	public function getState(): string;
 }
-

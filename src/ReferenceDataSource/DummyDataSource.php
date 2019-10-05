@@ -26,25 +26,19 @@ class DummyDataSource implements ReferenceDataSourceInterface
 {
 
 	/**
-	 * Return the state of the refered state machine.
-	 */
-	public function getState($id): string
-	{
-		return '';
-	}
-
-
-	/**
 	 * Load data for the state machine and set the state
 	 */
-	public function loadData($id, string &$state)
+	public function loadData($id)
 	{
-		throw new \LogicException('Cannot load data in Not Exists state.');
+		// Nothing exists.
+		return null;
 	}
 
 
 	/**
 	 * Invalidate cached data
+	 *
+	 * @codeCoverageIgnore
 	 */
 	public function invalidateCache($id = null)
 	{

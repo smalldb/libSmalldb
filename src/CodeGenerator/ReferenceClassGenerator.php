@@ -25,8 +25,6 @@ use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator\InheritingGenerat
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\ReferenceTrait;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
 class ReferenceClassGenerator extends AbstractClassGenerator
@@ -89,7 +87,7 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			} else {
 				$implementsInterface = [];
 				foreach ($sourceClassReflection->getInterfaces() as $interfaceReflection) {
-					if ($interfaceReflection->getName() !== ReferenceInterface::class) {
+					if (!$interfaceReflection->implementsInterface(ReferenceInterface::class)) {
 						$implementsInterface[] = $interfaceReflection;
 					}
 				}

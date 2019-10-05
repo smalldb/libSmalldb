@@ -41,16 +41,6 @@ trait ReferenceTrait // implements ReferenceInterface
 	/** @var ReferenceDataSourceInterface */
 	private $dataSource = null;
 
-	/**
-	 * Primary key (unique within $machine).
-	 *
-	 * The $id should be defined by the parent class; otherwise ReferenceClassGenerator will add it.
-	 */
-	//protected $id;
-
-	/** @var string */
-	protected $state = null;
-
 
 	/**
 	 * Create a reference and initialize it with a given ID. To copy
@@ -79,6 +69,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	{
 		return $this->smalldb;
 	}
+
 
 	/**
 	 * Lazy-load the provider from Smalldb
@@ -113,16 +104,6 @@ trait ReferenceTrait // implements ReferenceInterface
 	{
 		return $this->getDefinition()->getMachineType();  // @codeCoverageIgnore
 	}
-
-
-	/**
-	 * Read state machine state
-	 */
-	public function getState(): string
-	{
-		return $this->state ?? ($this->state = $this->dataSource->getState($this->getMachineId()));
-	}
-
 
 
 	/**

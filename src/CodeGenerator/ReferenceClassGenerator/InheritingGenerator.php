@@ -20,10 +20,9 @@ namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\LogicException;
-use Smalldb\StateMachine\CodeGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -32,79 +31,48 @@ class InheritingGenerator extends AbstractGenerator
 
 	/**
 	 * Generate a new class implementing the missing methods in $sourceReferenceClassName.
-	 *
-	 * @return string Class name of the implementation.
-	 * @throws ReflectionException
-	 * @throws LogicException
 	 */
-	public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
+	public function writeReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition): string
 	{
-		try {
-			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
+		// Begin the Reference class
+		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection);
 
-			$targetNamespace = $this->getClassGenerator()->getClassNamespace();
-			$shortTargetClassName = PhpFileWriter::getShortClassName($sourceReferenceClassName);
-			$targetReferenceClassName = $targetNamespace . '\\' . $shortTargetClassName;
+		// Create methods
+		$this->generateReferenceMethods($w, $definition);
+		$this->generateIdMethods($w);
+		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
+		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection);
+		$this->generateHydratorMethod($w, $definition, $sourceClassReflection);
 
-			$w = new PhpFileWriter();
-			$w->setFileHeader(__CLASS__);
-			$w->setNamespace($w->getClassNamespace($targetReferenceClassName));
-			$w->setClassName($shortTargetClassName);
-
-			// Create the class
-			$extends = null;
-			$implements = [$w->useClass(ReferenceInterface::class)];
-			if ($sourceClassReflection->isInterface()) {
-				$implements[] = $w->useClass($sourceReferenceClassName);
-			} else {
-				$extends = $w->useClass($sourceReferenceClassName);
-			}
-			$w->beginClass($shortTargetClassName, $extends, $implements);
-			$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
-
-			// Create methods
-			$this->generateReferenceMethods($w, $definition);
-			$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-			$this->generateDataGetterMethods($w, $sourceClassReflection);
-			$this->generateHydratorMethod($w, $definition, $sourceClassReflection);
-
-			$w->endClass();
-		}
-		// @codeCoverageIgnoreStart
-		catch (\ReflectionException $ex) {
-			throw new ReflectionException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
-		}
-		// @codeCoverageIgnoreEnd
-
-		$this->getClassGenerator()->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
+		$w->endClass();
 		return $targetReferenceClassName;
 	}
 
 
-	/**
-	 * @throws \ReflectionException
-	 * @throws LogicException
-	 */
-	private function generateDataGetterMethods(PhpFileWriter $w, ReflectionClass $sourceClassReflection)
+	private function generateDataGetterMethods(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection)
 	{
 		$w->writeln("/** @var bool */");
 		$w->writeln('private $dataLoaded = false;');
 
 		$w->beginMethod('invalidateCache', [], 'void');
 		{
-			$w->writeln('$this->state = null;');
 			$w->writeln('$this->dataLoaded = false;');
 			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
 
-		$w->beginProtectedMethod('loadData', [], 'void');
+		$w->beginProtectedMethod('loadData', [], 'bool');
 		{
-			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getMachineId(), \$this->state);");
+			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getMachineId());");
 			$w->beginBlock("if (\$data !== null)");
 			{
 				$w->writeln("static::hydrateFromArray(\$this, \$data);");
 				$w->writeln("\$this->dataLoaded = true;");
+				$w->writeln("return true;");
+			}
+			$w->midBlock("else");
+			{
+				$w->writeln("return false;");
 			}
 			$w->endBlock();
 		}
@@ -114,51 +82,26 @@ class InheritingGenerator extends AbstractGenerator
 
 		foreach ($sourceClassReflection->getMethods() as $method) {
 			$methodName = $method->getName();
-			if ($methodName === 'getMachineId' && !$w->hasMethod($methodName) && $method->isAbstract()) {
-				if (!$sourceClassReflection->hasProperty('machineId')) {
-					$w->writeln('protected $machineId;');
-				}
-				$w->beginMethod('getMachineId', []);
+			if (strncmp('get', $methodName, 3) === 0 && $method->isPublic() && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
+				$w->beginMethodOverride($method, $argCall);
+				$w->beginBlock("if (\$this->dataLoaded || \$this->loadData())");
 				{
-					$w->writeln("return \$this->machineId;");
+					$w->writeln("return parent::$methodName(" . join(', ', $argCall) . ");");
 				}
-				$w->endMethod();
-				$w->beginProtectedMethod('setMachineId', ["\$machineId"], 'void');
+				$w->midBlock("else");
 				{
-					$w->writeln("\$this->machineId = \$machineId;");
-				}
-				$w->endMethod();
-			} else if (strncmp('get', $methodName, 3) === 0 && $method->isPublic() && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
-				$argMethod = [];
-				$argCall = [];
-				foreach ($method->getParameters() as $param) {
-					$argMethod[] = $w->getParamAsCode($param);
-					$argCall[] = '$' . $param->name;
-				}
-
-				$returnType = $w->getTypeAsCode($method->getReturnType());
-
-				$w->beginMethod($methodName, $argMethod, $returnType);
-				$w->beginBlock("if (!\$this->dataLoaded)");
-				{
-					$w->writeln("\$this->loadData();");
+					$w->writeln("throw new " . $w->useClass(NotExistsException::class) . "(\"Cannot load data in the Not Exists state.\");");
 				}
 				$w->endBlock();
-				$w->writeln("return parent::$methodName(" . join(', ', $argCall) . ");");
 				$w->endMethod();
 			}
 		}
 
-		if (!$sourceClassReflection->hasMethod('setMachineId') && !$w->hasMethod('setMachineId')) {
-			$className = $sourceClassReflection->getName();
-			throw new LogicException("Protected method $className::setMachineId() is not defined. It is required by ReferenceTrait.");
-		}
+		$this->generateFallbackExistsStateFunction($w, $sourceClassReflection, $definition,
+			"\$this->dataLoaded || \$this->loadData()");
 	}
 
 
-	/**
-	 * @throws \ReflectionException
-	 */
 	private function generateHydratorMethod(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection): void
 	{
 		if ($sourceClassReflection->hasMethod('hydrateFromArray')) {

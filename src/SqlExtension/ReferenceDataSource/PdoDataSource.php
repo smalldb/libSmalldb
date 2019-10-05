@@ -66,30 +66,13 @@ class PdoDataSource implements ReferenceDataSourceInterface
 
 
 	/**
-	 * Return the state of the refered state machine.
-	 */
-	public function getState($id): string
-	{
-		$stmt = $this->stateSelectStmt;
-
-		$stmt->execute(['id' => $id]);
-		if ($this->onQueryCallback) {
-			($this->onQueryCallback)($stmt);
-		}
-
-		$state = $stmt->fetchColumn(0);
-		$stmt->closeCursor();
-		return $state === false || $state === null ? '' : $state;
-	}
-
-
-	/**
 	 * Load data for the state machine and set the state
 	 */
-	public function loadData($id, string &$state = null)
+	public function loadData($id)
 	{
 		$stmt = $this->loadDataStmt;
 
+		// TODO: Support composed primary keys.
 		$stmt->execute(['id' => $id]);
 		if ($this->onQueryCallback) {
 			($this->onQueryCallback)($stmt);
@@ -98,13 +81,7 @@ class PdoDataSource implements ReferenceDataSourceInterface
 		$data = $stmt->fetch(PDO::FETCH_ASSOC);
 		$stmt->closeCursor();
 
-		if ($data === false) {
-			$state = '';
-			throw new NotExistsException('Cannot load data in the Not Exists state.');
-		}
-
-		$state = $data['state'] ?? null;
-		return $data;
+		return $data ?: null;
 	}
 
 

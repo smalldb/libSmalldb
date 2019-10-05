@@ -20,18 +20,76 @@ namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\AbstractClassGenerator;
+use Smalldb\StateMachine\CodeGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
 abstract class AbstractGenerator extends AbstractClassGenerator
 {
 
-	abstract public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string;
+	final public function generateReferenceClass(string $sourceReferenceClassName, StateMachineDefinition $definition): string
+	{
+		try {
+			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
+			$w = $this->createPhpFileWriter($sourceClassReflection);
 
-	/**
-	 * @throws \ReflectionException
-	 */
+			$targetReferenceClassName = $this->writeReferenceClass($w, $sourceClassReflection, $definition);
+
+			$this->getClassGenerator()->addGeneratedClass($targetReferenceClassName, $w->getPhpCode());
+			return $targetReferenceClassName;
+		}
+		// @codeCoverageIgnoreStart
+		catch (\ReflectionException $ex) {
+			throw new ReflectionException("Failed to generate Smalldb reference class: " . $definition->getMachineType(), 0, $ex);
+		}
+		// @codeCoverageIgnoreEnd
+	}
+
+
+	abstract protected function writeReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition): string;
+
+
+	protected function createPhpFileWriter(ReflectionClass $sourceClassReflection): PhpFileWriter
+	{
+		$targetNamespace = $this->getClassGenerator()->getClassNamespace();
+		$targetShortClassName = $sourceClassReflection->getShortName();
+
+		// Setup the writer
+		$w = new PhpFileWriter();
+		$w->setFileHeader(get_class($this));
+		$w->setNamespace($targetNamespace);
+		$w->setClassName($targetShortClassName);
+
+		return $w;
+	}
+
+
+	protected function beginReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, array $implements = []): string
+	{
+		$targetNamespace = $this->getClassGenerator()->getClassNamespace();
+		$targetShortClassName = strtr($sourceClassReflection->getName(), ['\\' =>'__']);
+		$targetReferenceClassName = $targetNamespace . '\\' . $targetShortClassName;
+
+		// Add parent class/interface
+		if ($sourceClassReflection->isInterface()) {
+			$extends = null;
+			$implements[] = $w->useClass($sourceClassReflection->getName());
+		} else {
+			$extends = $w->useClass($sourceClassReflection->getName());
+			$implements[] = $w->useClass(ReferenceInterface::class);
+		}
+
+		// Create the class
+		$w->beginClass($targetShortClassName, $extends, $implements);
+		$w->writeln('use ' . $w->useClass(ReferenceTrait::class) . ';');
+
+		return $targetReferenceClassName;
+	}
+
+
 	protected function generateTransitionMethods(PhpFileWriter $w, StateMachineDefinition $definition,
 		ReflectionClass $sourceClassReflection): void
 	{
