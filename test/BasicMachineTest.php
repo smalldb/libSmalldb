@@ -68,12 +68,12 @@ class BasicMachineTest extends TestCase
 		/** @var CrudItem $ref */
 		$ref = $smalldb->nullRef($machineType);
 		$this->assertInstanceOf(ReferenceInterface::class, $ref);
-		$this->assertEquals(null, $ref->getId());
+		$this->assertEquals(null, $ref->getMachineId());
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
 		// Usage: Create
 		$ref->create($testData);
-		$id = $ref->getId();
+		$id = $ref->getMachineId();
 		$state = $ref->getState();
 		$this->assertNotEquals(null, $id);
 		$this->assertEquals(CrudItem::EXISTS, $state);
@@ -185,12 +185,12 @@ class BasicMachineTest extends TestCase
 		/** @var CrudItem $ref */
 		$ref = $smalldb->nullRef('crud-item');
 		$this->assertInstanceOf(ReferenceInterface::class, $ref);
-		$this->assertEquals(null, $ref->getId());
+		$this->assertEquals(null, $ref->getMachineId());
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
 		// Create the item
 		$ref->create(['name' => 'Foo']);
-		$id = $ref->getId();
+		$id = $ref->getMachineId();
 		$state = $ref->getState();
 		$this->assertNotEquals(null, $id);
 		$this->assertEquals(CrudItem::EXISTS, $state);
@@ -229,7 +229,7 @@ class BasicMachineTest extends TestCase
 		/** @var Post $ref */
 		$ref = $smalldb->nullRef(Post::class);
 		$this->assertInstanceOf(ReferenceInterface::class, $ref);
-		$this->assertEquals(null, $ref->getId());
+		$this->assertEquals(null, $ref->getMachineId());
 		$this->assertEquals(CrudItem::NOT_EXISTS, $ref->getState());
 
 		$this->expectException(NotExistsException::class);

@@ -94,13 +94,13 @@ class InheritingGenerator extends AbstractGenerator
 		{
 			$w->writeln('$this->state = null;');
 			$w->writeln('$this->dataLoaded = false;');
-			$w->writeln('$this->dataSource->invalidateCache($this->getId());');
+			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
 
 		$w->beginProtectedMethod('loadData', [], 'void');
 		{
-			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getId(), \$this->state);");
+			$w->writeln("\$data = \$this->dataSource->loadData(\$this->getMachineId(), \$this->state);");
 			$w->beginBlock("if (\$data !== null)");
 			{
 				$w->writeln("static::hydrateFromArray(\$this, \$data);");
@@ -114,18 +114,18 @@ class InheritingGenerator extends AbstractGenerator
 
 		foreach ($sourceClassReflection->getMethods() as $method) {
 			$methodName = $method->getName();
-			if ($methodName === 'getId' && !$w->hasMethod($methodName) && $method->isAbstract()) {
-				if (!$sourceClassReflection->hasProperty('id')) {
-					$w->writeln('protected $id;');
+			if ($methodName === 'getMachineId' && !$w->hasMethod($methodName) && $method->isAbstract()) {
+				if (!$sourceClassReflection->hasProperty('machineId')) {
+					$w->writeln('protected $machineId;');
 				}
-				$w->beginMethod('getId', []);
+				$w->beginMethod('getMachineId', []);
 				{
-					$w->writeln("return \$this->id;");
+					$w->writeln("return \$this->machineId;");
 				}
 				$w->endMethod();
-				$w->beginProtectedMethod('setId', ["\$id"], 'void');
+				$w->beginProtectedMethod('setMachineId', ["\$machineId"], 'void');
 				{
-					$w->writeln("\$this->id = \$id;");
+					$w->writeln("\$this->machineId = \$machineId;");
 				}
 				$w->endMethod();
 			} else if (strncmp('get', $methodName, 3) === 0 && $method->isPublic() && !$w->hasMethod($methodName) && !$referenceInterfaceReflection->hasMethod($methodName)) {
@@ -149,9 +149,9 @@ class InheritingGenerator extends AbstractGenerator
 			}
 		}
 
-		if (!$sourceClassReflection->hasMethod('setId') && !$w->hasMethod('setId')) {
+		if (!$sourceClassReflection->hasMethod('setMachineId') && !$w->hasMethod('setMachineId')) {
 			$className = $sourceClassReflection->getName();
-			throw new LogicException("Protected method $className::setId() is not defined. It is required by ReferenceTrait.");
+			throw new LogicException("Protected method $className::setMachineId() is not defined. It is required by ReferenceTrait.");
 		}
 	}
 

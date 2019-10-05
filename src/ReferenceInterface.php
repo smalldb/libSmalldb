@@ -48,7 +48,7 @@ interface ReferenceInterface
 	 * Get ID of the state machine.
 	 * The ID must be unique within state machine type.
 	 */
-	public function getId();
+	public function getMachineId();
 
 	/**
 	 * Read state machine state

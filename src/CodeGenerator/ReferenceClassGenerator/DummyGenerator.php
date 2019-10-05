@@ -82,24 +82,24 @@ class DummyGenerator extends AbstractGenerator
 
 	private function generateDummyId(PhpFileWriter $w, StateMachineDefinition $definition)
 	{
-		$w->writeln('private $id = null;');
+		$w->writeln('private $machineId = null;');
 
-		$w->beginMethod('getId', [], '');
+		$w->beginMethod('getMachineId', [], '');
 		{
-			$w->writeln('return $this->id;');
+			$w->writeln('return $this->machineId;');
 		}
 		$w->endMethod();
 
-		$w->beginProtectedMethod('setId', ['$id'], 'void');
+		$w->beginProtectedMethod('setMachineId', ['$machineId'], 'void');
 		{
-			$w->writeln('$this->id = $id;');
+			$w->writeln('$this->machineId = $machineId;');
 		}
 		$w->endMethod();
 
 		$w->beginMethod('invalidateCache', [], 'void');
 		{
 			$w->writeln('$this->state = null;');
-			$w->writeln('$this->dataSource->invalidateCache($this->getId());');
+			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
 	}

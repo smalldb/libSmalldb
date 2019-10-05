@@ -67,7 +67,7 @@ class BrokenCrudItemTransitions extends MethodTransitionsDecorator implements Tr
 	 */
 	protected function update(TransitionEvent $transitionEvent, CrudItem $ref, $data): void
 	{
-		$this->dao->table($this->table)->delete((int) $ref->getId());
+		$this->dao->table($this->table)->delete((int) $ref->getMachineId());
 	}
 
 

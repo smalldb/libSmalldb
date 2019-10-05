@@ -30,6 +30,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
 use Doctrine\ORM\Tools\Setup;
 use Psr\Container\ContainerInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\TagRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\UserRepository;

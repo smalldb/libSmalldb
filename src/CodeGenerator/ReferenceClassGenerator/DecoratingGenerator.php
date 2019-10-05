@@ -100,17 +100,17 @@ class DecoratingGenerator extends AbstractGenerator
 
 	private function generateIdMethods(PhpFileWriter $w)
 	{
-		$w->writeln('private $id = null;');
+		$w->writeln('private $machineId = null;');
 
-		$w->beginMethod('getId', [], '');
+		$w->beginMethod('getMachineId', [], '');
 		{
-			$w->writeln('return $this->id;');
+			$w->writeln('return $this->machineId;');
 		}
 		$w->endMethod();
 
-		$w->beginProtectedMethod('setId', ['$id'], 'void');
+		$w->beginProtectedMethod('setMachineId', ['$machineId'], 'void');
 		{
-			$w->writeln('$this->id = $id;');
+			$w->writeln('$this->machineId = $machineId;');
 		}
 		$w->endMethod();
 	}
@@ -131,7 +131,7 @@ class DecoratingGenerator extends AbstractGenerator
 		{
 			$w->writeln('$this->state = null;');
 			$w->writeln('$this->data = null;');
-			$w->writeln('$this->dataSource->invalidateCache($this->getId());');
+			$w->writeln('$this->dataSource->invalidateCache($this->getMachineId());');
 		}
 		$w->endMethod();
 
@@ -150,7 +150,7 @@ class DecoratingGenerator extends AbstractGenerator
 				$returnType = $w->getTypeAsCode($method->getReturnType());
 
 				$w->beginMethod($methodName, $argMethod, $returnType);
-				$w->writeln("return (\$this->data ?? (\$this->data = \$this->dataSource->loadData(\$this->getId(), \$this->state)))"
+				$w->writeln("return (\$this->data ?? (\$this->data = \$this->dataSource->loadData(\$this->getMachineId(), \$this->state)))"
 					. "->$methodName(" . join(", ", $argCall) . ");");
 				$w->endMethod();
 			}

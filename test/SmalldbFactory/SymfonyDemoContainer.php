@@ -41,13 +41,8 @@ use Symfony\Component\DependencyInjection\Reference;
 class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
 {
 
-	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
+	protected function createDefinitionBag(): SmalldbDefinitionBag
 	{
-		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
-		$smalldb = $c->autowire(Smalldb::class)
-			->setPublic(true);
-
-		// Definition Bag
 		$definitionBag = new SmalldbDefinitionBag();
 		$definitionBag->addFromAnnotatedClass(CrudItem::class);
 		$definitionBag->addFromAnnotatedClass(Post::class);
@@ -55,6 +50,18 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$definitionBag->addFromAnnotatedClass(User::class);
 		$definitionBag->addFromAnnotatedClass(SupervisorProcess::class);
 		$definitionBag->addFromAnnotatedClass(PizzaDelivery::class);
+		return $definitionBag;
+	}
+
+
+	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
+	{
+		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
+		$smalldb = $c->autowire(Smalldb::class)
+			->setPublic(true);
+
+		// Definition Bag
+		$definitionBag = $this->createDefinitionBag();
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);

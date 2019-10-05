@@ -44,7 +44,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 			VALUES (:id, :name)
 		");
 
-		$id = $ref->getId();
+		$id = $ref->getMachineId();
 		$stmt->execute([
 			'id' => $id,
 			'name' => $data->getName(),

@@ -48,6 +48,16 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 		// Invoke the transition
 		$this->doInvokeTransition($transitionEvent, $transitionDefinition);
 
+		// Update machineId if changed
+		if ($transitionEvent->hasNewId()) {
+			// $ref->setMachineId($transitionEvent->getNewId());
+			(function(TransitionEvent $transitionEvent) {
+				if (method_exists($this, 'setMachineId')) {
+					$this->setMachineId($transitionEvent->getNewId());
+				}
+			})->call($ref, $transitionEvent);
+		}
+
 		// Verify that the new state is expected according to the definition
 		$ref->invalidateCache();
 		$targetState = $ref->getState();

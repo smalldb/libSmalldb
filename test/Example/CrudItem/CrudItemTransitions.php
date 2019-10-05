@@ -53,12 +53,12 @@ class CrudItemTransitions extends MethodTransitionsDecorator implements Transiti
 
 	protected function update(TransitionEvent $transitionEvent, CrudItem $ref, $data): void
 	{
-		$this->dao->table($this->table)->update((int) $ref->getId(), $data);
+		$this->dao->table($this->table)->update((int) $ref->getMachineId(), $data);
 	}
 
 	protected function delete(TransitionEvent $transitionEvent, CrudItem $ref): void
 	{
-		$this->dao->table($this->table)->delete((int) $ref->getId());
+		$this->dao->table($this->table)->delete((int) $ref->getMachineId());
 	}
 
 }
