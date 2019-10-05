@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\SqlExtension;
 
 use Doctrine\DBAL\Connection;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\AbstractSmalldbRepository;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
@@ -31,47 +31,20 @@ use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
  *
  * This class implements a simple repository of a single entity class.
  */
-abstract class AbstractSqlRepository implements SmalldbRepositoryInterface
+abstract class AbstractSqlRepository extends AbstractSmalldbRepository implements SmalldbRepositoryInterface
 {
-
-	/** @var string */
-	protected const REF_CLASS = null;
-
-	/** @var Smalldb */
-	protected $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider = null;
-
-	/** @var string */
-	private $refClass = null;
-
-	/** @var DataSource */
-	private $dataSource = null;
 
 	/** @var Connection */
 	protected $db;
 
+	/** @var DataSource */
+	private $dataSource = null;
+
 
 	public function __construct(Smalldb $smalldb, Connection $db)
 	{
-		if (static::REF_CLASS === null) {
-			throw new \LogicException("Reference class not configured in " . __CLASS__ . "::REF_CLASS constant.");
-		}
-		$this->smalldb = $smalldb;
+		parent::__construct($smalldb);
 		$this->db = $db;
-	}
-
-
-	public function getMachineProvider(): SmalldbProviderInterface
-	{
-		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(static::REF_CLASS));
-	}
-
-
-	public function getReferenceClass(): string
-	{
-		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
 	}
 
 
@@ -83,13 +56,12 @@ abstract class AbstractSqlRepository implements SmalldbRepositoryInterface
 
 	protected function createDataSource(): DataSource
 	{
-		return new DataSource(null, $this->smalldb, $this->smalldb->getMachineProvider(static::REF_CLASS), $this->db);
+		return new DataSource(null, $this->smalldb, $this->getMachineProvider(), $this->db);
 	}
 
 
 	/**
 	 * Create a reference to a state machine identified by $id.
-	 *
 	 * Override this method to use a proper return type hint.
 	 *
 	 * @return ReferenceInterface
