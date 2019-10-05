@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository;
 
 use Smalldb\StateMachine\DoctrineExtension\AbstractDoctrineRepository;
-use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository as DoctrinePostRepository;
@@ -39,13 +38,11 @@ class SmalldbPostRepository extends AbstractDoctrineRepository implements Smalld
 
 	/**
 	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
 	 */
 	public function ref($id): PostRef
 	{
 		/** @var PostRef $ref */
-		$ref = $this->getDataSource()->ref($id);
+		$ref = parent::ref($id);
 		return $ref;
 	}
 

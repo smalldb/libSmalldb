@@ -18,11 +18,9 @@
 
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
-use Doctrine\Bundle\DoctrineBundle\ManagerConfigurator;
 use Doctrine\Bundle\DoctrineBundle\Registry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ContainerRepositoryFactory;
 use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Configuration;

@@ -18,8 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Doctrine\Bundle\DoctrineBundle\Registry;
-use Doctrine\ORM\EntityManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -28,6 +26,7 @@ use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoOrmContainer;
 use Smalldb\StateMachine\Test\SymfonyDemo\Entity\Post;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 
 
@@ -69,18 +68,34 @@ class DoctrineOrmTest extends TestCase
 
 	public function testReferenceState()
 	{
+		$id = 1;
+
 		$this->assertInstanceOf(Smalldb::class, $this->smalldb);
 
 		$nullRef = $this->smalldb->nullRef(PostRef::class);
 		$this->assertEquals(ReferenceInterface::NOT_EXISTS, $nullRef->getState());
 
 		/** @var PostRef $ref */
-		$ref = $this->smalldb->ref(PostRef::class, 1);
+		$ref = $this->smalldb->ref(PostRef::class, $id);
 		$this->assertEquals(PostRef::EXISTS, $ref->getState());
 
-		$this->assertEquals(1, $ref->getMachineId());
-		$this->assertEquals(1, $ref->getId());
+		$this->assertEquals($id, $ref->getMachineId());
+		$this->assertEquals($id, $ref->getId());
 
+		$this->assertNotEmpty($ref->getTitle());
+	}
+
+
+	public function testReferenceFromRepository()
+	{
+		$id = 1;
+
+		/** @var SmalldbPostRepository $repository */
+		$repository = $this->container->get(SmalldbPostRepository::class);
+
+		$ref = $repository->ref($id);
+		$this->assertInstanceOf(PostRef::class, $ref);
+		$this->assertEquals($id, $ref->getMachineId());
 		$this->assertNotEmpty($ref->getTitle());
 	}
 
