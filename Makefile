@@ -4,12 +4,13 @@ test: test-example ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox
 
 test-coverage: test-example ./vendor/bin/phpunit
-	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage --coverage-php test/output/coverage/coverage.php
-	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'
-	cp "test/output/coverage/_js/file.js" "test/output/coverage/_js/file.js~"
+	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage --coverage-php test/output/coverage/coverage.php; ret=$$?; \
+	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'; \
+	cp "test/output/coverage/_js/file.js" "test/output/coverage/_js/file.js~"; \
 	sed -i "test/output/coverage/_js/file.js" \
 		-e "s/^\\s*\$$('\\.popin')/  \$$('.popin td[data-content]')/" \
-		-e "s/\$$\\((this)\\|target\\)\\.children()\\.first()/\$$\\1/g"
+		-e "s/\$$\\((this)\\|target\\)\\.children()\\.first()/\$$\\1/g"; \
+	exit $$ret
 
 benchmark: test-example ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox --testsuite benchmark
