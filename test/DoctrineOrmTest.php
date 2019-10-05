@@ -112,4 +112,16 @@ class DoctrineOrmTest extends TestCase
 		$this->assertNotEmpty($properties);
 	}
 
+
+	public function testFindLatest()
+	{
+		/** @var SmalldbPostRepository $repository */
+		$repository = $this->container->get(SmalldbPostRepository::class);
+
+		$result = $repository->findBySearchQuery('Lorem');
+
+		$this->assertNotEmpty($result);
+		$this->assertContainsOnlyInstancesOf(ReferenceInterface::class, $result);
+	}
+
 }

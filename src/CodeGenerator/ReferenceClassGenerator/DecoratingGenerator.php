@@ -59,6 +59,7 @@ class DecoratingGenerator extends AbstractGenerator
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoInterface);
+		$this->generateHydratorMethod($w, $sourceClassReflection, $dtoInterface);
 
 		$w->endClass();
 		return $targetReferenceClassName;
@@ -174,6 +175,20 @@ class DecoratingGenerator extends AbstractGenerator
 			}
 		}
 
+	}
+
+
+	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface): void
+	{
+		if ($sourceClassReflection->hasMethod('hydrateWithDTO')) {
+			throw new InvalidArgumentException('Method hydrateWithDTO already defined in class ' . $sourceClassReflection->getName() . '.');
+		}
+
+		$w->beginStaticMethod('hydrateWithDTO', ['self $target', '?' . $w->useClass($dtoInterface->getName()) . ' $obj'], 'void');
+		{
+			$w->writeln("\$target->data = \$obj;");
+		}
+		$w->endMethod();
 	}
 
 }

@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository;
 use Smalldb\StateMachine\DoctrineExtension\AbstractDoctrineRepository;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
+use Smalldb\StateMachine\Test\SymfonyDemo\Entity\Post;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository as DoctrinePostRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 
@@ -44,6 +45,19 @@ class SmalldbPostRepository extends AbstractDoctrineRepository implements Smalld
 		/** @var PostRef $ref */
 		$ref = parent::ref($id);
 		return $ref;
+	}
+
+
+	public function findBySearchQuery(string $query, int $limit = Post::NUM_ITEMS): array
+	{
+		$refClass = $this->getReferenceClass();
+		$result = $this->repository->findBySearchQuery($query, $limit);
+
+		return array_map(function(Post $post) use ($refClass) {
+			$ref = $this->ref($post->getId());
+			($refClass)::hydrateWithDTO($ref, $post);
+			return $ref;
+		}, $result);
 	}
 
 }
