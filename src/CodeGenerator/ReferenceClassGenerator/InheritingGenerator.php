@@ -22,7 +22,9 @@ use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
+use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
@@ -97,8 +99,53 @@ class InheritingGenerator extends AbstractGenerator
 			}
 		}
 
-		$this->generateFallbackExistsStateFunction($w, $sourceClassReflection, $definition,
-			"\$this->dataLoaded || \$this->loadData()");
+		// Implement state method
+		if (!$w->hasMethod('getState') && ($stateMethod = $sourceClassReflection->getMethod('getState')) && $stateMethod->isAbstract()) {
+			$w->beginMethod('getState', [], 'string');
+			{
+				$notExists = $w->useClass(ReferenceInterface::class) . '::NOT_EXISTS';
+				$states = $definition->getStates();
+
+				switch (count($states)) {
+					case 0:
+					case 1:
+						$w->writeln("return $notExists;");
+						break;
+
+					case 2:
+						// There are two states: NOT_EXISTS and EXISTS. If there are any data, it EXISTS.
+						$theOtherState = null;
+						foreach ($states as $state) {
+							if ($state->getName() !== ReferenceInterface::NOT_EXISTS) {
+								$theOtherState = $state->getName();
+								break;
+							}
+						}
+						$w->writeln("return \$this->dataLoaded || \$this->loadData() ? (\$this->state ?? %s) : $notExists;", $theOtherState);
+						break;
+
+					default:
+						$w->beginBlock("if (\$this->dataLoaded || \$this->loadData())");
+						{
+							$w->beginBlock("if (\$this->state === null)");
+							{
+								$w->writeln("throw new " . $w->useClass(RuntimeException::class) . "('Failed to load state machine state.');");
+							}
+							$w->midBlock("else");
+							{
+								$w->writeln("return \$this->state;");
+							}
+						}
+						$w->midBlock("else");
+						{
+							$w->writeln("return $notExists;");
+						}
+						$w->endBlock();
+						break;
+				}
+			}
+			$w->endMethod();
+		}
 	}
 
 
