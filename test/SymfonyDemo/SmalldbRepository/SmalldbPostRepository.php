@@ -48,6 +48,9 @@ class SmalldbPostRepository extends AbstractDoctrineRepository implements Smalld
 	}
 
 
+	/**
+	 * @return Post[]
+	 */
 	public function findBySearchQuery(string $query, int $limit = Post::NUM_ITEMS): array
 	{
 		$refClass = $this->getReferenceClass();
