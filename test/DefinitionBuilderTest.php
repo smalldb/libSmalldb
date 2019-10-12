@@ -28,7 +28,6 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\DefinitionError;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Definition\UndefinedStateException;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
