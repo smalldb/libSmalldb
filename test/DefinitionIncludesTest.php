@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
@@ -30,7 +31,7 @@ class DefinitionIncludesTest extends TestCase
 
 	public function testGraphML()
 	{
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$definition = $reader->getStateMachineDefinition(SupervisorProcess::class);
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertNotEmpty($definition->getStates());
@@ -40,7 +41,7 @@ class DefinitionIncludesTest extends TestCase
 
 	public function testBPMN()
 	{
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$definition = $reader->getStateMachineDefinition(PizzaDelivery::class);
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertNotEmpty($definition->getStates());

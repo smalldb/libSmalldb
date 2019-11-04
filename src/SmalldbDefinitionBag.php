@@ -18,10 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
-use Smalldb\StateMachine\Definition\AnnotationReader\MissingStateMachineAnnotationException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 
 
 class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
@@ -98,50 +95,6 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 		} else {
 			throw new InvalidArgumentException("Undefined machine type: $machineType");
 		}
-	}
-
-
-	public function addFromAnnotatedClass(string $className): StateMachineDefinition
-	{
-		$reader = new AnnotationReader();
-		$definition = $reader->getStateMachineDefinition($className);
-		try {
-			$machineType = $this->addDefinition($definition);
-			$this->addAlias($className, $machineType);
-		}
-		catch(InvalidArgumentException $ex) {
-			throw new InvalidArgumentException($className . ": " . $ex->getMessage(), $ex->getCode(), $ex);
-		}
-		return $definition;
-	}
-
-
-	/**
-	 * @return StateMachineDefinition[]
-	 */
-	public function addFromAnnotatedClasses(iterable $classNames): array
-	{
-		$foundDefinitions = [];
-
-		foreach ($classNames as $className) {
-			try {
-				$foundDefinitions[$className] = $this->addFromAnnotatedClass($className);
-			}
-			catch (MissingStateMachineAnnotationException $ex) {
-				// Ignore classes without @StateMachine annotation.
-			}
-		}
-
-		return $foundDefinitions;
-	}
-
-
-	/**
-	 * @return StateMachineDefinition[]
-	 */
-	public function addFromClassLocator(ClassLocator $classLocator): array
-	{
-		return $this->addFromAnnotatedClasses($classLocator->getClasses());
 	}
 
 }

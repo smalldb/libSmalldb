@@ -24,18 +24,22 @@ use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\RealPathList;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class SmalldbExtension extends Extension
+class SmalldbExtension extends Extension implements CompilerPassInterface
 {
 	protected const PROVIDER_CLASS = LambdaProvider::class;
+
+	private $config;
 
 	/**
 	 * Create bundle configuration. Smalldb Bundle overrides this with
@@ -48,11 +52,17 @@ class SmalldbExtension extends Extension
 		return new Configuration();
 	}
 
+
 	public function load(array $configs, ContainerBuilder $container)
 	{
 		// Get configuration
-		$config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
-		if (!isset($config['class_generator'])) {
+		$this->config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
+	}
+
+
+	public function process(ContainerBuilder $container)
+	{
+		if (!isset($this->config['class_generator'])) {
 			// Stop if configuration is missing.
 			return null;
 		}
@@ -62,10 +72,10 @@ class SmalldbExtension extends Extension
 			->setPublic(true);
 
 		// Load all state machine definitions
-		$definitionBag = new SmalldbDefinitionBag();
+		$definitionReader = new SmalldbDefinitionBagReader();
 
-		if (!empty($config['definition_classes'])) {
-			$definitionClasses = $config['definition_classes'];
+		if (!empty($this->config['definition_classes'])) {
+			$definitionClasses = $this->config['definition_classes'];
 			$baseDir = $container->getParameter('kernel.project_dir');
 
 			if (!empty($definitionClasses['include_dirs'])) {
@@ -81,34 +91,32 @@ class SmalldbExtension extends Extension
 			}
 
 			if (!empty($definitionClasses['class_list'])) {
-				$definitionBag->addFromAnnotatedClasses($config['definition_classes']['class_list']);
+				$definitionReader->addFromAnnotatedClasses($this->config['definition_classes']['class_list']);
 			}
 
 			if (!empty($definitionClasses['psr4_dirs'])) {
 				foreach ($definitionClasses['psr4_dirs'] as $namespace => $dir) {
-					$definitionBag->addFromClassLocator(new Psr4ClassLocator($namespace, $dir));
+					$definitionReader->addFromClassLocator(new Psr4ClassLocator($namespace, $dir));
 				}
 			}
 
 			if (!empty($definitionClasses['use_composer'])) {
 				$excludeVendorDir = !empty($definitionClasses['ignore_vendor_dir']);
-				$definitionBag->addFromClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
+				$definitionReader->addFromClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
 			}
 
 		}
 
 		// Register autoloader for generated classes
-		$genNamespace = $config['class_generator']['namespace'];
-		$genPath = $config['class_generator']['path'];
+		$genNamespace = $this->config['class_generator']['namespace'];
+		$genPath = $this->config['class_generator']['path'];
 		$smalldb->addMethodCall('registerGeneratedClassAutoloader', [$genNamespace, $genPath]);
 		$autoloader = new GeneratedClassAutoloader($genNamespace, $genPath);
 		$autoloader->registerLoader();
 
 		// Generate everything
-		$this->generateClasses($container, $smalldb, $definitionBag,
+		$this->generateClasses($container, $smalldb, $definitionReader->getDefinitionBag(),
 			$genNamespace, $genPath);
-
-		return $config;
 	}
 
 

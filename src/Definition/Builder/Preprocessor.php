@@ -19,7 +19,8 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 
-interface PreprocessorInterface
+interface Preprocessor
 {
-	public function preprocessDefinition(StateMachineDefinitionBuilder $builder): void;
+	public function supports(PreprocessorPass $preprocessorPass): bool;
+	public function preprocessDefinition(StateMachineDefinitionBuilder $builder, PreprocessorPass $preprocessorPass): void;
 }

@@ -22,7 +22,9 @@ use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
 use Smalldb\StateMachine\Definition\Builder\DuplicatePropertyException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateStateException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateTransitionException;
-use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
+use Smalldb\StateMachine\Definition\Builder\Preprocessor;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\DefinitionError;
@@ -54,7 +56,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testCrudBuilder()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('crud-item');
 
 		$builder->addTransition('create', '', ['Exists']);
@@ -73,7 +75,7 @@ class DefinitionBuilderTest extends TestCase
 	{
 		$D = 6;
 
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('dice');
 		$builder->addState('Ready');
 		$builder->addTransition('create', '', ['Ready']);
@@ -95,7 +97,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testDefinitionClasses()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('Foo');
 		$this->assertEquals('Foo', $builder->getMachineType());
 
@@ -112,7 +114,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testErrors()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('Foo');
 
 		$this->assertFalse($builder->hasErrors());
@@ -133,7 +135,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testMissingMachineType()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->addState('S');
 		$this->expectException(StateMachineBuilderException::class);
 		$builder->build();
@@ -142,7 +144,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testDuplicateState()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addState('S');
 		$this->expectException(DuplicateStateException::class);
@@ -152,7 +154,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testDuplicateAction()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addAction('a');
 		$this->expectException(DuplicateActionException::class);
@@ -162,7 +164,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testDuplicateTransition()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B']);
 		$this->expectException(DuplicateTransitionException::class);
@@ -172,7 +174,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testGetState()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 
 		$a1 = $builder->getState('A');  // State created
@@ -183,7 +185,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testGetAction()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$a1 = $builder->getAction('a');
 		$a2 = $builder->getAction('a');
@@ -193,7 +195,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testGetTransition()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$t1 = $builder->getTransition('a', 'A');
 		$t2 = $builder->getTransition('a', 'A');
@@ -203,7 +205,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testProperty()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('Foo');
 		$foo = $builder->addProperty("foo", "string", true);
 		$bar = $builder->addProperty("bar", "int", false);
@@ -231,7 +233,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testDuplicateProperty()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addProperty('a');
 		$this->expectException(DuplicatePropertyException::class);
@@ -241,7 +243,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testGetProperty()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$p1 = $builder->getProperty('a');
 		$p2 = $builder->getProperty('a');
@@ -251,7 +253,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testMissingSourceState()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B']);
 		$this->expectException(StateMachineBuilderException::class); // A is missing
@@ -261,7 +263,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testMissingTargetState()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addTransition('a', 'A', ['B', 'C']);
 		$builder->addState('A');
@@ -273,7 +275,7 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testExtraNode()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
 		$builder->addTransition('a', '', ['A']);
 		$builder->addTransition('a', 'A', ['']);
@@ -294,16 +296,21 @@ class DefinitionBuilderTest extends TestCase
 
 	public function testPreprocessor()
 	{
-		$builder = new StateMachineDefinitionBuilder();
+		$preprocessorList = new PreprocessorList();
+		$builder = new StateMachineDefinitionBuilder($preprocessorList);
 
-		$preprocessor = $this->createMock(PreprocessorInterface::class);
+		$preprocessorPass = $this->createMock(PreprocessorPass::class);
+
+		$preprocessor = $this->createMock(Preprocessor::class);
+		$preprocessor->expects($this->once())->method('supports')->with($preprocessorPass)->willReturn(true);
 		$preprocessor->expects($this->once())->method('preprocessDefinition')->with($builder);
+		$preprocessorList->addPreprocessor($preprocessor);
 
 		$builder->setMachineType('Foo');
 		$builder->addState('A');
 		$builder->addState('B');
 		$builder->addTransition('t', 'A', ['B']);
-		$builder->addPreprocessor($preprocessor);
+		$builder->addPreprocessorPass($preprocessorPass);
 		$builder->build();
 	}
 

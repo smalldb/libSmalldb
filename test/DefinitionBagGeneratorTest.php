@@ -22,8 +22,8 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\CodeGenerator\DefinitionBagGenerator;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
@@ -36,11 +36,12 @@ class DefinitionBagGeneratorTest extends TestCase
 
 	public function testDefinitionBagGenerator()
 	{
-		$origBag = new SmalldbDefinitionBag();
-		$origBag->addFromAnnotatedClass(CrudItem::class);
-		$origBag->addFromAnnotatedClass(Post::class);
-		$origBag->addFromAnnotatedClass(Tag::class);
-		$origBag->addFromAnnotatedClass(User::class);
+		$origBagReader = new SmalldbDefinitionBagReader();
+		$origBagReader->addFromAnnotatedClass(CrudItem::class);
+		$origBagReader->addFromAnnotatedClass(Post::class);
+		$origBagReader->addFromAnnotatedClass(Tag::class);
+		$origBagReader->addFromAnnotatedClass(User::class);
+		$origBag = $origBagReader->getDefinitionBag();
 
 		$out = new TestOutput();
 

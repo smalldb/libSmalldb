@@ -19,45 +19,36 @@
 namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use Smalldb\StateMachine\BpmnExtension\BpmnReader;
-use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
+use Smalldb\StateMachine\Definition\Builder\Preprocessor;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 
 
-class DefinitionPreprocessor implements PreprocessorInterface
+class BpmnDefinitionPreprocessor implements Preprocessor
 {
-	/** @var string */
-	private $bpmnFilename;
 
-	/** @var string */
-	private $targetParticipant;
-
-	/** @var string|null */
-	private $svgFile;
-
-
-	public function __construct(string $bpmnFilename, string $targetParticipant, ?string $svgFile = null)
+	public function supports(PreprocessorPass $preprocessorPass): bool
 	{
-		$this->bpmnFilename = $bpmnFilename;
-		$this->targetParticipant = $targetParticipant;
-		$this->svgFile = $svgFile;
+		return $preprocessorPass instanceof BpmnDefinitionPreprocessorPass;
 	}
 
-	public function preprocessDefinition(StateMachineDefinitionBuilder $builder): void
+
+	public function preprocessDefinition(StateMachineDefinitionBuilder $builder, PreprocessorPass $preprocessorPass): void
 	{
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
 		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
-		$sourcesPlaceholder->addSourceFile(new SourceFile($this->bpmnFilename));
-		$builder->addMTime(filemtime($this->bpmnFilename));
+		$sourcesPlaceholder->addSourceFile(new SourceFile($preprocessorPass->getBpmnFilename()));
+		$builder->addMTime(filemtime($preprocessorPass->getBpmnFilename()));
 
-		$reader = BpmnReader::readBpmnFile($this->bpmnFilename);
-		$reader->inferStateMachine($builder, $this->targetParticipant);
+		$reader = BpmnReader::readBpmnFile($preprocessorPass->getBpmnFilename());
+		$reader->inferStateMachine($builder, $preprocessorPass->getTargetParticipant());
 
 		/** @var BpmnExtensionPlaceholder $placeholder */
 		$placeholder = $builder->getExtensionPlaceholder(BpmnExtensionPlaceholder::class);
-		$placeholder->addDiagramInfo($this->bpmnFilename, $this->targetParticipant,
-			$this->svgFile, $reader->getBpmnGraph());
-
+		$placeholder->addDiagramInfo($preprocessorPass->getBpmnFilename(), $preprocessorPass->getTargetParticipant(),
+			$preprocessorPass->getSvgFile(), $reader->getBpmnGraph());
 	}
+
 }

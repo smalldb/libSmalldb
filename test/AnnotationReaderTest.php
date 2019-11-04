@@ -21,6 +21,7 @@ use Doctrine\Common\Annotations\AnnotationException as DoctrineAnnotationExcepti
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
@@ -39,7 +40,7 @@ class AnnotationReaderTest extends TestCase
 
 	public function testCrudItem()
 	{
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$definition = $reader->getStateMachineDefinition(CrudItem::class);
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertEquals('crud-item', $definition->getMachineType());
@@ -84,7 +85,7 @@ class AnnotationReaderTest extends TestCase
 	 */
 	public function testConflictingAnnotations(string $className)
 	{
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(SqlAnnotationException::class);
 		$reader->getStateMachineDefinition($className);
 	}
@@ -101,7 +102,7 @@ class AnnotationReaderTest extends TestCase
 
 	public function testUseReferenceTrait()
 	{
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(\InvalidArgumentException::class);
 		$reader->getStateMachineDefinition(UseReferenceTrait::class);
 	}

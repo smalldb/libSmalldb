@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\GraphMLExtension\Annotation;
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\GraphMLExtension\DefinitionPreprocessor;
+use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessorPass;
 
 
 /**
@@ -44,7 +44,7 @@ class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBu
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		$builder->addPreprocessor(new DefinitionPreprocessor($this->canonizeFileName($this->fileName), $this->group));
+		$builder->addPreprocessorPass(new GraphMLDefinitionPreprocessorPass($this->canonizeFileName($this->fileName), $this->group));
 	}
 
 }

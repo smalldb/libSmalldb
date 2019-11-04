@@ -16,33 +16,18 @@
  *
  */
 
-namespace Smalldb\StateMachine\GraphMLExtension;
+namespace Smalldb\StateMachine\Definition\Builder;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\InvalidArgumentException;
+use Throwable;
 
 
-class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
+class PreprocessorPassException extends InvalidArgumentException
 {
 
-	/** @var DiagramInfo[] */
-	public $diagramInfo = [];
-
-
-	public function __construct()
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
 	{
-	}
-
-
-	public function buildExtension(): ?ExtensionInterface
-	{
-		return new GraphMLExtension($this->diagramInfo);
-	}
-
-	public function addDiagramInfo(string $graphmlFilename, ?string $group, ?Graph $graph)
-	{
-		$this->diagramInfo[] = new DiagramInfo($graphmlFilename, $group, $graph);
+		parent::__construct($message, $code, $previous);
 	}
 
 }

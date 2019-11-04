@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
@@ -41,7 +42,7 @@ class CrudItemBasic implements SmalldbFactory
 		$smalldb = new Smalldb();
 
 		// Definition
-		$reader = new AnnotationReader();
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$definition = $reader->getStateMachineDefinition(CrudItem::class);
 
 		// Repository

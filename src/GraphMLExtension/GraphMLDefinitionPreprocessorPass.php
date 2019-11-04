@@ -18,31 +18,37 @@
 
 namespace Smalldb\StateMachine\GraphMLExtension;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 
 
-class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
+class GraphMLDefinitionPreprocessorPass implements PreprocessorPass
 {
+	/** @var string */
+	private $graphmlFilename;
 
-	/** @var DiagramInfo[] */
-	public $diagramInfo = [];
+	/** @var string|null */
+	private $group;
 
 
-	public function __construct()
+	/**
+	 * GraphMLPreprocessor constructor.
+	 */
+	public function __construct(string $graphmlFilename, ?string $group = null)
 	{
+		$this->graphmlFilename = $graphmlFilename;
+		$this->group = $group;
 	}
 
 
-	public function buildExtension(): ?ExtensionInterface
+	public function getGraphmlFilename(): string
 	{
-		return new GraphMLExtension($this->diagramInfo);
+		return $this->graphmlFilename;
 	}
 
-	public function addDiagramInfo(string $graphmlFilename, ?string $group, ?Graph $graph)
+
+	public function getGroup(): ?string
 	{
-		$this->diagramInfo[] = new DiagramInfo($graphmlFilename, $group, $graph);
+		return $this->group;
 	}
 
 }

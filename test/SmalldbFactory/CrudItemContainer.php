@@ -25,6 +25,7 @@ use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
@@ -43,10 +44,10 @@ class CrudItemContainer extends AbstractSmalldbContainerFactory implements Small
 			->setPublic(true);
 
 		// Definition Bag
-		$definitionBag = new SmalldbDefinitionBag();
-		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
+		$definitionReader = new SmalldbDefinitionBagReader();
+		$definition = $definitionReader->addFromAnnotatedClass(CrudItem::class);
 		$c->autowire(SmalldbDefinitionBagInterface::class,
-			$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_CrudItemContainer'));
+			$scg->generateDefinitionBag($definitionReader->getDefinitionBag(), 'GeneratedDefinitionBag_CrudItemContainer'));
 
 		// Definition
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';

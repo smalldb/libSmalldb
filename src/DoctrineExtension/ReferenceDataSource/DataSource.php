@@ -71,11 +71,6 @@ class DataSource implements ReferenceDataSourceInterface
 		return new $this->refClass($this->smalldb, $this->machineProvider, $this, $id);
 	}
 
-	public function refPreheat($id, $data): ReferenceInterface
-	{
-		return new $this->refClass($this->smalldb, $this->machineProvider, $this, $id);
-	}
-
 
 	/**
 	 * Invalidate cached data

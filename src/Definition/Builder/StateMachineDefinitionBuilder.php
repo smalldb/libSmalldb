@@ -30,11 +30,13 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
+	/** @var PreprocessorList */
+	private $preprocessorBag;
 
 	/** @var int|null */
 	private $mtime;
 
-	/** @var PreprocessorInterface[] */
+	/** @var PreprocessorPass[] */
 	private $preprocessorQueue = [];
 
 	/** @var StatePlaceholder[] */
@@ -68,29 +70,30 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	private $transitionsClass = null;
 
 
-	public function __construct()
+	public function __construct(PreprocessorList $preprocessorBag)
 	{
 		parent::__construct([]);
+		$this->preprocessorBag = $preprocessorBag;
 	}
 
 
-	public function addPreprocessor(PreprocessorInterface $preprocessor): void
+	public function addPreprocessorPass(PreprocessorPass $preprocessorPass): void
 	{
-		$this->preprocessorQueue[] = $preprocessor;
+		$this->preprocessorQueue[] = $preprocessorPass;
 	}
 
 
-	public function runPreprocessors(): void
+	public function runPreprocessor(): void
 	{
-		while (($preprocessor = array_shift($this->preprocessorQueue))) {
-			$preprocessor->preprocessDefinition($this);
+		while (($preprocessorPass = array_shift($this->preprocessorQueue))) {
+			$this->preprocessorBag->preprocessDefinition($this, $preprocessorPass);
 		}
 	}
 
 
 	public function build(): StateMachineDefinition
 	{
-		$this->runPreprocessors();
+		$this->runPreprocessor();
 
 		if (empty($this->machineType)) {
 			throw new StateMachineBuilderException("Machine type not set.");

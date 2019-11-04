@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -35,7 +36,8 @@ class DefinitionBagTest extends TestCase
 
 	public function testDefinitionBag()
 	{
-		$bag = new SmalldbDefinitionBag();
+		$reader = new SmalldbDefinitionBagReader();
+		$bag = $reader->getDefinitionBag();
 		$this->assertEmpty($bag->getAllDefinitions(), "A new definition bag should be empty.");
 
 		$fooDefinition = new StateMachineDefinition('foo', time(), [], [], [], [], []);
@@ -43,7 +45,7 @@ class DefinitionBagTest extends TestCase
 		$bag->addDefinition($fooDefinition);
 		$bag->addDefinition($barDefinition);
 
-		$crudItemDefinition = $bag->addFromAnnotatedClass(CrudItem::class);
+		$crudItemDefinition = $reader->addFromAnnotatedClass(CrudItem::class);
 
 		$allDefinitions = $bag->getAllDefinitions();
 		$this->assertContains($fooDefinition, $allDefinitions);
@@ -84,11 +86,11 @@ class DefinitionBagTest extends TestCase
 
 	public function testDuplicateDefinitionFromAnnotatedClass()
 	{
-		$bag = new SmalldbDefinitionBag();
-		$bag->addFromAnnotatedClass(CrudItem::class);
+		$reader = new SmalldbDefinitionBagReader();
+		$reader->addFromAnnotatedClass(CrudItem::class);
 
 		$this->expectException(InvalidArgumentException::class);
-		$bag->addFromAnnotatedClass(CrudItem::class);
+		$reader->addFromAnnotatedClass(CrudItem::class);
 	}
 
 
@@ -153,8 +155,9 @@ class DefinitionBagTest extends TestCase
 	{
 		$classLocator = new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example', []);
 
-		$bag = new SmalldbDefinitionBag();
-		$foundDefs = $bag->addFromClassLocator($classLocator);
+		$reader = new SmalldbDefinitionBagReader();
+		$foundDefs = $reader->addFromClassLocator($classLocator);
+		$bag = $reader->getDefinitionBag();
 		$this->assertNotEmpty($foundDefs);
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(CrudItem::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition('crud-item'));
@@ -166,10 +169,11 @@ class DefinitionBagTest extends TestCase
 
 	public function testAddFromComposer()
 	{
-		$classLocator = new ComposerClassLocator(dirname(__DIR__), [], ['test/output', 'test/BadExample']);
+		$classLocator = new ComposerClassLocator(dirname(__DIR__), [], ['test/output', 'test/BadExample', 'test/SymfonyDemo']);
 
-		$bag = new SmalldbDefinitionBag();
-		$foundDefs = $bag->addFromClassLocator($classLocator);
+		$reader = new SmalldbDefinitionBagReader();
+		$foundDefs = $reader->addFromClassLocator($classLocator);
+		$bag = $reader->getDefinitionBag();
 		$this->assertNotEmpty($foundDefs);
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(CrudItem::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition('crud-item'));
@@ -181,9 +185,9 @@ class DefinitionBagTest extends TestCase
 
 	public function testAddFromPsr4DirectoryNoDir()
 	{
-		$bag = new SmalldbDefinitionBag();
+		$reader = new SmalldbDefinitionBagReader();
 		$this->expectException(InvalidArgumentException::class);
-		$bag->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory', []));
+		$reader->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory', []));
 	}
 
 }

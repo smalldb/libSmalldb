@@ -19,7 +19,9 @@
 namespace Smalldb\StateMachine\Test\SymfonyDemo\StateMachine;
 
 use Smalldb\StateMachine\Annotation as SM;
+use Smalldb\StateMachine\DoctrineExtension\Annotation\DoctrineEntity;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\SymfonyDemo\Entity\Post;
 use Smalldb\StateMachine\Test\SymfonyDemo\EntityInterface\PostImmutableInterface;
 use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepository;
 
@@ -29,6 +31,7 @@ use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepositor
  *
  * @SM\StateMachine("doctrine-post")
  * @SM\UseRepository(SmalldbPostRepository::class)
+ * @DoctrineEntity(Post::class)
  */
 abstract class PostRef implements ReferenceInterface, PostImmutableInterface
 {

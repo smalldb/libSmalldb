@@ -17,14 +17,12 @@
  */
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
-use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
@@ -43,10 +41,10 @@ class CrudItemServiceLocator extends AbstractSmalldbContainerFactory implements 
 			->setPublic(true);
 
 		// Definition Bag
-		$definitionBag = new SmalldbDefinitionBag();
-		$definition = $definitionBag->addFromAnnotatedClass(CrudItem::class);
+		$definitionReader = new SmalldbDefinitionBagReader();
+		$definition = $definitionReader->addFromAnnotatedClass(CrudItem::class);
 		$c->autowire(SmalldbDefinitionBagInterface::class,
-			$scg->generateDefinitionBag($definitionBag, 'GeneratedDefinitionBag_CrudItemServiceLocator'));
+			$scg->generateDefinitionBag($definitionReader->getDefinitionBag(), 'GeneratedDefinitionBag_CrudItemServiceLocator'));
 
 		// Definition
 		$definitionId = StateMachineDefinition::class . ' $crudItemDefinition';

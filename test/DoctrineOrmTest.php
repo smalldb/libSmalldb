@@ -106,8 +106,6 @@ class DoctrineOrmTest extends TestCase
 
 		$definition = $this->smalldb->getDefinition(PostRef::class);
 
-		$this->markTestIncomplete();
-
 		$properties = $definition->getProperties();
 		$this->assertNotEmpty($properties);
 	}

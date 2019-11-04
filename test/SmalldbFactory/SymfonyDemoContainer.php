@@ -22,46 +22,51 @@ use PDO;
 use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
+use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\Post\PostRepository;
+use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
+use Smalldb\StateMachine\Test\Example\Tag\TagTransitions;
 use Smalldb\StateMachine\Test\Example\User\User;
+use Smalldb\StateMachine\Test\Example\User\UserRepository;
+use Smalldb\StateMachine\Test\Example\User\UserTransitions;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 
-class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
+class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory, CompilerPassInterface
 {
 
-	protected function createDefinitionBag(): SmalldbDefinitionBag
+	protected function createDefinitionReader(ContainerBuilder $c): SmalldbDefinitionBagReader
 	{
-		$definitionBag = new SmalldbDefinitionBag();
-		$definitionBag->addFromAnnotatedClass(CrudItem::class);
-		$definitionBag->addFromAnnotatedClass(Post::class);
-		$definitionBag->addFromAnnotatedClass(Tag::class);
-		$definitionBag->addFromAnnotatedClass(User::class);
-		$definitionBag->addFromAnnotatedClass(SupervisorProcess::class);
-		$definitionBag->addFromAnnotatedClass(PizzaDelivery::class);
-		return $definitionBag;
+		$bagReader = new SmalldbDefinitionBagReader();
+		$bagReader->addFromAnnotatedClass(CrudItem::class);
+		$bagReader->addFromAnnotatedClass(Post::class);
+		$bagReader->addFromAnnotatedClass(Tag::class);
+		$bagReader->addFromAnnotatedClass(User::class);
+		$bagReader->addFromAnnotatedClass(SupervisorProcess::class);
+		$bagReader->addFromAnnotatedClass(PizzaDelivery::class);
+		return $bagReader;
 	}
 
 
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
 	{
-		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
-		$smalldb = $c->autowire(Smalldb::class)
+		$c->autowire(Smalldb::class)
 			->setPublic(true);
-
-		// Definition Bag
-		$definitionBag = $this->createDefinitionBag();
 
 		// "Database"
 		$c->autowire(ArrayDaoTables::class);
@@ -79,6 +84,32 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 			->setPublic(true)
 			->setFactory([new Reference(SymfonyDemoDatabaseFactory::class), 'connect']);
 
+		// Add Repositories
+		$c->autowire(PostRepository::class)->setPublic(true);
+		$c->autowire(TagRepository::class)->setPublic(true);
+		$c->autowire(UserRepository::class)->setPublic(true);
+		$c->autowire(CrudItemRepository::class)->setPublic(true);
+
+		// Add transition implementations
+		$c->autowire(PostTransitions::class)->setPublic(true);
+		$c->autowire(TagTransitions::class)->setPublic(true);
+		$c->autowire(UserTransitions::class)->setPublic(true);
+		$c->autowire(CrudItemTransitions::class)->setPublic(true);
+
+		$c->addCompilerPass($this);
+		return $c;
+	}
+
+
+	public function process(ContainerBuilder $c)
+	{
+		$scg = new SmalldbClassGenerator('Smalldb\\GeneratedCode\\', $this->out->mkdir('generated'));
+
+		$smalldb = $c->getDefinition(Smalldb::class);
+
+		// Definition Bag
+		$definitionBag = $this->createDefinitionReader($c)->getDefinitionBag();
+
 		// Register & Autowire all state machine components
 		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {
 			$referenceClass = $definition->getReferenceClass();
@@ -89,13 +120,10 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 
 			if ($repositoryClass) {
 				$serviceReferences[LambdaProvider::REPOSITORY] = new Reference($repositoryClass);
-				$c->autowire($repositoryClass)
-					->setPublic(true);
 			}
 
 			if ($transitionsClass) {
 				$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = new Reference($transitionsClass);
-				$c->autowire($transitionsClass);
 			}
 
 			$realReferenceClass = $referenceClass ? $scg->generateReferenceClass($referenceClass, $definition) : null;
@@ -116,10 +144,8 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 
 		// Compile & register definition bag
 		$bagName = 'GeneratedDefinitionBag_' . preg_replace('/.*\\\\/', '', get_class($this));
-		$c->autowire(SmalldbDefinitionBagInterface::class,
-				$scg->generateDefinitionBag($definitionBag, $bagName))
+		$c->autowire(SmalldbDefinitionBagInterface::class, $scg->generateDefinitionBag($definitionBag, $bagName))
 			->setPublic(true);
-		return $c;
 	}
 
 }

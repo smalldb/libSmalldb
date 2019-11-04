@@ -25,7 +25,7 @@ use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\Smalldb;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 
@@ -45,8 +45,8 @@ class ReferenceClassGeneratorTest extends TestCase
 
 		$origClass = Post::class;
 
-		$definitionBag = new SmalldbDefinitionBag();
-		$definition = $definitionBag->addFromAnnotatedClass($origClass);
+		$definitionReader = new SmalldbDefinitionBagReader();
+		$definition = $definitionReader->addFromAnnotatedClass($origClass);
 
 		$generator = new ReferenceClassGenerator($scg);
 		$newClass = $generator->generateReferenceClass($origClass, $definition);

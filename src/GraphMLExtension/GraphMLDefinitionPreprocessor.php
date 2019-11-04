@@ -18,45 +18,35 @@
 
 namespace Smalldb\StateMachine\GraphMLExtension;
 
-use Smalldb\StateMachine\Definition\Builder\PreprocessorInterface;
+use Smalldb\StateMachine\Definition\Builder\Preprocessor;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 
 
-class DefinitionPreprocessor implements PreprocessorInterface
+class GraphMLDefinitionPreprocessor implements Preprocessor
 {
-	/**
-	 * @var string
-	 */
-	private $graphmlFilename;
-	/**
-	 * @var string
-	 */
-	private $group;
 
-	/**
-	 * GraphMLPreprocessor constructor.
-	 */
-	public function __construct(string $graphmlFilename, ?string $group = null)
+	public function supports(PreprocessorPass $preprocessorPass): bool
 	{
-		$this->graphmlFilename = $graphmlFilename;
-		$this->group = $group;
+		return $preprocessorPass instanceof GraphMLDefinitionPreprocessorPass;
 	}
 
-	public function preprocessDefinition(StateMachineDefinitionBuilder $builder): void
+
+	public function preprocessDefinition(StateMachineDefinitionBuilder $builder, PreprocessorPass $preprocessorPass): void
 	{
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
 		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
-		$sourcesPlaceholder->addSourceFile(new SourceFile($this->graphmlFilename));
-		$builder->addMTime(filemtime($this->graphmlFilename));
+		$sourcesPlaceholder->addSourceFile(new SourceFile($preprocessorPass->getGraphmlFilename()));
+		$builder->addMTime(filemtime($preprocessorPass->getGraphmlFilename()));
 
 		$reader = new GraphMLReader($builder);
-		$reader->parseGraphMLFile($this->graphmlFilename, $this->group);
+		$reader->parseGraphMLFile($preprocessorPass->getGraphmlFilename(), $preprocessorPass->getGroup());
 
 		/** @var GraphMLExtensionPlaceholder $placeholder */
 		$placeholder = $builder->getExtensionPlaceholder(GraphMLExtensionPlaceholder::class);
-		$placeholder->addDiagramInfo($this->graphmlFilename, $this->group, $reader->getGraph());
-
+		$placeholder->addDiagramInfo($preprocessorPass->getGraphmlFilename(), $preprocessorPass->getGroup(), $reader->getGraph());
 	}
+
 }

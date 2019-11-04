@@ -28,10 +28,9 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\UnderscoreNamingStrategy;
 use Doctrine\ORM\Tools\Setup;
 use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreprocessor;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\Test\SymfonyDemo\Repository\PostRepository;
-use Smalldb\StateMachine\Test\SymfonyDemo\Repository\TagRepository;
-use Smalldb\StateMachine\Test\SymfonyDemo\Repository\UserRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\SmalldbRepository\SmalldbPostRepository;
 use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -44,11 +43,15 @@ use Symfony\Component\DependencyInjection\Reference;
 class SymfonyDemoOrmContainer extends SymfonyDemoContainer
 {
 
-	protected function createDefinitionBag(): SmalldbDefinitionBag
+	protected function createDefinitionReader(ContainerBuilder $c): SmalldbDefinitionBagReader
 	{
-		$definitionBag = new SmalldbDefinitionBag();
-		$definitionBag->addFromAnnotatedClass(PostRef::class);
-		return $definitionBag;
+		/** @var EntityManager $em */
+		$em = $c->get(EntityManager::class);
+
+		$definitionReader = new SmalldbDefinitionBagReader();
+		$definitionReader->addPreprocessor(new DoctrineDefinitionPreprocessor($em));
+		$definitionReader->addFromAnnotatedClass(PostRef::class);
+		return $definitionReader;
 	}
 
 	protected function configureContainer(ContainerBuilder $c): ContainerBuilder
@@ -78,9 +81,6 @@ class SymfonyDemoOrmContainer extends SymfonyDemoContainer
 			->setPublic(true);
 
 		$c->autowire(PostRepository::class)->setPublic(true);
-		$c->autowire(TagRepository::class)->setPublic(true);
-		$c->autowire(UserRepository::class)->setPublic(true);
-
 		$c->autowire(SmalldbPostRepository::class)->setPublic(true);
 
 		return $c;

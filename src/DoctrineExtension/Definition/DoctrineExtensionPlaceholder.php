@@ -16,18 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\GraphMLExtension;
+namespace Smalldb\StateMachine\DoctrineExtension\Definition;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
 
 
-class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
+class DoctrineExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
 
-	/** @var DiagramInfo[] */
-	public $diagramInfo = [];
+	/** @var string */
+	public $entityClassName = null;
 
 
 	public function __construct()
@@ -37,12 +36,11 @@ class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
 
 	public function buildExtension(): ?ExtensionInterface
 	{
-		return new GraphMLExtension($this->diagramInfo);
-	}
-
-	public function addDiagramInfo(string $graphmlFilename, ?string $group, ?Graph $graph)
-	{
-		$this->diagramInfo[] = new DiagramInfo($graphmlFilename, $group, $graph);
+		if ($this->entityClassName) {
+			return new DoctrineExtension($this->entityClassName);
+		} else {
+			return null;
+		}
 	}
 
 }

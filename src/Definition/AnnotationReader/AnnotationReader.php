@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\ActionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
@@ -49,12 +50,17 @@ use Smalldb\StateMachine\Utils\AnnotationReader\DeepAnnotationReader;
 class AnnotationReader
 {
 
+	/** @var StateMachineDefinitionBuilderFactory */
+	private $definitionBuilderFactory;
+
 	/** @var AnnotationReaderInterface */
 	private $annotationReader;
 
 
-	public function __construct(?AnnotationReaderInterface $annotationReader = null)
+	public function __construct(StateMachineDefinitionBuilderFactory $definitionBuilderFactory,
+		?AnnotationReaderInterface $annotationReader = null)
 	{
+		$this->definitionBuilderFactory = $definitionBuilderFactory;
 		$this->annotationReader = $annotationReader ?? (new DeepAnnotationReader());
 	}
 
@@ -62,7 +68,7 @@ class AnnotationReader
 	public function getStateMachineDefinition(string $className): StateMachineDefinition
 	{
 		$reflectionClass = new ReflectionClass($className);
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = $this->definitionBuilderFactory->createDefinitionBuilder();
 		$this->processClassReflection($reflectionClass, $this->annotationReader, $builder);
 		return $builder->build();
 	}

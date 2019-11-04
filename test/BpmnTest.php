@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\BpmnExtension\GrafovatkoProcessor;
 use Smalldb\StateMachine\BpmnExtension\BpmnReader;
 use Smalldb\StateMachine\BpmnExtension\SvgPainter;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Graph\Edge;
@@ -54,6 +54,9 @@ class BpmnTest extends TestCase
 
 	private $outputDir;
 
+	/** @var StateMachineDefinitionBuilderFactory */
+	private $definitionBuilderFactory;
+
 
 	public function setUp(): void
 	{
@@ -62,13 +65,15 @@ class BpmnTest extends TestCase
 			$outputDirCreated = mkdir($this->outputDir);
 			$this->assertTrue($outputDirCreated, 'Failed to create output directory: ' . $this->outputDir);
 		}
+
+		$this->definitionBuilderFactory = StateMachineDefinitionBuilderFactory::createDefaultFactory();
 	}
 
 
 	public function testBasicExport()
 	{
 		// Build a simple CRUD machine
-		$builder = new StateMachineDefinitionBuilder();
+		$builder = $this->definitionBuilderFactory->createDefinitionBuilder();
 		$builder->setMachineType('crud-item');
 		$builder->addState('Exists');
 		$builder->addTransition('create', '', ['Exists']);
@@ -95,7 +100,7 @@ class BpmnTest extends TestCase
 
 		// Read BPMN diagram
 		$bpmnReader = BpmnReader::readBpmnFile($bpmnFilename);
-		$definitionBuilder = $bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
+		$definitionBuilder = $bpmnReader->inferStateMachine($this->definitionBuilderFactory->createDefinitionBuilder(), "Participant_StateMachine");
 		$definitionBuilder->setMachineType($machineType);
 
 		// Infer the state machine
@@ -536,7 +541,7 @@ class BpmnTest extends TestCase
 	{
 		$bpmnGraph = $bpmnGraphGenerator(9);
 		$bpmnReader = BpmnReader::readGraph($bpmnGraph);
-		$definitionBuilder = $bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
+		$definitionBuilder = $bpmnReader->inferStateMachine(StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder(), "Participant_StateMachine");
 		$definitionBuilder->setMachineType($machineType);
 		$definition = $definitionBuilder->build();
 
@@ -574,7 +579,7 @@ class BpmnTest extends TestCase
 		$tStart = getrusage();
 
 		$bpmnReader->enableTimeLog();
-		$bpmnReader->inferStateMachine(new StateMachineDefinitionBuilder(), "Participant_StateMachine");
+		$bpmnReader->inferStateMachine($this->definitionBuilderFactory->createDefinitionBuilder(), "Participant_StateMachine");
 
 		$tEnd = getrusage();
 		$t_sec = ($tEnd['ru_utime.tv_sec'] + $tEnd['ru_utime.tv_usec'] / 1e6)

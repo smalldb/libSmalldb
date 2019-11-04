@@ -16,42 +16,30 @@
  *
  */
 
-namespace Smalldb\StateMachine\BpmnExtension\Annotation;
+namespace Smalldb\StateMachine\DoctrineExtension\Annotation;
 
-use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
-use Smalldb\StateMachine\BpmnExtension\Definition\BpmnDefinitionPreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreprocessorPass;
+use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineExtensionPlaceholder;
 
 
 /**
- * Include GraphML state chart file
+ * State machine provides properties of the given Doctrine entity.
  *
  * @Annotation
  * @Target({"CLASS"})
  */
-class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
+class DoctrineEntity implements StateMachineBuilderApplyInterface
 {
-	/**
-	 * @var string
-	 * @Required
-	 */
-	public $bpmnFileName;
-
-	/**
-	 * @var string
-	 * @Required
-	 */
-	public $targetParticipant;
 
 	/** @var string */
-	public $svgFileName = null;
+	public $className;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
-		$builder->addPreprocessorPass(new BpmnDefinitionPreprocessorPass($this->canonizeFileName($this->bpmnFileName),
-			$this->targetParticipant, $this->canonizeFileName($this->svgFileName)));
+		$builder->addPreprocessorPass(new DoctrineDefinitionPreprocessorPass($this->className));
 	}
 
 }
