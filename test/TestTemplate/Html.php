@@ -187,6 +187,21 @@ class Html
 		return static::blockPairElement('article', $attrs, $children);
 	}
 
+	public static function section(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('section', $attrs, $children);
+	}
+
+	public static function header(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('header', $attrs, $children);
+	}
+
+	public static function footer(array $attrs = [], ...$children): string
+	{
+		return static::blockPairElement('footer', $attrs, $children);
+	}
+
 	public static function p(array $attrs = [], ...$children): string
 	{
 		return static::blockPairElement('div', $attrs, $children);
@@ -240,6 +255,11 @@ class Html
 	public static function em(array $attrs = [], ...$children): string
 	{
 		return static::inlinePairElement('em', $attrs, $children);
+	}
+
+	public static function code(array $attrs = [], ...$children): string
+	{
+		return static::inlinePairElement('code', $attrs, $children);
 	}
 
 }

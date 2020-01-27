@@ -19,18 +19,14 @@ h1, h2, h3, h4, h5, h6 {
 
 
 body {
-	display: flex;
-	flex-direction: row;
-	justify-items: stretch;
-	align-items: stretch;
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-rows: 1fr auto;
 }
 
 nav {
-	order: 1;
-	flex: 0 0;
-	display: flex;
-	flex-direction: column;
-	flex-wrap: nowrap;
+	grid-column: 1;
+	grid-row: 1 / span 2;
 	justify-content: start;
 	background: #eee;
 	min-height: 100%;
@@ -71,9 +67,18 @@ nav {
 	}
 
 article {
-	order: 2;
-	flex: 1 0;
+	grid-column: 2;
+	grid-row: 1;
 	padding: 0em 2em 3em 2em;
+}
+
+footer {
+	grid-column: 2;
+	grid-row: 2;
+	border-top: 1px solid #aaa;
+	padding: 0.5em 0em;
+	margin: 1em 2em 0em 2em;
+	color: #888;
 }
 
 h1 {

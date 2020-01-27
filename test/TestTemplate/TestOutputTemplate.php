@@ -19,6 +19,7 @@
 
 namespace Smalldb\StateMachine\Test\TestTemplate;
 
+use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\Renderer\StateMachineExporter;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
@@ -143,6 +144,8 @@ class TestOutputTemplate extends TestOutput implements Template
 					Html::h1([], Html::text($this->title)),
 					$this->getHtml()),
 				(new NavigationTemplate())->setActiveUrl($this->outputFilename)->render(),
+				Html::footer([],
+					Html::code([], Html::text($this->getTestName()))),
 				$this->generateScriptTags(),
 				Html::script(['text/javascript'], Html::text($this->getGrafovatkoInitJsSnippet()))));
 	}
@@ -176,6 +179,19 @@ class TestOutputTemplate extends TestOutput implements Template
 				}
 			}
 			eof;
+	}
+
+
+	private function getTestName(): string
+	{
+		$trace = debug_backtrace();
+		foreach ($trace as $t) {
+			$test = $t['object'];
+			if ($test instanceof TestCase) {
+				return $t['class'] . '::' . $t['function'] . '()';
+			}
+		}
+		throw new \RuntimeException('Failed to detect test class');
 	}
 
 }
