@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Utils\AnnotationReader;
 
-use Doctrine\Common\Annotations\Reader;
+use Smalldb\Annotations\Reader;
 
 
 interface AnnotationReaderInterface extends Reader

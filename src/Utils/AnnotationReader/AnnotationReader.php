@@ -18,35 +18,10 @@
 
 namespace Smalldb\StateMachine\Utils\AnnotationReader;
 
-use Doctrine\Common\Annotations\AnnotationReader as DoctrineAnnotationReader;
-use Doctrine\Common\Annotations\AnnotationRegistry;
-use Doctrine\Common\Annotations\DocParser;
+use Smalldb\Annotations\RecursiveAnnotationReader;
 
 
-class AnnotationReader extends DoctrineAnnotationReader implements AnnotationReaderInterface
+class AnnotationReader extends RecursiveAnnotationReader implements AnnotationReaderInterface
 {
-
-	public function __construct(DocParser $parser = null)
-	{
-		parent::__construct($parser);
-
-		// Doxygen annotations
-		$this->addGlobalIgnoredName('copydoc');
-		$this->addGlobalIgnoredName('htmlinclude');
-		$this->addGlobalIgnoredName('implements');
-		$this->addGlobalIgnoredName('link');
-		$this->addGlobalIgnoredName('note');
-		$this->addGlobalIgnoredName('par');
-		$this->addGlobalIgnoredName('see');
-		$this->addGlobalIgnoredName('since');
-		$this->addGlobalIgnoredName('throws');
-		$this->addGlobalIgnoredName('var');
-		$this->addGlobalIgnoredName('warning');
-
-		// Use autoloader to load annotations
-		if (class_exists(AnnotationRegistry::class)) {
-			AnnotationRegistry::registerUniqueLoader('class_exists');
-		}
-	}
-
+	// For forward compatibility.
 }

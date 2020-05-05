@@ -38,7 +38,7 @@ use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtensionPlaceholder;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
-use Smalldb\StateMachine\Utils\AnnotationReader\DeepAnnotationReader;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader as Reader;
 
 
 /**
@@ -61,7 +61,7 @@ class AnnotationReader
 		?AnnotationReaderInterface $annotationReader = null)
 	{
 		$this->definitionBuilderFactory = $definitionBuilderFactory;
-		$this->annotationReader = $annotationReader ?? (new DeepAnnotationReader());
+		$this->annotationReader = $annotationReader ?? (new Reader());
 	}
 
 

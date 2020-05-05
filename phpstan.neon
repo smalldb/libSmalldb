@@ -19,6 +19,3 @@ parameters:
             message: '/Parameter #2 $sourceStateName of method Smalldb\\StateMachine\\Definition\\Builder\\StateMachineDefinitionBuilder::addTransition() expects string, string|null given./'
             path: 'src/AnnotationReader.php'
 
-        -
-            message: '/Parameter #1 \$constant of method Doctrine\\Common\\Annotations\\AnnotationReader::getConstantAnnotations() expects ReflectionClassConstant, ReflectionClassConstant|false given./'
-            path: 'src/Utils/DeepAnnotationReader.php'
