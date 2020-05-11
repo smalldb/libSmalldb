@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
 use ReflectionClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\AnnotationReader\TypeResolver;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
@@ -57,6 +58,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		$w = new PhpFileWriter();
 		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
 		$w->setNamespace($targetNamespace);
+		$w->docComment("@" . $w->useClass(InferredClass::class));
 		$w->beginInterface($targetShortClassName);
 
 		foreach ($sourceClass->getProperties() as $propertyReflection) {
@@ -86,6 +88,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		$w = new PhpFileWriter();
 		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
 		$w->setNamespace($targetNamespace);
+		$w->docComment("@" . $w->useClass(InferredClass::class));
 		$w->beginClass($targetShortClassName, $w->useClass($sourceClass->getName()), [$w->useClass($immutableInterfaceName)]);
 
 		foreach ($sourceClass->getProperties() as $propertyReflection) {
@@ -116,6 +119,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		$w = new PhpFileWriter();
 		$w->setFileHeader(__CLASS__ . ' (@' . $annotationReflection->getShortName() . ' annotation)');
 		$w->setNamespace($targetNamespace);
+		$w->docComment("@" . $w->useClass(InferredClass::class));
 		$w->beginClass($targetShortClassName, $w->useClass($immutableClassName));
 
 		foreach ($sourceClass->getProperties() as $propertyReflection) {

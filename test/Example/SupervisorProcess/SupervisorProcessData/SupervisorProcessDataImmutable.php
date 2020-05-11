@@ -7,9 +7,14 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessDataImmutableInterface;
 
+
+/**
+ * @InferredClass
+ */
 class SupervisorProcessDataImmutable extends SupervisorProcessData implements SupervisorProcessDataImmutableInterface
 {
 
