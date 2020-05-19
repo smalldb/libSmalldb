@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation;
+namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;

@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
+use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 

@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test\BadExample;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
+use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**

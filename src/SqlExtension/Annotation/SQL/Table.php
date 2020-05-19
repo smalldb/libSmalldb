@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation;
+namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
@@ -27,17 +27,17 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtensionPlaceholder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class StateSelect implements StateMachineBuilderApplyInterface
+class Table implements StateMachineBuilderApplyInterface
 {
 	/** @var string */
-	public $sqlStateSelect;
+	public $sqlTable;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
 		/** @var SqlTableExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $builder->getExtensionPlaceholder(SqlTableExtensionPlaceholder::class);
-		$sqlExtensionPlaceholder->sqlStateSelect = $this->sqlStateSelect;
+		$sqlExtensionPlaceholder->sqlTable = $this->sqlTable;
 	}
 
 }

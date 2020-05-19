@@ -26,7 +26,7 @@ use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\SqlExtension\Annotation as SQL;
+use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**

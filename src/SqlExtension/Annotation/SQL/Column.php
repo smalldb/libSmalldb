@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation;
+namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
@@ -24,27 +24,39 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder
 
 
 /**
- * SQL column annotation -- the property is part of the primary key
+ * SQL column annotation -- the property is mapped 1:1 to an SQL column.
  *
  * @Annotation
  * @Target({"PROPERTY"})
  */
-class Id implements PropertyPlaceholderApplyInterface
+class Column implements PropertyPlaceholderApplyInterface
 {
+	/** @var string */
+	public $name;
+
+	/**
+	 * @var string
+	 * Ignored; for compatibility with the Doctrine annotation.
+	 */
+	public $type;
+
+	/**
+	 * @var bool
+	 * Ignored; for compatibility with the Doctrine annotation.
+	 */
+	public $unique;
+
 
 	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void
 	{
-		/** @var \Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
+		/** @var SqlPropertyExtensionPlaceholder $sqlExtensionPlaceholder */
 		$sqlExtensionPlaceholder = $propertyPlaceholder->getExtensionPlaceholder(SqlPropertyExtensionPlaceholder::class);
 
 		if ($sqlExtensionPlaceholder->sqlSelect !== null) {
-			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Id and Select are mutually exclusive.");
+			throw new AnnotationException("Property {$propertyPlaceholder->name}: Annotations Column and Select are mutually exclusive.");
 		}
 
-		if ($sqlExtensionPlaceholder->sqlColumn === null) {
-			$sqlExtensionPlaceholder->sqlColumn = $propertyPlaceholder->name;
-		}
-
-		$sqlExtensionPlaceholder->isId = true;
+		$sqlExtensionPlaceholder->sqlColumn = $this->name ?? $propertyPlaceholder->name;
 	}
+
 }
