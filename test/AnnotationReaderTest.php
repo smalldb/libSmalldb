@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
-use Smalldb\StateMachine\SqlExtension\Annotation\SQL\AnnotationException as SqlAnnotationException;
+use Smalldb\StateMachine\SqlExtension\AnnotationException as SqlAnnotationException;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations2;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;

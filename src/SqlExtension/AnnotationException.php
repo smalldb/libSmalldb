@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+namespace Smalldb\StateMachine\SqlExtension;
 
 use Throwable;
 
