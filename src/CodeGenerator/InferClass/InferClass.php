@@ -29,13 +29,11 @@ class InferClass
 {
 
 	/** @var ClassLocator[] */
-	private $classLocators;
+	private array $classLocators;
 
-	/** @var \Smalldb\StateMachine\Utils\\Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface */
-	private $annotationReader;
+	private AnnotationReaderInterface $annotationReader;
 
-	/** @var ContainerInterface */
-	private $classGeneratorServiceLocator;
+	private ?ContainerInterface $classGeneratorServiceLocator;
 
 
 	public function __construct(ContainerInterface $classGeneratorServiceLocator = null, AnnotationReaderInterface $annotationReader = null)

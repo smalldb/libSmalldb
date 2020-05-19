@@ -24,28 +24,26 @@ namespace Smalldb\StateMachine\Utils;
  */
 class PhpFileWriter
 {
-	private $indent = "";
-	private $indentDepth = 0;
+	private string $indent = "";
+	private int $indentDepth = 0;
 
-	private $buffer = '';
+	private string $buffer = '';
 
-	private $headerComment = null;
-	private $fileNamespace = null;
-	private $generatorName = null;
-
-	/** @var string[] */
-	private $useAliases = [];
-	/** @var int[] */
-	private $usedAliasesCounter = [];
-
-	/** @var int[] */
-	private $usedIdentifiersCounter = [];
+	private ?string $headerComment = null;
+	private ?string $fileNamespace = null;
 
 	/** @var string[] */
-	private $definedMethodNames = [];
+	private array $useAliases = [];
+	/** @var int[] */
+	private array $usedAliasesCounter = [];
 
-	/** @var bool */
-	private $skipNextEmptyLine = false;
+	/** @var int[] */
+	private array $usedIdentifiersCounter = [];
+
+	/** @var string[] */
+	private array $definedMethodNames = [];
+
+	private bool $skipNextEmptyLine = false;
 
 
 	/**
@@ -61,6 +59,7 @@ class PhpFileWriter
 		$this->eof();
 		file_put_contents($filename, $this->getPhpCode());
 	}
+
 
 	public function getPhpCode(): string
 	{
@@ -92,7 +91,7 @@ class PhpFileWriter
 	/**
 	 * @throws \ReflectionException
 	 */
-	public function getParamAsCode(\ReflectionParameter $param) : string
+	public function getParamAsCode(\ReflectionParameter $param): string
 	{
 		$code = '$' . $param->name;
 
@@ -104,16 +103,8 @@ class PhpFileWriter
 			$code = '... ' . $code;
 		}
 
-		if (($type = $param->getType()) !== null) {
-			$type = (string) $type;
-			if (class_exists($type) || interface_exists($type)) {
-				$type = $this->useClass($type);
-			}
-			$code = $type . ' ' . $code;
-
-			if ($param->allowsNull()) {
-				$code = '?' . $code;
-			}
+		if (($type = $param->getType()) !== null && ($typehint = $this->getTypeAsCode($type)) !== '') {
+			$code = $typehint . ' ' . $code;
 		}
 
 		if ($param->isDefaultValueAvailable()) {
@@ -130,7 +121,7 @@ class PhpFileWriter
 
 	public function getTypeAsCode(?\ReflectionType $typeReflection): string
 	{
-		if ($typeReflection === null) {
+		if ($typeReflection === null || !($typeReflection instanceof \ReflectionNamedType)) {
 			return '';
 		} else {
 			$className = $typeReflection->getName();
@@ -144,6 +135,13 @@ class PhpFileWriter
 			}
 			return $type;
 		}
+	}
+
+
+	public function getParamCode(?\ReflectionType $type, string $name): string
+	{
+		$typehint = $this->getTypeAsCode($type);
+		return $typehint === '' ? '$' . $name : $typehint . ' $' . $name;
 	}
 
 
@@ -184,7 +182,13 @@ class PhpFileWriter
 	}
 
 
-	public function useClass(string $fqcn): string
+	public function useClasses(array $fqcnList): array
+	{
+		return array_map(function ($fqcn) { return $this->useClass($fqcn); }, $fqcnList);
+	}
+
+
+	public function useClass(string $fqcn, ?string $useAlias = null): string
 	{
 		if ($fqcn === '') {
 			return '';
@@ -213,8 +217,16 @@ class PhpFileWriter
 				return $prefix . $fqcn;
 		}
 
-		if (isset($this->useAliases[$fqcn])) {
+		if ($useAlias !== null) {
+			if (isset($this->useAliases[$fqcn])) {
+				throw new \InvalidArgumentException("The class $fqcn already has an alias.");
+			}
+			$this->useAliases[$fqcn] = $useAlias;
+			return $useAlias;
+		} else if (isset($this->useAliases[$fqcn])) {
 			return $prefix . $this->useAliases[$fqcn];
+		} else if ($this->getClassNamespace($fqcn) === $this->fileNamespace) {
+			return $this->getShortClassName($fqcn);
 		} else {
 			$alias = $this->getShortClassName($fqcn);
 			if (isset($this->usedAliasesCounter[$alias])) {
@@ -264,7 +276,7 @@ class PhpFileWriter
 	}
 
 
-	private $lineIndented = false;
+	private bool $lineIndented = false;
 
 	public function writeString(string $string = '', ...$args): self
 	{

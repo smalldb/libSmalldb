@@ -21,14 +21,14 @@ namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\GraphMLExtension\Annotation\IncludeGraphML;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessDataImmutableInterface;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessDataInterface;
 
 
 /**
  * @StateMachine("supervisor-process")
  * @IncludeGraphML("SupervisorProcess.graphml")
  */
-abstract class SupervisorProcess implements ReferenceInterface, SupervisorProcessDataImmutableInterface
+abstract class SupervisorProcess implements ReferenceInterface//, SupervisorProcessDataInterface
 {
-
+	// TODO
 }

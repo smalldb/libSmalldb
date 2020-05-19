@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,29 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
 
-use ReflectionClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
-abstract class AbstractInferClassGenerator implements InferClassGenerator
+/**
+ * Tag - An entity based on Symfony Demo
+ *
+ * @SQL\Table("symfony_demo_post")
+ * @InferSmalldbEntity()
+ */
+abstract class Tag
 {
-	use GeneratorHelpers;
 
-	protected function getTargetDirectory(ReflectionClass $sourceClass): string
-	{
-		$targetDir = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $sourceClass->getShortName();
-		if (!is_dir($targetDir)) {
-			mkdir($targetDir);
-		}
-		return $targetDir;
-	}
+	/**
+	 * @SQL\Id
+	 */
+	protected ?int $id;
+
+	/**
+	 * @SQL\Column
+	 */
+	protected string $name;
 
 }

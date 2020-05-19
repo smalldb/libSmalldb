@@ -21,6 +21,11 @@ namespace Smalldb\StateMachine\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\InferClass\InferClass;
+use Smalldb\StateMachine\CodeGenerator\InferClass\SmalldbEntityGenerator;
+use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag;
+use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagImmutable;
+use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagInterface;
+use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagMutable;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
@@ -32,11 +37,40 @@ class InferClassTest extends TestCase
 	{
 		$inferClass = new InferClass();
 		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
+		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\EntityGeneratorExample\\', __DIR__ . '/EntityGeneratorExample', []));
 		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\SymfonyDemo\\', __DIR__ . '/SymfonyDemo', []));
+		$foundClassCount = 0;
 
 		foreach ($inferClass->locateClasses() as $classname) {
 			$this->assertClassOrInterfaceExists($classname);
+			$foundClassCount++;
 		}
+
+		$this->assertGreaterThanOrEqual(3, $foundClassCount);
+	}
+
+	public function testInferFromTagClass()
+	{
+		$eg = new SmalldbEntityGenerator();
+		$generatedClasses = $eg->inferEntityClasses(new ReflectionClass(Tag::class));
+
+		$this->assertNotEmpty($generatedClasses);
+		foreach ($generatedClasses as $generatedClass) {
+			$this->assertClassOrInterfaceOrTraitExists($generatedClass);
+		}
+
+		$tag = new TagMutable();
+		$tag->setId(1);
+		$tag->setName('foo');
+
+		$copiedTag = new TagImmutable($tag);
+		$copiedTag2 = new TagMutable($copiedTag);
+
+		$this->assertInstanceOf(TagInterface::class, $tag);
+		$this->assertInstanceOf(TagInterface::class, $copiedTag);
+		$this->assertInstanceOf(TagInterface::class, $copiedTag2);
+		$this->assertEquals($tag, $copiedTag2);
+
 	}
 
 
@@ -67,16 +101,21 @@ class InferClassTest extends TestCase
 	*/
 
 
+	private function assertClassExists(string $className)
+	{
+		$this->assertTrue(class_exists($className), "Class $className does not exist.");
+	}
+
 	private function assertClassOrInterfaceExists(string $className)
 	{
 		$this->assertTrue(class_exists($className) || interface_exists($className),
 			"Class or interface $className does not exist.");
 	}
 
-
-	private function assertClassExists(string $className)
+	private function assertClassOrInterfaceOrTraitExists(string $className)
 	{
-		$this->assertTrue(class_exists($className), "Class $className does not exist.");
+		$this->assertTrue(class_exists($className) || interface_exists($className) || trait_exists($className),
+			"Class or interface or trait $className does not exist.");
 	}
 
 }

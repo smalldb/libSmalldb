@@ -45,7 +45,7 @@ class ImmutableInterfaceGenerator extends AbstractInferClassGenerator implements
 		AnnotationReaderInterface $annotationReader, TypeResolver $typeResolver,
 		string $targetNamespace, string $targetShortClassName, string $targetDir)
 	{
-		$w = $this->createFileWriter($annotation, $targetNamespace);
+		$w = $this->createFileWriter($targetNamespace, $annotation);
 		$w->beginInterface($targetShortClassName);
 
 		foreach ($sourceClass->getMethods() as $methodReflection) {
