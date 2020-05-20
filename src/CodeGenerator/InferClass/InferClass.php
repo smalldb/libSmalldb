@@ -82,7 +82,7 @@ class InferClass
 			if ($annotation instanceof InferClassAnnotation) {
 				$classGeneratorName = $annotation->getInferClassGeneratorName();
 				$classGenerator = $this->getClassGenerator($classGeneratorName);
-				$classGenerator->processClass($class, $annotation, $this->annotationReader);
+				$classGenerator->processClass($class, $annotation);
 			}
 		}
 	}
@@ -93,7 +93,7 @@ class InferClass
 		if ($this->classGeneratorServiceLocator && $this->classGeneratorServiceLocator->has($className)) {
 			return $this->classGeneratorServiceLocator->get($className);
 		} else {
-			return new $className();
+			return new $className($this->annotationReader);
 		}
 	}
 

@@ -19,8 +19,11 @@
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionNamedType;
 use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
@@ -29,13 +32,16 @@ class SmalldbEntityGenerator implements InferClassGenerator
 {
 	use GeneratorHelpers;
 
+	private AnnotationReaderInterface $annotationReader;
 
-	public function __construct()
+
+	public function __construct(?AnnotationReaderInterface $annotationReader = null)
 	{
+		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
 	}
 
 
-	public function processClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation, AnnotationReaderInterface $annotationReader): void
+	public function processClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation): void
 	{
 		$this->inferEntityClasses($sourceClass);
 	}
@@ -43,7 +49,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 
 	public function inferEntityClasses(ReflectionClass $sourceClass): array
 	{
-		$immutableInterface = $this->inferImmutableInterface($sourceClass, 'Interface');
+		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
 		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait');
 		$settersTrait = $this->inferSettersTrait($sourceClass, 'SettersTrait');
 		$constructorTrait = $this->inferCopyConstructorTrait($sourceClass, 'CopyConstructorTrait', $immutableInterface);
@@ -68,7 +74,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		array $interfaceNames = [], array $traitNames = []): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-		use ($sourceClass, $interfaceNames, $traitNames)
+			use ($sourceClass, $interfaceNames, $traitNames)
 		{
 			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), $w->useClasses($interfaceNames));
 
@@ -84,7 +90,7 @@ class SmalldbEntityGenerator implements InferClassGenerator
 	public function inferImmutableInterface(ReflectionClass $sourceClass, string $suffix): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-		use ($sourceClass)
+			use ($sourceClass)
 		{
 			$w->beginInterface($targetShortName);
 
@@ -96,6 +102,15 @@ class SmalldbEntityGenerator implements InferClassGenerator
 				$w->writeInterfaceMethod($getterName, [], $typehint);
 			}
 
+			foreach ($sourceClass->getMethods() as $methodReflection) {
+				if ($methodReflection->isPublic()) {
+					$methodName = $methodReflection->getName();
+					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
+					$w->writeInterfaceMethod($methodName, $argMethod,
+						$w->getTypeAsCode($methodReflection->getReturnType()));
+				}
+			}
+
 			$w->endInterface();
 		});
 	}
@@ -104,26 +119,20 @@ class SmalldbEntityGenerator implements InferClassGenerator
 	public function inferGettersTrait(ReflectionClass $sourceClass, string $suffix): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-		use ($sourceClass)
+			use ($sourceClass)
 		{
 			$w->beginTrait($targetShortName);
 
 			foreach ($sourceClass->getProperties() as $propertyReflection) {
 				$propertyName = $propertyReflection->getName();
-				$getterName = 'get' . ucfirst($propertyName);
 				$typehint = $w->getTypeAsCode($propertyReflection->getType());
 
-				// Do not reimplement the existing getter
-				if ($sourceClass->hasMethod($getterName)) {
-					$sourceClassGetters = $sourceClass->getMethod($getterName);
-					if (!$sourceClassGetters->isAbstract()) {
-						continue;
-					}
-				}
+				$getterName = 'get' . ucfirst($propertyName);
+				$getter = $sourceClass->hasMethod($getterName) ? $sourceClass->getMethod($getterName) : null;
 
 				$w->beginMethod($getterName, [], $typehint);
 				{
-					if ($sourceClass->hasMethod($getterName) && !$sourceClass->getMethod($getterName)->isAbstract()) {
+					if ($getter && !$getter->isAbstract()) {
 						// Do not reimplement the existing getter -- call it.
 						$w->writeln("return parent::$getterName();");
 					} else {
@@ -142,18 +151,20 @@ class SmalldbEntityGenerator implements InferClassGenerator
 	public function inferSettersTrait(ReflectionClass $sourceClass, string $suffix): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-		use ($sourceClass)
+			use ($sourceClass)
 		{
 			$w->beginTrait($targetShortName);
 
 			foreach ($sourceClass->getProperties() as $propertyReflection) {
 				$propertyName = $propertyReflection->getName();
-				$setterName = 'set' . ucfirst($propertyName);
 				$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
+
+				$setterName = 'set' . ucfirst($propertyName);
+				$sourceSetter = $sourceClass->hasMethod($setterName) ? $sourceClass->getMethod($setterName) : null;
 
 				$w->beginMethod($setterName, [$param], 'void');
 				{
-					if ($sourceClass->hasMethod($setterName) && !$sourceClass->getMethod($setterName)->isAbstract()) {
+					if ($sourceSetter && $sourceSetter->isAbstract()) {
 						// Do not reimplement the existing setter -- call it.
 						$w->writeln("parent::$setterName(\$$propertyName);");
 					} else {
@@ -164,8 +175,35 @@ class SmalldbEntityGenerator implements InferClassGenerator
 				$w->endMethod();
 			}
 
+			// Export annotated mutators
+			foreach ($sourceClass->getMethods() as $methodReflection) {
+				if ($this->hasPublicMutatorAnnotation($methodReflection)) {
+					$methodName = $methodReflection->getName();
+					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
+					$returnTypehint = $w->getTypeAsCode($methodReflection->getReturnType());
+					$w->beginMethod($methodName, $argMethod, $returnTypehint);
+					{
+						$parentCall = "parent::$methodName(" . join(', ', $argCall) . ");";
+						$w->writeln($returnTypehint !== 'void' ? "return " . $parentCall : $parentCall);
+					}
+					$w->endMethod();
+				}
+			}
+
 			$w->endTrait();
 		});
+	}
+
+
+	private function hasPublicMutatorAnnotation(ReflectionMethod $methodReflection)
+	{
+		$methodAnnotations = $this->annotationReader->getMethodAnnotations($methodReflection);
+		foreach ($methodAnnotations as $annotation) {
+			if ($annotation instanceof PublicMutator) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 
@@ -175,12 +213,14 @@ class SmalldbEntityGenerator implements InferClassGenerator
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass, $copyInterfaceName)
 		{
+			$sourceConstructor = $sourceClass->hasMethod('__construct') ? $sourceClass->getMethod('__construct') : null;
+
 			$w->beginTrait($targetShortName);
 			$w->beginMethod('__construct', [$w->useClass($copyInterfaceName) . ' $source = null']);
 
 			// Call parent constructor if present
-			if ($sourceClass->hasMethod('__construct')) {
-				$constructorParameters = $sourceClass->getMethod('__construct')->getParameters();
+			if ($sourceConstructor) {
+				$constructorParameters = $sourceConstructor->getParameters();
 				$firstParamType = $constructorParameters[0]->getType();
 				$firstParamTypeName = $firstParamType instanceof ReflectionNamedType ? $firstParamType->getName() : null;
 

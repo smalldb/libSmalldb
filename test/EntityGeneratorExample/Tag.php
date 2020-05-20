@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
 
 use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
@@ -40,5 +41,29 @@ abstract class Tag
 	 * @SQL\Column
 	 */
 	protected string $name;
+
+
+	public function getSlug(): string
+	{
+		return preg_replace('/[^a-z0-9]+/', '-', strtolower($this->name));
+	}
+
+
+	/**
+	 * @PublicMutator
+	 */
+	protected function setNameFromSlug(string $slug): string
+	{
+		return ($this->name = ucfirst(str_replace('-', ' ', $slug)));
+	}
+
+
+	/**
+	 * @PublicMutator
+	 */
+	protected function resetName(): void
+	{
+		$this->name = (string) $this->id;
+	}
 
 }
