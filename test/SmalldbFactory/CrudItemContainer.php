@@ -18,8 +18,8 @@
 namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
-use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Smalldb;

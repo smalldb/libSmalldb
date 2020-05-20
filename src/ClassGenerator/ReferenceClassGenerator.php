@@ -16,12 +16,12 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\ClassGenerator;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator\DecoratingGenerator;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator\DummyGenerator;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator\InheritingGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\DecoratingGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\DummyGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\InheritingGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;

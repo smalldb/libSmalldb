@@ -16,11 +16,11 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+namespace Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\AbstractClassGenerator;
-use Smalldb\StateMachine\CodeGenerator\ReflectionException;
+use Smalldb\StateMachine\ClassGenerator\AbstractClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;

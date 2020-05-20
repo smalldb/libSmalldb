@@ -19,8 +19,8 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
-use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;

@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\SymfonyDI;
 
-use Smalldb\StateMachine\CodeGenerator\GeneratedClassAutoloader;
-use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
+use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;

@@ -19,7 +19,7 @@ namespace Smalldb\StateMachine\Test\SmalldbFactory;
 
 use Doctrine\DBAL\Connection;
 use PDO;
-use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;

@@ -19,8 +19,8 @@
 namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
-use Smalldb\StateMachine\CodeGenerator\DefinitionBagGenerator;
-use Smalldb\StateMachine\CodeGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\ClassGenerator\DefinitionBagGenerator;
+use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\SmalldbDefinitionBagReader;

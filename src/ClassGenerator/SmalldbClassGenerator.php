@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\ClassGenerator;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
@@ -109,9 +109,11 @@ class SmalldbClassGenerator
 	private function checkGeneratedClass(string $generatedClass)
 	{
 		if (!class_exists($generatedClass)) {
+			// @codeCoverageIgnoreStart
 			throw new RuntimeException("Generated class $generatedClass not found. "
 				. "Is class loader configured to load the generated classes? "
-				. "Configure PSR-4 loader to load $this->classNamespace from $this->classDirectory");  // @codeCoverageIgnore
+				. "Configure PSR-4 loader to load $this->classNamespace from $this->classDirectory");
+			// @codeCoverageIgnoreEnd
 		}
 	}
 

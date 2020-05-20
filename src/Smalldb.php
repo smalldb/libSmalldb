@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\CodeGenerator\GeneratedClassAutoloader;
+use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\Transition\TransitionDecorator;

@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\ClassGenerator;
 
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;

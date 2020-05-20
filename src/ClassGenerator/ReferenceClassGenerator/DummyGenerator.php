@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\ReferenceClassGenerator;
+namespace Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;

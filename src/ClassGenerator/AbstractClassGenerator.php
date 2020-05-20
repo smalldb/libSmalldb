@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /*
  * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
@@ -16,21 +16,27 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
-
-use Throwable;
+namespace Smalldb\StateMachine\ClassGenerator;
 
 
-/**
- * Class ReflectionException
- *
- * @codeCoverageIgnore
- */
-class ReflectionException extends \ReflectionException
+abstract class AbstractClassGenerator
 {
-	// Just an exception.
-	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	// TODO: Remove this class, do not pass SmalldbClassGenerator to generators;
+	//      return proper class representation instead.
+
+	/** @var SmalldbClassGenerator */
+	private $classGenerator;
+
+
+	public function __construct(SmalldbClassGenerator $classGenerator)
 	{
-		parent::__construct($message, $code, $previous);
+		$this->classGenerator = $classGenerator;
 	}
+
+
+	protected function getClassGenerator(): SmalldbClassGenerator
+	{
+		return $this->classGenerator;
+	}
+
 }
