@@ -57,7 +57,17 @@ class PhpFileWriter
 	public function write(string $filename)
 	{
 		$this->eof();
-		file_put_contents($filename, $this->getPhpCode());
+
+		$tmpFilename = tempnam(dirname($filename), '.' . basename($filename) . '.');
+		try {
+			file_put_contents($tmpFilename, $this->getPhpCode());
+			chmod($tmpFilename, 0444 & fileperms($tmpFilename));
+			rename($tmpFilename, $filename);
+		}
+		catch(\Throwable $up) {
+			unlink($tmpFilename);
+			throw $up;
+		}
 	}
 
 
