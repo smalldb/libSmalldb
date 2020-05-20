@@ -16,11 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass;
+namespace Smalldb\StateMachine\CodeGenerator;
 
-interface InferClassAnnotation
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+
+
+interface InferClassGenerator
 {
 
-	public function getInferClassGeneratorName(): string;
+	public function __construct(?AnnotationReaderInterface $annotationReader = null);
+
+	public function processClass(\ReflectionClass $class, InferClassAnnotation $annotation): void;
 
 }

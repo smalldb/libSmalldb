@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass;
-
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+namespace Smalldb\StateMachine\CodeGenerator\Annotation;
 
 
-trait GeneratorHelpers
+/**
+ * Mark inferred
+ *
+ * @Annotation
+ * @Target({"CLASS"})
+ */
+class InferredClass
 {
-
-	protected function createFileWriter(string $targetNamespace, ?InferClassAnnotation $annotationReflection = null): PhpFileWriter
-	{
-		$w = new PhpFileWriter();
-		$w->setFileHeader(get_class($this) . ($annotationReflection ? ' (@' . get_class($annotationReflection) . ' annotation)' : ''));
-		$w->setNamespace($targetNamespace);
-		return $w;
-	}
 
 }

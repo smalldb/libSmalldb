@@ -20,8 +20,8 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Smalldb\StateMachine\InferClass\InferClass;
-use Smalldb\StateMachine\InferClass\SmalldbEntityGenerator;
+use Smalldb\StateMachine\CodeGenerator\InferClass;
+use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag as TagProperties;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\Tag;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagImmutable;
@@ -30,7 +30,7 @@ use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 
 
-class InferClassTest extends TestCase
+class DtoGeneratorTest extends TestCase
 {
 
 	public function testLocateClasses()
@@ -52,9 +52,9 @@ class InferClassTest extends TestCase
 	}
 
 
-	public function testInferFromTagClass()
+	public function testGenerateTagDto()
 	{
-		$eg = new SmalldbEntityGenerator();
+		$eg = new DtoGenerator();
 		$generatedClasses = $eg->inferEntityClasses(new ReflectionClass(TagProperties::class));
 
 		$this->assertNotEmpty($generatedClasses);

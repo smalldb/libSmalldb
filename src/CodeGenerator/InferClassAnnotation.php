@@ -16,16 +16,11 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass\Annotation;
+namespace Smalldb\StateMachine\CodeGenerator;
 
-
-/**
- * Mark inferred
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class InferredClass
+interface InferClassAnnotation
 {
+
+	public function getInferClassGeneratorName(): string;
 
 }

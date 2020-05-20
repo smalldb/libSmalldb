@@ -16,19 +16,19 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass;
+namespace Smalldb\StateMachine\CodeGenerator;
 
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use Smalldb\StateMachine\InferClass\Annotation\InferredClass;
-use Smalldb\StateMachine\InferClass\Annotation\PublicMutator;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
-class SmalldbEntityGenerator implements InferClassGenerator
+class DtoGenerator implements InferClassGenerator
 {
 	use GeneratorHelpers;
 

@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
 
-use Smalldb\StateMachine\InferClass\Annotation\InferSmalldbEntity;
-use Smalldb\StateMachine\InferClass\Annotation\PublicMutator;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 

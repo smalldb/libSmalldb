@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass\Annotation;
+namespace Smalldb\StateMachine\CodeGenerator\Annotation;
 
-use Smalldb\StateMachine\InferClass\InferClassAnnotation;
-use Smalldb\StateMachine\InferClass\SmalldbEntityGenerator;
+use Smalldb\StateMachine\CodeGenerator\InferClassAnnotation;
+use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
 
 
 /**
@@ -33,7 +33,7 @@ class InferSmalldbEntity implements InferClassAnnotation
 
 	public function getInferClassGeneratorName(): string
 	{
-		return SmalldbEntityGenerator::class;
+		return DtoGenerator::class;
 	}
 
 }

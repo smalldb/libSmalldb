@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\InferClass;
+namespace Smalldb\StateMachine\CodeGenerator;
 
 use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\InferClass\Annotation\InferredClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
