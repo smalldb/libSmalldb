@@ -85,7 +85,9 @@ class PhpFileWriter
 		ksort($this->useAliases);
 		foreach ($this->useAliases as $className => $alias) {
 			if ($this->getShortClassName($className) === $alias) {
-				$code .= "use $className;\n";
+				if ($this->getClassNamespace($className) !== $this->fileNamespace) {
+					$code .= "use $className;\n";
+				}
 			} else {
 				$code .= "use $className as $alias;\n";
 			}
@@ -235,8 +237,6 @@ class PhpFileWriter
 			return $useAlias;
 		} else if (isset($this->useAliases[$fqcn])) {
 			return $prefix . $this->useAliases[$fqcn];
-		} else if ($this->getClassNamespace($fqcn) === $this->fileNamespace) {
-			return $this->getShortClassName($fqcn);
 		} else {
 			$alias = $this->getShortClassName($fqcn);
 			if (isset($this->usedAliasesCounter[$alias])) {
