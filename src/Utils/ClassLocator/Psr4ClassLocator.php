@@ -24,18 +24,10 @@ use Smalldb\StateMachine\InvalidArgumentException;
 class Psr4ClassLocator implements ClassLocator
 {
 
-	/** @var string */
-	private $namespace;
-
-	/** @var string */
-	private $directory;
-
-	/** @var RealPathList */
-	private $includePaths;
-
-	/** @var PathList */
-	private $excludePaths;
-
+	private string $namespace;
+	private string $directory;
+	private RealPathList $includePaths;
+	private PathList $excludePaths;
 
 	public function __construct(string $namespace, string $directory, $includePaths = [], $excludePaths = [])
 	{
@@ -86,7 +78,7 @@ class Psr4ClassLocator implements ClassLocator
 				if (!$this->includePaths->isEmpty() && !$this->includePaths->contains(dirname($fileAbsPath))) {
 					continue;
 				}
-				if (class_exists($className) || interface_exists($className)) {
+				if (class_exists($className) || interface_exists($className) || trait_exists($className)) {
 					yield $fileAbsPath => $className;
 				}
 			}

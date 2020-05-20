@@ -1,13 +1,13 @@
-<?php
+<?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +16,22 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
+namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
 
+use DateTimeImmutable;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use Symfony\Component\Validator\Constraints as Assert;
 
 
 /**
- * User - An entity based on Symfony Demo
+ * A process controlled by Supervisord
  *
- * @SQL\Table("symfony_demo_user")
+ * @SQL\Table("supervisor_process")
+ * @GenerateDTO()
  */
-abstract class User
+abstract class SupervisorProcess
 {
+
 	/**
 	 * @SQL\Id
 	 */
@@ -36,31 +39,33 @@ abstract class User
 
 	/**
 	 * @SQL\Column
-	 * @Assert\NotBlank()
 	 */
-	protected string $fullName;
+	protected string $state;
 
 	/**
 	 * @SQL\Column
-	 * @Assert\NotBlank()
-	 * @Assert\Length(min=2, max=50)
 	 */
-	protected string $username;
+	protected string $command;
 
 	/**
-	 * @SQL\Column
-	 * @Assert\Email()
+	 * @SQL\Column("created_at")
 	 */
-	protected string $email;
+	protected DateTimeImmutable $createdAt;
 
 	/**
-	 * @ORM\Column(type="string")
+	 * @SQL\Column("modified_at")
 	 */
-	protected string $password;
+	protected DateTimeImmutable $modifiedAt;
 
 	/**
-	 * @SQL\Column(type="json")
+	 * @SQL\Column("memory_limit")
 	 */
-	protected array $roles;
+	protected ?int $memoryLimit;
+
+	/**
+	 * @var string[]
+	 * @SQL\Column(type = "json")
+	 */
+	protected array $args;
 
 }

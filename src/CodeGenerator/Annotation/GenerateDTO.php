@@ -16,16 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
-
-use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+namespace Smalldb\StateMachine\CodeGenerator\Annotation;
 
 
-interface InferClassGenerator
+/**
+ * Generate DTO from the annotated class
+ *
+ * @Annotation
+ * @Target({"CLASS"})
+ */
+class GenerateDTO
 {
-
-	public function __construct(?AnnotationReaderInterface $annotationReader = null);
-
-	public function processClass(\ReflectionClass $class, InferClassAnnotation $annotation): void;
 
 }

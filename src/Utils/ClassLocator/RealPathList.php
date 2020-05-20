@@ -20,12 +20,8 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 
 class RealPathList extends PathList
 {
-	/** @var ?string */
-	protected $prefix = null;
-
-	/** @var string */
-	protected $separator = DIRECTORY_SEPARATOR;
-
+	protected ?string $prefix = null;
+	protected string $separator = DIRECTORY_SEPARATOR;
 
 	public function __construct(?string $prefix = null, array $paths = [])
 	{

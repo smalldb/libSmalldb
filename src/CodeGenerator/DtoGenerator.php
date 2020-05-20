@@ -21,14 +21,15 @@ namespace Smalldb\StateMachine\CodeGenerator;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
-class DtoGenerator implements InferClassGenerator
+class DtoGenerator implements AnnotationHandler
 {
 	use GeneratorHelpers;
 
@@ -41,13 +42,21 @@ class DtoGenerator implements InferClassGenerator
 	}
 
 
-	public function processClass(ReflectionClass $sourceClass, InferClassAnnotation $annotation): void
+	public function getSupportedAnnotations(): array
 	{
-		$this->inferEntityClasses($sourceClass);
+		return [
+			GenerateDTO::class
+		];
 	}
 
 
-	public function inferEntityClasses(ReflectionClass $sourceClass): array
+	public function handleClassAnnotation(ReflectionClass $sourceClass, object $annotation)
+	{
+		return $this->generateDtoClasses($sourceClass);
+	}
+
+
+	public function generateDtoClasses(ReflectionClass $sourceClass): array
 	{
 		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
 		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait');
@@ -268,7 +277,7 @@ class DtoGenerator implements InferClassGenerator
 		$targetFilename = $targetDirectory . DIRECTORY_SEPARATOR . $targetShortName . '.php';
 
 		$w = $this->createFileWriter($targetNamespace);
-		$w->docComment("@" . $w->useClass(InferredClass::class) . "\n"
+		$w->docComment("@" . $w->useClass(GeneratedClass::class) . "\n"
 			. "@see \\" . $sourceClass->getName());
 
 		$writeCallback($w, $targetNamespace, $targetShortName);

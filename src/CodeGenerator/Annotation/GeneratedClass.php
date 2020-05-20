@@ -18,22 +18,15 @@
 
 namespace Smalldb\StateMachine\CodeGenerator\Annotation;
 
-use Smalldb\StateMachine\CodeGenerator\InferClassAnnotation;
-use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
-
 
 /**
- * InferClass annotation to mark Smalldb entity source class.
+ * Mark class as generated, so that AnnotationProcessor skips it.
+ * Do not use this in hand-written code.
  *
  * @Annotation
  * @Target({"CLASS"})
  */
-class InferSmalldbEntity implements InferClassAnnotation
+class GeneratedClass
 {
-
-	public function getInferClassGeneratorName(): string
-	{
-		return DtoGenerator::class;
-	}
 
 }

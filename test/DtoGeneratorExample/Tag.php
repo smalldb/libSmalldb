@@ -16,18 +16,20 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
+namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
 
-use DateTimeImmutable;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
+use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**
- * Post - An entity based on Symfony Demo
+ * Tag - An entity based on Symfony Demo
  *
  * @SQL\Table("symfony_demo_post")
+ * @GenerateDTO()
  */
-abstract class Post
+abstract class Tag
 {
 
 	/**
@@ -38,36 +40,30 @@ abstract class Post
 	/**
 	 * @SQL\Column
 	 */
-	protected string $title;
+	protected string $name;
+
+
+	public function getSlug(): string
+	{
+		return preg_replace('/[^a-z0-9]+/', '-', strtolower($this->name));
+	}
+
 
 	/**
-	 * @SQL\Column
+	 * @PublicMutator
 	 */
-	protected string $slug;
+	protected function setNameFromSlug(string $slug): string
+	{
+		return ($this->name = ucfirst(str_replace('-', ' ', $slug)));
+	}
+
 
 	/**
-	 * @SQL\Column
+	 * @PublicMutator
 	 */
-	protected string $summary;
-
-	/**
-	 * @SQL\Column
-	 */
-	protected string $content;
-
-	/**
-	 * @SQL\Column("published_at")
-	 */
-	protected DateTimeImmutable $publishedAt;
-
-	/**
-	 * @SQL\Column("author_id")
-	 */
-	protected int $authorId;
-
-	/**
-	 * @SQL\Select("SELECT COUNT(*) FROM symfony_demo_comment WHERE symfony_demo_comment.post_id = this.id")
-	 */
-	protected ?int $commentCount = null;
+	protected function resetName(): void
+	{
+		$this->name = (string) $this->id;
+	}
 
 }

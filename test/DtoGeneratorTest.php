@@ -20,13 +20,15 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\InferClass;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
+use Smalldb\StateMachine\CodeGenerator\AnnotationHandler;
+use Smalldb\StateMachine\CodeGenerator\CodeGenerator;
 use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
-use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag as TagProperties;
-use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\Tag;
-use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagImmutable;
-use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagMutable;
-use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\SupervisorProcess\SupervisorProcess;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag as TagProperties;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\Tag;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagImmutable;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagMutable;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 
 
@@ -35,16 +37,12 @@ class DtoGeneratorTest extends TestCase
 
 	public function testLocateClasses()
 	{
-		$this->markTestSkipped();
-
-		$inferClass = new InferClass();
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\EntityGeneratorExample\\', __DIR__ . '/EntityGeneratorExample', []));
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\SymfonyDemo\\', __DIR__ . '/SymfonyDemo', []));
+		$cg = new CodeGenerator();
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
 		$foundClassCount = 0;
 
-		foreach ($inferClass->locateClasses() as $classname) {
-			$this->assertClassOrInterfaceExists($classname);
+		foreach ($cg->locateClasses() as $classname) {
+			$this->assertClassOrInterfaceOrTraitExists($classname);
 			$foundClassCount++;
 		}
 
@@ -52,10 +50,44 @@ class DtoGeneratorTest extends TestCase
 	}
 
 
+	/**
+	 * @depends testLocateClasses
+	 */
+	public function testDeleteGeneratedClasses()
+	{
+		$cg = new CodeGenerator();
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
+		$cg->deleteGeneratedClasses();
+
+		$this->assertFileNotExists(__DIR__ . '\\DtoGeneratorExample\\Tag\\Tag.php');
+	}
+
+
+	/**
+	 * @depends testDeleteGeneratedClasses
+	 */
+	public function testCodeGenerator()
+	{
+		$handlerMock = $this->getMockBuilder(AnnotationHandler::class)->getMock();
+		$handlerMock->method('getSupportedAnnotations')->willReturn([GenerateDTO::class]);
+		$handlerMock->expects($this->once())->method('handleClassAnnotation');
+
+		$cg = new CodeGenerator();
+		/** @noinspection PhpParamsInspection */
+		$cg->addAnnotationHandler($handlerMock);
+		$cg->processClass(new ReflectionClass(TagProperties::class));
+
+		$this->assertClassOrInterfaceOrTraitExists(Tag::class);
+	}
+
+
+	/**
+	 * @depends testDeleteGeneratedClasses
+	 */
 	public function testGenerateTagDto()
 	{
-		$eg = new DtoGenerator();
-		$generatedClasses = $eg->inferEntityClasses(new ReflectionClass(TagProperties::class));
+		$g = new DtoGenerator();
+		$generatedClasses = $g->generateDtoClasses(new ReflectionClass(TagProperties::class));
 
 		$this->assertNotEmpty($generatedClasses);
 		foreach ($generatedClasses as $generatedClass) {
@@ -84,33 +116,18 @@ class DtoGeneratorTest extends TestCase
 	//      https://symfony.com/doc/current/form/data_mappers.html
 
 
-	public function testProcessSupervisorClass()
+	/**
+	 * @depends testDeleteGeneratedClasses
+	 */
+	public function testEntireCodeGeneratorFlow()
 	{
-		$this->markTestSkipped();
+		$cg = new CodeGenerator();
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
+		$cg->addAnnotationHandler(new DtoGenerator($cg->getAnnotationReader()));
+		$cg->processClasses();
 
-		$supervisorClass = new ReflectionClass(SupervisorProcessData::class);
-		$namespace = $supervisorClass->getNamespaceName();
-		$directory = dirname($supervisorClass->getFileName());
-
-		$inferClass = new InferClass();
-		$inferClass->addClassLocator(new Psr4ClassLocator($namespace, $directory, []));
-		$inferClass->processClasses();
-
-		// Check for the generated classes
-		$this->assertClassExists(SupervisorProcessData\SupervisorProcessDataImmutable::class);
+		$this->assertClassOrInterfaceExists(SupervisorProcess::class);
 	}
-
-
-	/*
-	public function testInferEverything()
-	{
-		$inferClass = new InferClass();
-		$inferClass->addClassLocator(new Psr4ClassLocator(__NAMESPACE__, __DIR__);
-		$inferClass->processClasses();
-
-		$this->assertClassOrInterfaceExists(Post::class);
-	}
-	*/
 
 
 	private function assertClassExists(string $className)

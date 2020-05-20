@@ -1,13 +1,13 @@
-<?php declare(strict_types = 1);
+<?php
 /*
  * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,54 +16,51 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
+namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
 
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
-use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 /**
- * Tag - An entity based on Symfony Demo
+ * User - An entity based on Symfony Demo
  *
- * @SQL\Table("symfony_demo_post")
- * @InferSmalldbEntity()
+ * @SQL\Table("symfony_demo_user")
  */
-abstract class Tag
+abstract class User
 {
-
 	/**
 	 * @SQL\Id
 	 */
-	protected ?int $id;
+	protected int $id;
 
 	/**
 	 * @SQL\Column
+	 * @Assert\NotBlank()
 	 */
-	protected string $name;
-
-
-	public function getSlug(): string
-	{
-		return preg_replace('/[^a-z0-9]+/', '-', strtolower($this->name));
-	}
-
+	protected string $fullName;
 
 	/**
-	 * @PublicMutator
+	 * @SQL\Column
+	 * @Assert\NotBlank()
+	 * @Assert\Length(min=2, max=50)
 	 */
-	protected function setNameFromSlug(string $slug): string
-	{
-		return ($this->name = ucfirst(str_replace('-', ' ', $slug)));
-	}
-
+	protected string $username;
 
 	/**
-	 * @PublicMutator
+	 * @SQL\Column
+	 * @Assert\Email()
 	 */
-	protected function resetName(): void
-	{
-		$this->name = (string) $this->id;
-	}
+	protected string $email;
+
+	/**
+	 * @ORM\Column(type="string")
+	 */
+	protected string $password;
+
+	/**
+	 * @SQL\Column(type="json")
+	 */
+	protected array $roles;
 
 }

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +16,58 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
+namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**
- * A process controlled by Supervisord
+ * Post - An entity based on Symfony Demo
  *
- * @SQL\Table("supervisor_process")
- * @InferSmalldbEntity()
+ * @SQL\Table("symfony_demo_post")
  */
-abstract class SupervisorProcess
+abstract class Post
 {
 
 	/**
 	 * @SQL\Id
 	 */
-	protected int $id;
+	protected ?int $id;
 
 	/**
 	 * @SQL\Column
 	 */
-	protected string $state;
+	protected string $title;
 
 	/**
 	 * @SQL\Column
 	 */
-	protected string $command;
+	protected string $slug;
 
 	/**
-	 * @SQL\Column("created_at")
+	 * @SQL\Column
 	 */
-	protected DateTimeImmutable $createdAt;
+	protected string $summary;
 
 	/**
-	 * @SQL\Column("modified_at")
+	 * @SQL\Column
 	 */
-	protected DateTimeImmutable $modifiedAt;
+	protected string $content;
 
 	/**
-	 * @SQL\Column("memory_limit")
+	 * @SQL\Column("published_at")
 	 */
-	protected ?int $memoryLimit;
+	protected DateTimeImmutable $publishedAt;
 
 	/**
-	 * @var string[]
-	 * @SQL\Column(type = "json")
+	 * @SQL\Column("author_id")
 	 */
-	protected array $args;
+	protected int $authorId;
+
+	/**
+	 * @SQL\Select("SELECT COUNT(*) FROM symfony_demo_comment WHERE symfony_demo_comment.post_id = this.id")
+	 */
+	protected ?int $commentCount = null;
 
 }

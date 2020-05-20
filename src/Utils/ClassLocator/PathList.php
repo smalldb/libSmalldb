@@ -20,12 +20,8 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 
 class PathList
 {
-	/** @var array */
-	private $paths;
-
-	/** @var string */
-	protected $separator = '/';
-
+	private array $paths;
+	protected string $separator = '/';
 
 	public function __construct(array $paths = [])
 	{
