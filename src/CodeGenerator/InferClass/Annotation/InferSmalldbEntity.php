@@ -16,24 +16,24 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeGenerator\InferClass\Annotation;
 
-use Smalldb\StateMachine\CodeGenerator\InferClass\ImmutableInterfaceGenerator;
 use Smalldb\StateMachine\CodeGenerator\InferClass\InferClassAnnotation;
+use Smalldb\StateMachine\CodeGenerator\InferClass\SmalldbEntityGenerator;
 
 
 /**
- * Infer an immutable interface for this class.
+ * InferClass annotation to mark Smalldb entity source class.
  *
  * @Annotation
  * @Target({"CLASS"})
  */
-class InferImmutableInterface implements InferClassAnnotation
+class InferSmalldbEntity implements InferClassAnnotation
 {
 
 	public function getInferClassGeneratorName(): string
 	{
-		return ImmutableInterfaceGenerator::class;
+		return SmalldbEntityGenerator::class;
 	}
 
 }

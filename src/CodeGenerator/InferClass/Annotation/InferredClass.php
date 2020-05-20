@@ -16,16 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeGenerator\InferClass\Annotation;
 
 
 /**
- * Export method as public in the setter trait
+ * Mark inferred
  *
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"CLASS"})
  */
-class PublicMutator
+class InferredClass
 {
 
 }

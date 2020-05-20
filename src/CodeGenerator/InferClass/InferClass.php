@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\CodeGenerator\InferClass;
 
 use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferredClass;
+use Smalldb\StateMachine\CodeGenerator\InferClass\Annotation\InferredClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;

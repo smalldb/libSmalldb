@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test\EntityGeneratorExample;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\CodeGenerator\InferClass\Annotation\InferSmalldbEntity;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 

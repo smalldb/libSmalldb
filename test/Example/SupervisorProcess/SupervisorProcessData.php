@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\InferSmalldbEntity;
+use Smalldb\StateMachine\CodeGenerator\InferClass\Annotation\InferSmalldbEntity;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
