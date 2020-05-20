@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass\Annotation;
+namespace Smalldb\StateMachine\InferClass\Annotation;
 
 
 /**

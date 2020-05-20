@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\InferClass;
 
 use Psr\Container\ContainerInterface;
-use Smalldb\StateMachine\CodeGenerator\InferClass\Annotation\InferredClass;
+use Smalldb\StateMachine\InferClass\Annotation\InferredClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
@@ -36,6 +36,7 @@ class InferClass
 	private ?ContainerInterface $classGeneratorServiceLocator;
 
 
+	// TODO: Remove service locator
 	public function __construct(ContainerInterface $classGeneratorServiceLocator = null, AnnotationReaderInterface $annotationReader = null)
 	{
 		$this->classGeneratorServiceLocator = $classGeneratorServiceLocator;

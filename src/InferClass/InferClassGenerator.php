@@ -16,16 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass\Annotation;
+namespace Smalldb\StateMachine\InferClass;
+
+use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 
 
-/**
- * Export method as public in the setter trait
- *
- * @Annotation
- * @Target({"METHOD"})
- */
-class PublicMutator
+interface InferClassGenerator
 {
+
+	public function __construct(?AnnotationReaderInterface $annotationReader = null);
+
+	public function processClass(\ReflectionClass $class, InferClassAnnotation $annotation): void;
 
 }

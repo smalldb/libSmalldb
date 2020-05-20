@@ -20,8 +20,8 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\InferClass\InferClass;
-use Smalldb\StateMachine\CodeGenerator\InferClass\SmalldbEntityGenerator;
+use Smalldb\StateMachine\InferClass\InferClass;
+use Smalldb\StateMachine\InferClass\SmalldbEntityGenerator;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag as TagProperties;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\Tag;
 use Smalldb\StateMachine\Test\EntityGeneratorExample\Tag\TagImmutable;
@@ -51,6 +51,7 @@ class InferClassTest extends TestCase
 		$this->assertGreaterThanOrEqual(3, $foundClassCount);
 	}
 
+
 	public function testInferFromTagClass()
 	{
 		$eg = new SmalldbEntityGenerator();
@@ -77,6 +78,10 @@ class InferClassTest extends TestCase
 		$this->assertEquals('foo-bar', $slug);
 
 	}
+
+
+	// TODO: Add a test with Symfony Forms
+	//      https://symfony.com/doc/current/form/data_mappers.html
 
 
 	public function testProcessSupervisorClass()

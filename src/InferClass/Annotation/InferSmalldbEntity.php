@@ -16,16 +16,24 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\InferClass\Annotation;
 
-use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use Smalldb\StateMachine\InferClass\InferClassAnnotation;
+use Smalldb\StateMachine\InferClass\SmalldbEntityGenerator;
 
 
-interface InferClassGenerator
+/**
+ * InferClass annotation to mark Smalldb entity source class.
+ *
+ * @Annotation
+ * @Target({"CLASS"})
+ */
+class InferSmalldbEntity implements InferClassAnnotation
 {
 
-	public function __construct(?AnnotationReaderInterface $annotationReader = null);
-
-	public function processClass(\ReflectionClass $class, InferClassAnnotation $annotation): void;
+	public function getInferClassGeneratorName(): string
+	{
+		return SmalldbEntityGenerator::class;
+	}
 
 }

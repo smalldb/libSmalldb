@@ -16,11 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\InferClass;
+namespace Smalldb\StateMachine\InferClass\Annotation;
 
-interface InferClassAnnotation
+
+/**
+ * Export method as public in the setter trait
+ *
+ * @Annotation
+ * @Target({"METHOD"})
+ */
+class PublicMutator
 {
-
-	public function getInferClassGeneratorName(): string;
 
 }
