@@ -61,10 +61,11 @@ class DtoGenerator implements AnnotationHandler
 		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
 		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait');
 		$settersTrait = $this->inferSettersTrait($sourceClass, 'SettersTrait');
+		$withersTrait = $this->inferWithersTrait($sourceClass, 'WithersTrait');
 		$constructorTrait = $this->inferCopyConstructorTrait($sourceClass, 'CopyConstructorTrait', $immutableInterface);
 
 		$immutableClass = $this->inferClass($sourceClass, 'Immutable', [$immutableInterface],
-			[$constructorTrait, $gettersTrait]);
+			[$constructorTrait, $gettersTrait, $withersTrait]);
 		$mutableClass = $this->inferClass($sourceClass, 'Mutable', [$immutableInterface],
 			[$constructorTrait, $gettersTrait, $settersTrait]);
 
@@ -74,6 +75,7 @@ class DtoGenerator implements AnnotationHandler
 			$mutableClass,
 			$gettersTrait,
 			$settersTrait,
+			$withersTrait,
 			$constructorTrait,
 		];
 	}
@@ -194,6 +196,57 @@ class DtoGenerator implements AnnotationHandler
 					{
 						$parentCall = "parent::$methodName(" . join(', ', $argCall) . ");";
 						$w->writeln($returnTypehint !== 'void' ? "return " . $parentCall : $parentCall);
+					}
+					$w->endMethod();
+				}
+			}
+
+			$w->endTrait();
+		});
+	}
+
+
+	public function inferWithersTrait(ReflectionClass $sourceClass, string $suffix): string
+	{
+		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+			use ($sourceClass)
+		{
+			$w->beginTrait($targetShortName);
+
+			foreach ($sourceClass->getProperties() as $propertyReflection) {
+				$propertyName = $propertyReflection->getName();
+				$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
+
+				$setterName = 'set' . ucfirst($propertyName);
+				$witherName = 'with' . ucfirst($propertyName);
+				$hasSourceSetter = $sourceClass->hasMethod($setterName);
+
+				$w->beginMethod($witherName, [$param], 'self');
+				{
+					$w->writeln("\$t = clone \$this;");
+					if ($hasSourceSetter) {
+						// Do not reimplement the existing setter -- call it.
+						$w->writeln("\$t->$setterName(\$$propertyName);");
+					} else {
+						// Set the property
+						$w->writeln("\$t->$propertyName = \$$propertyName;");
+					}
+					$w->writeln("return \$t;");
+				}
+				$w->endMethod();
+			}
+
+			// Export annotated mutators
+			foreach ($sourceClass->getMethods() as $methodReflection) {
+				if ($this->hasPublicMutatorAnnotation($methodReflection)) {
+					$methodName = $methodReflection->getName();
+					$witherName = strncmp($methodName, 'set', 3) === 0 ? 'with' . substr($methodName, 3) : 'with' . ucfirst($methodName);
+					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
+					$w->beginMethod($witherName, $argMethod, 'self');
+					{
+						$w->writeln("\$t = clone \$this;");
+						$w->writeln("\$t->$methodName(" . join(', ', $argCall) . ");");
+						$w->writeln("return \$t;");
 					}
 					$w->endMethod();
 				}

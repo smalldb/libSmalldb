@@ -109,6 +109,11 @@ class DtoGeneratorTest extends TestCase
 		$slug = $copiedTag2->getSlug();
 		$this->assertEquals('foo-bar', $slug);
 
+		$mutatedTag = $copiedTag->withName('With Foo');
+		$this->assertInstanceOf(Tag::class, $mutatedTag);
+		$this->assertNotSame($copiedTag, $mutatedTag);
+		$mutatedSlug = $mutatedTag->getSlug();
+		$this->assertEquals('with-foo', $mutatedSlug);
 	}
 
 
