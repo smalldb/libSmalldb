@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
-use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;

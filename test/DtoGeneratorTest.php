@@ -29,7 +29,9 @@ use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag as TagProperties;
 use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\Tag;
 use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagImmutable;
 use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagMutable;
+use Smalldb\StateMachine\Test\DtoGeneratorExample\TagType;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
+use Symfony\Component\Form\Forms;
 
 
 class DtoGeneratorTest extends TestCase
@@ -117,10 +119,6 @@ class DtoGeneratorTest extends TestCase
 	}
 
 
-	// TODO: Add a test with Symfony Forms
-	//      https://symfony.com/doc/current/form/data_mappers.html
-
-
 	/**
 	 * @depends testDeleteGeneratedClasses
 	 */
@@ -132,6 +130,70 @@ class DtoGeneratorTest extends TestCase
 		$cg->processClasses();
 
 		$this->assertClassOrInterfaceExists(SupervisorProcess::class);
+	}
+
+
+	/**
+	 * @depends testGenerateTagDto
+	 */
+	public function testSimpleSymfonyFormWithNoInitialData()
+	{
+		$factory = Forms::createFormFactory();
+		$form = $factory->create(TagType::class);
+		$form->submit(['id' => 1, 'name' => 'New tag name']);
+
+		$this->assertTrue($form->isSubmitted() && $form->isValid());
+		$newTag = $form->getData();
+		$this->assertInstanceOf(Tag::class, $newTag);
+
+		$newName = $newTag->getName();
+		$this->assertEquals('New tag name', $newName);
+	}
+
+
+	/**
+	 * @depends testGenerateTagDto
+	 */
+	public function testSimpleSymfonyFormWithMutableEntity()
+	{
+		$tag = new TagMutable();
+		$tag->setId(1);
+		$tag->setName('Old tag name');
+
+		$factory = Forms::createFormFactory();
+		$form = $factory->create(TagType::class, $tag);
+		$form->submit(['id' => 1, 'name' => 'New tag name']);
+
+		$this->assertTrue($form->isSubmitted() && $form->isValid());
+		$newTag = $form->getData();
+		$this->assertInstanceOf(Tag::class, $newTag);
+
+		$newName = $newTag->getName();
+		$this->assertEquals('New tag name', $newName);
+	}
+
+
+	/**
+	 * @depends testGenerateTagDto
+	 */
+	public function testSimpleSymfonyFormWithImmutableEntity()
+	{
+		$srcTag = new TagMutable();
+		$srcTag->setId(1);
+		$srcTag->setName('Old tag name');
+		$tag = new TagImmutable($srcTag);
+
+		$factory = Forms::createFormFactory();
+		$form = $factory->create(TagType::class, $tag);
+		$form->submit(['id' => 1, 'name' => 'New tag name']);
+
+		$this->assertTrue($form->isSubmitted() && $form->isValid());
+
+		$newTag = $form->getData();
+		$this->assertInstanceOf(Tag::class, $newTag);
+
+		$newName = $newTag->getName();
+		$this->assertEquals('New tag name', $newName);
 	}
 
 

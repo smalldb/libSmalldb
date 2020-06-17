@@ -27,6 +27,9 @@ use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Symfony\Component\Form\DataMapperInterface;
+use Symfony\Component\Form\Exception\UnexpectedTypeException;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 
 
 class DtoGenerator implements AnnotationHandler
@@ -59,7 +62,7 @@ class DtoGenerator implements AnnotationHandler
 	public function generateDtoClasses(ReflectionClass $sourceClass): array
 	{
 		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
-		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait');
+		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait', $immutableInterface);
 		$settersTrait = $this->inferSettersTrait($sourceClass, 'SettersTrait');
 		$withersTrait = $this->inferWithersTrait($sourceClass, 'WithersTrait');
 		$constructorTrait = $this->inferCopyConstructorTrait($sourceClass, 'CopyConstructorTrait', $immutableInterface);
@@ -69,6 +72,8 @@ class DtoGenerator implements AnnotationHandler
 		$mutableClass = $this->inferClass($sourceClass, 'Mutable', [$immutableInterface],
 			[$constructorTrait, $gettersTrait, $settersTrait]);
 
+		$formDataMapper = $this->inferFormDataMapper($sourceClass, 'FormDataMapper', $immutableInterface, $immutableClass);
+
 		return [
 			$immutableInterface,
 			$immutableClass,
@@ -77,6 +82,7 @@ class DtoGenerator implements AnnotationHandler
 			$settersTrait,
 			$withersTrait,
 			$constructorTrait,
+			$formDataMapper,
 		];
 	}
 
@@ -127,10 +133,10 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	public function inferGettersTrait(ReflectionClass $sourceClass, string $suffix): string
+	public function inferGettersTrait(ReflectionClass $sourceClass, string $suffix, string $immutableInterface): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass)
+			use ($sourceClass, $immutableInterface)
 		{
 			$w->beginTrait($targetShortName);
 
@@ -153,6 +159,22 @@ class DtoGenerator implements AnnotationHandler
 				}
 				$w->endMethod();
 			}
+
+			$w->beginStaticMethod('get', [$w->useClass($immutableInterface) . ' $source', 'string $propertyName']);
+			{
+				$w->beginBlock('switch ($propertyName)');
+				{
+					foreach ($sourceClass->getProperties() as $propertyReflection) {
+						$propertyName = $propertyReflection->getName();
+						$getterName = 'get' . ucfirst($propertyName);
+						$w->writeln("case %s: return \$source->$getterName();", $propertyName);
+					}
+					$w->writeln('default: throw new \InvalidArgumentException("Unknown property: " . $propertyName);');
+				}
+				$w->endBlock();
+			}
+			$w->endMethod();
+
 
 			$w->endTrait();
 		});
@@ -278,44 +300,125 @@ class DtoGenerator implements AnnotationHandler
 			$sourceConstructor = $sourceClass->hasMethod('__construct') ? $sourceClass->getMethod('__construct') : null;
 
 			$w->beginTrait($targetShortName);
-			$w->beginMethod('__construct', [$w->useClass($copyInterfaceName) . ' $source = null']);
 
-			// Call parent constructor if present
-			if ($sourceConstructor) {
-				$constructorParameters = $sourceConstructor->getParameters();
-				$firstParamType = $constructorParameters[0]->getType();
-				$firstParamTypeName = $firstParamType instanceof ReflectionNamedType ? $firstParamType->getName() : null;
-
-				if ($firstParamTypeName === $copyInterfaceName) {
-					$w->writeln("parent::__construct(\$source);");
-				} else {
-					$w->writeln("parent::__construct();");
-				}
-			}
-
-			$w->beginBlock('if ($source !== null)');
+			$w->beginMethod('__construct', ['?' . $w->useClass($copyInterfaceName) . ' $source = null']);
 			{
-				$w->beginBlock('if ($source instanceof ' . $w->useClass($sourceClass->getName()) . ')');
-				{
-					foreach ($sourceClass->getProperties() as $property) {
-						$propertyName = $property->getName();
-						$w->writeln("\$this->$propertyName = \$source->$propertyName;");
+
+				// Call parent constructor if present
+				if ($sourceConstructor) {
+					$constructorParameters = $sourceConstructor->getParameters();
+					$firstParamType = $constructorParameters[0]->getType();
+					$firstParamTypeName = $firstParamType instanceof ReflectionNamedType ? $firstParamType->getName() : null;
+
+					if ($firstParamTypeName === $copyInterfaceName) {
+						$w->writeln("parent::__construct(\$source);");
+					} else {
+						$w->writeln("parent::__construct();");
 					}
 				}
-				$w->midBlock('else');
+
+				$w->beginBlock('if ($source !== null)');
 				{
-					foreach ($sourceClass->getProperties() as $property) {
-						$propertyName = $property->getName();
-						$getterName = 'get' . ucfirst($propertyName);
-						$w->writeln("\$this->$propertyName = \$source->$getterName();");
+					$w->beginBlock('if ($source instanceof ' . $w->useClass($sourceClass->getName()) . ')');
+					{
+						foreach ($sourceClass->getProperties() as $property) {
+							$propertyName = $property->getName();
+							$w->writeln("\$this->$propertyName = \$source->$propertyName;");
+						}
 					}
+					$w->midBlock('else');
+					{
+						foreach ($sourceClass->getProperties() as $property) {
+							$propertyName = $property->getName();
+							$getterName = 'get' . ucfirst($propertyName);
+							$w->writeln("\$this->$propertyName = \$source->$getterName();");
+						}
+					}
+					$w->endBlock();
 				}
 				$w->endBlock();
 			}
-			$w->endBlock();
-
 			$w->endMethod();
+
+			$w->beginStaticMethod('fromArray', ['array $source', '?' . $w->useClass($copyInterfaceName) . ' $sourceObj = null'], 'self');
+			{
+				$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
+				foreach ($sourceClass->getProperties() as $property) {
+					$propertyName = $property->getName();
+					$w->writeln("\$t->$propertyName = \$source['$propertyName'];");
+				}
+				$w->writeln("return \$t;");
+			}
+			$w->endMethod();
+
+			$w->beginStaticMethod('fromIterable', ['?' . $w->useClass($copyInterfaceName) . ' $sourceObj', 'iterable $source', '?callable $mapFunction = null'], 'self');
+			{
+				$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
+				$w->beginBlock("foreach (\$source as \$prop => \$value)");
+				{
+					$w->beginBlock("switch (\$prop)");
+					{
+						foreach ($sourceClass->getProperties() as $property) {
+							$propertyName = $property->getName();
+							$w->writeln("case '$propertyName': \$t->$propertyName = \$mapFunction ? \$mapFunction(\$value) : \$value; break;");
+						}
+						$w->writeln("default: throw new " . $w->useClass(\InvalidArgumentException::class) . "('Unknown property: \"' . \$prop . '\" not in ' . __CLASS__);");
+					}
+					$w->endBlock();
+				}
+				$w->endBlock();
+				$w->writeln("return \$t;");
+			}
+			$w->endMethod();
+
 			$w->endTrait();
+		});
+	}
+
+
+	protected function inferFormDataMapper(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName, string $immutableClassName)
+	{
+		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+			use ($sourceClass, $immutableInterfaceName, $immutableClassName)
+		{
+			$w->beginClass($targetShortName, null, [$w->useClass(DataMapperInterface::class)]);
+
+			$w->beginMethod('mapDataToForms', ['$viewData', 'iterable $forms']);
+			{
+				$w->beginBlock('if ($viewData === null)');
+				{
+					$w->writeln('return;');
+				}
+				$w->midBlock('else if ($viewData instanceof ' . $w->useClass($immutableInterfaceName) . ')');
+				{
+					$w->beginBlock('foreach ($forms as $prop => $field)');
+					{
+						$w->writeln('$field->setData(' . $w->useClass($immutableClassName) . '::get($viewData, $prop));');
+					}
+					$w->endBlock();
+				}
+				$w->midBlock('else');
+				{
+					$w->writeln('throw new ' . $w->useClass(UnexpectedTypeException::class) . '($viewData, ' . $w->useClass($immutableClassName) . '::class);');
+				}
+				$w->endBlock();
+			}
+			$w->endMethod();
+
+			$w->beginMethod('mapFormsToData', ['iterable $forms', '& $viewData']);
+			{
+				$w->writeln('$viewData = ' . $w->useClass($immutableClassName). '::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });');
+			}
+			$w->endMethod();
+
+			$w->beginMethod('configureOptions', [$w->useClass(OptionsResolver::class) . ' $optionsResolver']);
+			{
+				$w->writeln('$resolver->setDefault("empty_data", null);');
+				$w->writeln('$resolver->setDefault("data_class", ' . $w->useClass($immutableInterfaceName). '::class);');
+			}
+			$w->endMethod();
+
+			$w->endClass();
 		});
 	}
 
