@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -62,49 +63,48 @@ class DtoGenerator implements AnnotationHandler
 	public function generateDtoClasses(ReflectionClass $sourceClass): array
 	{
 		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
-		$gettersTrait = $this->inferGettersTrait($sourceClass, 'GettersTrait', $immutableInterface);
-		$settersTrait = $this->inferSettersTrait($sourceClass, 'SettersTrait');
-		$withersTrait = $this->inferWithersTrait($sourceClass, 'WithersTrait');
-		$constructorTrait = $this->inferCopyConstructorTrait($sourceClass, 'CopyConstructorTrait', $immutableInterface);
-
-		$immutableClass = $this->inferClass($sourceClass, 'Immutable', [$immutableInterface],
-			[$constructorTrait, $gettersTrait, $withersTrait]);
-		$mutableClass = $this->inferClass($sourceClass, 'Mutable', [$immutableInterface],
-			[$constructorTrait, $gettersTrait, $settersTrait]);
-
+		$immutableClass = $this->inferImmutableClass($sourceClass, 'Immutable', $immutableInterface);
+		$mutableClass = $this->inferMutableClass($sourceClass, 'Mutable', $immutableInterface);
 		$formDataMapper = $this->inferFormDataMapper($sourceClass, 'FormDataMapper', $immutableInterface, $immutableClass);
 
 		return [
 			$immutableInterface,
 			$immutableClass,
 			$mutableClass,
-			$gettersTrait,
-			$settersTrait,
-			$withersTrait,
-			$constructorTrait,
 			$formDataMapper,
 		];
 	}
 
 
-	public function inferClass(ReflectionClass $sourceClass, string $suffix,
-		array $interfaceNames = [], array $traitNames = []): string
+	private function inferImmutableClass(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass, $interfaceNames, $traitNames)
+			use ($sourceClass, $immutableInterfaceName)
 		{
-			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), $w->useClasses($interfaceNames));
-
-			if (!empty($traitNames)) {
-				$w->writeln("use " . join(', ', $w->useClasses($traitNames)) . ";");
-			}
-
+			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), [$w->useClass($immutableInterfaceName)]);
+			$this->generateConstructors($w, $sourceClass, $immutableInterfaceName);
+			$this->generateGetters($w, $sourceClass, $immutableInterfaceName);
+			$this->generateWithers($w, $sourceClass);
 			$w->endClass();
 		});
 	}
 
 
-	public function inferImmutableInterface(ReflectionClass $sourceClass, string $suffix): string
+	private function inferMutableClass(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName): string
+	{
+		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+			use ($sourceClass, $immutableInterfaceName)
+		{
+			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), [$w->useClass($immutableInterfaceName)]);
+			$this->generateConstructors($w, $sourceClass, $immutableInterfaceName);
+			$this->generateGetters($w, $sourceClass, $immutableInterfaceName);
+			$this->generateSetters($w, $sourceClass);
+			$w->endClass();
+		});
+	}
+
+
+	private function inferImmutableInterface(ReflectionClass $sourceClass, string $suffix): string
 	{
 		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass)
@@ -133,151 +133,6 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	public function inferGettersTrait(ReflectionClass $sourceClass, string $suffix, string $immutableInterface): string
-	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass, $immutableInterface)
-		{
-			$w->beginTrait($targetShortName);
-
-			foreach ($sourceClass->getProperties() as $propertyReflection) {
-				$propertyName = $propertyReflection->getName();
-				$typehint = $w->getTypeAsCode($propertyReflection->getType());
-
-				$getterName = 'get' . ucfirst($propertyName);
-				$getter = $sourceClass->hasMethod($getterName) ? $sourceClass->getMethod($getterName) : null;
-
-				$w->beginMethod($getterName, [], $typehint);
-				{
-					if ($getter && !$getter->isAbstract()) {
-						// Do not reimplement the existing getter -- call it.
-						$w->writeln("return parent::$getterName();");
-					} else {
-						// Get the property
-						$w->writeln("return \$this->$propertyName;");
-					}
-				}
-				$w->endMethod();
-			}
-
-			$w->beginStaticMethod('get', [$w->useClass($immutableInterface) . ' $source', 'string $propertyName']);
-			{
-				$w->beginBlock('switch ($propertyName)');
-				{
-					foreach ($sourceClass->getProperties() as $propertyReflection) {
-						$propertyName = $propertyReflection->getName();
-						$getterName = 'get' . ucfirst($propertyName);
-						$w->writeln("case %s: return \$source->$getterName();", $propertyName);
-					}
-					$w->writeln('default: throw new \InvalidArgumentException("Unknown property: " . $propertyName);');
-				}
-				$w->endBlock();
-			}
-			$w->endMethod();
-
-
-			$w->endTrait();
-		});
-	}
-
-
-	public function inferSettersTrait(ReflectionClass $sourceClass, string $suffix): string
-	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass)
-		{
-			$w->beginTrait($targetShortName);
-
-			foreach ($sourceClass->getProperties() as $propertyReflection) {
-				$propertyName = $propertyReflection->getName();
-				$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
-
-				$setterName = 'set' . ucfirst($propertyName);
-				$sourceSetter = $sourceClass->hasMethod($setterName) ? $sourceClass->getMethod($setterName) : null;
-
-				$w->beginMethod($setterName, [$param], 'void');
-				{
-					if ($sourceSetter && $sourceSetter->isAbstract()) {
-						// Do not reimplement the existing setter -- call it.
-						$w->writeln("parent::$setterName(\$$propertyName);");
-					} else {
-						// Set the property
-						$w->writeln("\$this->$propertyName = \$$propertyName;");
-					}
-				}
-				$w->endMethod();
-			}
-
-			// Export annotated mutators
-			foreach ($sourceClass->getMethods() as $methodReflection) {
-				if ($this->hasPublicMutatorAnnotation($methodReflection)) {
-					$methodName = $methodReflection->getName();
-					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
-					$returnTypehint = $w->getTypeAsCode($methodReflection->getReturnType());
-					$w->beginMethod($methodName, $argMethod, $returnTypehint);
-					{
-						$parentCall = "parent::$methodName(" . join(', ', $argCall) . ");";
-						$w->writeln($returnTypehint !== 'void' ? "return " . $parentCall : $parentCall);
-					}
-					$w->endMethod();
-				}
-			}
-
-			$w->endTrait();
-		});
-	}
-
-
-	public function inferWithersTrait(ReflectionClass $sourceClass, string $suffix): string
-	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass)
-		{
-			$w->beginTrait($targetShortName);
-
-			foreach ($sourceClass->getProperties() as $propertyReflection) {
-				$propertyName = $propertyReflection->getName();
-				$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
-
-				$setterName = 'set' . ucfirst($propertyName);
-				$witherName = 'with' . ucfirst($propertyName);
-				$hasSourceSetter = $sourceClass->hasMethod($setterName);
-
-				$w->beginMethod($witherName, [$param], 'self');
-				{
-					$w->writeln("\$t = clone \$this;");
-					if ($hasSourceSetter) {
-						// Do not reimplement the existing setter -- call it.
-						$w->writeln("\$t->$setterName(\$$propertyName);");
-					} else {
-						// Set the property
-						$w->writeln("\$t->$propertyName = \$$propertyName;");
-					}
-					$w->writeln("return \$t;");
-				}
-				$w->endMethod();
-			}
-
-			// Export annotated mutators
-			foreach ($sourceClass->getMethods() as $methodReflection) {
-				if ($this->hasPublicMutatorAnnotation($methodReflection)) {
-					$methodName = $methodReflection->getName();
-					$witherName = strncmp($methodName, 'set', 3) === 0 ? 'with' . substr($methodName, 3) : 'with' . ucfirst($methodName);
-					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
-					$w->beginMethod($witherName, $argMethod, 'self');
-					{
-						$w->writeln("\$t = clone \$this;");
-						$w->writeln("\$t->$methodName(" . join(', ', $argCall) . ");");
-						$w->writeln("return \$t;");
-					}
-					$w->endMethod();
-				}
-			}
-
-			$w->endTrait();
-		});
-	}
-
 
 	private function hasPublicMutatorAnnotation(ReflectionMethod $methodReflection)
 	{
@@ -290,90 +145,6 @@ class DtoGenerator implements AnnotationHandler
 		return false;
 	}
 
-
-	public function inferCopyConstructorTrait(ReflectionClass $sourceClass, string $suffix,
-		string $copyInterfaceName): string
-	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
-			use ($sourceClass, $copyInterfaceName)
-		{
-			$sourceConstructor = $sourceClass->hasMethod('__construct') ? $sourceClass->getMethod('__construct') : null;
-
-			$w->beginTrait($targetShortName);
-
-			$w->beginMethod('__construct', ['?' . $w->useClass($copyInterfaceName) . ' $source = null']);
-			{
-
-				// Call parent constructor if present
-				if ($sourceConstructor) {
-					$constructorParameters = $sourceConstructor->getParameters();
-					$firstParamType = $constructorParameters[0]->getType();
-					$firstParamTypeName = $firstParamType instanceof ReflectionNamedType ? $firstParamType->getName() : null;
-
-					if ($firstParamTypeName === $copyInterfaceName) {
-						$w->writeln("parent::__construct(\$source);");
-					} else {
-						$w->writeln("parent::__construct();");
-					}
-				}
-
-				$w->beginBlock('if ($source !== null)');
-				{
-					$w->beginBlock('if ($source instanceof ' . $w->useClass($sourceClass->getName()) . ')');
-					{
-						foreach ($sourceClass->getProperties() as $property) {
-							$propertyName = $property->getName();
-							$w->writeln("\$this->$propertyName = \$source->$propertyName;");
-						}
-					}
-					$w->midBlock('else');
-					{
-						foreach ($sourceClass->getProperties() as $property) {
-							$propertyName = $property->getName();
-							$getterName = 'get' . ucfirst($propertyName);
-							$w->writeln("\$this->$propertyName = \$source->$getterName();");
-						}
-					}
-					$w->endBlock();
-				}
-				$w->endBlock();
-			}
-			$w->endMethod();
-
-			$w->beginStaticMethod('fromArray', ['array $source', '?' . $w->useClass($copyInterfaceName) . ' $sourceObj = null'], 'self');
-			{
-				$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
-				foreach ($sourceClass->getProperties() as $property) {
-					$propertyName = $property->getName();
-					$w->writeln("\$t->$propertyName = \$source['$propertyName'];");
-				}
-				$w->writeln("return \$t;");
-			}
-			$w->endMethod();
-
-			$w->beginStaticMethod('fromIterable', ['?' . $w->useClass($copyInterfaceName) . ' $sourceObj', 'iterable $source', '?callable $mapFunction = null'], 'self');
-			{
-				$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
-				$w->beginBlock("foreach (\$source as \$prop => \$value)");
-				{
-					$w->beginBlock("switch (\$prop)");
-					{
-						foreach ($sourceClass->getProperties() as $property) {
-							$propertyName = $property->getName();
-							$w->writeln("case '$propertyName': \$t->$propertyName = \$mapFunction ? \$mapFunction(\$value) : \$value; break;");
-						}
-						$w->writeln("default: throw new " . $w->useClass(\InvalidArgumentException::class) . "('Unknown property: \"' . \$prop . '\" not in ' . __CLASS__);");
-					}
-					$w->endBlock();
-				}
-				$w->endBlock();
-				$w->writeln("return \$t;");
-			}
-			$w->endMethod();
-
-			$w->endTrait();
-		});
-	}
 
 
 	protected function inferFormDataMapper(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName, string $immutableClassName)
@@ -443,6 +214,204 @@ class DtoGenerator implements AnnotationHandler
 		}
 		$w->write($targetFilename);
 		return $targetClassName;
+	}
+
+
+	private function generateGetters(PhpFileWriter $w, ReflectionClass $sourceClass, string $immutableInterface): void
+	{
+		foreach ($sourceClass->getProperties() as $propertyReflection) {
+			$propertyName = $propertyReflection->getName();
+			$typehint = $w->getTypeAsCode($propertyReflection->getType());
+
+			$getterName = 'get' . ucfirst($propertyName);
+			$getter = $sourceClass->hasMethod($getterName) ? $sourceClass->getMethod($getterName) : null;
+
+			$w->beginMethod($getterName, [], $typehint);
+			{
+				if ($getter && !$getter->isAbstract()) {
+					// Do not reimplement the existing getter -- call it.
+					$w->writeln("return parent::$getterName();");
+				} else {
+					// Get the property
+					$w->writeln("return \$this->$propertyName;");
+				}
+			}
+			$w->endMethod();
+		}
+
+		$w->beginStaticMethod('get', [$w->useClass($immutableInterface) . ' $source', 'string $propertyName']);
+		{
+			$w->beginBlock('switch ($propertyName)');
+			{
+				foreach ($sourceClass->getProperties() as $propertyReflection) {
+					$propertyName = $propertyReflection->getName();
+					$getterName = 'get' . ucfirst($propertyName);
+					$w->writeln("case %s: return \$source->$getterName();", $propertyName);
+				}
+				$w->writeln('default: throw new \InvalidArgumentException("Unknown property: " . $propertyName);');
+			}
+			$w->endBlock();
+		}
+		$w->endMethod();
+
+	}
+
+
+	private function generateSetters(PhpFileWriter $w, ReflectionClass $sourceClass): void
+	{
+		foreach ($sourceClass->getProperties() as $propertyReflection) {
+			$propertyName = $propertyReflection->getName();
+			$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
+
+			$setterName = 'set' . ucfirst($propertyName);
+			$sourceSetter = $sourceClass->hasMethod($setterName) ? $sourceClass->getMethod($setterName) : null;
+
+			$w->beginMethod($setterName, [$param], 'void');
+			{
+				if ($sourceSetter && $sourceSetter->isAbstract()) {
+					// Do not reimplement the existing setter -- call it.
+					$w->writeln("parent::$setterName(\$$propertyName);");
+				} else {
+					// Set the property
+					$w->writeln("\$this->$propertyName = \$$propertyName;");
+				}
+			}
+			$w->endMethod();
+		}
+
+		// Export annotated mutators
+		foreach ($sourceClass->getMethods() as $methodReflection) {
+			if ($this->hasPublicMutatorAnnotation($methodReflection)) {
+				$methodName = $methodReflection->getName();
+				[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
+				$returnTypehint = $w->getTypeAsCode($methodReflection->getReturnType());
+				$w->beginMethod($methodName, $argMethod, $returnTypehint);
+				{
+					$parentCall = "parent::$methodName(" . join(', ', $argCall) . ");";
+					$w->writeln($returnTypehint !== 'void' ? "return " . $parentCall : $parentCall);
+				}
+				$w->endMethod();
+			}
+		}
+	}
+
+
+	private function generateWithers(PhpFileWriter $w, ReflectionClass $sourceClass): void
+	{
+		foreach ($sourceClass->getProperties() as $propertyReflection) {
+			$propertyName = $propertyReflection->getName();
+			$param = $w->getParamCode($propertyReflection->getType(), $propertyReflection->getName());
+
+			$setterName = 'set' . ucfirst($propertyName);
+			$witherName = 'with' . ucfirst($propertyName);
+			$hasSourceSetter = $sourceClass->hasMethod($setterName);
+
+			$w->beginMethod($witherName, [$param], 'self');
+			{
+				$w->writeln("\$t = clone \$this;");
+				if ($hasSourceSetter) {
+					// Do not reimplement the existing setter -- call it.
+					$w->writeln("\$t->$setterName(\$$propertyName);");
+				} else {
+					// Set the property
+					$w->writeln("\$t->$propertyName = \$$propertyName;");
+				}
+				$w->writeln("return \$t;");
+			}
+			$w->endMethod();
+		}
+
+		// Export annotated mutators
+		foreach ($sourceClass->getMethods() as $methodReflection) {
+			if ($this->hasPublicMutatorAnnotation($methodReflection)) {
+				$methodName = $methodReflection->getName();
+				$witherName = strncmp($methodName, 'set', 3) === 0 ? 'with' . substr($methodName, 3) : 'with' . ucfirst($methodName);
+				[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
+				$w->beginMethod($witherName, $argMethod, 'self');
+				{
+					$w->writeln("\$t = clone \$this;");
+					$w->writeln("\$t->$methodName(" . join(', ', $argCall) . ");");
+					$w->writeln("return \$t;");
+				}
+				$w->endMethod();
+			}
+		}
+	}
+
+
+	private function generateConstructors(PhpFileWriter $w, ReflectionClass $sourceClass, string $copyInterfaceName): void
+	{
+		$sourceConstructor = $sourceClass->hasMethod('__construct') ? $sourceClass->getMethod('__construct') : null;
+
+		$w->beginMethod('__construct', ['?' . $w->useClass($copyInterfaceName) . ' $source = null']);
+		{
+
+			// Call parent constructor if present
+			if ($sourceConstructor) {
+				$constructorParameters = $sourceConstructor->getParameters();
+				$firstParamType = $constructorParameters[0]->getType();
+				$firstParamTypeName = $firstParamType instanceof ReflectionNamedType ? $firstParamType->getName() : null;
+
+				if ($firstParamTypeName === $copyInterfaceName) {
+					$w->writeln("parent::__construct(\$source);");
+				} else {
+					$w->writeln("parent::__construct();");
+				}
+			}
+
+			$w->beginBlock('if ($source !== null)');
+			{
+				$w->beginBlock('if ($source instanceof ' . $w->useClass($sourceClass->getName()) . ')');
+				{
+					foreach ($sourceClass->getProperties() as $property) {
+						$propertyName = $property->getName();
+						$w->writeln("\$this->$propertyName = \$source->$propertyName;");
+					}
+				}
+				$w->midBlock('else');
+				{
+					foreach ($sourceClass->getProperties() as $property) {
+						$propertyName = $property->getName();
+						$getterName = 'get' . ucfirst($propertyName);
+						$w->writeln("\$this->$propertyName = \$source->$getterName();");
+					}
+				}
+				$w->endBlock();
+			}
+			$w->endBlock();
+		}
+		$w->endMethod();
+
+		$w->beginStaticMethod('fromArray', ['array $source', '?' . $w->useClass($copyInterfaceName) . ' $sourceObj = null'], 'self');
+		{
+			$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
+			foreach ($sourceClass->getProperties() as $property) {
+				$propertyName = $property->getName();
+				$w->writeln("\$t->$propertyName = \$source['$propertyName'];");
+			}
+			$w->writeln("return \$t;");
+		}
+		$w->endMethod();
+
+		$w->beginStaticMethod('fromIterable', ['?' . $w->useClass($copyInterfaceName) . ' $sourceObj', 'iterable $source', '?callable $mapFunction = null'], 'self');
+		{
+			$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
+			$w->beginBlock("foreach (\$source as \$prop => \$value)");
+			{
+				$w->beginBlock("switch (\$prop)");
+				{
+					foreach ($sourceClass->getProperties() as $property) {
+						$propertyName = $property->getName();
+						$w->writeln("case '$propertyName': \$t->$propertyName = \$mapFunction ? \$mapFunction(\$value) : \$value; break;");
+					}
+					$w->writeln("default: throw new " . $w->useClass(InvalidArgumentException::class) . "('Unknown property: \"' . \$prop . '\" not in ' . __CLASS__);");
+				}
+				$w->endBlock();
+			}
+			$w->endBlock();
+			$w->writeln("return \$t;");
+		}
+		$w->endMethod();
 	}
 
 }
