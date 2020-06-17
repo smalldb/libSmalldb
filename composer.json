@@ -58,7 +58,8 @@
         "phpstan/phpstan-phpunit": ">=0.11",
         "symfony/validator": "*",
         "symfony/security-core": "*",
-        "doctrine/doctrine-bundle": "*"
+        "doctrine/doctrine-bundle": "*",
+        "symfony/form": "^5.1"
     },
     "suggest": {
         "doctrine/dbal": "SQL database support",
