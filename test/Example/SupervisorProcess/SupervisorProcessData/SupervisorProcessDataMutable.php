@@ -76,7 +76,7 @@ class SupervisorProcessDataMutable extends Source_SupervisorProcessProperties im
 	}
 
 
-	public function getId(): int
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -133,7 +133,7 @@ class SupervisorProcessDataMutable extends Source_SupervisorProcessProperties im
 	}
 
 
-	public function setId(int $id): void
+	public function setId(?int $id): void
 	{
 		$this->id = $id;
 	}

@@ -71,7 +71,7 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function getId(): int
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -121,7 +121,7 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function setId(int $id): void
+	public function setId(?int $id): void
 	{
 		$this->id = $id;
 	}

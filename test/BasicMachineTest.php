@@ -17,6 +17,7 @@
  */
 namespace Smalldb\StateMachine\Test;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
@@ -27,8 +28,8 @@ use Smalldb\StateMachine\SourcesExtension\Definition\SourceFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtension;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\Post\PostData;
-use Smalldb\StateMachine\Test\Example\Post\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
 use Smalldb\StateMachine\Test\SmalldbFactory\BrokenCrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemBasic;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
@@ -146,13 +147,13 @@ class BasicMachineTest extends TestCase
 
 	private function createPostData(): PostDataImmutable
 	{
-		$dataPost = new PostData();
+		$dataPost = new PostDataMutable();
 		$dataPost->setId(1);
 		$dataPost->setTitle('Foo');
 		$dataPost->setSlug('foo');
 		$dataPost->setSummary('Foo foo.');
 		$dataPost->setContent('Foo foo foo foo foo.');
-		$dataPost->setPublishedAt(new \DateTimeImmutable());
+		$dataPost->setPublishedAt(new DateTimeImmutable());
 		$dataPost->setAuthorId(1);
 		return new PostDataImmutable($dataPost);
 	}

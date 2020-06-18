@@ -17,7 +17,7 @@ use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
 interface SupervisorProcessData
 {
 
-	public function getId(): int;
+	public function getId(): ?int;
 
 	public function getState(): string;
 

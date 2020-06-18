@@ -18,23 +18,22 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\Post\PostData;
-use Smalldb\StateMachine\Test\Example\Post\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
 
 class PostRepositoryTest extends TestCase
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var PostRepository */
-	private $postRepository;
+	private Smalldb $smalldb;
+	private PostRepository $postRepository;
 
 
 	public function setUp(): void
@@ -97,14 +96,14 @@ class PostRepositoryTest extends TestCase
 
 	private function createPostData(): PostData
 	{
-		$postData = new PostData();
+		$postData = new PostDataMutable();
 		$postData->setTitle('Foo');
 		$postData->setSlug('foo');
 		$postData->setAuthorId(1);
-		$postData->setPublishedAt(new \DateTimeImmutable());
+		$postData->setPublishedAt(new DateTimeImmutable());
 		$postData->setSummary('Foo, foo.');
 		$postData->setContent('Foo. Foo. Foo.');
-		return $postData;
+		return new PostDataImmutable($postData);
 	}
 
 	public function testCreate()
@@ -130,8 +129,8 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('Exists', $ref->getState());
 		$this->assertEquals('Foo', $ref->getTitle());
 
-		$postData = new PostData($ref);
-		$postData->setTitle('Bar');
+		$postData = new PostDataImmutable($ref);
+		$postData = $postData->withTitle('Bar');
 
 		$ref->update($postData);
 		$this->assertEquals('Exists', $ref->getState());

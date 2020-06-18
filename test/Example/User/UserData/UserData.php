@@ -16,7 +16,7 @@ use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
 interface UserData
 {
 
-	public function getId(): int;
+	public function getId(): ?int;
 
 	public function getFullName(): string;
 

@@ -76,7 +76,7 @@ class SupervisorProcessDataImmutable extends Source_SupervisorProcessProperties 
 	}
 
 
-	public function getId(): int
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -133,7 +133,7 @@ class SupervisorProcessDataImmutable extends Source_SupervisorProcessProperties 
 	}
 
 
-	public function withId(int $id): self
+	public function withId(?int $id): self
 	{
 		$t = clone $this;
 		$t->id = $id;

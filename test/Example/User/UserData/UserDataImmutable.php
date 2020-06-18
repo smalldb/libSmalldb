@@ -71,7 +71,7 @@ class UserDataImmutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function getId(): int
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -121,7 +121,7 @@ class UserDataImmutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function withId(int $id): self
+	public function withId(?int $id): self
 	{
 		$t = clone $this;
 		$t->id = $id;

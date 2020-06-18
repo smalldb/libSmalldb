@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Doctrine\DBAL\Connection;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
@@ -37,7 +38,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
-	protected function create(TransitionEvent $transitionEvent, Post $ref, PostDataImmutable $data): int
+	protected function create(TransitionEvent $transitionEvent, Post $ref, PostData $data): int
 	{
 		$stmt = $this->db->prepare("
 			INSERT INTO $this->table (id, author_id, title, slug, summary, content, published_at)

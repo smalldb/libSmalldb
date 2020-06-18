@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\Post\PostData;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
@@ -47,8 +47,7 @@ use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
  */
 class DemoControllerTest extends TestCase
 {
-	/** @var PDO */
-	protected $db;
+	protected PDO $db;
 
 
 	private function createContainer(): ContainerInterface
@@ -107,7 +106,7 @@ class DemoControllerTest extends TestCase
 		$post = $postRepository->ref($id);
 		$this->assertInstanceOf(Post::class, $post);
 
-		$postData = new PostData();
+		$postData = new PostDataMutable();
 		$postData->setId($id);
 		$postData->setTitle('Foo');
 		$postData->setSlug('foo');
@@ -200,7 +199,9 @@ class DemoControllerTest extends TestCase
 
 	private function editController($request, Post $post)
 	{
-		$postData = new PostData($post);
+		// TODO: Use real Symfony forms.
+
+		$postData = new PostDataMutable($post);
 
 		// Process the form; update $postData from the $request.
 		$postData->setTitle($request['title']);

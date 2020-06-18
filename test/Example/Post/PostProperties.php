@@ -36,7 +36,7 @@ class PostProperties
 	/**
 	 * @SQL\Id
 	 */
-	protected ?int $id;
+	protected ?int $id = null;
 
 	/**
 	 * @SQL\Column

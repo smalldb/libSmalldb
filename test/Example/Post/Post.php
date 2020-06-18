@@ -27,6 +27,7 @@ use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 
 
 /**
