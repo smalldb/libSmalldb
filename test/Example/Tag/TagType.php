@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
+namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\Tag;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagFormDataMapper;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataFormDataMapper;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -40,14 +40,14 @@ class TagType extends AbstractType
 			'label' => 'Name',
 		]);
 
-		$builder->setDataMapper(new TagFormDataMapper());
+		$builder->setDataMapper(new TagDataFormDataMapper());
 	}
 
 
 	public function configureOptions(OptionsResolver $resolver)
 	{
 		$resolver->setDefault('empty_data', null);
-		$resolver->setDefault('data_class', Tag::class);
+		$resolver->setDefault('data_class', TagData::class);
 	}
 
 }

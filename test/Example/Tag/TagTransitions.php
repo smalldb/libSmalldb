@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
 use PDO;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
@@ -26,9 +27,8 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 
 class TagTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-	/** @var PDO */
-	private $pdo;
-	private $table = 'symfony_demo_tag';
+	private PDO $pdo;
+	private string $table = 'symfony_demo_tag';
 
 	public function __construct(PDO $db)
 	{
@@ -37,7 +37,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	}
 
 
-	protected function create(TransitionEvent $transitionEvent, Tag $ref, TagDataImmutable $data): int
+	protected function create(TransitionEvent $transitionEvent, Tag $ref, TagData $data): int
 	{
 		$stmt = $this->pdo->prepare("
 			INSERT INTO $this->table (id, name)

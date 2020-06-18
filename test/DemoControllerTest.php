@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use DateTimeImmutable;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -29,11 +30,10 @@ use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Test\Example\Tag\TagData;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
-use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
 /**
@@ -104,7 +104,6 @@ class DemoControllerTest extends TestCase
 	 */
 	private function createPost(PostRepository $postRepository, int $id = 1000): Post
 	{
-		/** @var Post $post */
 		$post = $postRepository->ref($id);
 		$this->assertInstanceOf(Post::class, $post);
 
@@ -113,7 +112,7 @@ class DemoControllerTest extends TestCase
 		$postData->setTitle('Foo');
 		$postData->setSlug('foo');
 		$postData->setAuthorId(1);
-		$postData->setPublishedAt(new \DateTimeImmutable());
+		$postData->setPublishedAt(new DateTimeImmutable());
 		$postData->setSummary('Foo, foo.');
 		$postData->setContent('Foo. Foo. Foo.');
 
@@ -152,10 +151,9 @@ class DemoControllerTest extends TestCase
 		/** @var TagRepository $tags */
 		$tags = $container->get(TagRepository::class);
 
-		$tagData = new TagData();
+		$tagData = new TagDataMutable();
 		$tagData->setName('Foo');
 
-		/** @var Tag $ref */
 		$ref = $tags->ref(null);
 		$ref->create($tagData);
 

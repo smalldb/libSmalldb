@@ -24,12 +24,12 @@ use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\CodeGenerator\AnnotationHandler;
 use Smalldb\StateMachine\CodeGenerator\CodeGenerator;
 use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\SupervisorProcess\SupervisorProcess;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag as TagProperties;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\Tag;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagImmutable;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\Tag\TagMutable;
-use Smalldb\StateMachine\Test\DtoGeneratorExample\TagType;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessData;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
+use Smalldb\StateMachine\Test\Example\Tag\TagProperties;
+use Smalldb\StateMachine\Test\Example\Tag\TagType;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Symfony\Component\Form\Forms;
 
@@ -40,7 +40,6 @@ class DtoGeneratorTest extends TestCase
 	public function testLocateClasses()
 	{
 		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$foundClassCount = 0;
 
@@ -59,11 +58,17 @@ class DtoGeneratorTest extends TestCase
 	public function testDeleteGeneratedClasses()
 	{
 		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$cg->deleteGeneratedClasses();
 
-		$this->assertFileNotExists(__DIR__ . '\\DtoGeneratorExample\\Tag\\Tag.php');
+		$this->assertFileNotExists(__DIR__ . '/Example/Tag/TagData/TagData.php');
+
+		// Remove one of the target directories to test that it will get created again
+		$tagDataDir = __DIR__ . '/Example/Tag/TagData';
+		if (is_dir($tagDataDir)) {
+			rmdir($tagDataDir);
+		}
+		$this->assertDirectoryNotExists(__DIR__ . '/Example/Tag/TagData');
 	}
 
 
@@ -92,30 +97,30 @@ class DtoGeneratorTest extends TestCase
 	public function testGenerateTagDto()
 	{
 		$g = new DtoGenerator();
-		$generatedClasses = $g->generateDtoClasses(new ReflectionClass(TagProperties::class));
+		$generatedClasses = $g->generateDtoClasses(new ReflectionClass(TagProperties::class), 'TagData');
 
 		$this->assertNotEmpty($generatedClasses);
 		foreach ($generatedClasses as $generatedClass) {
 			$this->assertClassOrInterfaceOrTraitExists($generatedClass);
 		}
 
-		$tag = new TagMutable();
+		$tag = new TagDataMutable();
 		$tag->setId(1);
 		$tag->setName('Foo Bar');
 
-		$copiedTag = new TagImmutable($tag);
-		$copiedTag2 = new TagMutable($copiedTag);
+		$copiedTag = new TagDataImmutable($tag);
+		$copiedTag2 = new TagDataMutable($copiedTag);
 
-		$this->assertInstanceOf(Tag::class, $tag);
-		$this->assertInstanceOf(Tag::class, $copiedTag);
-		$this->assertInstanceOf(Tag::class, $copiedTag2);
+		$this->assertInstanceOf(TagData::class, $tag);
+		$this->assertInstanceOf(TagData::class, $copiedTag);
+		$this->assertInstanceOf(TagData::class, $copiedTag2);
 		$this->assertEquals($tag, $copiedTag2);
 
 		$slug = $copiedTag2->getSlug();
 		$this->assertEquals('foo-bar', $slug);
 
 		$mutatedTag = $copiedTag->withName('With Foo');
-		$this->assertInstanceOf(Tag::class, $mutatedTag);
+		$this->assertInstanceOf(TagData::class, $mutatedTag);
 		$this->assertNotSame($copiedTag, $mutatedTag);
 		$mutatedSlug = $mutatedTag->getSlug();
 		$this->assertEquals('with-foo', $mutatedSlug);
@@ -128,12 +133,11 @@ class DtoGeneratorTest extends TestCase
 	public function testEntireCodeGeneratorFlow()
 	{
 		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$cg->addAnnotationHandler(new DtoGenerator($cg->getAnnotationReader()));
 		$cg->processClasses();
 
-		$this->assertClassOrInterfaceExists(SupervisorProcess::class);
+		$this->assertClassOrInterfaceExists(SupervisorProcessData::class);
 	}
 
 
@@ -148,7 +152,7 @@ class DtoGeneratorTest extends TestCase
 
 		$this->assertTrue($form->isSubmitted() && $form->isValid());
 		$newTag = $form->getData();
-		$this->assertInstanceOf(Tag::class, $newTag);
+		$this->assertInstanceOf(TagData::class, $newTag);
 
 		$newName = $newTag->getName();
 		$this->assertEquals('New tag name', $newName);
@@ -160,7 +164,7 @@ class DtoGeneratorTest extends TestCase
 	 */
 	public function testSimpleSymfonyFormWithMutableEntity()
 	{
-		$tag = new TagMutable();
+		$tag = new TagDataMutable();
 		$tag->setId(1);
 		$tag->setName('Old tag name');
 
@@ -170,7 +174,7 @@ class DtoGeneratorTest extends TestCase
 
 		$this->assertTrue($form->isSubmitted() && $form->isValid());
 		$newTag = $form->getData();
-		$this->assertInstanceOf(Tag::class, $newTag);
+		$this->assertInstanceOf(TagData::class, $newTag);
 
 		$newName = $newTag->getName();
 		$this->assertEquals('New tag name', $newName);
@@ -182,10 +186,10 @@ class DtoGeneratorTest extends TestCase
 	 */
 	public function testSimpleSymfonyFormWithImmutableEntity()
 	{
-		$srcTag = new TagMutable();
+		$srcTag = new TagDataMutable();
 		$srcTag->setId(1);
 		$srcTag->setName('Old tag name');
-		$tag = new TagImmutable($srcTag);
+		$tag = new TagDataImmutable($srcTag);
 
 		$factory = Forms::createFormFactory();
 		$form = $factory->create(TagType::class, $tag);
@@ -194,7 +198,7 @@ class DtoGeneratorTest extends TestCase
 		$this->assertTrue($form->isSubmitted() && $form->isValid());
 
 		$newTag = $form->getData();
-		$this->assertInstanceOf(Tag::class, $newTag);
+		$this->assertInstanceOf(TagData::class, $newTag);
 
 		$newName = $newTag->getName();
 		$this->assertEquals('New tag name', $newName);

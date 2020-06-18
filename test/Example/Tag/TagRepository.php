@@ -29,20 +29,11 @@ use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 
 class TagRepository implements SmalldbRepositoryInterface
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider = null;
-
-	/** @var string */
-	private $refClass = null;
-
-	/** @var PdoDataLoader */
-	private $dataLoader = null;
-
-	/** @var PDO */
-	private $pdo;
+	private Smalldb $smalldb;
+	private ?SmalldbProviderInterface $machineProvider = null;
+	private ?string $refClass = null;
+	private ?PdoDataLoader $dataLoader = null;
+	private PDO $pdo;
 
 
 	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
@@ -71,8 +62,8 @@ class TagRepository implements SmalldbRepositoryInterface
 
 
 	// TODO: Load this from the definition
-	private $table = 'symfony_demo_tag';
-	private $selectColumns = 'id, name';
+	private string $table = 'symfony_demo_tag';
+	private string $selectColumns = 'id, name';
 
 	private function createDataLoader($preloadedDataSet = null): PdoDataLoader
 	{

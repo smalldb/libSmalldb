@@ -137,20 +137,6 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-
-	private function hasPublicMutatorAnnotation(ReflectionMethod $methodReflection)
-	{
-		$methodAnnotations = $this->annotationReader->getMethodAnnotations($methodReflection);
-		foreach ($methodAnnotations as $annotation) {
-			if ($annotation instanceof PublicMutator) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-
 	protected function inferFormDataMapper(ReflectionClass $sourceClass, ?string $targetName, string $suffix, string $immutableInterfaceName, string $immutableClassName)
 	{
 		return $this->writeClass($sourceClass, $targetName, $suffix, function (PhpFileWriter $w, $targetNamespace, $targetShortName)
@@ -195,6 +181,18 @@ class DtoGenerator implements AnnotationHandler
 
 			$w->endClass();
 		});
+	}
+
+
+	private function hasPublicMutatorAnnotation(ReflectionMethod $methodReflection)
+	{
+		$methodAnnotations = $this->annotationReader->getMethodAnnotations($methodReflection);
+		foreach ($methodAnnotations as $annotation) {
+			if ($annotation instanceof PublicMutator) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 

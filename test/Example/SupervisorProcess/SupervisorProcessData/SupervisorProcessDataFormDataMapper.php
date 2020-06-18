@@ -4,7 +4,7 @@
 // Do NOT edit! All changes will be lost!
 // 
 // 
-namespace Smalldb\StateMachine\Test\Example\Tag\TagData;
+namespace Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
 use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
 use Symfony\Component\Form\DataMapperInterface;
@@ -14,35 +14,35 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * @GeneratedClass
- * @see \Smalldb\StateMachine\Test\Example\Tag\TagProperties
+ * @see \Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessProperties
  */
-class TagDataFormDataMapper implements DataMapperInterface
+class SupervisorProcessDataFormDataMapper implements DataMapperInterface
 {
 
 	public function mapDataToForms($viewData, iterable $forms)
 	{
 		if ($viewData === null) {
 			return;
-		} else if ($viewData instanceof TagData) {
+		} else if ($viewData instanceof SupervisorProcessData) {
 			foreach ($forms as $prop => $field) {
-				$field->setData(TagDataImmutable::get($viewData, $prop));
+				$field->setData(SupervisorProcessDataImmutable::get($viewData, $prop));
 			}
 		} else {
-			throw new UnexpectedTypeException($viewData, TagDataImmutable::class);
+			throw new UnexpectedTypeException($viewData, SupervisorProcessDataImmutable::class);
 		}
 	}
 
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = TagDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
+		$viewData = SupervisorProcessDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
 	}
 
 
 	public function configureOptions(OptionsResolver $optionsResolver)
 	{
 		$optionsResolver->setDefault("empty_data", null);
-		$optionsResolver->setDefault("data_class", TagData::class);
+		$optionsResolver->setDefault("data_class", SupervisorProcessData::class);
 	}
 
 }

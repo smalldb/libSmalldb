@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,54 +16,58 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
+namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 
+use DateTimeImmutable;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
-use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
 /**
- * Tag - An entity based on Symfony Demo
+ * A process controlled by Supervisord
  *
- * @SQL\Table("symfony_demo_post")
- * @GenerateDTO()
+ * @SQL\Table("supervisor_process")
+ * @SQL\StateSelect("state")
+ * @GenerateDTO("SupervisorProcessData")
  */
-abstract class Tag
+abstract class SupervisorProcessProperties
 {
+	use CopyConstructorTrait;
 
 	/**
 	 * @SQL\Id
 	 */
-	protected ?int $id;
+	protected int $id;
 
 	/**
 	 * @SQL\Column
 	 */
-	protected string $name;
-
-
-	public function getSlug(): string
-	{
-		return preg_replace('/[^a-z0-9]+/', '-', strtolower($this->name));
-	}
-
+	protected string $state;
 
 	/**
-	 * @PublicMutator
+	 * @SQL\Column
 	 */
-	protected function setNameFromSlug(string $slug): string
-	{
-		return ($this->name = ucfirst(str_replace('-', ' ', $slug)));
-	}
-
+	protected string $command;
 
 	/**
-	 * @PublicMutator
+	 * @SQL\Column("created_at")
 	 */
-	protected function resetName(): void
-	{
-		$this->name = (string) $this->id;
-	}
+	protected DateTimeImmutable $createdAt;
+
+	/**
+	 * @SQL\Column("modified_at")
+	 */
+	protected DateTimeImmutable $modifiedAt;
+
+	/**
+	 * @SQL\Column("memory_limit")
+	 */
+	protected ?int $memoryLimit;
+
+	/**
+	 * @var string[]|null
+	 */
+	protected ?array $args;
 
 }
