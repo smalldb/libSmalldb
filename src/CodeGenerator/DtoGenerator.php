@@ -124,8 +124,8 @@ class DtoGenerator implements AnnotationHandler
 			}
 
 			foreach ($sourceClass->getMethods() as $methodReflection) {
-				if ($methodReflection->isPublic()) {
-					$methodName = $methodReflection->getName();
+				$methodName = $methodReflection->getName();
+				if ($methodName !== '__construct' && $methodReflection->isPublic()) {
 					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
 					$w->writeInterfaceMethod($methodName, $argMethod,
 						$w->getTypeAsCode($methodReflection->getReturnType()));
