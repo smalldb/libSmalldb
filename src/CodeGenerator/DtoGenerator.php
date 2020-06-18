@@ -188,8 +188,8 @@ class DtoGenerator implements AnnotationHandler
 
 			$w->beginMethod('configureOptions', [$w->useClass(OptionsResolver::class) . ' $optionsResolver']);
 			{
-				$w->writeln('$resolver->setDefault("empty_data", null);');
-				$w->writeln('$resolver->setDefault("data_class", ' . $w->useClass($immutableInterfaceName) . '::class);');
+				$w->writeln('$optionsResolver->setDefault("empty_data", null);');
+				$w->writeln('$optionsResolver->setDefault("data_class", ' . $w->useClass($immutableInterfaceName) . '::class);');
 			}
 			$w->endMethod();
 
