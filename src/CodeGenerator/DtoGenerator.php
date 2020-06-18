@@ -56,16 +56,20 @@ class DtoGenerator implements AnnotationHandler
 
 	public function handleClassAnnotation(ReflectionClass $sourceClass, object $annotation)
 	{
-		return $this->generateDtoClasses($sourceClass);
+		if ($annotation instanceof GenerateDTO) {
+			return $this->generateDtoClasses($sourceClass, $annotation->targetName);
+		} else {
+			throw new \LogicException("Unsupported annotation: " . get_class($annotation));
+		}
 	}
 
 
-	public function generateDtoClasses(ReflectionClass $sourceClass): array
+	public function generateDtoClasses(ReflectionClass $sourceClass, ?string $targetName = null): array
 	{
-		$immutableInterface = $this->inferImmutableInterface($sourceClass, '');
-		$immutableClass = $this->inferImmutableClass($sourceClass, 'Immutable', $immutableInterface);
-		$mutableClass = $this->inferMutableClass($sourceClass, 'Mutable', $immutableInterface);
-		$formDataMapper = $this->inferFormDataMapper($sourceClass, 'FormDataMapper', $immutableInterface, $immutableClass);
+		$immutableInterface = $this->inferImmutableInterface($sourceClass, $targetName, '');
+		$immutableClass = $this->inferImmutableClass($sourceClass, $targetName, 'Immutable', $immutableInterface);
+		$mutableClass = $this->inferMutableClass($sourceClass, $targetName, 'Mutable', $immutableInterface);
+		$formDataMapper = $this->inferFormDataMapper($sourceClass, $targetName, 'FormDataMapper', $immutableInterface, $immutableClass);
 
 		return [
 			$immutableInterface,
@@ -76,9 +80,9 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	private function inferImmutableClass(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName): string
+	private function inferImmutableClass(ReflectionClass $sourceClass, ?string $targetName, string $suffix, string $immutableInterfaceName): string
 	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+		return $this->writeClass($sourceClass, $targetName, $suffix, function (PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass, $immutableInterfaceName)
 		{
 			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), [$w->useClass($immutableInterfaceName)]);
@@ -90,9 +94,9 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	private function inferMutableClass(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName): string
+	private function inferMutableClass(ReflectionClass $sourceClass, ?string $targetName, string $suffix, string $immutableInterfaceName): string
 	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+		return $this->writeClass($sourceClass, $targetName, $suffix, function (PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass, $immutableInterfaceName)
 		{
 			$w->beginClass($targetShortName, $w->useClass($sourceClass->getName(), 'Source_' . $sourceClass->getShortName()), [$w->useClass($immutableInterfaceName)]);
@@ -104,9 +108,9 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	private function inferImmutableInterface(ReflectionClass $sourceClass, string $suffix): string
+	private function inferImmutableInterface(ReflectionClass $sourceClass, ?string $targetName, string $suffix): string
 	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+		return $this->writeClass($sourceClass, $targetName, $suffix, function (PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass)
 		{
 			$w->beginInterface($targetShortName);
@@ -147,9 +151,9 @@ class DtoGenerator implements AnnotationHandler
 
 
 
-	protected function inferFormDataMapper(ReflectionClass $sourceClass, string $suffix, string $immutableInterfaceName, string $immutableClassName)
+	protected function inferFormDataMapper(ReflectionClass $sourceClass, ?string $targetName, string $suffix, string $immutableInterfaceName, string $immutableClassName)
 	{
-		return $this->writeClass($sourceClass, $suffix, function(PhpFileWriter $w, $targetNamespace, $targetShortName)
+		return $this->writeClass($sourceClass, $targetName, $suffix, function (PhpFileWriter $w, $targetNamespace, $targetShortName)
 			use ($sourceClass, $immutableInterfaceName, $immutableClassName)
 		{
 			$w->beginClass($targetShortName, null, [$w->useClass(DataMapperInterface::class)]);
@@ -178,14 +182,14 @@ class DtoGenerator implements AnnotationHandler
 
 			$w->beginMethod('mapFormsToData', ['iterable $forms', '& $viewData']);
 			{
-				$w->writeln('$viewData = ' . $w->useClass($immutableClassName). '::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });');
+				$w->writeln('$viewData = ' . $w->useClass($immutableClassName) . '::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });');
 			}
 			$w->endMethod();
 
 			$w->beginMethod('configureOptions', [$w->useClass(OptionsResolver::class) . ' $optionsResolver']);
 			{
 				$w->writeln('$resolver->setDefault("empty_data", null);');
-				$w->writeln('$resolver->setDefault("data_class", ' . $w->useClass($immutableInterfaceName). '::class);');
+				$w->writeln('$resolver->setDefault("data_class", ' . $w->useClass($immutableInterfaceName) . '::class);');
 			}
 			$w->endMethod();
 
@@ -194,13 +198,14 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	protected function writeClass(ReflectionClass $sourceClass, string $suffix, callable $writeCallback): string
+	protected function writeClass(ReflectionClass $sourceClass, ?string $targetName, string $suffix, callable $writeCallback): string
 	{
 		$sourceShortName = $sourceClass->getShortName();
-		$targetShortName = $sourceShortName . $suffix;
-		$targetNamespace = $sourceClass->getName();
+		$targetName ??= $sourceShortName;
+		$targetShortName = $targetName . $suffix;
+		$targetNamespace = $sourceClass->getNamespaceName() . '\\' . $targetName;
 		$targetClassName = $targetNamespace . '\\' . $targetShortName;
-		$targetDirectory = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $sourceShortName;
+		$targetDirectory = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $targetName;
 		$targetFilename = $targetDirectory . DIRECTORY_SEPARATOR . $targetShortName . '.php';
 
 		$w = $this->createFileWriter($targetNamespace);

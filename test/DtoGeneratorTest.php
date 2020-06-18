@@ -41,6 +41,7 @@ class DtoGeneratorTest extends TestCase
 	{
 		$cg = new CodeGenerator();
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$foundClassCount = 0;
 
 		foreach ($cg->locateClasses() as $classname) {
@@ -59,6 +60,7 @@ class DtoGeneratorTest extends TestCase
 	{
 		$cg = new CodeGenerator();
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$cg->deleteGeneratedClasses();
 
 		$this->assertFileNotExists(__DIR__ . '\\DtoGeneratorExample\\Tag\\Tag.php');
@@ -126,6 +128,7 @@ class DtoGeneratorTest extends TestCase
 	{
 		$cg = new CodeGenerator();
 		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\DtoGeneratorExample\\', __DIR__ . '/DtoGeneratorExample', []));
+		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
 		$cg->addAnnotationHandler(new DtoGenerator($cg->getAnnotationReader()));
 		$cg->processClasses();
 

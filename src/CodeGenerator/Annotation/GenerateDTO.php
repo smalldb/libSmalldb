@@ -27,5 +27,5 @@ namespace Smalldb\StateMachine\CodeGenerator\Annotation;
  */
 class GenerateDTO
 {
-
+	public ?string $targetName = null;
 }

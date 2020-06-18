@@ -24,6 +24,7 @@ use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 
 
 /**
@@ -31,7 +32,7 @@ use Smalldb\StateMachine\ReferenceInterface;
  * @UseRepository(TagRepository::class)
  * @UseTransitions(TagTransitions::class)
  */
-abstract class Tag extends TagDataImmutable implements ReferenceInterface
+abstract class Tag implements ReferenceInterface, TagData
 {
 
 	/**
@@ -42,12 +43,12 @@ abstract class Tag extends TagDataImmutable implements ReferenceInterface
 	/**
 	 * @Transition("", {"Exists"}, color = "#4a0")
 	 */
-	abstract public function create(TagDataImmutable $itemData);
+	abstract public function create(TagData $itemData);
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 */
-	abstract public function update(TagDataImmutable $itemData);
+	abstract public function update(TagData $itemData);
 
 	/**
 	 * @Transition("Exists", {""}, color = "#a40")
