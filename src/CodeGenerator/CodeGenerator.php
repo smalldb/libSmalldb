@@ -99,14 +99,18 @@ class CodeGenerator
 	}
 
 
-	public function processClass(\ReflectionClass $sourceClass): void
+	/**
+	 * @return string[]  List of generated classes (FQCNs)
+	 */
+	public function processClass(\ReflectionClass $sourceClass): array
 	{
 		$annotations = $this->annotationReader->getClassAnnotations($sourceClass);
+		$generatedClasses = [];
 
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof GeneratedClass) {
 				// Do not process generated classes
-				return;
+				return [];
 			}
 		}
 
@@ -114,10 +118,12 @@ class CodeGenerator
 			$annotationClassName = get_class($annotation);
 			if (isset($this->annotationHandlers[$annotationClassName])) {
 				foreach ($this->annotationHandlers[$annotationClassName] as $handler) {
-					$handler->handleClassAnnotation($sourceClass, $annotation);
+					$generatedClasses[] = $handler->handleClassAnnotation($sourceClass, $annotation);
 				}
 			}
 		}
+
+		return array_merge(...$generatedClasses);
 	}
 
 

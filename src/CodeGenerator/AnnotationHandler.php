@@ -24,6 +24,10 @@ interface AnnotationHandler
 
 	public function getSupportedAnnotations(): array;
 
-	public function handleClassAnnotation(\ReflectionClass $sourceClass, object $annotation);
+
+	/**
+	 * @return string[]  List of generated classes (FQCNs)
+	 */
+	public function handleClassAnnotation(\ReflectionClass $sourceClass, object $annotation): array;
 
 }

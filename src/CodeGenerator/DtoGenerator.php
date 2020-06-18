@@ -54,12 +54,12 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
-	public function handleClassAnnotation(ReflectionClass $sourceClass, object $annotation)
+	public function handleClassAnnotation(ReflectionClass $sourceClass, object $annotation): array
 	{
 		if ($annotation instanceof GenerateDTO) {
 			return $this->generateDtoClasses($sourceClass, $annotation->targetName);
 		} else {
-			throw new \LogicException("Unsupported annotation: " . get_class($annotation));
+			throw new \LogicException("Unsupported annotation: " . get_class($annotation)); // @codeCoverageIgnore
 		}
 	}
 

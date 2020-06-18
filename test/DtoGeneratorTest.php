@@ -79,9 +79,10 @@ class DtoGeneratorTest extends TestCase
 		$cg = new CodeGenerator();
 		/** @noinspection PhpParamsInspection */
 		$cg->addAnnotationHandler($handlerMock);
-		$cg->processClass(new ReflectionClass(TagProperties::class));
+		$generatedClasses = $cg->processClass(new ReflectionClass(TagProperties::class));
 
-		$this->assertClassOrInterfaceOrTraitExists(Tag::class);
+		$this->assertClassOrInterfaceOrTraitExists(TagData::class);
+		$this->assertContainsEquals(TagData::class, $generatedClasses);
 	}
 
 
