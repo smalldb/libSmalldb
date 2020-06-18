@@ -61,7 +61,7 @@ class PhpFileWriter
 		$tmpFilename = tempnam(dirname($filename), '.' . basename($filename) . '.');
 		try {
 			file_put_contents($tmpFilename, $this->getPhpCode());
-			chmod($tmpFilename, 0444 & fileperms($tmpFilename));
+			chmod($tmpFilename, 0444 & ~umask());
 			rename($tmpFilename, $filename);
 		}
 		catch(\Throwable $up) {
