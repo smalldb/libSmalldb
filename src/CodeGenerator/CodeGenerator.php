@@ -18,7 +18,9 @@
 
 namespace Smalldb\StateMachine\CodeGenerator;
 
+use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
@@ -76,33 +78,41 @@ class CodeGenerator
 	public function processClasses(): void
 	{
 		foreach ($this->locateClasses() as $className) {
-			$this->processClass(new \ReflectionClass($className));
+			$this->processClass(new ReflectionClass($className));
 		}
 	}
 
 
 	/**
-	 * @return \ReflectionClass[]
+	 * @return ReflectionClass[]
 	 */
 	public function locateGeneratedClasses(): iterable
 	{
 		foreach ($this->locateClasses() as $className) {
-			$class = new \ReflectionClass($className);
-			$annotations = $this->annotationReader->getClassAnnotations($class);
-			foreach ($annotations as $annotation) {
-				if ($annotation instanceof GeneratedClass) {
-					yield $class;
-					break;
-				}
+			$class = new ReflectionClass($className);
+			if ($this->hasGeneratedAnnotation($class)) {
+				yield $class;
 			}
 		}
+	}
+
+
+	private function hasGeneratedAnnotation(ReflectionClass $class): bool
+	{
+		$annotations = $this->annotationReader->getClassAnnotations($class);
+		foreach ($annotations as $annotation) {
+			if ($annotation instanceof GeneratedClass) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 
 	/**
 	 * @return string[]  List of generated classes (FQCNs)
 	 */
-	public function processClass(\ReflectionClass $sourceClass): array
+	public function processClass(ReflectionClass $sourceClass): array
 	{
 		$annotations = $this->annotationReader->getClassAnnotations($sourceClass);
 		$generatedClasses = [];

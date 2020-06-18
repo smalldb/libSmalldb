@@ -86,6 +86,9 @@ class PostRepositoryTest extends TestCase
 		/** @var Post $ref */
 		$ref = $this->smalldb->ref(Post::class, 1);
 
+		// FIXME: There should be no need to trigger loading manually.
+		$ref->getTitle();
+
 		$postData = new PostDataImmutable($ref);
 
 		$dataTitle = $postData->getTitle();

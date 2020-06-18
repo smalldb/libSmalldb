@@ -27,6 +27,7 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
@@ -114,6 +115,7 @@ class DemoControllerTest extends TestCase
 		$postData->setPublishedAt(new DateTimeImmutable());
 		$postData->setSummary('Foo, foo.');
 		$postData->setContent('Foo. Foo. Foo.');
+		$postData = new PostDataImmutable($postData);
 
 		$post->create($postData);
 		$this->assertEquals(Post::EXISTS, $post->getState());
@@ -201,14 +203,15 @@ class DemoControllerTest extends TestCase
 	{
 		// TODO: Use real Symfony forms.
 
-		$postData = new PostDataMutable($post);
+		$postData = new PostDataImmutable($post);
 
 		// Process the form; update $postData from the $request.
-		$postData->setTitle($request['title']);
+		$postData = $postData->withTitle($request['title']);
 
 		// if ($form->isSubmitted() && $form->isValid()) {
-			$postData->setSlug($this->slugify($postData->getTitle()));
-			$post->update($postData);
+			// Do some additional modification specific to this form.
+			$updatedPostData = $postData->withSlug($this->slugify($postData->getTitle()));
+			$post->update($updatedPostData);
 		// }
 
 		return $this->render([
