@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 use DateTimeImmutable;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
 /**
@@ -33,7 +32,6 @@ use Smalldb\StateMachine\Utils\CopyConstructorTrait;
  */
 abstract class SupervisorProcessProperties
 {
-	use CopyConstructorTrait;
 
 	/**
 	 * @SQL\Id

@@ -21,7 +21,6 @@ class SupervisorProcessDataImmutable extends Source_SupervisorProcessProperties 
 
 	public function __construct(?SupervisorProcessData $source = null)
 	{
-		parent::__construct();
 		if ($source !== null) {
 			if ($source instanceof Source_SupervisorProcessProperties) {
 				$this->id = $source->id;

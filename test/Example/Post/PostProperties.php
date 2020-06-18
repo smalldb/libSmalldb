@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use Smalldb\StateMachine\Utils\CopyConstructorTrait;
 
 
 /**
@@ -28,107 +28,49 @@ use Smalldb\StateMachine\Utils\CopyConstructorTrait;
  *
  * @SQL\Table("symfony_demo_post")
  * @SQL\StateSelect("'Exists'")
+ * @GenerateDTO("PostData")
  */
-class PostDataImmutable
+class PostProperties
 {
-	use CopyConstructorTrait;
 
 	/**
-	 * @var int|null
 	 * @SQL\Id
 	 */
-	protected $id;
+	protected ?int $id;
 
 	/**
-	 * @var string
 	 * @SQL\Column
 	 */
-	protected $title;
+	protected string $title;
 
 	/**
-	 * @var string
 	 * @SQL\Column
 	 */
-	protected $slug;
+	protected string $slug;
 
 	/**
-	 * @var string
 	 * @SQL\Column
 	 */
-	protected $summary;
+	protected string $summary;
 
 	/**
-	 * @var string
 	 * @SQL\Column
 	 */
-	protected $content;
+	protected string $content;
 
 	/**
-	 * @var DateTimeImmutable
 	 * @SQL\Column("published_at")
 	 */
-	protected $publishedAt;
+	protected DateTimeImmutable $publishedAt;
 
 	/**
-	 * @var int
 	 * @SQL\Column("author_id")
 	 */
-	protected $authorId;
+	protected int $authorId;
 
 	/**
-	 * @var int|null
 	 * @SQL\Select("SELECT COUNT(*) FROM symfony_demo_comment WHERE symfony_demo_comment.post_id = this.id")
 	 */
-	protected $commentCount = null;
-
-
-	public function getId(): ?int
-	{
-		return $this->id;
-	}
-
-	/**
-	 * Set/Update the ID. Used by ReferenceTrait.
-	 */
-	protected function setId(?int $id): void
-	{
-		$this->id = $id;
-	}
-
-	public function getContent(): string
-	{
-		return $this->content;
-	}
-
-	public function getPublishedAt(): ?DateTimeImmutable
-	{
-		return $this->publishedAt;
-	}
-
-	public function getTitle(): string
-	{
-		return $this->title;
-	}
-
-	public function getAuthorId(): int
-	{
-		return $this->authorId;
-	}
-
-	public function getSlug(): string
-	{
-		return $this->slug;
-	}
-
-	public function getSummary(): string
-	{
-		return $this->summary;
-	}
-
-
-	public function getCommentCount(): ?int
-	{
-		return $this->commentCount;
-	}
+	protected ?int $commentCount = null;
 
 }

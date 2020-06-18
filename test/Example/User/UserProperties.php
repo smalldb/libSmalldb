@@ -1,13 +1,13 @@
-<?php declare(strict_types = 1);
+<?php
 /*
  * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,58 +16,54 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\DtoGeneratorExample;
+namespace Smalldb\StateMachine\Test\Example\User;
 
-use DateTimeImmutable;
+use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Symfony\Component\Validator\Constraints as Assert;
 
 
 /**
- * Post - An entity based on Symfony Demo
+ * User - An entity based on Symfony Demo
  *
- * @SQL\Table("symfony_demo_post")
+ * @SQL\Table("symfony_demo_user")
+ * @GenerateDTO("UserData")
  */
-abstract class Post
+abstract class UserProperties
 {
 
 	/**
 	 * @SQL\Id
 	 */
-	protected ?int $id;
+	protected int $id;
 
 	/**
 	 * @SQL\Column
+	 * @Assert\NotBlank()
 	 */
-	protected string $title;
+	protected string $fullName;
 
 	/**
 	 * @SQL\Column
+	 * @Assert\NotBlank()
+	 * @Assert\Length(min=2, max=50)
 	 */
-	protected string $slug;
+	protected string $username;
 
 	/**
 	 * @SQL\Column
+	 * @Assert\Email()
 	 */
-	protected string $summary;
+	protected string $email;
 
 	/**
-	 * @SQL\Column
+	 * @SQL\Column(type="string")
 	 */
-	protected string $content;
+	protected string $password;
 
 	/**
-	 * @SQL\Column("published_at")
+	 * @SQL\Column(type="json")
 	 */
-	protected DateTimeImmutable $publishedAt;
-
-	/**
-	 * @SQL\Column("author_id")
-	 */
-	protected int $authorId;
-
-	/**
-	 * @SQL\Select("SELECT COUNT(*) FROM symfony_demo_comment WHERE symfony_demo_comment.post_id = this.id")
-	 */
-	protected ?int $commentCount = null;
+	protected array $roles;
 
 }
