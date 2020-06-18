@@ -78,8 +78,13 @@ class Psr4ClassLocator implements ClassLocator
 				if (!$this->includePaths->isEmpty() && !$this->includePaths->contains(dirname($fileAbsPath))) {
 					continue;
 				}
-				if (class_exists($className) || interface_exists($className) || trait_exists($className)) {
-					yield $fileAbsPath => $className;
+				try {
+					if (class_exists($className) || interface_exists($className) || trait_exists($className)) {
+						yield $fileAbsPath => $className;
+					}
+				}
+				catch(\Throwable $ex) {
+					// Ignore errors; just don't enumerate the broken class.
 				}
 			}
 		}
