@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
-use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
+use Smalldb\StateMachine\CodeCooker\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Symfony\Component\Validator\Constraints as Assert;
 

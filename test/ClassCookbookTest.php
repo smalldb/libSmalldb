@@ -18,10 +18,10 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\CodeGenerator\Cookbook;
-use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
-use Smalldb\StateMachine\CodeGenerator\Recipe\DummyRecipe;
-use Smalldb\StateMachine\CodeGenerator\RecipeLocator;
+use Smalldb\StateMachine\CodeCooker\Cookbook;
+use Smalldb\StateMachine\CodeCooker\Recipe\DtoRecipe;
+use Smalldb\StateMachine\CodeCooker\Recipe\DummyRecipe;
+use Smalldb\StateMachine\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 

@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Recipe;
+namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\Generator\DtoGenerator;
+use Smalldb\StateMachine\CodeCooker\Generator\DtoGenerator;
 
 
 class DtoRecipe extends ClassRecipe

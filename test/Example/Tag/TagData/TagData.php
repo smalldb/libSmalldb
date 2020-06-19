@@ -6,7 +6,7 @@
 // 
 namespace Smalldb\StateMachine\Test\Example\Tag\TagData;
 
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 
 
 /**

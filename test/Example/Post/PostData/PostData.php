@@ -7,7 +7,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post\PostData;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 
 
 /**

@@ -16,14 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Generator;
+namespace Smalldb\StateMachine\CodeCooker\Generator;
 
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
-use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\PhpFileWriter;

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeCooker;
+
+use Smalldb\StateMachine\CodeCooker\Recipe\ClassRecipe;
 
 
-/**
- * Export method as public in the setter trait
- *
- * @Annotation
- * @Target({"METHOD"})
- */
-class PublicMutator
+interface AnnotationRecipeBuilder
 {
+
+	public function buildRecipe(\ReflectionClass $sourceClass): ClassRecipe;
 
 }

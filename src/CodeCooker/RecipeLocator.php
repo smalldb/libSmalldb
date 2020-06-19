@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\CodeCooker;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;

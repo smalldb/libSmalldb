@@ -16,20 +16,29 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Generator;
+namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
-use Smalldb\StateMachine\Utils\PhpFileWriter;
-
-
-trait GeneratorHelpers
+/**
+ * ClassRecipe: an empty recipe, a base class for other recipes.
+ */
+abstract class ClassRecipe
 {
+	/** @var string[] */
+	private array $targetClassNames;
 
-	protected function createFileWriter(string $targetNamespace, ?object $annotation = null): PhpFileWriter
+
+	public function __construct(array $targetClassNames)
 	{
-		$w = new PhpFileWriter();
-		$w->setFileHeader(get_class($this) . ($annotation ? ' (@' . get_class($annotation) . ' annotation)' : ''));
-		$w->setNamespace($targetNamespace);
-		return $w;
+		$this->targetClassNames = $targetClassNames;
 	}
+
+
+	public function getTargetClassNames(): array
+	{
+		return $this->targetClassNames;
+	}
+
+
+	abstract public function cookRecipe(): array;
 
 }

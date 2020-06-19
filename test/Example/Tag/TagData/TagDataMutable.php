@@ -7,7 +7,7 @@
 namespace Smalldb\StateMachine\Test\Example\Tag\TagData;
 
 use InvalidArgumentException;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Test\Example\Tag\TagProperties as Source_TagProperties;
 
 

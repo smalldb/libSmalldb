@@ -16,16 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Recipe;
+namespace Smalldb\StateMachine\CodeCooker;
+
+use Throwable;
 
 
-class DummyRecipe extends ClassRecipe
+class DuplicateRecipeException extends \InvalidArgumentException
 {
 
-	public function cookRecipe(): array
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
 	{
-		// No-op. This is just a training dummy.
-		return [];
+		parent::__construct($message, $code, $previous);
 	}
 
 }

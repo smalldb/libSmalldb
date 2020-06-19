@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
+use Smalldb\StateMachine\CodeCooker\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 

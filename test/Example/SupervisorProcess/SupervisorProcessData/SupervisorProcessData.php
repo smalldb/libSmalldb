@@ -7,7 +7,7 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
 use DateTimeImmutable;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 
 
 /**

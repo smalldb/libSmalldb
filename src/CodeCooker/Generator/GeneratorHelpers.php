@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,20 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeCooker\Generator;
 
-use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\AnnotationRecipeBuilder;
-use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
+use Smalldb\StateMachine\Utils\PhpFileWriter;
 
 
-/**
- * Generate DTO from the annotated class
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class GenerateDTO implements AnnotationRecipeBuilder
+trait GeneratorHelpers
 {
-	public ?string $targetName = null;
 
-
-	public function buildRecipe(ReflectionClass $sourceClass): DtoRecipe
+	protected function createFileWriter(string $targetNamespace, ?object $annotation = null): PhpFileWriter
 	{
-		return DtoRecipe::fromReflection($sourceClass, $this->targetName);
+		$w = new PhpFileWriter();
+		$w->setFileHeader(get_class($this) . ($annotation ? ' (@' . get_class($annotation) . ' annotation)' : ''));
+		$w->setNamespace($targetNamespace);
+		return $w;
 	}
 
 }

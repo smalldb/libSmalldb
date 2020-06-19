@@ -7,7 +7,7 @@
 namespace Smalldb\StateMachine\Test\Example\User\UserData;
 
 use InvalidArgumentException;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Test\Example\User\UserProperties as Source_UserProperties;
 
 

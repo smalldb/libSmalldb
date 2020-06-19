@@ -16,14 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
-
-use Smalldb\StateMachine\CodeGenerator\Recipe\ClassRecipe;
+namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
 
-interface AnnotationRecipeBuilder
+class DummyRecipe extends ClassRecipe
 {
 
-	public function buildRecipe(\ReflectionClass $sourceClass): ClassRecipe;
+	public function cookRecipe(): array
+	{
+		// No-op. This is just a training dummy.
+		return [];
+	}
 
 }

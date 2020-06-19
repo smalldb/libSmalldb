@@ -16,17 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeCooker\Annotation;
 
 
 /**
- * Mark class as generated, so that AnnotationProcessor skips it.
- * Do not use this in hand-written code.
+ * Export method as public in the setter trait
  *
  * @Annotation
- * @Target({"CLASS"})
+ * @Target({"METHOD"})
  */
-class GeneratedClass
+class PublicMutator
 {
 
 }

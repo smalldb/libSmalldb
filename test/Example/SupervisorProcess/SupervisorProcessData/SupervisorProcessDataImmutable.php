@@ -8,7 +8,7 @@ namespace Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessD
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
+use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessProperties as Source_SupervisorProcessProperties;
 
 
