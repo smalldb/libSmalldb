@@ -18,27 +18,14 @@
 
 namespace Smalldb\StateMachine\CodeGenerator\Recipe;
 
-/**
- * ClassRecipe: an empty recipe, a base class for other recipes.
- */
-abstract class ClassRecipe
+
+class DummyRecipe extends ClassRecipe
 {
-	/** @var string[] */
-	private array $targetClassNames;
 
-
-	public function __construct(array $targetClassNames)
+	public function cookRecipe(): array
 	{
-		$this->targetClassNames = $targetClassNames;
+		// No-op. This is just a training dummy.
+		return [];
 	}
-
-
-	public function getTargetClassNames(): array
-	{
-		return $this->targetClassNames;
-	}
-
-
-	abstract public function cookRecipe(): array;
 
 }

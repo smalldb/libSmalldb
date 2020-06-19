@@ -20,8 +20,8 @@ namespace Smalldb\StateMachine\Test;
 
 use PHPStan\Testing\TestCase;
 use Smalldb\StateMachine\CodeGenerator\Cookbook;
-use Smalldb\StateMachine\CodeGenerator\Recipe\ClassRecipe;
 use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
+use Smalldb\StateMachine\CodeGenerator\Recipe\DummyRecipe;
 use Smalldb\StateMachine\CodeGenerator\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
@@ -33,8 +33,8 @@ class CookbookTest extends TestCase
 	public function testCookbookAddRecipe()
 	{
 		$cookbook = new Cookbook();
-		$recipeFoo = new ClassRecipe(["foo"]);
-		$recipeBar = new ClassRecipe(["bar", "baz"]);
+		$recipeFoo = new DummyRecipe(["foo"]);
+		$recipeBar = new DummyRecipe(["bar", "baz"]);
 
 		$cookbook->addRecipe($recipeFoo);
 		$cookbook->addRecipe($recipeBar);
@@ -48,8 +48,8 @@ class CookbookTest extends TestCase
 	public function testCookbookAddRecipes()
 	{
 		$cookbook = new Cookbook();
-		$recipeFoo = new ClassRecipe(["foo"]);
-		$recipeBar = new ClassRecipe(["bar", "baz"]);
+		$recipeFoo = new DummyRecipe(["foo"]);
+		$recipeBar = new DummyRecipe(["bar", "baz"]);
 
 		$generator = function () use ($recipeFoo, $recipeBar) {
 			yield $recipeFoo;
