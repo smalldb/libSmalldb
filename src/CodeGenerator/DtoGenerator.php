@@ -64,6 +64,28 @@ class DtoGenerator implements AnnotationHandler
 	}
 
 
+	public static function calculateTargetClassNames(ReflectionClass $sourceClass, ?string $targetName = null): array
+	{
+		$suffixes = [
+			'',
+			'Immutable',
+			'Mutable',
+			'FormDataMapper',
+		];
+
+		$sourceShortName = $sourceClass->getShortName();
+		$targetName ??= $sourceShortName;
+		$targetNamespace = $sourceClass->getNamespaceName() . '\\' . $targetName;
+
+		$targetClassNames = [];
+		foreach ($suffixes as $suffix) {
+			$targetShortName = $targetName . $suffix;
+			$targetClassNames[] = $targetNamespace . '\\' . $targetShortName;
+		}
+		return $targetClassNames;
+	}
+
+
 	public function generateDtoClasses(ReflectionClass $sourceClass, ?string $targetName = null): array
 	{
 		$immutableInterface = $this->inferImmutableInterface($sourceClass, $targetName, '');

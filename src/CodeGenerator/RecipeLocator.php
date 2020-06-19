@@ -20,13 +20,12 @@ namespace Smalldb\StateMachine\CodeGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
-use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 
 
-class CodeGenerator
+class RecipeLocator
 {
 
 	/** @var ClassLocator[] */
@@ -75,10 +74,10 @@ class CodeGenerator
 	}
 
 
-	public function processClasses(): void
+	public function locateRecipes(): \Generator
 	{
 		foreach ($this->locateClasses() as $className) {
-			$this->processClass(new ReflectionClass($className));
+			yield from $this->locateClassRecipes(new ReflectionClass($className));
 		}
 	}
 
@@ -112,28 +111,27 @@ class CodeGenerator
 	/**
 	 * @return string[]  List of generated classes (FQCNs)
 	 */
-	public function processClass(ReflectionClass $sourceClass): array
+	public function locateClassRecipes(ReflectionClass $sourceClass): \Generator
 	{
 		$annotations = $this->annotationReader->getClassAnnotations($sourceClass);
-		$generatedClasses = [];
 
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof GeneratedClass) {
 				// Do not process generated classes
-				return [];
+				return;
 			}
 		}
 
 		foreach ($annotations as $annotation) {
 			$annotationClassName = get_class($annotation);
-			if (isset($this->annotationHandlers[$annotationClassName])) {
+			if ($annotation instanceof AnnotationRecipeBuilder) {
+				yield $annotation->buildRecipe($sourceClass);
+			} else if (isset($this->annotationHandlers[$annotationClassName])) {
 				foreach ($this->annotationHandlers[$annotationClassName] as $handler) {
-					$generatedClasses[] = $handler->handleClassAnnotation($sourceClass, $annotation);
+					yield $handler->handleClassAnnotation($sourceClass, $annotation);
 				}
 			}
 		}
-
-		return array_merge(...$generatedClasses);
 	}
 
 

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
+namespace Smalldb\StateMachine\CodeGenerator;
 
-use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\AnnotationRecipeBuilder;
-use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
+use Throwable;
 
 
-/**
- * Generate DTO from the annotated class
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class GenerateDTO implements AnnotationRecipeBuilder
+class DuplicateRecipeException extends \InvalidArgumentException
 {
-	public ?string $targetName = null;
 
-
-	public function buildRecipe(ReflectionClass $sourceClass): DtoRecipe
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
 	{
-		return DtoRecipe::fromReflection($sourceClass, $this->targetName);
+		parent::__construct($message, $code, $previous);
 	}
 
 }

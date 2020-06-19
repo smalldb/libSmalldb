@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,32 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator\Annotation;
-
-use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\AnnotationRecipeBuilder;
-use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
-
+namespace Smalldb\StateMachine\CodeGenerator\Recipe;
 
 /**
- * Generate DTO from the annotated class
- *
- * @Annotation
- * @Target({"CLASS"})
+ * ClassRecipe: an empty recipe, a base class for other recipes.
  */
-class GenerateDTO implements AnnotationRecipeBuilder
+class ClassRecipe
 {
-	public ?string $targetName = null;
+	/** @var string[] */
+	private array $targetClassNames;
 
 
-	public function buildRecipe(ReflectionClass $sourceClass): DtoRecipe
+	public function __construct(array $targetClassNames)
 	{
-		return DtoRecipe::fromReflection($sourceClass, $this->targetName);
+		$this->targetClassNames = $targetClassNames;
+	}
+
+
+	public function getTargetClassNames(): array
+	{
+		return $this->targetClassNames;
+	}
+
+
+	public function cookRecipe(): array
+	{
+		return [];
 	}
 
 }
