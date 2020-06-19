@@ -19,69 +19,18 @@
 namespace Smalldb\StateMachine\Test;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
-use Smalldb\StateMachine\CodeGenerator\AnnotationHandler;
-use Smalldb\StateMachine\CodeGenerator\CodeGenerator;
-use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
-use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessData;
+use Smalldb\StateMachine\CodeGenerator\Generator\DtoGenerator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagProperties;
 use Smalldb\StateMachine\Test\Example\Tag\TagType;
-use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Symfony\Component\Form\Forms;
 
 
 class DtoGeneratorTest extends TestCase
 {
 
-	/**
-	 * @depends testLocateClasses
-	 */
-	public function testDeleteGeneratedClasses()
-	{
-		// FIXME: Post reference breaks this test :(
-		$this->assertTrue(true);
-		return;
-
-		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
-		$cg->deleteGeneratedClasses();
-
-		$this->assertFileNotExists(__DIR__ . '/Example/Tag/TagData/TagData.php');
-
-		// Remove one of the target directories to test that it will get created again
-		$tagDataDir = __DIR__ . '/Example/Tag/TagData';
-		if (is_dir($tagDataDir)) {
-			rmdir($tagDataDir);
-		}
-		$this->assertDirectoryNotExists(__DIR__ . '/Example/Tag/TagData');
-	}
-
-
-	/**
-	 * @depends testDeleteGeneratedClasses
-	 */
-	public function testCodeGenerator()
-	{
-		$handlerMock = $this->getMockBuilder(AnnotationHandler::class)->getMock();
-		$handlerMock->method('getSupportedAnnotations')->willReturn([GenerateDTO::class]);
-		$handlerMock->expects($this->once())->method('handleClassAnnotation');
-
-		$cg = new CodeGenerator();
-		/** @noinspection PhpParamsInspection */
-		$cg->addAnnotationHandler($handlerMock);
-		$generatedClasses = $cg->processClass(new ReflectionClass(TagProperties::class));
-
-		$this->assertClassOrInterfaceOrTraitExists(TagData::class);
-		$this->assertContainsEquals(TagData::class, $generatedClasses);
-	}
-
-
-	/**
-	 * @depends testDeleteGeneratedClasses
-	 */
 	public function testGenerateTagDto()
 	{
 		$g = new DtoGenerator();
@@ -112,20 +61,6 @@ class DtoGeneratorTest extends TestCase
 		$this->assertNotSame($copiedTag, $mutatedTag);
 		$mutatedSlug = $mutatedTag->getSlug();
 		$this->assertEquals('with-foo', $mutatedSlug);
-	}
-
-
-	/**
-	 * @depends testDeleteGeneratedClasses
-	 */
-	public function testEntireCodeGeneratorFlow()
-	{
-		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
-		$cg->addAnnotationHandler(new DtoGenerator($cg->getAnnotationReader()));
-		$cg->processClasses();
-
-		$this->assertClassOrInterfaceExists(SupervisorProcessData::class);
 	}
 
 
