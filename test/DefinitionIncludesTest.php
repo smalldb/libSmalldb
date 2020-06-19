@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;

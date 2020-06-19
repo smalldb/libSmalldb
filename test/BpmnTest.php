@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\BpmnExtension\GrafovatkoProcessor;
 use Smalldb\StateMachine\BpmnExtension\BpmnReader;
 use Smalldb\StateMachine\BpmnExtension\SvgPainter;

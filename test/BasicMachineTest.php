@@ -18,7 +18,6 @@
 namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;

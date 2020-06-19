@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Graph\Grafovatko\Processor;
 use Smalldb\StateMachine\Graph\Graph;

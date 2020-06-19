@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceProtectedAPI;

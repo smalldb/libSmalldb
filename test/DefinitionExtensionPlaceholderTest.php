@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\Test;
 
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\Builder\ActionPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;

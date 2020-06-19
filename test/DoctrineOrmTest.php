@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;

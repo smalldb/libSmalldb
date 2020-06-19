@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
@@ -124,7 +123,6 @@ class ClassLocatorTest extends TestCase
 		// Excluded class
 		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
 		$this->assertNotContains(SymfonyDemoDatabase::class, $classes);
-		$this->assertNotContains(TestCase::class, $classes);
 	}
 
 }

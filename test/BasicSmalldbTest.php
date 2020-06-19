@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;

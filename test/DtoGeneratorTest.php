@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\CodeGenerator\AnnotationHandler;
@@ -191,24 +190,6 @@ class DtoGeneratorTest extends TestCase
 
 		$newName = $newTag->getName();
 		$this->assertEquals('New tag name', $newName);
-	}
-
-
-	private function assertClassExists(string $className)
-	{
-		$this->assertTrue(class_exists($className), "Class $className does not exist.");
-	}
-
-	private function assertClassOrInterfaceExists(string $className)
-	{
-		$this->assertTrue(class_exists($className) || interface_exists($className),
-			"Class or interface $className does not exist.");
-	}
-
-	private function assertClassOrInterfaceOrTraitExists(string $className)
-	{
-		$this->assertTrue(class_exists($className) || interface_exists($className) || trait_exists($className),
-			"Class or interface or trait $className does not exist.");
 	}
 
 }

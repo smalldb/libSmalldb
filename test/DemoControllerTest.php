@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
 use PDO;
-use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Smalldb;

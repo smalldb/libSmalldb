@@ -17,7 +17,6 @@
  */
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
 use Smalldb\StateMachine\Definition\Builder\DuplicatePropertyException;
 use Smalldb\StateMachine\Definition\Builder\DuplicateStateException;

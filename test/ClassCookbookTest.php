@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPStan\Testing\TestCase;
 use Smalldb\StateMachine\CodeGenerator\Cookbook;
 use Smalldb\StateMachine\CodeGenerator\Recipe\DtoRecipe;
 use Smalldb\StateMachine\CodeGenerator\Recipe\DummyRecipe;
@@ -27,7 +26,7 @@ use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 
 
-class CookbookTest extends TestCase
+class ClassCookbookTest extends TestCase
 {
 
 	public function testCookbookAddRecipe()
@@ -93,13 +92,6 @@ class CookbookTest extends TestCase
 
 		$tagDataRecipe = $cookbook->findRecipe(TagData::class);
 		$this->assertInstanceOf(DtoRecipe::class, $tagDataRecipe);
-	}
-
-
-	private function assertClassOrInterfaceOrTraitExists(string $className)
-	{
-		$this->assertTrue(class_exists($className) || interface_exists($className) || trait_exists($className),
-			"Class or interface or trait $className does not exist.");
 	}
 
 }

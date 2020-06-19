@@ -19,7 +19,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Test\Database\ArrayDao;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 

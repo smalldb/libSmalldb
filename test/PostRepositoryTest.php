@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;

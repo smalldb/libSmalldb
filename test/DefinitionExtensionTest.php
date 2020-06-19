@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Definition\ExtensibleDefinition;

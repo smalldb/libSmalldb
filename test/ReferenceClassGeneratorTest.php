@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
 use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;

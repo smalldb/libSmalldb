@@ -17,7 +17,6 @@
  */
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Framework\TestCase;
 use Smalldb\StateMachine\Graph\DuplicateAttrIndexException;
 use Smalldb\StateMachine\Graph\DuplicateEdgeException;
 use Smalldb\StateMachine\Graph\DuplicateNodeException;
