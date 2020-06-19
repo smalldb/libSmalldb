@@ -16,14 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\CodeGenerator\Generator;
 
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use Smalldb\StateMachine\CodeGenerator\Annotation\GeneratedClass;
-use Smalldb\StateMachine\CodeGenerator\Annotation\GenerateDTO;
 use Smalldb\StateMachine\CodeGenerator\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
@@ -33,7 +32,7 @@ use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 
-class DtoGenerator implements AnnotationHandler
+class DtoGenerator
 {
 	use GeneratorHelpers;
 
@@ -43,24 +42,6 @@ class DtoGenerator implements AnnotationHandler
 	public function __construct(?AnnotationReaderInterface $annotationReader = null)
 	{
 		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
-	}
-
-
-	public function getSupportedAnnotations(): array
-	{
-		return [
-			GenerateDTO::class
-		];
-	}
-
-
-	public function handleClassAnnotation(ReflectionClass $sourceClass, object $annotation): array
-	{
-		if ($annotation instanceof GenerateDTO) {
-			return $this->generateDtoClasses($sourceClass, $annotation->targetName);
-		} else {
-			throw new \LogicException("Unsupported annotation: " . get_class($annotation)); // @codeCoverageIgnore
-		}
 	}
 
 

@@ -28,6 +28,7 @@ class Cookbook
 
 	private array $knownClasses = [];
 
+
 	public function __construct(array $recipes = [])
 	{
 		$this->recipes = $recipes;

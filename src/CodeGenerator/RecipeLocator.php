@@ -27,12 +27,8 @@ use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 
 class RecipeLocator
 {
-
 	/** @var ClassLocator[] */
 	private array $classLocators = [];
-
-	/** @var AnnotationHandler[][] */
-	private array $annotationHandlers = [];
 
 	private AnnotationReaderInterface $annotationReader;
 
@@ -40,7 +36,6 @@ class RecipeLocator
 	public function __construct(AnnotationReaderInterface $annotationReader = null)
 	{
 		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
-		$this->addAnnotationHandler(new DtoGenerator($this->annotationReader));
 	}
 
 
@@ -53,14 +48,6 @@ class RecipeLocator
 	public function addClassLocator(ClassLocator $classLocator): void
 	{
 		$this->classLocators[] = $classLocator;
-	}
-
-
-	public function addAnnotationHandler(AnnotationHandler $annotationHandler): void
-	{
-		foreach ($annotationHandler->getSupportedAnnotations() as $annotationClassName) {
-			$this->annotationHandlers[$annotationClassName][] = $annotationHandler;
-		}
 	}
 
 
@@ -83,62 +70,24 @@ class RecipeLocator
 
 
 	/**
-	 * @return ReflectionClass[]
-	 */
-	public function locateGeneratedClasses(): iterable
-	{
-		foreach ($this->locateClasses() as $className) {
-			$class = new ReflectionClass($className);
-			if ($this->hasGeneratedAnnotation($class)) {
-				yield $class;
-			}
-		}
-	}
-
-
-	private function hasGeneratedAnnotation(ReflectionClass $class): bool
-	{
-		$annotations = $this->annotationReader->getClassAnnotations($class);
-		foreach ($annotations as $annotation) {
-			if ($annotation instanceof GeneratedClass) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-	/**
 	 * @return string[]  List of generated classes (FQCNs)
 	 */
 	public function locateClassRecipes(ReflectionClass $sourceClass): \Generator
 	{
 		$annotations = $this->annotationReader->getClassAnnotations($sourceClass);
 
+		// Do not process generated classes
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof GeneratedClass) {
-				// Do not process generated classes
 				return;
 			}
 		}
 
+		// Convert annotations to recipes
 		foreach ($annotations as $annotation) {
-			$annotationClassName = get_class($annotation);
 			if ($annotation instanceof AnnotationRecipeBuilder) {
 				yield $annotation->buildRecipe($sourceClass);
-			} else if (isset($this->annotationHandlers[$annotationClassName])) {
-				foreach ($this->annotationHandlers[$annotationClassName] as $handler) {
-					yield $handler->handleClassAnnotation($sourceClass, $annotation);
-				}
 			}
-		}
-	}
-
-
-	public function deleteGeneratedClasses(): void
-	{
-		foreach ($this->locateGeneratedClasses() as $generatedClass) {
-			unlink($generatedClass->getFileName());
 		}
 	}
 

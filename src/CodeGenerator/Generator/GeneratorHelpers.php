@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeGenerator;
+namespace Smalldb\StateMachine\CodeGenerator\Generator;
 
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 
@@ -24,10 +24,10 @@ use Smalldb\StateMachine\Utils\PhpFileWriter;
 trait GeneratorHelpers
 {
 
-	protected function createFileWriter(string $targetNamespace, ?InferClassAnnotation $annotationReflection = null): PhpFileWriter
+	protected function createFileWriter(string $targetNamespace, ?object $annotation = null): PhpFileWriter
 	{
 		$w = new PhpFileWriter();
-		$w->setFileHeader(get_class($this) . ($annotationReflection ? ' (@' . get_class($annotationReflection) . ' annotation)' : ''));
+		$w->setFileHeader(get_class($this) . ($annotation ? ' (@' . get_class($annotation) . ' annotation)' : ''));
 		$w->setNamespace($targetNamespace);
 		return $w;
 	}

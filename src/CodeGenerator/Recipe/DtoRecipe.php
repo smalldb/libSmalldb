@@ -18,9 +18,8 @@
 
 namespace Smalldb\StateMachine\CodeGenerator\Recipe;
 
-
 use ReflectionClass;
-use Smalldb\StateMachine\CodeGenerator\DtoGenerator;
+use Smalldb\StateMachine\CodeGenerator\Generator\DtoGenerator;
 
 
 class DtoRecipe extends ClassRecipe

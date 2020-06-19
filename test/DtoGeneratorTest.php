@@ -37,21 +37,6 @@ use Symfony\Component\Form\Forms;
 class DtoGeneratorTest extends TestCase
 {
 
-	public function testLocateClasses()
-	{
-		$cg = new CodeGenerator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
-		$foundClassCount = 0;
-
-		foreach ($cg->locateClasses() as $classname) {
-			$this->assertClassOrInterfaceOrTraitExists($classname);
-			$foundClassCount++;
-		}
-
-		$this->assertGreaterThanOrEqual(3, $foundClassCount);
-	}
-
-
 	/**
 	 * @depends testLocateClasses
 	 */
