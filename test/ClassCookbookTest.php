@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\CodeCooker\Cookbook;
+use Smalldb\StateMachine\CodeCooker\DuplicateRecipeException;
 use Smalldb\StateMachine\CodeCooker\Recipe\DtoRecipe;
 use Smalldb\StateMachine\CodeCooker\Recipe\DummyRecipe;
 use Smalldb\StateMachine\CodeCooker\RecipeLocator;
@@ -41,6 +42,19 @@ class ClassCookbookTest extends TestCase
 		$recipes = $cookbook->getRecipes();
 		$this->assertContains($recipeFoo, $recipes);
 		$this->assertContains($recipeBar, $recipes);
+	}
+
+
+	public function testCookbookAddDuplicateRecipe()
+	{
+		$cookbook = new Cookbook();
+		$recipeFoo = new DummyRecipe(["foo"]);
+		$recipeBar = new DummyRecipe(["bar", "baz", "foo"]);
+
+		$cookbook->addRecipe($recipeFoo);
+
+		$this->expectException(DuplicateRecipeException::class);
+		$cookbook->addRecipe($recipeBar);
 	}
 
 

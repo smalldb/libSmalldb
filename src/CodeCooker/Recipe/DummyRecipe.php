@@ -25,7 +25,7 @@ class DummyRecipe extends ClassRecipe
 	public function cookRecipe(): array
 	{
 		// No-op. This is just a training dummy.
-		return [];
+		return [];  // @codeCoverageIgnore
 	}
 
 }
