@@ -51,19 +51,17 @@ class RecipeLocator
 	}
 
 
-	public function locateClasses(): iterable
+	public function locateClasses(): \Generator
 	{
 		foreach ($this->classLocators as $classLocator) {
-			foreach ($classLocator->getClasses() as $classname) {
-				yield $classname;
-			}
+			yield from $classLocator->getClasses();
 		}
 	}
 
 
 	public function locateRecipes(): \Generator
 	{
-		foreach ($this->locateClasses() as $className) {
+		foreach ($this->locateClasses() as $filename => $className) {
 			yield from $this->locateClassRecipes(new ReflectionClass($className));
 		}
 	}

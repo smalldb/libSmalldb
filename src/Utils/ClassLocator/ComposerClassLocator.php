@@ -66,6 +66,8 @@ class ComposerClassLocator implements ClassLocator
 
 	public function getClasses(): \Generator
 	{
+		// TODO: Refactor this so that it builds a list of Class Locators and then introduce CompositeClassLocator.
+
 		$autoloader = $this->loadComposerAutoloader($this->comopserAutoloaderPath);
 
 		// Class map

@@ -77,6 +77,17 @@ class ClassCookbookTest extends TestCase
 	}
 
 
+	public function testCookbookGetTargetClassNames()
+	{
+		$cookbook = new Cookbook();
+		$cookbook->addRecipe(new DummyRecipe(["foo"]));
+		$cookbook->addRecipe(new DummyRecipe(["bar", "baz"]));
+
+		$targetClassNames = iterator_to_array($cookbook->getAllTargetClassNames());
+		$this->assertEquals(["foo", "bar", "baz"], $targetClassNames);
+	}
+
+
 	public function testLocateClasses()
 	{
 		$cg = new RecipeLocator();

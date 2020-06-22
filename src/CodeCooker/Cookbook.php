@@ -66,4 +66,14 @@ class Cookbook
 		return $this->knownClasses[$targetClassName] ?? null;
 	}
 
+
+	public function getAllTargetClassNames(): \Generator
+	{
+		foreach ($this->getRecipes() as $recipe) {
+			foreach ($recipe->getTargetClassNames() as $targetClassName) {
+				yield $targetClassName;
+			}
+		}
+	}
+
 }
