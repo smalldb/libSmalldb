@@ -79,7 +79,7 @@ class Psr4ClassLocator implements ClassLocator
 					continue;
 				}
 				try {
-					if (class_exists($className) || interface_exists($className) || trait_exists($className)) {
+					if (class_exists($className) || interface_exists($className, false) || trait_exists($className, false)) {
 						yield $fileAbsPath => $className;
 					}
 				}
