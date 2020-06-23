@@ -21,27 +21,20 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 use Composer\Autoload\ClassLoader;
 
 
-class ComposerClassLocator implements ClassLocator
+class ComposerClassLocator extends CompositeClassLocator implements ClassLocator
 {
-
-	/** @var string */
-	private $baseDir;
-
-	/** @var string */
-	private $comopserAutoloaderPath;
-
-	/** @var string */
-	private $vendorDir;
-
-	/** @var array */
-	private $includePaths;
-
-	/** @var array */
-	private $excludePaths;
+	private bool $setupComplete = false;
+	private string $baseDir;
+	private string $comopserAutoloaderPath;
+	private string $vendorDir;
+	private RealPathList $includePaths;
+	private RealPathList $excludePaths;
 
 
 	public function __construct(string $baseDir, $includePaths = [], $excludePaths = [], bool $excludeVendor = true, string $vendorDir = 'vendor')
 	{
+		parent::__construct();
+
 		$this->baseDir = realpath($baseDir);
 		$this->vendorDir = "$baseDir/$vendorDir";
 		$this->comopserAutoloaderPath = $this->vendorDir . "/autoload.php";
@@ -64,13 +57,16 @@ class ComposerClassLocator implements ClassLocator
 	}
 
 
-	public function getClasses(): \Generator
+	private function setup()
 	{
-		// TODO: Refactor this so that it builds a list of Class Locators and then introduce CompositeClassLocator.
+		if ($this->setupComplete) {
+			return;
+		}
 
 		$autoloader = $this->loadComposerAutoloader($this->comopserAutoloaderPath);
 
 		// Class map
+		$classMap = [];
 		foreach ($autoloader->getClassMap() as $classname => $filename) {
 			if (!$this->includePaths->isEmpty() && !$this->includePaths->contains($filename)) {
 				continue;
@@ -78,7 +74,10 @@ class ComposerClassLocator implements ClassLocator
 			if ($this->excludePaths->contains($filename)) {
 				continue;
 			}
-			yield $classname;
+			$classMap[$classname] = $filename;
+		}
+		if (!empty($classMap)) {
+			$this->addClassLocator(new ClassMapClassLocator($classMap));
 		}
 
 		if ($autoloader->isClassMapAuthoritative()) {
@@ -92,8 +91,7 @@ class ComposerClassLocator implements ClassLocator
 				if ($this->excludePaths->contains($dir)) {
 					continue;
 				}
-				$psr4Locator = new Psr4ClassLocator($prefix, $dir, $this->includePaths, $this->excludePaths);
-				yield from $psr4Locator->getClasses();
+				$this->addClassLocator(new Psr4ClassLocator($prefix, $dir, $this->includePaths, $this->excludePaths));
 			}
 		}
 
@@ -103,10 +101,11 @@ class ComposerClassLocator implements ClassLocator
 				if ($this->excludePaths->contains($dir)) {
 					continue;
 				}
-				$psr4Locator = new Psr0ClassLocator($dir, $this->includePaths, $this->excludePaths);
-				yield from $psr4Locator->getClasses();
+				$this->addClassLocator(new Psr0ClassLocator($dir, $this->includePaths, $this->excludePaths));
 			}
 		}
+
+		$this->setupComplete = true;
 	}
 
 
@@ -120,15 +119,24 @@ class ComposerClassLocator implements ClassLocator
 	}
 
 
+	public function getClasses(): \Generator
+	{
+		$this->setup();
+		yield from parent::getClasses();
+	}
+
+
 	public function mapClassNameToFileName(string $className): ?string
 	{
-		// TODO: Implement mapClassNameToFileName() method.
+		$this->setup();
+		return parent::mapClassNameToFileName($className);
 	}
 
 
 	public function mapFileNameToClassName(string $fileName): ?string
 	{
-		// TODO: Implement mapFileNameToClassName() method.
+		$this->setup();
+		return parent::mapFileNameToClassName($fileName);
 	}
 
 }

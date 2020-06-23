@@ -33,6 +33,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\PathList;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
@@ -106,19 +107,41 @@ class ClassLocatorTest extends TestCase
 	}
 
 
+	private function checkClassNameToFileName(ClassLocator $locator, string $className, bool $shouldBeFound = true)
+	{
+		$expectedFilename = (new ReflectionClass($className))->getFileName();
+		$mappedFileName = $locator->mapClassNameToFileName($className);
+
+		if ($shouldBeFound) {
+			$this->assertFileExists($mappedFileName);
+			$this->assertEquals(realpath($expectedFilename), realpath($mappedFileName));
+		} else {
+			$this->assertNull($mappedFileName);
+		}
+	}
+
+
+	private function checkFileNameToClassName(ClassLocator $locator, string $className, bool $shouldBeFound = true)
+	{
+		$this->assertTrue(class_exists($className));
+		$filename = (new ReflectionClass($className))->getFileName();
+
+		$mappedClassName = $locator->mapFileNameToClassName($filename);
+
+		if ($shouldBeFound) {
+			$this->assertEquals(realpath($className), $mappedClassName === null ? null : realpath($mappedClassName));
+		} else {
+			$this->assertNull($mappedClassName);
+		}
+	}
+
+
 	public function testPsr4LocatorMappingClassNameToFileName()
 	{
 		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
 
-		$className = Tag::class;
-		$mappedFileName = $locator->mapClassNameToFileName($className);
-		$expectedFilename = (new ReflectionClass($className))->getFileName();
-		$this->assertFileExists($mappedFileName);
-		$this->assertEquals($expectedFilename, $mappedFileName);
-
-		$className = StateMachine::class;
-		$mappedFileName = $locator->mapClassNameToFileName($className);
-		$this->assertNull($mappedFileName);
+		$this->checkClassNameToFileName($locator, Tag::class);
+		$this->checkClassNameToFileName($locator, StateMachine::class, false);
 
 		$this->expectException(InvalidArgumentException::class);
 		$locator->mapClassNameToFileName(__NAMESPACE__ . '\\..\\..\\etc\\passwd');
@@ -129,15 +152,8 @@ class ClassLocatorTest extends TestCase
 	{
 		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
 
-		$className = Tag::class;
-		$filename = (new ReflectionClass($className))->getFileName();
-		$mappedClassName = $locator->mapFileNameToClassName($filename);
-		$this->assertEquals($className, $mappedClassName);
-
-		$className = StateMachine::class;
-		$filename = (new ReflectionClass($className))->getFileName();
-		$mappedClassName = $locator->mapFileNameToClassName($filename);
-		$this->assertNull($mappedClassName);
+		$this->checkFileNameToClassName($locator, Tag::class);
+		$this->checkFileNameToClassName($locator, StateMachine::class, false);
 
 		$this->expectException(InvalidArgumentException::class);
 		$locator->mapFileNameToClassName(__DIR__ . '/../../etc/passwd');
@@ -148,6 +164,8 @@ class ClassLocatorTest extends TestCase
 	{
 		$locator = new ComposerClassLocator(dirname(__DIR__), ["src/Graph", "test"], ["test/BadExample", "test/Database", "test/output"]);
 		$classes = iterator_to_array($locator->getClasses(), false);
+
+		$this->assertContainsOnlyInstancesOf(ClassLocator::class, $locator->getClassLocators());
 
 		// A plain class outside tests
 		$this->assertTrue(class_exists(Graph::class));
@@ -170,6 +188,11 @@ class ClassLocatorTest extends TestCase
 		// Excluded class
 		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
 		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
+
+		// Check mapping
+		$this->checkClassNameToFileName($locator, Graph::class);
+		$this->checkClassNameToFileName($locator, ReflectionClass::class, false);
+		$this->checkFileNameToClassName($locator, Graph::class);
 	}
 
 
