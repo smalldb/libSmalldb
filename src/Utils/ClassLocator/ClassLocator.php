@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,4 +22,6 @@ namespace Smalldb\StateMachine\Utils\ClassLocator;
 interface ClassLocator
 {
 	public function getClasses(): \Generator;
+	public function mapClassNameToFileName(string $className): ?string;
+	public function mapFileNameToClassName(string $fileName): ?string;
 }

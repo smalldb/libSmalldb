@@ -119,4 +119,16 @@ class ComposerClassLocator implements ClassLocator
 		return $composerAutoloader;
 	}
 
+
+	public function mapClassNameToFileName(string $className): ?string
+	{
+		// TODO: Implement mapClassNameToFileName() method.
+	}
+
+
+	public function mapFileNameToClassName(string $fileName): ?string
+	{
+		// TODO: Implement mapFileNameToClassName() method.
+	}
+
 }

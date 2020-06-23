@@ -29,6 +29,7 @@ class Psr4ClassLocator implements ClassLocator
 	private RealPathList $includePaths;
 	private PathList $excludePaths;
 
+
 	public function __construct(string $namespace, string $directory, $includePaths = [], $excludePaths = [])
 	{
 		$this->namespace = $namespace === '' ? '\\' : ($namespace[-1] === "\\" ? $namespace : $namespace . "\\");
@@ -83,10 +84,39 @@ class Psr4ClassLocator implements ClassLocator
 						yield $fileAbsPath => $className;
 					}
 				}
-				catch(\Throwable $ex) {
+				catch (\Throwable $ex) {
 					// Ignore errors; just don't enumerate the broken class.
 				}
 			}
+		}
+	}
+
+
+	public function mapClassNameToFileName(string $className): ?string
+	{
+		if (str_starts_with($className, $this->namespace)) {
+			$relPath = substr($className, strlen($this->namespace));
+			if (!preg_match('/^[A-Za-z0-9_\\\\]+$/', $relPath)) {
+				throw new InvalidArgumentException("Invalid class name: " . $className);
+			}
+			return $this->directory . DIRECTORY_SEPARATOR
+				. str_replace('\\', DIRECTORY_SEPARATOR, $relPath) . '.php';
+		} else {
+			return null;
+		}
+	}
+
+
+	public function mapFileNameToClassName(string $fileName): ?string
+	{
+		if (str_starts_with($fileName, $this->directory)) {
+			$relPath = substr($fileName, strlen($this->directory));
+			if (!preg_match('/^[A-Za-z0-9_\\/\\\\]+\\.php$/', $relPath)) {
+				throw new InvalidArgumentException("Invalid filename: " . $fileName);
+			}
+			return $this->namespace . trim(str_replace(['.php', '\\', '/'], ['', '\\', '\\'], $relPath), '\\');
+		} else {
+			return null;
 		}
 	}
 

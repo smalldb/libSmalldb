@@ -19,7 +19,9 @@
 namespace Smalldb\StateMachine\Test;
 
 use ReflectionClass;
+use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\BadExample\BrokenClass\MissingImplementationDummy;
 use Smalldb\StateMachine\Test\BadExample\BrokenClass\MissingInterfaceDummy;
@@ -30,6 +32,7 @@ use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\PathList;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
@@ -100,6 +103,44 @@ class ClassLocatorTest extends TestCase
 		// Excluded class
 		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
 		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
+	}
+
+
+	public function testPsr4LocatorMappingClassNameToFileName()
+	{
+		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
+
+		$className = Tag::class;
+		$mappedFileName = $locator->mapClassNameToFileName($className);
+		$expectedFilename = (new ReflectionClass($className))->getFileName();
+		$this->assertFileExists($mappedFileName);
+		$this->assertEquals($expectedFilename, $mappedFileName);
+
+		$className = StateMachine::class;
+		$mappedFileName = $locator->mapClassNameToFileName($className);
+		$this->assertNull($mappedFileName);
+
+		$this->expectException(InvalidArgumentException::class);
+		$locator->mapClassNameToFileName(__NAMESPACE__ . '\\..\\..\\etc\\passwd');
+	}
+
+
+	public function testPsr4LocatorMappingFileNameToClassName()
+	{
+		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
+
+		$className = Tag::class;
+		$filename = (new ReflectionClass($className))->getFileName();
+		$mappedClassName = $locator->mapFileNameToClassName($filename);
+		$this->assertEquals($className, $mappedClassName);
+
+		$className = StateMachine::class;
+		$filename = (new ReflectionClass($className))->getFileName();
+		$mappedClassName = $locator->mapFileNameToClassName($filename);
+		$this->assertNull($mappedClassName);
+
+		$this->expectException(InvalidArgumentException::class);
+		$locator->mapFileNameToClassName(__DIR__ . '/../../etc/passwd');
 	}
 
 
