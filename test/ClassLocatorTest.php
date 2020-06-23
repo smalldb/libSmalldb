@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use ReflectionClass;
 use Smalldb\StateMachine\Graph\Graph;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\BadExample\BrokenClass\MissingImplementationDummy;
@@ -29,9 +30,7 @@ use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
-use Smalldb\StateMachine\Test\Misc\ClassExistenceResource;
 use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\MissingClassException;
 use Smalldb\StateMachine\Utils\ClassLocator\PathList;
 use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 use Smalldb\StateMachine\Utils\ClassLocator\RealPathList;
@@ -88,19 +87,19 @@ class ClassLocatorTest extends TestCase
 
 		// A plain class
 		$this->assertTrue(class_exists(PostRepository::class));
-		$this->assertContains(PostRepository::class, $classes);
+		$this->assertContainsEquals(PostRepository::class, $classes);
 
 		// An abstract class
 		$this->assertTrue(class_exists(Post::class));
-		$this->assertContains(Post::class, $classes);
+		$this->assertContainsEquals(Post::class, $classes);
 
 		// An interface
 		$this->assertTrue(interface_exists(CrudItem::class));
-		$this->assertContains(CrudItem::class, $classes);
+		$this->assertContainsEquals(CrudItem::class, $classes);
 
 		// Excluded class
 		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
-		$this->assertNotContains(SymfonyDemoDatabase::class, $classes);
+		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
 	}
 
 
@@ -142,10 +141,15 @@ class ClassLocatorTest extends TestCase
 		// There should be at least one class that is not completely broken.
 		$this->assertNotEmpty($foundClasses);
 
-		// Classes that may be abstract but exists.
+		// Classes that may be abstract but exists ...
 		$this->assertContainsEquals(MissingImplementationDummy::class, $foundClasses);
 		$this->assertContainsEquals(MissingTraitDummy::class, $foundClasses);
 		$this->assertContainsEquals(MissingTypehintsDummy::class, $foundClasses);
+
+		// ... and thus we can get a reflection object for each of them.
+		$this->assertNotEmpty(new ReflectionClass(MissingImplementationDummy::class));
+		$this->assertNotEmpty(new ReflectionClass(MissingTraitDummy::class));
+		$this->assertNotEmpty(new ReflectionClass(MissingTypehintsDummy::class));
 
 		// Classes that are really broken
 		$this->assertNotContainsEquals(MissingInterfaceDummy::class, $foundClasses);
