@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+
+
 /**
  * ClassRecipe: an empty recipe, a base class for other recipes.
  */
@@ -39,6 +42,6 @@ abstract class ClassRecipe
 	}
 
 
-	abstract public function cookRecipe(): array;
+	abstract public function cookRecipe(ClassLocator $classLocator): array;
 
 }

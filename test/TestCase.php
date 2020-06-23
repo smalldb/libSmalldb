@@ -18,19 +18,31 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
+
+
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
+
+	protected function createExampleClassLocator(): ClassLocator
+	{
+		return new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . DIRECTORY_SEPARATOR . 'Example');
+	}
+
 
 	protected function assertClassExists(string $className)
 	{
 		$this->assertTrue(class_exists($className), "Class $className does not exist.");
 	}
 
+
 	protected function assertClassOrInterfaceExists(string $className)
 	{
 		$this->assertTrue(class_exists($className) || interface_exists($className),
 			"Class or interface $className does not exist.");
 	}
+
 
 	protected function assertClassOrInterfaceOrTraitExists(string $className)
 	{

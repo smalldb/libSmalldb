@@ -24,7 +24,6 @@ use Smalldb\StateMachine\CodeCooker\Recipe\DtoRecipe;
 use Smalldb\StateMachine\CodeCooker\Recipe\DummyRecipe;
 use Smalldb\StateMachine\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
-use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
 
 
 class ClassCookbookTest extends TestCase
@@ -90,11 +89,10 @@ class ClassCookbookTest extends TestCase
 
 	public function testLocateClasses()
 	{
-		$cg = new RecipeLocator();
-		$cg->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
+		$cg = new RecipeLocator($this->createExampleClassLocator());
 		$foundClassCount = 0;
 
-		foreach ($cg->locateClasses() as $classname) {
+		foreach ($cg->getClassLocator()->getClasses() as $classname) {
 			$this->assertClassOrInterfaceOrTraitExists($classname);
 			$foundClassCount++;
 		}
@@ -106,8 +104,7 @@ class ClassCookbookTest extends TestCase
 
 	public function testLocateRecipes()
 	{
-		$recipeLocator = new RecipeLocator();
-		$recipeLocator->addClassLocator(new Psr4ClassLocator(__NAMESPACE__ . '\\Example\\', __DIR__ . '/Example', []));
+		$recipeLocator = new RecipeLocator($this->createExampleClassLocator());
 
 		$cookbook = new Cookbook();
 		$cookbook->addRecipes($recipeLocator->locateRecipes());

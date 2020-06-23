@@ -33,7 +33,7 @@ class DtoGeneratorTest extends TestCase
 
 	public function testGenerateTagDto()
 	{
-		$g = new DtoGenerator();
+		$g = new DtoGenerator($this->createExampleClassLocator());
 		$generatedClasses = $g->generateDtoClasses(new ReflectionClass(TagProperties::class), 'TagData');
 
 		$this->assertNotEmpty($generatedClasses);

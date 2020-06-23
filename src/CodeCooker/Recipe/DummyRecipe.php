@@ -18,11 +18,13 @@
 
 namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+
 
 class DummyRecipe extends ClassRecipe
 {
 
-	public function cookRecipe(): array
+	public function cookRecipe(ClassLocator $classLocator): array
 	{
 		// No-op. This is just a training dummy.
 		return [];  // @codeCoverageIgnore

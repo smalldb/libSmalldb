@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\CodeCooker\Recipe;
 
 use ReflectionClass;
 use Smalldb\StateMachine\CodeCooker\Generator\DtoGenerator;
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 
 
 class DtoRecipe extends ClassRecipe
@@ -43,9 +44,9 @@ class DtoRecipe extends ClassRecipe
 	}
 
 
-	public function cookRecipe(): array
+	public function cookRecipe(ClassLocator $classLocator): array
 	{
-		$generator = new DtoGenerator();
+		$generator = new DtoGenerator($classLocator);
 		return $generator->generateDtoClasses($this->getSourceClass(), $this->getTargetName());
 	}
 

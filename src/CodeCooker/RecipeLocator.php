@@ -27,15 +27,20 @@ use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 
 class RecipeLocator
 {
-	/** @var ClassLocator[] */
-	private array $classLocators = [];
-
+	private ClassLocator $classLocator;
 	private AnnotationReaderInterface $annotationReader;
 
 
-	public function __construct(AnnotationReaderInterface $annotationReader = null)
+	public function __construct(ClassLocator $classLocator, AnnotationReaderInterface $annotationReader = null)
 	{
+		$this->classLocator = $classLocator;
 		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
+	}
+
+
+	public function getClassLocator(): ClassLocator
+	{
+		return $this->classLocator;
 	}
 
 
@@ -45,23 +50,9 @@ class RecipeLocator
 	}
 
 
-	public function addClassLocator(ClassLocator $classLocator): void
-	{
-		$this->classLocators[] = $classLocator;
-	}
-
-
-	public function locateClasses(): \Generator
-	{
-		foreach ($this->classLocators as $classLocator) {
-			yield from $classLocator->getClasses();
-		}
-	}
-
-
 	public function locateRecipes(): \Generator
 	{
-		foreach ($this->locateClasses() as $filename => $className) {
+		foreach ($this->classLocator->getClasses() as $filename => $className) {
 			yield from $this->locateClassRecipes(new ReflectionClass($className));
 		}
 	}

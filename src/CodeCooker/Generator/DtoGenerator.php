@@ -26,6 +26,7 @@ use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\CodeCooker\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\PhpFileWriter;
 use Symfony\Component\Form\DataMapperInterface;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
@@ -36,11 +37,13 @@ class DtoGenerator
 {
 	use GeneratorHelpers;
 
+	private ClassLocator $classLocator;
 	private AnnotationReaderInterface $annotationReader;
 
 
-	public function __construct(?AnnotationReaderInterface $annotationReader = null)
+	public function __construct(ClassLocator $classLocator, ?AnnotationReaderInterface $annotationReader = null)
 	{
+		$this->classLocator = $classLocator;
 		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
 	}
 
@@ -203,11 +206,13 @@ class DtoGenerator
 	{
 		$sourceShortName = $sourceClass->getShortName();
 		$targetName ??= $sourceShortName;
+
 		$targetShortName = $targetName . $suffix;
 		$targetNamespace = $sourceClass->getNamespaceName() . '\\' . $targetName;
 		$targetClassName = $targetNamespace . '\\' . $targetShortName;
-		$targetDirectory = dirname($sourceClass->getFileName()) . DIRECTORY_SEPARATOR . $targetName;
-		$targetFilename = $targetDirectory . DIRECTORY_SEPARATOR . $targetShortName . '.php';
+
+		$targetFilename = $this->classLocator->mapClassNameToFileName($targetClassName);
+		$targetDirectory = dirname($targetFilename);
 
 		$w = $this->createFileWriter($targetNamespace);
 		$w->docComment("@" . $w->useClass(GeneratedClass::class) . "\n"
