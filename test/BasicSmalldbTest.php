@@ -44,7 +44,7 @@ class BasicSmalldbTest extends TestCase
 		$smalldb->registerMachineType($this->createProvider('baz'));
 
 		$registeredTypes = $smalldb->getMachineTypes();
-		$this->assertContains('foo', $registeredTypes);
+		$this->assertContainsEquals('foo', $registeredTypes);
 
 		$this->assertEquals($fooProvider, $smalldb->getMachineProvider('foo'));
 	}
@@ -58,7 +58,7 @@ class BasicSmalldbTest extends TestCase
 		$smalldb->registerMachineType($this->createProvider('foo3'));
 
 		$registeredTypes = $smalldb->getMachineTypes();
-		$this->assertNotContains('bar', $registeredTypes);
+		$this->assertNotContainsEquals('bar', $registeredTypes);
 
 		$this->expectException(InvalidArgumentException::class);
 		$smalldb->getMachineProvider('bar');

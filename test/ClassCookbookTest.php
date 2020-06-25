@@ -39,8 +39,8 @@ class ClassCookbookTest extends TestCase
 		$cookbook->addRecipe($recipeBar);
 
 		$recipes = $cookbook->getRecipes();
-		$this->assertContains($recipeFoo, $recipes);
-		$this->assertContains($recipeBar, $recipes);
+		$this->assertContainsEquals($recipeFoo, $recipes);
+		$this->assertContainsEquals($recipeBar, $recipes);
 	}
 
 
@@ -71,8 +71,8 @@ class ClassCookbookTest extends TestCase
 		$cookbook->addRecipes($generator());
 
 		$recipes = $cookbook->getRecipes();
-		$this->assertContains($recipeFoo, $recipes);
-		$this->assertContains($recipeBar, $recipes);
+		$this->assertContainsEquals($recipeFoo, $recipes);
+		$this->assertContainsEquals($recipeBar, $recipes);
 	}
 
 

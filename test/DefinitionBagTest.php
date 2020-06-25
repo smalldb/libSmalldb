@@ -47,14 +47,14 @@ class DefinitionBagTest extends TestCase
 		$crudItemDefinition = $reader->addFromAnnotatedClass(CrudItem::class);
 
 		$allDefinitions = $bag->getAllDefinitions();
-		$this->assertContains($fooDefinition, $allDefinitions);
-		$this->assertContains($barDefinition, $allDefinitions);
-		$this->assertContains($crudItemDefinition, $allDefinitions);
+		$this->assertContainsEquals($fooDefinition, $allDefinitions);
+		$this->assertContainsEquals($barDefinition, $allDefinitions);
+		$this->assertContainsEquals($crudItemDefinition, $allDefinitions);
 
 		$allMachineTypes = $bag->getAllMachineTypes();
-		$this->assertContains('foo', $allMachineTypes);
-		$this->assertContains('bar', $allMachineTypes);
-		$this->assertContains($crudItemDefinition->getMachineType(), $allMachineTypes);
+		$this->assertContainsEquals('foo', $allMachineTypes);
+		$this->assertContainsEquals('bar', $allMachineTypes);
+		$this->assertContainsEquals($crudItemDefinition->getMachineType(), $allMachineTypes);
 
 		$retrievedFooDef = $bag->getDefinition('foo');
 		$this->assertEquals($fooDefinition, $retrievedFooDef);
