@@ -21,9 +21,7 @@ namespace Smalldb\StateMachine\SourcesExtension\Definition;
 
 class SourceClassFile extends SourceFile
 {
-
-	/** @var string */
-	private $classname;
+	private string $classname;
 
 
 	public function __construct(\ReflectionClass $classReflection)

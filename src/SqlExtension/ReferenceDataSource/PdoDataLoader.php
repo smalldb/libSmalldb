@@ -32,14 +32,9 @@ use Smalldb\StateMachine\Smalldb;
  */
 class PdoDataLoader extends PdoDataSource
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider;
-
-	/** @var string */
-	private $refClass;
+	private Smalldb $smalldb;
+	private SmalldbProviderInterface $machineProvider;
+	private string $refClass;
 
 
 	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider)

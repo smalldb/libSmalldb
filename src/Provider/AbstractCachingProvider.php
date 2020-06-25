@@ -34,23 +34,12 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
  */
 abstract class AbstractCachingProvider implements SmalldbProviderInterface
 {
-	/** @var string|null */
-	private $machineType;
-
-	/** @var string */
-	private $referenceClass;
-
-	/** @var SmalldbDefinitionBagInterface|null */
-	protected $definitionBag;
-
-	/** @var StateMachineDefinition|null */
-	protected $definition;
-
-	/** @var TransitionDecorator|null */
-	protected $transitionsDecorator;
-
-	/** @var SmalldbRepositoryInterface|null */
-	protected $repository;
+	private ?string $machineType = null;
+	private string $referenceClass;
+	protected ?SmalldbDefinitionBagInterface $definitionBag = null;
+	protected ?StateMachineDefinition $definition = null;
+	protected ?TransitionDecorator $transitionsDecorator = null;
+	protected ?SmalldbRepositoryInterface $repository = null;
 
 
 	public function setReferenceClass(string $referenceClass)
@@ -101,7 +90,7 @@ abstract class AbstractCachingProvider implements SmalldbProviderInterface
 
 	final public function getMachineType(): string
 	{
-		return $this->machineType ?? $this->getDefinition()->getMachineType();
+		return $this->machineType ?? ($this->machineType = $this->getDefinition()->getMachineType());
 	}
 
 

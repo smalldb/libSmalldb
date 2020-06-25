@@ -21,10 +21,7 @@ namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\Statement;
 use Doctrine\DBAL\FetchMode;
-use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\ReferenceDataSource\LogicException;
-use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
@@ -32,18 +29,10 @@ use Smalldb\StateMachine\Smalldb;
 
 class DataSource implements ReferenceDataSourceInterface
 {
-
-	/** @var Smalldb */
-	protected $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	protected $machineProvider;
-
-	/** @var string */
-	protected $refClass;
-
-	/** @var Connection */
-	private $db;
+	protected Smalldb $smalldb;
+	protected SmalldbProviderInterface $machineProvider;
+	protected string $refClass;
+	private Connection $db;
 
 	/** @var callable|null */
 	private $onQueryCallback = null;

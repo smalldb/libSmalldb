@@ -18,15 +18,15 @@
 
 namespace Smalldb\StateMachine\SourcesExtension\Definition;
 
+use JsonSerializable;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class SourceFile implements \JsonSerializable
+class SourceFile implements JsonSerializable
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $filename;
+	private string $filename;
 
 
 	public function __construct(string $filename)

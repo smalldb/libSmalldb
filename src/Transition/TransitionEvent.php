@@ -24,26 +24,16 @@ use Smalldb\StateMachine\Utils\Hook;
 
 class TransitionEvent
 {
-	/** @var ReferenceInterface */
-	private $ref;
-
-	/** @var string */
-	private $transitionName;
-
-	/** @var array */
-	private $transitionArgs;
-
-	/** @var bool */
-	private $isTransitionFailed = false;
-
-	/** @var bool */
-	private $hasNewId = false;
+	private ReferenceInterface $ref;
+	private string $transitionName;
+	private array $transitionArgs;
+	private bool $isTransitionFailed = false;
+	private bool $hasNewId = false;
 
 	/** @var mixed */
 	private $newId = null;
 
-	/** @var Hook|null */
-	private $onNewIdHook = null;
+	private ?Hook $onNewIdHook = null;
 
 	/** @var mixed */
 	private $returnValue = null;

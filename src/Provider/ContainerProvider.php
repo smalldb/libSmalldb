@@ -26,17 +26,10 @@ use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 class ContainerProvider extends AbstractCachingProvider implements SmalldbProviderInterface
 {
-	/** @var ContainerInterface */
-	private $container;
-
-	/** @var string|null */
-	private $definitionId;
-
-	/** @var string|null */
-	private $transitionsImplementationId;
-
-	/** @var string|null */
-	private $repositoryId;
+	private ContainerInterface $container;
+	private ?string $definitionId;
+	private ?string $transitionsImplementationId;
+	private ?string $repositoryId;
 
 
 	public function __construct(ContainerInterface $container)

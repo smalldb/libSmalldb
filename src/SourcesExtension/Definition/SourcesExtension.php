@@ -27,7 +27,7 @@ class SourcesExtension implements ExtensionInterface
 	use SimpleJsonSerializableTrait;
 
 	/** @var SourceFile[] */
-	private $sourceFiles;
+	private array $sourceFiles;
 
 
 	/**

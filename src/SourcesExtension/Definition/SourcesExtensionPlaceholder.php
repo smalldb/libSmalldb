@@ -26,7 +26,7 @@ class SourcesExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
 
 	/** @var SourceFile[] */
-	public $sourceFiles;
+	public array $sourceFiles;
 
 
 	public function __construct()
