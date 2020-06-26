@@ -22,7 +22,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 
 /**

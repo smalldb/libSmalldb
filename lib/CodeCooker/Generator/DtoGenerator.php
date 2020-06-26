@@ -27,7 +27,7 @@ use Smalldb\CodeCooker\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\ClassLocator\ClassLocator;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 use Symfony\Component\Form\DataMapperInterface;
 use Symfony\Component\Form\Exception\UnexpectedTypeException;
 use Symfony\Component\OptionsResolver\OptionsResolver;

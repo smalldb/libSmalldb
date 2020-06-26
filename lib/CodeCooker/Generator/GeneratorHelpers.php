@@ -18,7 +18,7 @@
 
 namespace Smalldb\CodeCooker\Generator;
 
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 
 trait GeneratorHelpers

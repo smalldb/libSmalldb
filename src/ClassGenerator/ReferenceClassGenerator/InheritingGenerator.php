@@ -25,7 +25,7 @@ use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\RuntimeException;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 
 class InheritingGenerator extends AbstractGenerator

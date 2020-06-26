@@ -22,7 +22,7 @@ namespace Smalldb\StateMachine\ClassGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 class DefinitionBagGenerator extends AbstractClassGenerator
 {

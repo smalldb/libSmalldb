@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 
 class DummyGenerator extends AbstractGenerator

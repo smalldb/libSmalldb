@@ -24,7 +24,7 @@ use Smalldb\StateMachine\ClassGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Smalldb\PhpFileWriter\PhpFileWriter;
 
 
 abstract class AbstractGenerator extends AbstractClassGenerator

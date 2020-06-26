@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils;
+namespace Smalldb\PhpFileWriter;
 
 
 /**
