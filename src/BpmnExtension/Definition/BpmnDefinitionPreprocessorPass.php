@@ -23,14 +23,9 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 
 class BpmnDefinitionPreprocessorPass implements PreprocessorPass
 {
-	/** @var string */
-	private $bpmnFilename;
-
-	/** @var string */
-	private $targetParticipant;
-
-	/** @var string|null */
-	private $svgFile;
+	private string $bpmnFilename;
+	private string $targetParticipant;
+	private ?string $svgFile;
 
 
 	public function __construct(string $bpmnFilename, string $targetParticipant, ?string $svgFile = null)

@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\BpmnExtension\Definition\BpmnExtension;
+use Smalldb\StateMachine\BpmnExtension\Definition\BpmnExtensionPlaceholder;
 use Smalldb\StateMachine\BpmnExtension\GrafovatkoProcessor;
 use Smalldb\StateMachine\BpmnExtension\BpmnReader;
 use Smalldb\StateMachine\BpmnExtension\SvgPainter;
@@ -50,19 +52,15 @@ class BpmnTest extends TestCase
 	/** @var int Minimum increment of $N */
 	const N_MIN_STEP = 200;
 
-
-	private $outputDir;
-
-	/** @var StateMachineDefinitionBuilderFactory */
-	private $definitionBuilderFactory;
+	private StateMachineDefinitionBuilderFactory $definitionBuilderFactory;
 
 
 	public function setUp(): void
 	{
-		$this->outputDir = __DIR__ . '/output';
-		if (!is_dir($this->outputDir)) {
-			$outputDirCreated = mkdir($this->outputDir);
-			$this->assertTrue($outputDirCreated, 'Failed to create output directory: ' . $this->outputDir);
+		$outputDir = __DIR__ . '/output';
+		if (!is_dir($outputDir)) {
+			$outputDirCreated = mkdir($outputDir);
+			$this->assertTrue($outputDirCreated, 'Failed to create output directory: ' . $outputDir);
 		}
 
 		$this->definitionBuilderFactory = StateMachineDefinitionBuilderFactory::createDefaultFactory();
@@ -86,6 +84,29 @@ class BpmnTest extends TestCase
 		$output->setTitle('CRUD Item');
 		$output->addStateMachineGraph($definition);
 		$output->writeHtmlFile('index.html');
+	}
+
+
+	public function testBpmnDefinitionExtension()
+	{
+		$placeholder = new BpmnExtensionPlaceholder();
+		$placeholder->addDiagramInfo('filename1.bpmn', 'machine_participant1', 'filename1.svg', $g1 = new Graph());
+		$placeholder->addDiagramInfo('filename2.bpmn', 'machine_participant2', 'filename2.svg', $g2 = new Graph());
+
+		$ext = $placeholder->buildExtension();
+		$this->assertInstanceOf(BpmnExtension::class, $ext);
+
+		[$diagramInfo1, $diagramInfo2] = $ext->getDiagramInfo();
+
+		$this->assertEquals('filename1.bpmn', $diagramInfo1->getBpmnFileName());
+		$this->assertEquals('machine_participant1', $diagramInfo1->getTargetParticipant());
+		$this->assertEquals('filename1.svg', $diagramInfo1->getSvgFileName());
+		$this->assertSame($g1, $diagramInfo1->getBpmnGraph());
+
+		$this->assertEquals('filename2.bpmn', $diagramInfo2->getBpmnFileName());
+		$this->assertEquals('machine_participant2', $diagramInfo2->getTargetParticipant());
+		$this->assertEquals('filename2.svg', $diagramInfo2->getSvgFileName());
+		$this->assertSame($g2, $diagramInfo2->getBpmnGraph());
 	}
 
 

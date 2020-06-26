@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\Graph\Graph;
 
 
@@ -27,7 +26,7 @@ class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
 
 	/** @var DiagramInfo[] */
-	public $diagramInfo;
+	public array $diagramInfo;
 
 
 	public function __construct()
@@ -35,7 +34,7 @@ class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
 	}
 
 
-	public function buildExtension(): ?ExtensionInterface
+	public function buildExtension(): BpmnExtension
 	{
 		return new BpmnExtension($this->diagramInfo);
 	}

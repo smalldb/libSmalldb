@@ -37,6 +37,10 @@ class BpmnDefinitionPreprocessor implements Preprocessor
 
 	public function preprocessDefinition(StateMachineDefinitionBuilder $builder, PreprocessorPass $preprocessorPass): void
 	{
+		if (!($preprocessorPass instanceof BpmnDefinitionPreprocessorPass)) {
+			throw new \InvalidArgumentException("Unsupported preprocessor pass: " . get_class($preprocessorPass));  // @codeCoverageIgnore
+		}
+
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
 		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
 		$sourcesPlaceholder->addSourceFile(new SourceFile($preprocessorPass->getBpmnFilename()));

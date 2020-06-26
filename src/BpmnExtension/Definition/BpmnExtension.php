@@ -29,7 +29,7 @@ class BpmnExtension implements ExtensionInterface
 	/**
 	 * @var DiagramInfo[]
 	 */
-	private $diagramInfo;
+	private array $diagramInfo;
 
 
 	/**
