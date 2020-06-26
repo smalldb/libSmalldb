@@ -31,7 +31,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Smalldb\\StateMachine\\": "src/"
+            "Smalldb\\StateMachine\\": "src/",
+            "Smalldb\\": "lib/"
         }
     },
     "autoload-dev": {
