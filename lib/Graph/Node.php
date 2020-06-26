@@ -31,14 +31,12 @@ class Node extends AbstractGraphElement
 	 *
 	 * @var Edge[]
 	 */
-	private $connectedEdges = [];
+	private array $connectedEdges = [];
 
 	/**
 	 * Nested graph.
-	 *
-	 * @var NestedGraph|null
 	 */
-	private $nestedGraph = null;
+	private ?NestedGraph $nestedGraph = null;
 
 
 	public function __construct(NestedGraph $graph, string $id, array $attrs)

@@ -18,10 +18,10 @@
 
 namespace Smalldb\Graph;
 
-use Smalldb\StateMachine\InvalidArgumentException;
 use Throwable;
 
-class MissingElementException extends InvalidArgumentException
+
+class MissingElementException extends \InvalidArgumentException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)

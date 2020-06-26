@@ -26,40 +26,32 @@ class NestedGraph extends AbstractElement
 	 *
 	 * @var Node[]
 	 */
-	private $nodes = [];
+	private array $nodes = [];
 
 	/**
 	 * @var Edge[]
 	 */
-	private $edges = [];
+	private array $edges = [];
 
 	/**
 	 * Node owning this graph if the graph is nested.
-	 *
-	 * @var Node|null
 	 */
-	private $parentNode;
+	private ?Node $parentNode = null;
 
 	/**
 	 * Root graph
-	 *
-	 * @var Graph
 	 */
-	protected $rootGraph = null;
+	protected ?Graph $rootGraph = null;
 
 	/**
 	 * Node index
-	 *
-	 * @var ElementAttrIndex
 	 */
-	protected $nodeAttrIndex;
+	protected ElementAttrIndex $nodeAttrIndex;
 
 	/**
 	 * Edge index
-	 *
-	 * @var ElementAttrIndex
 	 */
-	protected $edgeAttrIndex;
+	protected ElementAttrIndex $edgeAttrIndex;
 
 
 	/**

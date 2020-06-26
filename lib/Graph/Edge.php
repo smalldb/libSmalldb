@@ -22,15 +22,8 @@ namespace Smalldb\Graph;
 
 class Edge extends AbstractGraphElement
 {
-	/**
-	 * @var Node
-	 */
-	private $start;
-
-	/**
-	 * @var Node
-	 */
-	private $end;
+	private Node $start;
+	private Node $end;
 
 
 	public function __construct(NestedGraph $graph, string $id, Node $start, Node $end, array $attrs)

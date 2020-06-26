@@ -28,20 +28,19 @@ use Smalldb\Graph\Node;
 
 class GrafovatkoExporter
 {
-	/** @var Graph */
-	private $graph;
+	private Graph $graph;
 
-	public static $grafovatkoJsLink = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
+	public static string $grafovatkoJsLink = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
 
 	/** @var ProcessorInterface[] */
-	private $processors = [];
+	private array $processors = [];
 
 	/**
 	 * Global graph IDs prefix
 	 *
 	 * @var string
 	 */
-	private $prefix = '';
+	private string $prefix = '';
 
 
 	public function __construct(Graph $graph)

@@ -25,18 +25,14 @@ class ElementAttrIndex
 	/**
 	 * @var AbstractGraphElement[][][]
 	 */
-	private $index = [];
+	private array $index = [];
 
 	/**
 	 * @var AbstractGraphElement[]
 	 */
-	private $elements = [];
+	private array $elements = [];
 
-
-	/**
-	 * @var string
-	 */
-	private $elementClassName;
+	private string $elementClassName;
 
 
 	/**

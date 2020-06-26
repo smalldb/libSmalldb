@@ -21,11 +21,7 @@ namespace Smalldb\Graph;
 
 abstract class AbstractElement implements \ArrayAccess
 {
-
-	/**
-	 * @var array
-	 */
-	private $attrs;
+	private array $attrs;
 
 
 	public function __construct(array $attrs = [])

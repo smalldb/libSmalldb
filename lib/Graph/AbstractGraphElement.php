@@ -22,15 +22,8 @@ namespace Smalldb\Graph;
 
 abstract class AbstractGraphElement extends AbstractElement
 {
-	/**
-	 * @var string
-	 */
-	private $id;
-
-	/**
-	 * @var NestedGraph
-	 */
-	private $graph;
+	private string $id;
+	private NestedGraph $graph;
 
 
 	public function __construct(NestedGraph $graph, string $id, array $attrs)

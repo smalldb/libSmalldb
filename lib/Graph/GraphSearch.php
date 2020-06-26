@@ -26,7 +26,7 @@ use Smalldb\StateMachine\InvalidArgumentException;
  */
 class GraphSearch
 {
-	private $graph;
+	private NestedGraph $graph;
 
 	/** @var callable(Node): bool */
 	private $processNodeCb;
@@ -38,8 +38,8 @@ class GraphSearch
 	/** @var callable(Node, Edge, Node, bool): bool */
 	private $checkArrowCbDefault;
 
-	private $strategy;
-	private $direction = self::DIR_FORWARD;
+	private int $strategy;
+	private int $direction = self::DIR_FORWARD;
 
 	const DFS_STRATEGY = 0x01;
 	const BFS_STRATEGY = 0x02;

@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use DOMDocument;
+use DOMElement;
 use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\Graph\Grafovatko\Processor;
 use Smalldb\Graph\Graph;
@@ -89,8 +91,28 @@ class GrafovatkoTest extends TestCase
 		$exporter->addProcessor(new Processor());
 		$jsonArray = $exporter->export();
 
-		$this->assertEquals(count($graph->getNodes()), count($jsonArray['nodes']));
-		$this->assertEquals(count($graph->getEdges()), count($jsonArray['edges']));
+		$this->assertSameSize($graph->getNodes(), $jsonArray['nodes']);
+		$this->assertSameSize($graph->getEdges(), $jsonArray['edges']);
+	}
+
+
+	public function testGraphExportWithPrefix()
+	{
+		$graph = $this->buildBalancedBinaryTree();
+		$exporter = new GrafovatkoExporter($graph);
+		$exporter->addProcessor(new Processor());
+		$exporter->setPrefix('_foo_');
+		$jsonArray = $exporter->export();
+
+		$this->assertSameSize($graph->getNodes(), $jsonArray['nodes']);
+		$this->assertSameSize($graph->getEdges(), $jsonArray['edges']);
+
+		foreach ($jsonArray['nodes'] as $n) {
+			$this->assertStringStartsWith('_foo_', $n['id']);
+		}
+		foreach ($jsonArray['edges'] as $e) {
+			$this->assertStringStartsWith('_foo_', $e['id']);
+		}
 	}
 
 
@@ -102,8 +124,8 @@ class GrafovatkoTest extends TestCase
 		$jsonString = $exporter->exportJsonString();
 		$jsonArray = json_decode($jsonString, true);
 
-		$this->assertEquals(count($graph->getNodes()), count($jsonArray['nodes']));
-		$this->assertEquals(count($graph->getEdges()), count($jsonArray['edges']));
+		$this->assertSameSize($graph->getNodes(), $jsonArray['nodes']);
+		$this->assertSameSize($graph->getEdges(), $jsonArray['edges']);
 	}
 
 
@@ -134,9 +156,9 @@ class GrafovatkoTest extends TestCase
 
 		$svgElement = $exporter->exportSvgElement(['class' => 'foo-class']);
 
-		$dom = new \DOMDocument();
+		$dom = new DOMDocument();
 		$dom->loadXML($svgElement);
-		/** @var \DOMElement[] $svgElements */
+		/** @var DOMElement[] $svgElements */
 		$svgElements = $dom->getElementsByTagName('svg');
 		$this->assertCount(1, $svgElements);
 		$svgElement = $svgElements[0];
@@ -164,7 +186,7 @@ class GrafovatkoTest extends TestCase
 
 		$exporter->exportHtmlFile($outputFile);
 
-		$dom = new \DOMDocument();
+		$dom = new DOMDocument();
 		$dom->load($outputFile);
 
 		$svgElements = $dom->getElementsByTagName('svg');
