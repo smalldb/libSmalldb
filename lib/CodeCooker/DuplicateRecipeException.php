@@ -16,20 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Generator;
+namespace Smalldb\CodeCooker;
 
-use Smalldb\StateMachine\Utils\PhpFileWriter;
+use Throwable;
 
 
-trait GeneratorHelpers
+class DuplicateRecipeException extends \InvalidArgumentException
 {
 
-	protected function createFileWriter(string $targetNamespace, ?object $annotation = null): PhpFileWriter
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
 	{
-		$w = new PhpFileWriter();
-		$w->setFileHeader(get_class($this) . ($annotation ? ' (@' . get_class($annotation) . ' annotation)' : ''));
-		$w->setNamespace($targetNamespace);
-		return $w;
+		parent::__construct($message, $code, $previous);
 	}
 
 }

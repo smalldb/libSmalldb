@@ -18,11 +18,11 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\CodeCooker\Cookbook;
-use Smalldb\StateMachine\CodeCooker\DuplicateRecipeException;
-use Smalldb\StateMachine\CodeCooker\Recipe\DtoRecipe;
-use Smalldb\StateMachine\CodeCooker\Recipe\DummyRecipe;
-use Smalldb\StateMachine\CodeCooker\RecipeLocator;
+use Smalldb\CodeCooker\Cookbook;
+use Smalldb\CodeCooker\DuplicateRecipeException;
+use Smalldb\CodeCooker\Recipe\DtoRecipe;
+use Smalldb\CodeCooker\Recipe\DummyRecipe;
+use Smalldb\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 
 

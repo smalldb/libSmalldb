@@ -16,10 +16,10 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Recipe;
+namespace Smalldb\CodeCooker\Recipe;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeCooker\Generator\DtoGenerator;
+use Smalldb\CodeCooker\Generator\DtoGenerator;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 
 

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Recipe;
-
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+namespace Smalldb\CodeCooker\Annotation;
 
 
 /**
- * ClassRecipe: an empty recipe, a base class for other recipes.
+ * Export method as public in the setter trait
+ *
+ * @Annotation
+ * @Target({"METHOD"})
  */
-abstract class ClassRecipe
+class PublicMutator
 {
-	/** @var string[] */
-	private array $targetClassNames;
-
-
-	public function __construct(array $targetClassNames)
-	{
-		$this->targetClassNames = $targetClassNames;
-	}
-
-
-	public function getTargetClassNames(): array
-	{
-		return $this->targetClassNames;
-	}
-
-
-	abstract public function cookRecipe(ClassLocator $classLocator): array;
 
 }

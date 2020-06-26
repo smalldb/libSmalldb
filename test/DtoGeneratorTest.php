@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use ReflectionClass;
-use Smalldb\StateMachine\CodeCooker\Generator\DtoGenerator;
+use Smalldb\CodeCooker\Generator\DtoGenerator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;

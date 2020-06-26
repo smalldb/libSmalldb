@@ -16,9 +16,9 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker;
+namespace Smalldb\CodeCooker;
 
-use Smalldb\StateMachine\CodeCooker\Recipe\ClassRecipe;
+use Smalldb\CodeCooker\Recipe\ClassRecipe;
 
 
 class Cookbook

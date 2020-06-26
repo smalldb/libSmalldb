@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker;
-
-use Smalldb\StateMachine\CodeCooker\Recipe\ClassRecipe;
+namespace Smalldb\CodeCooker\Annotation;
 
 
-interface AnnotationRecipeBuilder
+/**
+ * Mark class as generated, so that AnnotationProcessor skips it.
+ * Do not use this in hand-written code.
+ *
+ * @Annotation
+ * @Target({"CLASS"})
+ */
+class GeneratedClass
 {
-
-	public function buildRecipe(\ReflectionClass $sourceClass): ClassRecipe;
 
 }

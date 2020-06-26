@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\CodeCooker\Annotation\GenerateDTO;
-use Smalldb\StateMachine\CodeCooker\Annotation\PublicMutator;
+use Smalldb\CodeCooker\Annotation\GenerateDTO;
+use Smalldb\CodeCooker\Annotation\PublicMutator;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 

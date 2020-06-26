@@ -16,14 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Generator;
+namespace Smalldb\CodeCooker\Generator;
 
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
-use Smalldb\StateMachine\CodeCooker\Annotation\GeneratedClass;
-use Smalldb\StateMachine\CodeCooker\Annotation\PublicMutator;
+use Smalldb\CodeCooker\Annotation\GeneratedClass;
+use Smalldb\CodeCooker\Annotation\PublicMutator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
 use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;

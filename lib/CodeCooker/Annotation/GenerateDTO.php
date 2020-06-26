@@ -16,16 +16,27 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Annotation;
+namespace Smalldb\CodeCooker\Annotation;
+
+use ReflectionClass;
+use Smalldb\CodeCooker\AnnotationRecipeBuilder;
+use Smalldb\CodeCooker\Recipe\DtoRecipe;
 
 
 /**
- * Export method as public in the setter trait
+ * Generate DTO from the annotated class
  *
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"CLASS"})
  */
-class PublicMutator
+class GenerateDTO implements AnnotationRecipeBuilder
 {
+	public ?string $targetName = null;
+
+
+	public function buildRecipe(ReflectionClass $sourceClass): DtoRecipe
+	{
+		return DtoRecipe::fromReflection($sourceClass, $this->targetName);
+	}
 
 }

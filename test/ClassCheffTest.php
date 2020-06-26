@@ -18,10 +18,10 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\CodeCooker\Chef;
-use Smalldb\StateMachine\CodeCooker\Cookbook;
-use Smalldb\StateMachine\CodeCooker\Recipe\ClassRecipe;
-use Smalldb\StateMachine\CodeCooker\RecipeLocator;
+use Smalldb\CodeCooker\Chef;
+use Smalldb\CodeCooker\Cookbook;
+use Smalldb\CodeCooker\Recipe\ClassRecipe;
+use Smalldb\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
 

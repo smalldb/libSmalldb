@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,32 @@
  *
  */
 
-namespace Smalldb\StateMachine\CodeCooker\Annotation;
+namespace Smalldb\CodeCooker\Recipe;
+
+use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
 
 
 /**
- * Mark class as generated, so that AnnotationProcessor skips it.
- * Do not use this in hand-written code.
- *
- * @Annotation
- * @Target({"CLASS"})
+ * ClassRecipe: an empty recipe, a base class for other recipes.
  */
-class GeneratedClass
+abstract class ClassRecipe
 {
+	/** @var string[] */
+	private array $targetClassNames;
+
+
+	public function __construct(array $targetClassNames)
+	{
+		$this->targetClassNames = $targetClassNames;
+	}
+
+
+	public function getTargetClassNames(): array
+	{
+		return $this->targetClassNames;
+	}
+
+
+	abstract public function cookRecipe(ClassLocator $classLocator): array;
 
 }
