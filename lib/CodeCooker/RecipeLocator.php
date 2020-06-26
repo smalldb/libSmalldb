@@ -21,7 +21,7 @@ namespace Smalldb\CodeCooker;
 use ReflectionClass;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\ClassLocator;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader;
 
 

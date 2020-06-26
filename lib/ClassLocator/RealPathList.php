@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils\ClassLocator;
+namespace Smalldb\ClassLocator;
 
 class RealPathList extends PathList
 {

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils\ClassLocator;
+namespace Smalldb\ClassLocator;
 
-
-interface ClassLocator
+class Psr0ClassLocator extends Psr4ClassLocator
 {
-	public function getClasses(): \Generator;
-	public function mapClassNameToFileName(string $className): ?string;
-	public function mapFileNameToClassName(string $fileName): ?string;
+
+	public function __construct(string $directory, array $includePaths = [], array $excludePaths = [])
+	{
+		parent::__construct('\\', $directory, $includePaths, $excludePaths);
+	}
+
 }

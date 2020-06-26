@@ -26,8 +26,8 @@ use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
-use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
+use Smalldb\ClassLocator\ComposerClassLocator;
+use Smalldb\ClassLocator\Psr4ClassLocator;
 
 
 class DefinitionBagTest extends TestCase

@@ -20,7 +20,7 @@ namespace Smalldb\CodeCooker\Recipe;
 
 use ReflectionClass;
 use Smalldb\CodeCooker\Generator\DtoGenerator;
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\ClassLocator;
 
 
 class DtoRecipe extends ClassRecipe

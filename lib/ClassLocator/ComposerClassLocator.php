@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Utils\ClassLocator;
+namespace Smalldb\ClassLocator;
 
 use Composer\Autoload\ClassLoader;
 

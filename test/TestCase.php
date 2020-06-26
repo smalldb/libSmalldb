@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
+use Smalldb\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\Psr4ClassLocator;
 
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase

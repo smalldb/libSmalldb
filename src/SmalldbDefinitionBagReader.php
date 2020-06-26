@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Definition\AnnotationReader\MissingStateMachineAnnotati
 use Smalldb\StateMachine\Definition\Builder\Preprocessor;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\ClassLocator;
 
 
 class SmalldbDefinitionBagReader

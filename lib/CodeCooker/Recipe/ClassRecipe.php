@@ -18,7 +18,7 @@
 
 namespace Smalldb\CodeCooker\Recipe;
 
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\ClassLocator;
 
 
 /**

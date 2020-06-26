@@ -33,11 +33,11 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Utils\ClassLocator\ClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\ComposerClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\PathList;
-use Smalldb\StateMachine\Utils\ClassLocator\Psr4ClassLocator;
-use Smalldb\StateMachine\Utils\ClassLocator\RealPathList;
+use Smalldb\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\ComposerClassLocator;
+use Smalldb\ClassLocator\PathList;
+use Smalldb\ClassLocator\Psr4ClassLocator;
+use Smalldb\ClassLocator\RealPathList;
 
 
 class ClassLocatorTest extends TestCase
