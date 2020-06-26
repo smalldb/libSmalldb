@@ -19,10 +19,10 @@
 namespace Smalldb\StateMachine\BpmnExtension;
 
 use Smalldb\StateMachine\AbstractMachine;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\GraphSearch;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\GraphSearch;
+use Smalldb\Graph\Node;
 
 
 class GraphvizExport

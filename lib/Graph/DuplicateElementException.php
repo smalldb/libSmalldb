@@ -16,12 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph;
 
+namespace Smalldb\Graph;
+
+use Smalldb\StateMachine\InvalidArgumentException;
 use Throwable;
 
 
-class DuplicateAttrIndexException extends DuplicateElementException
+class DuplicateElementException extends InvalidArgumentException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)

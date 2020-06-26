@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineGraph extends Graph

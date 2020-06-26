@@ -16,47 +16,16 @@
  *
  */
 
+namespace Smalldb\Graph;
 
-namespace Smalldb\StateMachine\Graph;
+use Throwable;
 
 
-abstract class AbstractGraphElement extends AbstractElement
+class MissingNodeException extends MissingElementException
 {
-	/**
-	 * @var string
-	 */
-	private $id;
-
-	/**
-	 * @var NestedGraph
-	 */
-	private $graph;
-
-
-	public function __construct(NestedGraph $graph, string $id, array $attrs)
+	// Just an exception.
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
 	{
-		parent::__construct($attrs);
-		$this->graph = $graph;
-		$this->id = $id;
+		parent::__construct($message, $code, $previous);
 	}
-
-
-	public function getId(): string
-	{
-		return $this->id;
-	}
-
-
-	public function getGraph(): NestedGraph
-	{
-		return $this->graph;
-	}
-
-
-	public function getRootGraph(): Graph
-	{
-		return $this->graph->getRootGraph();
-	}
-
-
 }

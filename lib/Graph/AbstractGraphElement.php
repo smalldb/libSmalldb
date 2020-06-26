@@ -17,16 +17,46 @@
  */
 
 
-namespace Smalldb\StateMachine\Graph;
-
-use Throwable;
+namespace Smalldb\Graph;
 
 
-class DuplicateNodeException extends DuplicateElementException
+abstract class AbstractGraphElement extends AbstractElement
 {
-	// Just an exception.
-	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	/**
+	 * @var string
+	 */
+	private $id;
+
+	/**
+	 * @var NestedGraph
+	 */
+	private $graph;
+
+
+	public function __construct(NestedGraph $graph, string $id, array $attrs)
 	{
-		parent::__construct($message, $code, $previous);
+		parent::__construct($attrs);
+		$this->graph = $graph;
+		$this->id = $id;
 	}
+
+
+	public function getId(): string
+	{
+		return $this->id;
+	}
+
+
+	public function getGraph(): NestedGraph
+	{
+		return $this->graph;
+	}
+
+
+	public function getRootGraph(): Graph
+	{
+		return $this->graph->getRootGraph();
+	}
+
+
 }

@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\BpmnExtension;
 
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\Node;
 
 
 class SvgPainter

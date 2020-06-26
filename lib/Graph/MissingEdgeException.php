@@ -16,12 +16,12 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph;
+namespace Smalldb\Graph;
 
 use Throwable;
 
 
-class MissingNodeException extends MissingElementException
+class MissingEdgeException extends MissingElementException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)
@@ -29,3 +29,4 @@ class MissingNodeException extends MissingElementException
 		parent::__construct($message, $code, $previous);
 	}
 }
+

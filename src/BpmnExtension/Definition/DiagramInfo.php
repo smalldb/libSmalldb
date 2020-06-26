@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use JsonSerializable;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 

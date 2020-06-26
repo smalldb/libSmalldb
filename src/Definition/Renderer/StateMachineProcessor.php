@@ -21,11 +21,11 @@ namespace Smalldb\StateMachine\Definition\Renderer;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Grafovatko\ProcessorInterface;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Grafovatko\ProcessorInterface;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 
 
 class StateMachineProcessor implements ProcessorInterface

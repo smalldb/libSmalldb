@@ -12,7 +12,7 @@ parameters:
             path: 'src/Graph/GraphSearch.php'
 
         -
-            message: '/Access to private property \$edges of parent class Smalldb\\StateMachine\\Graph\\NestedGraph./'
+            message: '/Access to private property \$edges of parent class Smalldb\\Graph\\NestedGraph./'
             path: 'src/Graph/NestedGraph.php'
 
         -

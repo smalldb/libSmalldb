@@ -20,8 +20,8 @@ namespace Smalldb\StateMachine\Definition;
 
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
-use Smalldb\StateMachine\Graph\GraphSearch;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\GraphSearch;
+use Smalldb\Graph\Node;
 
 
 /**

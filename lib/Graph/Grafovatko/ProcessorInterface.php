@@ -16,63 +16,40 @@
  *
  */
 
-
-namespace Smalldb\StateMachine\Graph\Grafovatko;
-
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+namespace Smalldb\Graph\Grafovatko;
 
 
-/**
- * A dummy graph processor which implements no-op on everything.
- */
-class Processor implements ProcessorInterface
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
+
+interface ProcessorInterface
 {
-	/** @var string */
-	private $prefix;
 
-
-	public function setPrefix(string $prefix): void
-	{
-		$this->prefix = $prefix;
-	}
-
+	/**
+	 * Set prefix of generated elements
+	 */
+	public function setPrefix(string $prefix);
 
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
-	 *
-	 * @param NestedGraph $graph
-	 * @param array $exportedGraph
-	 * @return array
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph): array
-	{
-		return $exportedGraph;  // @codeCoverageIgnore
-	}
+	public function processGraph(NestedGraph $graph, array $exportedGraph): array;
 
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode): array
-	{
-		return $exportedNode;  // @codeCoverageIgnore
-	}
+	public function processNodeAttrs(Node $node, array $exportedNode): array;
 
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
-	{
-		return $exportedEdge;  // @codeCoverageIgnore
-	}
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array;
 
 	/**
 	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
 	 */
-	public function getExtraSvgElements(Graph $graph): array
-	{
-		return [];  // @codeCoverageIgnore
-	}
+	public function getExtraSvgElements(Graph $graph): array;
+
 }

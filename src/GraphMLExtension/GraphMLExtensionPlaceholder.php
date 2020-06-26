@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\GraphMLExtension;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 
 
 class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface

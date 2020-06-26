@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedActionException;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 use Smalldb\StateMachine\Definition\UndefinedTransitionException;
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 
 
 class DefinitionTest extends TestCase

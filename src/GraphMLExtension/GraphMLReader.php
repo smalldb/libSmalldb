@@ -21,8 +21,8 @@ namespace Smalldb\StateMachine\GraphMLExtension;
 use DOMDocument;
 use DOMXpath;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\MissingElementException;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\MissingElementException;
 
 
 /**

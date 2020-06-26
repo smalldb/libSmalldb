@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph;
+namespace Smalldb\Graph;
 
 
 abstract class AbstractElement implements \ArrayAccess

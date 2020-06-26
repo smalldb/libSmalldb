@@ -18,9 +18,9 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
-use Smalldb\StateMachine\Graph\Grafovatko\Processor;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\Graph\Grafovatko\Processor;
+use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 
 

@@ -16,12 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph;
+
+namespace Smalldb\Graph;
 
 use Throwable;
 
 
-class DuplicateEdgeException extends DuplicateElementException
+class DuplicateNodeException extends DuplicateElementException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)

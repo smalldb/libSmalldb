@@ -19,11 +19,11 @@
 namespace Smalldb\StateMachine\BpmnExtension;
 
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\GraphSearch;
-use Smalldb\StateMachine\Graph\MissingElementException;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\GraphSearch;
+use Smalldb\Graph\MissingElementException;
+use Smalldb\Graph\Node;
 use Smalldb\StateMachine\RuntimeException;
 
 

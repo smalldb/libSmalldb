@@ -24,11 +24,11 @@ use Smalldb\StateMachine\BpmnExtension\SvgPainter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 use Smalldb\StateMachine\Test\TestTemplate\Html;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 

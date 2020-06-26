@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph;
+namespace Smalldb\Graph;
 
 use Throwable;
 

@@ -20,8 +20,8 @@
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
 use Smalldb\StateMachine\Definition\StateDefinition;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 
 class StateMachineNode extends Node
 {

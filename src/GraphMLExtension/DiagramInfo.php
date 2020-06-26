@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\GraphMLExtension;
 
 
 use JsonSerializable;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 class DiagramInfo implements JsonSerializable

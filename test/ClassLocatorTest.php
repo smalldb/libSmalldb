@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\Test;
 
 use ReflectionClass;
 use Smalldb\StateMachine\Annotation\StateMachine;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\BadExample\BrokenClass\MissingImplementationDummy;
@@ -162,7 +162,7 @@ class ClassLocatorTest extends TestCase
 
 	public function testComposerLocator()
 	{
-		$locator = new ComposerClassLocator(dirname(__DIR__), ["src/Graph", "test"], ["test/BadExample", "test/Database", "test/output"]);
+		$locator = new ComposerClassLocator(dirname(__DIR__), ["lib/Graph", "test"], ["test/BadExample", "test/Database", "test/output"]);
 		$classes = iterator_to_array($locator->getClasses(), false);
 
 		$this->assertContainsOnlyInstancesOf(ClassLocator::class, $locator->getClassLocators());

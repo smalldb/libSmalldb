@@ -17,13 +17,13 @@
  */
 
 
-namespace Smalldb\StateMachine\Graph\Grafovatko;
+namespace Smalldb\Graph\Grafovatko;
 
 use RuntimeException;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 
 
 class GrafovatkoExporter

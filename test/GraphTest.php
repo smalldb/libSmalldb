@@ -17,18 +17,18 @@
  */
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\Graph\DuplicateAttrIndexException;
-use Smalldb\StateMachine\Graph\DuplicateEdgeException;
-use Smalldb\StateMachine\Graph\DuplicateNodeException;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
-use Smalldb\StateMachine\Graph\GraphSearch;
-use Smalldb\StateMachine\Graph\MissingAttrIndexException;
-use Smalldb\StateMachine\Graph\MissingEdgeException;
-use Smalldb\StateMachine\Graph\MissingElementException;
-use Smalldb\StateMachine\Graph\MissingNodeException;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\DuplicateAttrIndexException;
+use Smalldb\Graph\DuplicateEdgeException;
+use Smalldb\Graph\DuplicateNodeException;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\Graph\GraphSearch;
+use Smalldb\Graph\MissingAttrIndexException;
+use Smalldb\Graph\MissingEdgeException;
+use Smalldb\Graph\MissingElementException;
+use Smalldb\Graph\MissingNodeException;
+use Smalldb\Graph\Node;
 
 
 /**

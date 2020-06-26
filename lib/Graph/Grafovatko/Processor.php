@@ -16,40 +16,63 @@
  *
  */
 
-namespace Smalldb\StateMachine\Graph\Grafovatko;
+
+namespace Smalldb\Graph\Grafovatko;
+
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 
 
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\Graph;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
-
-interface ProcessorInterface
+/**
+ * A dummy graph processor which implements no-op on everything.
+ */
+class Processor implements ProcessorInterface
 {
+	/** @var string */
+	private $prefix;
 
-	/**
-	 * Set prefix of generated elements
-	 */
-	public function setPrefix(string $prefix);
+
+	public function setPrefix(string $prefix): void
+	{
+		$this->prefix = $prefix;
+	}
+
 
 	/**
 	 * Returns modified $exportedGraph which become the graph's attributes.
+	 *
+	 * @param NestedGraph $graph
+	 * @param array $exportedGraph
+	 * @return array
 	 */
-	public function processGraph(NestedGraph $graph, array $exportedGraph): array;
+	public function processGraph(NestedGraph $graph, array $exportedGraph): array
+	{
+		return $exportedGraph;  // @codeCoverageIgnore
+	}
 
 	/**
 	 * Returns modified $exportedNode which become the node's attributes.
 	 */
-	public function processNodeAttrs(Node $node, array $exportedNode): array;
+	public function processNodeAttrs(Node $node, array $exportedNode): array
+	{
+		return $exportedNode;  // @codeCoverageIgnore
+	}
 
 	/**
 	 * Returns modified $exportedEdge which become the edge's attributes.
 	 */
-	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array;
+	public function processEdgeAttrs(Edge $edge, array $exportedEdge): array
+	{
+		return $exportedEdge;  // @codeCoverageIgnore
+	}
 
 	/**
 	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
 	 */
-	public function getExtraSvgElements(Graph $graph): array;
-
+	public function getExtraSvgElements(Graph $graph): array
+	{
+		return [];  // @codeCoverageIgnore
+	}
 }

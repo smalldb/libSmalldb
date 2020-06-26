@@ -20,9 +20,9 @@
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
 use Smalldb\StateMachine\Definition\TransitionDefinition;
-use Smalldb\StateMachine\Graph\Edge;
-use Smalldb\StateMachine\Graph\NestedGraph;
-use Smalldb\StateMachine\Graph\Node;
+use Smalldb\Graph\Edge;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 
 class StateMachineEdge extends Edge
 {

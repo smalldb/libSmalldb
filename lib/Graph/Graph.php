@@ -17,7 +17,7 @@
  */
 
 
-namespace Smalldb\StateMachine\Graph;
+namespace Smalldb\Graph;
 
 
 class Graph extends NestedGraph

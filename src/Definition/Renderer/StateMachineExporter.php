@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Definition\Renderer;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 
 
 class StateMachineExporter extends GrafovatkoExporter

@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\BpmnExtension\Definition;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Graph\Graph;
+use Smalldb\Graph\Graph;
 
 
 class BpmnExtensionPlaceholder implements ExtensionPlaceholderInterface
