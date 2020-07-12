@@ -40,15 +40,18 @@ class UserDataImmutable extends Source_UserProperties implements UserData
 	}
 
 
-	public static function fromArray(array $source, ?UserData $sourceObj = null): self
+	public static function fromArray(?array $source, ?UserData $sourceObj = null): ?self
 	{
+		if ($source === null) {
+			return null;
+		}
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
-		$t->id = $source['id'];
-		$t->fullName = $source['fullName'];
-		$t->username = $source['username'];
-		$t->email = $source['email'];
-		$t->password = $source['password'];
-		$t->roles = $source['roles'];
+		$t->id = isset($source['id']) ? (int) $source['id'] : null;
+		$t->fullName = (string) $source['fullName'];
+		$t->username = (string) $source['username'];
+		$t->email = (string) $source['email'];
+		$t->password = (string) $source['password'];
+		$t->roles = $source['roles'] ?? null;
 		return $t;
 	}
 

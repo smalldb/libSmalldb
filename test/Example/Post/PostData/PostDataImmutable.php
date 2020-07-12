@@ -45,17 +45,20 @@ class PostDataImmutable extends Source_PostProperties implements PostData
 	}
 
 
-	public static function fromArray(array $source, ?PostData $sourceObj = null): self
+	public static function fromArray(?array $source, ?PostData $sourceObj = null): ?self
 	{
+		if ($source === null) {
+			return null;
+		}
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
-		$t->id = $source['id'];
-		$t->title = $source['title'];
-		$t->slug = $source['slug'];
-		$t->summary = $source['summary'];
-		$t->content = $source['content'];
-		$t->publishedAt = $source['publishedAt'];
-		$t->authorId = $source['authorId'];
-		$t->commentCount = $source['commentCount'];
+		$t->id = isset($source['id']) ? (int) $source['id'] : null;
+		$t->title = (string) $source['title'];
+		$t->slug = (string) $source['slug'];
+		$t->summary = (string) $source['summary'];
+		$t->content = (string) $source['content'];
+		$t->publishedAt = ($v = $source['publishedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->authorId = (int) $source['authorId'];
+		$t->commentCount = isset($source['commentCount']) ? (int) $source['commentCount'] : null;
 		return $t;
 	}
 

@@ -25,6 +25,7 @@ use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
 
@@ -34,6 +35,7 @@ use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
  * @UseRepository(TagRepository::class)
  * @UseTransitions(TagTransitions::class)
  * @WrapDTO(TagDataImmutable::class)
+ * @SQL\StateSelect("'Exists'")
  */
 abstract class Tag implements ReferenceInterface, TagData
 {

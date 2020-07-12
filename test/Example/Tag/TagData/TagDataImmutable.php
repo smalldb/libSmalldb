@@ -32,11 +32,14 @@ class TagDataImmutable extends Source_TagProperties implements TagData
 	}
 
 
-	public static function fromArray(array $source, ?TagData $sourceObj = null): self
+	public static function fromArray(?array $source, ?TagData $sourceObj = null): ?self
 	{
+		if ($source === null) {
+			return null;
+		}
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
-		$t->id = $source['id'];
-		$t->name = $source['name'];
+		$t->id = isset($source['id']) ? (int) $source['id'] : null;
+		$t->name = (string) $source['name'];
 		return $t;
 	}
 

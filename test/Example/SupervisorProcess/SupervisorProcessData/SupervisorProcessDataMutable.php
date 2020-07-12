@@ -43,16 +43,19 @@ class SupervisorProcessDataMutable extends Source_SupervisorProcessProperties im
 	}
 
 
-	public static function fromArray(array $source, ?SupervisorProcessData $sourceObj = null): self
+	public static function fromArray(?array $source, ?SupervisorProcessData $sourceObj = null): ?self
 	{
+		if ($source === null) {
+			return null;
+		}
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
-		$t->id = $source['id'];
-		$t->state = $source['state'];
-		$t->command = $source['command'];
-		$t->createdAt = $source['createdAt'];
-		$t->modifiedAt = $source['modifiedAt'];
-		$t->memoryLimit = $source['memoryLimit'];
-		$t->args = $source['args'];
+		$t->id = isset($source['id']) ? (int) $source['id'] : null;
+		$t->state = (string) $source['state'];
+		$t->command = (string) $source['command'];
+		$t->createdAt = ($v = $source['createdAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->modifiedAt = ($v = $source['modifiedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->memoryLimit = isset($source['memoryLimit']) ? (int) $source['memoryLimit'] : null;
+		$t->args = $source['args'] ?? null;
 		return $t;
 	}
 

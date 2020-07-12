@@ -393,12 +393,48 @@ class DtoGenerator
 		}
 		$w->endMethod();
 
-		$w->beginStaticMethod('fromArray', ['array $source', '?' . $w->useClass($copyInterfaceName) . ' $sourceObj = null'], 'self');
+		$w->beginStaticMethod('fromArray', ['?array $source', '?' . $w->useClass($copyInterfaceName) . ' $sourceObj = null'], '?self');
 		{
+			$w->beginBlock("if (\$source === null)");
+			{
+				$w->writeln("return null;");
+			}
+			$w->endBlock();
+
 			$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
 			foreach ($sourceClass->getProperties() as $property) {
 				$propertyName = $property->getName();
-				$w->writeln("\$t->$propertyName = \$source['$propertyName'];");
+				$type = $property->getType();
+				if ($type instanceof ReflectionNamedType) {
+					$typehint = $type->getName();
+				} else {
+					$typehint = null;
+				}
+
+				//$w->writeln("\$t->$propertyName = \$source['$propertyName'];");
+
+				// Convert value to fit the typehint
+				switch ($typehint) {
+					case 'int':
+					case 'float':
+					case 'bool':
+					case 'string':
+						if ($type->allowsNull()) {
+							$w->writeln("\$t->$propertyName = isset(\$source[%s]) ? ($typehint) \$source[%s] : null;", $propertyName, $propertyName);
+						} else {
+							$w->writeln("\$t->$propertyName = ($typehint) \$source[%s];", $propertyName, $propertyName);
+						}
+						break;
+
+					default:
+						if ($typehint && class_exists($typehint)) {
+							$c = $w->useClass($typehint);
+							$w->writeln("\$t->$propertyName = (\$v = \$source[%s] ?? null) instanceof $c || \$v === null ? \$v : new $c(\$v);", $propertyName);
+						} else {
+							$w->writeln("\$t->$propertyName = \$source[%s] ?? null;", $propertyName);
+						}
+						break;
+				}
 			}
 			$w->writeln("return \$t;");
 		}

@@ -26,7 +26,7 @@ use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 /**
  * Class TagProperties
  *
- * @SQL\Table("symfony_demo_post")
+ * @SQL\Table("symfony_demo_tag")
  * @GenerateDTO("TagData")
  */
 abstract class TagProperties
