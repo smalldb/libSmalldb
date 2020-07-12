@@ -49,12 +49,8 @@ use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReader as Reader;
  */
 class AnnotationReader
 {
-
-	/** @var StateMachineDefinitionBuilderFactory */
-	private $definitionBuilderFactory;
-
-	/** @var AnnotationReaderInterface */
-	private $annotationReader;
+	private StateMachineDefinitionBuilderFactory $definitionBuilderFactory;
+	private AnnotationReaderInterface $annotationReader;
 
 
 	public function __construct(StateMachineDefinitionBuilderFactory $definitionBuilderFactory,
@@ -75,7 +71,8 @@ class AnnotationReader
 
 
 	private function processClassReflection(ReflectionClass $reflectionClass,
-		AnnotationReaderInterface $annotationReader, StateMachineDefinitionBuilder $builder): void
+		AnnotationReaderInterface $annotationReader, StateMachineDefinitionBuilder $builder,
+		bool $isSourceClass = true): void
 	{
 		$filename = $reflectionClass->getFileName();
 		$classname = $reflectionClass->getName();
@@ -93,15 +90,17 @@ class AnnotationReader
 			}
 		}
 
-		$builder->setReferenceClass($classname);
-		$builder->setMTime(filemtime($filename));
+		if ($isSourceClass) {
+			$builder->setReferenceClass($classname);
+			$builder->setMTime(filemtime($filename));
+		}
 
 		/** @var SourcesExtensionPlaceholder $sourcesPlaceholder */
 		$sourcesPlaceholder = $builder->getExtensionPlaceholder(SourcesExtensionPlaceholder::class);
 		$sourcesPlaceholder->addSourceFile(new SourceClassFile($reflectionClass));
 
 		$classAnnotations = $annotationReader->getClassAnnotations($reflectionClass);
-		$this->processClassAnnotations($reflectionClass, $classAnnotations, $builder);
+		$this->processClassAnnotations($reflectionClass, $classAnnotations, $builder, $isSourceClass);
 
 		foreach ($reflectionClass->getReflectionConstants() as $reflectionConstant) {
 			$constantAnnotations = $annotationReader->getConstantAnnotations($reflectionConstant);
@@ -125,7 +124,7 @@ class AnnotationReader
 	}
 
 	private function processClassAnnotations(ReflectionClass $reflectionClass, array $annotations,
-		StateMachineDefinitionBuilder $builder): void
+		StateMachineDefinitionBuilder $builder, bool $isSourceClass = true): void
 	{
 		$isStateMachine = false;
 
@@ -139,9 +138,15 @@ class AnnotationReader
 			if ($annotation instanceof StateMachineBuilderApplyInterface) {
 				$annotation->applyToBuilder($builder);
 			}
+			if ($annotation instanceof RecursiveAnnotationIncludeInterface) {
+				foreach ($annotation->getIncludedClassNames() as $includedClassName) {
+					$includedClass = new ReflectionClass($includedClassName);
+					$this->processClassReflection($includedClass, $this->annotationReader, $builder, false);
+				}
+			}
 		}
 
-		if (!$isStateMachine) {
+		if ($isSourceClass && !$isStateMachine) {
 			throw new MissingStateMachineAnnotationException("No @StateMachine annotation found: " . $reflectionClass->getName());
 		}
 	}

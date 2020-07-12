@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\DtoExtension\Annotation;
 
+use Smalldb\StateMachine\Definition\AnnotationReader\RecursiveAnnotationIncludeInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\DtoExtension\Definition\DtoExtensionPlaceholder;
@@ -27,9 +28,18 @@ use Smalldb\StateMachine\DtoExtension\Definition\DtoExtensionPlaceholder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class WrapDTO implements StateMachineBuilderApplyInterface
+class WrapDTO implements StateMachineBuilderApplyInterface, RecursiveAnnotationIncludeInterface
 {
 	public string $dtoClassName;
+
+	public function __construct($values)
+	{
+		$dtoClassName = $values['value'] ?? null;
+		if (!$dtoClassName || !class_exists($dtoClassName)) {
+			throw new \InvalidArgumentException("WrapDTO requires a class name of existing class.");
+		}
+		$this->dtoClassName = $dtoClassName;
+	}
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
@@ -37,6 +47,14 @@ class WrapDTO implements StateMachineBuilderApplyInterface
 		/** @var DtoExtensionPlaceholder $extPlaceholder */
 		$extPlaceholder = $builder->getExtensionPlaceholder(DtoExtensionPlaceholder::class);
 		$extPlaceholder->dtoClassName = $this->dtoClassName;
+	}
+
+
+	public function getIncludedClassNames(): \Generator
+	{
+		if ($this->dtoClassName) {
+			yield $this->dtoClassName;
+		}
 	}
 
 }
