@@ -27,7 +27,7 @@ class GraphMLExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
 
 	/** @var DiagramInfo[] */
-	public $diagramInfo = [];
+	public array $diagramInfo = [];
 
 
 	public function __construct()

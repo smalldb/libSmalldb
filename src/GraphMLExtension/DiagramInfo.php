@@ -27,18 +27,9 @@ class DiagramInfo implements JsonSerializable
 {
 	use SimpleJsonSerializableTrait;
 
-	/**
-	 * @var string
-	 */
-	private $graphmlFileName;
-	/**
-	 * @var string|null
-	 */
-	private $group;
-	/**
-	 * @var Graph|null
-	 */
-	private $graph;
+	private string $graphmlFileName;
+	private ?string $group;
+	private ?Graph $graph;
 
 
 	public function __construct(string $graphmlFileName, ?string $group, ?Graph $graph)

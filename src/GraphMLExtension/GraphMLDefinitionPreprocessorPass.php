@@ -23,11 +23,8 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 
 class GraphMLDefinitionPreprocessorPass implements PreprocessorPass
 {
-	/** @var string */
-	private $graphmlFilename;
-
-	/** @var string|null */
-	private $group;
+	private string $graphmlFilename;
+	private ?string $group;
 
 
 	/**

@@ -33,13 +33,10 @@ use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessorPass;
 class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
 {
 	/**
-	 * @var string
 	 * @Required
 	 */
-	public $fileName;
-
-	/** @var string */
-	public $group = null;
+	public string $fileName;
+	public ?string $group = null;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void

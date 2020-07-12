@@ -26,8 +26,8 @@ class GraphMLExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var DiagramInfo */
-	public $diagramInfo = [];
+	/** @var DiagramInfo[] */
+	public array $diagramInfo = [];
 
 
 	public function __construct(array $diagramInfo)
@@ -36,7 +36,7 @@ class GraphMLExtension implements ExtensionInterface
 	}
 
 
-	public function getDiagramInfo(): DiagramInfo
+	public function getDiagramInfo(): array
 	{
 		return $this->diagramInfo;
 	}

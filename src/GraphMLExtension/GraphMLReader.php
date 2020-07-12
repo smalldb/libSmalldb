@@ -36,15 +36,8 @@ use Smalldb\Graph\MissingElementException;
  */
 class GraphMLReader
 {
-
-	/**
-	 * @var StateMachineDefinitionBuilder
-	 */
-	private $builder;
-
-
-	/** @var Graph */
-	private $graph = null;
+	private StateMachineDefinitionBuilder $builder;
+	private ?Graph $graph = null;
 
 
 	public function __construct(StateMachineDefinitionBuilder $builder)
