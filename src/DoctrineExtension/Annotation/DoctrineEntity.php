@@ -21,7 +21,6 @@ namespace Smalldb\StateMachine\DoctrineExtension\Annotation;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreprocessorPass;
-use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineExtensionPlaceholder;
 
 
 /**
@@ -32,9 +31,7 @@ use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineExtensionPlacehold
  */
 class DoctrineEntity implements StateMachineBuilderApplyInterface
 {
-
-	/** @var string */
-	public $className;
+	public string $className;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void

@@ -27,12 +27,8 @@ use Smalldb\StateMachine\Smalldb;
 
 class AbstractDoctrineRepository extends AbstractSmalldbRepository
 {
-
-	/** @var DataSource */
-	private $dataSource = null;
-
-	/** @var EntityRepository */
-	protected $repository;
+	private ?DataSource $dataSource = null;
+	protected EntityRepository $repository;
 
 
 	public function __construct(Smalldb $smalldb, EntityRepository $repository)

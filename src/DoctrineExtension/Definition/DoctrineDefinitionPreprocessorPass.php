@@ -23,9 +23,7 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 
 class DoctrineDefinitionPreprocessorPass implements PreprocessorPass
 {
-
-	/** @var string */
-	private $entityClassName;
+	private string $entityClassName;
 
 
 	public function __construct(string $entityClassName)

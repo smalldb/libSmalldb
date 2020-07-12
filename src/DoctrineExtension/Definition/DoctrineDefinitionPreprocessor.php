@@ -26,9 +26,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
 class DoctrineDefinitionPreprocessor implements Preprocessor
 {
-
-	/** @var EntityManager */
-	private $entityManager;
+	private EntityManager $entityManager;
 
 
 	public function __construct(EntityManager $entityManager)

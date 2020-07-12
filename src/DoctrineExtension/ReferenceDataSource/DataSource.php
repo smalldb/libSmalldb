@@ -20,28 +20,17 @@ namespace Smalldb\StateMachine\DoctrineExtension\ReferenceDataSource;
 
 use Doctrine\ORM\EntityRepository;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
-use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Smalldb;
 
 
 class DataSource implements ReferenceDataSourceInterface
 {
-
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider;
-
-	/** @var EntityRepository */
-	private $repository;
-
-	/** @var string */
-	private $refClass;
+	private Smalldb $smalldb;
+	private SmalldbProviderInterface $machineProvider;
+	private EntityRepository $repository;
+	private string $refClass;
 
 
 	public function __construct(Smalldb $smalldb, SmalldbProviderInterface $machineProvider, EntityRepository $repository)

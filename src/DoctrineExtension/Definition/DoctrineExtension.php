@@ -26,8 +26,7 @@ class DoctrineExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $entityClassName;
+	private string $entityClassName;
 
 
 	public function __construct(string $entityClassName)

@@ -24,9 +24,7 @@ use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 class DoctrineExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-
-	/** @var string */
-	public $entityClassName = null;
+	public ?string $entityClassName = null;
 
 
 	public function __construct()
