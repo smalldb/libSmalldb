@@ -55,7 +55,7 @@ class AbstractDoctrineRepository extends AbstractSmalldbRepository
 	 *
 	 * @return ReferenceInterface
 	 */
-	public function ref($id)
+	public function ref($id): ReferenceInterface
 	{
 		return $this->getDataSource()->ref($id);
 	}

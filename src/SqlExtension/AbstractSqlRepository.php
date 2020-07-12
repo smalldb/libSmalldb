@@ -59,10 +59,8 @@ abstract class AbstractSqlRepository extends AbstractSmalldbRepository implement
 	/**
 	 * Create a reference to a state machine identified by $id.
 	 * Override this method to use a proper return type hint.
-	 *
-	 * @return ReferenceInterface
 	 */
-	public function ref($id)
+	public function ref($id): ReferenceInterface
 	{
 		return $this->getDataSource()->ref($id);
 	}

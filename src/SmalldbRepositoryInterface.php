@@ -24,9 +24,7 @@ interface SmalldbRepositoryInterface
 
 	/**
 	 * Create a reference to a state machine identified by $id.
-	 *
-	 * @return ReferenceInterface
 	 */
-	public function ref($id);
+	public function ref($id): ReferenceInterface;
 
 }
