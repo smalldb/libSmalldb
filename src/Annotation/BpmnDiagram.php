@@ -26,20 +26,11 @@ namespace Smalldb\StateMachine\Annotation;
  */
 class BpmnDiagram
 {
-	/**
-	 * @var string
-	 * @required
-	 */
-	public $file;
+	/** @required */
+	public string $file;
 
-	/**
-	 * @var string
-	 */
-	public $svgFile = null;
+	public ?string $svgFile = null;
 
-	/**
-	 * @var string
-	 * @required
-	 */
-	public $stateMachineParticipantId;
+	/** @required */
+	public string $stateMachineParticipantId;
 }

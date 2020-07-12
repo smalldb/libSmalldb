@@ -29,8 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  */
 class UseTransitions implements StateMachineBuilderApplyInterface
 {
-	/** @var string */
-	public $transitionsClass;
+	public string $transitionsClass;
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{

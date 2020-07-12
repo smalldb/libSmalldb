@@ -29,14 +29,9 @@ use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
  */
 class State implements StatePlaceholderApplyInterface
 {
-	/** @var string */
-	public $name;
-
-	/** @var ?string */
-	public $label;
-
-	/** @var ?string */
-	public $color;
+	public string $name;
+	public ?string $label = null;
+	public ?string $color = null;
 
 	public function __construct(array $values)
 	{

@@ -26,7 +26,5 @@ namespace Smalldb\StateMachine\Annotation\Access;
  */
 class AllowPolicy
 {
-	/** @var string */
-	public $policy;
-
+	public string $policy;
 }

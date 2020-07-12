@@ -29,8 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  */
 class UseRepository implements StateMachineBuilderApplyInterface
 {
-	/** @var string */
-	public $repositoryClass;
+	public string $repositoryClass;
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{

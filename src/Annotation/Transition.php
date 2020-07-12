@@ -27,20 +27,12 @@ namespace Smalldb\StateMachine\Annotation;
  */
 class Transition
 {
-	/**
-	 * @var string|null
-	 */
-	public $source = null;
+	public ?string $source = null;
 
-	/**
-	 * @var string[]
-	 */
-	public $targets = [];
+	/** @var string[] */
+	public array $targets = [];
 
-	/**
-	 * @var string|null
-	 */
-	public $color = null;
+	public ?string $color = null;
 
 
 	public function __construct(array $values)

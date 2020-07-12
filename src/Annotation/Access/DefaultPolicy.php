@@ -27,6 +27,5 @@ namespace Smalldb\StateMachine\Annotation\Access;
  */
 class DefaultPolicy
 {
-	/** @var string */
-	public $accessPolicy;
+	public string $accessPolicy;
 }

@@ -27,6 +27,5 @@ namespace Smalldb\StateMachine\Annotation\Access;
  */
 class RequireRole
 {
-	/** @var string */
-	public $role;
+	public string $role;
 }

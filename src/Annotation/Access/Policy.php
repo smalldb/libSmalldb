@@ -26,6 +26,9 @@ namespace Smalldb\StateMachine\Annotation\Access;
  */
 class Policy
 {
-	/** @var array */
-	public $policies;
+	/**
+	 * @var array
+	 * FIXME: Policy[] ?
+	 */
+	public array $policies;
 }

@@ -24,8 +24,7 @@ use Smalldb\StateMachine\Definition\AnnotationReader\ReflectionClassAwareAnnotat
 abstract class AbstractIncludeAnnotation implements ReflectionClassAwareAnnotationInterface
 {
 
-	/** @var string|null */
-	protected $baseDirName = null;
+	protected ?string $baseDirName = null;
 
 
 	public function setReflectionClass(\ReflectionClass $reflectionClass)

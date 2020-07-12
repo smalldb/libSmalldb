@@ -29,8 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  */
 class StateMachine implements StateMachineBuilderApplyInterface
 {
-	/** @var string */
-	public $type;
+	public string $type;
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{

@@ -29,8 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  */
 class UseReference implements StateMachineBuilderApplyInterface
 {
-	/** @var string */
-	public $referenceClass;
+	public string $referenceClass;
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{

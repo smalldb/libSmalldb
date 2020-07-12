@@ -32,7 +32,7 @@ use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 class Color implements StatePlaceholderApplyInterface, TransitionPlaceholderApplyInterface
 {
 	/** @var string */
-	public $color;
+	public string $color;
 
 	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
 	{
