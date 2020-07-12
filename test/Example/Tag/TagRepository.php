@@ -18,79 +18,19 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use PDO;
-use PDOStatement;
-use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\PdoDataLoader;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
+use Smalldb\StateMachine\Test\Misc\AbstractCountingSqlRepository;
 
 
-class TagRepository implements SmalldbRepositoryInterface
+class TagRepository extends AbstractCountingSqlRepository implements SmalldbRepositoryInterface
 {
-	private Smalldb $smalldb;
-	private ?SmalldbProviderInterface $machineProvider = null;
-	private ?string $refClass = null;
-	private ?PdoDataLoader $dataLoader = null;
-	private PDO $pdo;
-
-
-	public function __construct(Smalldb $smalldb, SymfonyDemoDatabase $pdo)
-	{
-		$this->smalldb = $smalldb;
-		$this->pdo = $pdo;
-	}
-
-
-	public function getMachineProvider(): SmalldbProviderInterface
-	{
-		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(Tag::class));
-	}
-
-
-	public function getReferenceClass(): string
-	{
-		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
-	}
-
-
-	private function getDataLoader(): PdoDataLoader
-	{
-		return $this->dataLoader ?? ($this->dataLoader = $this->createDataLoader());
-	}
-
-
-	// TODO: Load this from the definition
-	private string $table = 'symfony_demo_tag';
-	private string $selectColumns = 'id, name';
-
-	private function createDataLoader($preloadedDataSet = null): PdoDataLoader
-	{
-		$dataLoader = new PdoDataLoader($this->smalldb, $this->getMachineProvider());
-		$dataLoader->setStateSelectPreparedStatement($this->pdo->prepare("
-			SELECT 'Exists' AS state
-			FROM $this->table
-			WHERE id = :id
-			LIMIT 1
-		"));
-		$dataLoader->setLoadDataPreparedStatement($this->pdo->prepare("
-			SELECT $this->selectColumns
-			FROM $this->table
-			WHERE id = :id
-			LIMIT 1
-		"));
-		$dataLoader->setOnQueryCallback(function (PDOStatement $stmt) {
-			//$this->queryCount++;
-		});
-		return $dataLoader;
-	}
+	protected const REF_CLASS = Tag::class;
 
 
 	public function ref($id): Tag
 	{
 		/** @var Tag $ref */
-		$ref = $this->getDataLoader()->ref($id);
+		$ref = $this->getDataSource()->ref($id);
 		return $ref;
 	}
 
