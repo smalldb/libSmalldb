@@ -33,12 +33,8 @@ use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
  */
 abstract class AbstractSqlRepository extends AbstractSmalldbRepository implements SmalldbRepositoryInterface
 {
-
-	/** @var Connection */
-	protected $db;
-
-	/** @var DataSource */
-	private $dataSource = null;
+	protected Connection $db;
+	private ?DataSource $dataSource = null;
 
 
 	public function __construct(Smalldb $smalldb, Connection $db)

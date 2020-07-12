@@ -24,21 +24,9 @@ use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 class SqlPropertyExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-
-	/**
-	 * @var bool
-	 */
-	public $isId = false;
-
-	/**
-	 * @var ?string
-	 */
-	public $sqlColumn;
-
-	/**
-	 * @var ?string
-	 */
-	public $sqlSelect;
+	public bool $isId = false;
+	public ?string $sqlColumn = null;
+	public ?string $sqlSelect = null;
 
 
 	public function __construct()

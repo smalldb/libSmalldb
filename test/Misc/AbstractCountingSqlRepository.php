@@ -25,9 +25,7 @@ use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
 
 class AbstractCountingSqlRepository extends AbstractSqlRepository
 {
-
-	/** @var int */
-	private $queryCount = 0;
+	private int $queryCount = 0;
 
 
 	protected function createDataSource(): DataSource

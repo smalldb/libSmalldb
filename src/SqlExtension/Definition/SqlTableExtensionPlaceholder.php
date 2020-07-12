@@ -24,12 +24,8 @@ use Smalldb\StateMachine\Definition\ExtensionInterface;
 
 class SqlTableExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-
-	/** @var string */
-	public $sqlTable;
-
-	/** @var string */
-	public $sqlStateSelect = null;
+	public string $sqlTable;
+	public ?string $sqlStateSelect = null;
 
 
 	public function __construct()

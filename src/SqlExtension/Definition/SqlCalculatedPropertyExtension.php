@@ -26,8 +26,7 @@ class SqlCalculatedPropertyExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string|null */
-	private $sqlSelect;
+	private ?string $sqlSelect;
 
 
 	public function __construct(?string $sqlSelect = null)

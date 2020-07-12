@@ -26,11 +26,9 @@ class SqlTableExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $sqlTable;
+	private string $sqlTable;
+	private string $sqlStateSelect;
 
-	/** @var string */
-	private $sqlStateSelect;
 
 	public function __construct(string $sqlTable, string $sqlStateSelect)
 	{
