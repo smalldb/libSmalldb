@@ -23,14 +23,17 @@ use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
+use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
+use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
 
 
 /**
  * @StateMachine("tag")
  * @UseRepository(TagRepository::class)
  * @UseTransitions(TagTransitions::class)
+ * @WrapDTO(TagDataImmutable::class)
  */
 abstract class Tag implements ReferenceInterface, TagData
 {

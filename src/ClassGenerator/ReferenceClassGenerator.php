@@ -23,21 +23,16 @@ use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\DecoratingGenera
 use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\DummyGenerator;
 use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\InheritingGenerator;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\DtoExtension\Definition\DtoExtension;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
 class ReferenceClassGenerator extends AbstractClassGenerator
 {
-
-	/** @var InheritingGenerator */
-	private $inheritingGenerator = null;
-
-	/** @var DecoratingGenerator */
-	private $decoratingGenerator = null;
-
-	/** @var DummyGenerator */
-	private $dummyGenerator = null;
+	private ?InheritingGenerator $inheritingGenerator = null;
+	private ?DecoratingGenerator $decoratingGenerator = null;
+	private ?DummyGenerator $dummyGenerator = null;
 
 
 	public function __construct(SmalldbClassGenerator $classGenerator)
@@ -78,6 +73,10 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 		try {
 			$generator = null;
 			$sourceClassReflection = new ReflectionClass($sourceReferenceClassName);
+
+			if ($definition->hasExtension(DtoExtension::class)) {
+				return $this->getDecoratingGenerator()->generateReferenceClass($sourceReferenceClassName, $definition);
+			}
 
 			$parentClassReflection = $sourceClassReflection->getParentClass();
 			if ($parentClassReflection && !$parentClassReflection->implementsInterface(ReferenceInterface::class)) {

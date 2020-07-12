@@ -22,7 +22,6 @@ use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
-use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\RuntimeException;
 use Smalldb\PhpFileWriter\PhpFileWriter;

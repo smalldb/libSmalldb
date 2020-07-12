@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator;
 
 use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\DtoExtension\Definition\DtoExtension;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
@@ -35,7 +36,34 @@ class DecoratingGenerator extends AbstractGenerator
 	 */
 	public function writeReferenceClass(PhpFileWriter $w, ReflectionClass $sourceClassReflection, StateMachineDefinition $definition): string
 	{
-		// Detect DTO interface
+		$dtoClassName = null;
+		if ($definition->hasExtension(DtoExtension::class)) {
+			/** @var DtoExtension $dtoExt */
+			$dtoExt = $definition->getExtension(DtoExtension::class);
+			$dtoClassName = $dtoExt->getDtoClassName();
+		}
+
+		// Use the DTO class name provided by the definition or try to autodetect the name
+		$dtoClass = $dtoClassName ? new ReflectionClass($dtoClassName)
+			: $this->detectDtoInterface($sourceClassReflection);
+
+		// Begin the Reference class
+		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection);
+
+		// Create methods
+		$this->generateIdMethods($w);
+		$this->generateReferenceMethods($w, $definition);
+		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
+		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass);
+		$this->generateHydratorMethod($w, $sourceClassReflection, $dtoClass);
+
+		$w->endClass();
+		return $targetReferenceClassName;
+	}
+
+
+	private function detectDtoInterface(ReflectionClass $sourceClassReflection): ReflectionClass
+	{
 		$dtoInterface = null;
 		foreach ($sourceClassReflection->getInterfaces() as $interface) {
 			if (!$interface->implementsInterface(ReferenceInterface::class)) {
@@ -50,28 +78,16 @@ class DecoratingGenerator extends AbstractGenerator
 		if ($dtoInterface === null) {
 			throw new InvalidArgumentException("No DTO interface found in " . $sourceClassReflection->getName());
 		}
-
-		// Begin the Reference class
-		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection, [$w->useClass($dtoInterface->getName())]);
-
-		// Create methods
-		$this->generateIdMethods($w);
-		$this->generateReferenceMethods($w, $definition);
-		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoInterface);
-		$this->generateHydratorMethod($w, $sourceClassReflection, $dtoInterface);
-
-		$w->endClass();
-		return $targetReferenceClassName;
+		return $dtoInterface;
 	}
 
 
-	private function generateDataGetterMethods(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface)
+	private function generateDataGetterMethods(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection,
+		ReflectionClass $dtoInterface)
 	{
 		$dtoInterfaceAlias = $w->useClass($dtoInterface->getName());
 
-		$w->writeln("/** @var " . $dtoInterfaceAlias . " */");
-		$w->writeln('private $data = null;');
+		$w->writeln("private ?$dtoInterfaceAlias \$data = null;");
 
 		$w->beginMethod('invalidateCache', [], 'void');
 		{
@@ -83,7 +99,23 @@ class DecoratingGenerator extends AbstractGenerator
 		// Implement missing methods from $dtoInterface
 		foreach ($dtoInterface->getMethods() as $dtoMethod) {
 			$dtoMethodName = $dtoMethod->getName();
+
+			if ($dtoMethodName === '__construct') {
+				// Skip constructors.
+				continue;
+			}
+
+			if (!$sourceClassReflection->hasMethod($dtoMethodName)) {
+				// Skip methods that do not exist in the reference class.
+				continue;
+			}
+
 			$sourceMethod = $sourceClassReflection->getMethod($dtoMethodName);
+
+			if ($sourceMethod->isStatic()) {
+				// Skip static methods.
+				continue;
+			}
 
 			if (!$w->hasMethod($dtoMethodName) && $dtoMethod->isPublic() && (!$sourceMethod || $sourceMethod->isAbstract())) {
 				$w->beginMethodOverride($dtoMethod, $parentCallArgs);
@@ -156,7 +188,10 @@ class DecoratingGenerator extends AbstractGenerator
 				$returnType = $method->getReturnType();
 
 				// Implement data loader methods
-				if ($returnType && $returnType->getName() === $dtoInterface->getName() && empty($method->getParameters())) {
+				if ($returnType instanceof \ReflectionNamedType
+					&& $returnType->getName() === $dtoInterface->getName()
+					&& empty($method->getParameters()))
+				{
 					$w->beginMethodOverride($method, $parentCallArgs);
 					{
 						$w->beginBlock("if (\$this->data === null && (\$this->data = \$this->dataSource->loadData(\$this->getMachineId())) === null)");
