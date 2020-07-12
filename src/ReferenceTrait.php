@@ -32,14 +32,9 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
  */
 trait ReferenceTrait // implements ReferenceInterface
 {
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider = null;
-
-	/** @var ReferenceDataSourceInterface */
-	private $dataSource = null;
+	private Smalldb $smalldb;
+	private ?SmalldbProviderInterface $machineProvider = null;
+	private ?ReferenceDataSourceInterface $dataSource = null;
 
 
 	/**

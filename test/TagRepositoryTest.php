@@ -78,7 +78,7 @@ class TagRepositoryTest extends TestCase
 		$ref = $this->smalldb->ref(Tag::class, 1);
 		$this->assertEquals('Exists', $ref->getState());
 		$this->assertEquals(1, $ref->getId());
-		$this->assertNotEmpty($ref->getTitle());
+		$this->assertNotEmpty($ref->getName());
 
 		// One query to load the state, second to load data. One would be better.
 		$this->assertLessThanOrEqual(2, $this->tagRepository->getQueryCount());
@@ -98,12 +98,12 @@ class TagRepositoryTest extends TestCase
 		$ref = $this->smalldb->ref(Tag::class, 1);
 
 		// FIXME: There should be no need to trigger loading manually.
-		$ref->getTitle();
+		$ref->getName();
 
 		$tagData = new TagDataImmutable($ref);
 
-		$dataTitle = $tagData->getTitle();
-		$refTitle = $ref->getTitle();
+		$dataTitle = $tagData->getName();
+		$refTitle = $ref->getName();
 		$this->assertEquals($refTitle, $dataTitle);
 	}
 
@@ -111,12 +111,7 @@ class TagRepositoryTest extends TestCase
 	private function createTagData(): TagData
 	{
 		$tagData = new TagDataMutable();
-		$tagData->setTitle('Foo');
-		$tagData->setSlug('foo');
-		$tagData->setAuthorId(1);
-		$tagData->setPublishedAt(new DateTimeImmutable());
-		$tagData->setSummary('Foo, foo.');
-		$tagData->setContent('Foo. Foo. Foo.');
+		$tagData->setName('Foo');
 		return new TagDataImmutable($tagData);
 	}
 
@@ -131,25 +126,28 @@ class TagRepositoryTest extends TestCase
 		$ref->create($tagData);
 		$this->assertEquals('Exists', $ref->getState());
 		$this->assertEquals(1000, $ref->getId());
-		$this->assertEquals('Foo', $ref->getTitle());
+		$this->assertEquals('Foo', $ref->getName());
 	}
 
 
+	/**
+	 * @depends testCreate
+	 */
 	public function testUpdate()
 	{
 		/** @var Tag $ref */
 		$ref = $this->smalldb->ref(Tag::class, 1000);
 		$ref->create($this->createTagData());
 		$this->assertEquals('Exists', $ref->getState());
-		$this->assertEquals('Foo', $ref->getTitle());
+		$this->assertEquals('Foo', $ref->getName());
 
 		$tagData = new TagDataImmutable($ref);
-		$tagData = $tagData->withTitle('Bar');
+		$tagData = $tagData->withName('Bar');
 
 		$ref->update($tagData);
 		$this->assertEquals('Exists', $ref->getState());
 		$this->assertEquals(1000, $ref->getId());
-		$this->assertEquals('Bar', $ref->getTitle());
+		$this->assertEquals('Bar', $ref->getName());
 	}
 
 

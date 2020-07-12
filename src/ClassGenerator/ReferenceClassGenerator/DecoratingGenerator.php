@@ -50,12 +50,13 @@ class DecoratingGenerator extends AbstractGenerator
 		// Begin the Reference class
 		$targetReferenceClassName = $this->beginReferenceClass($w, $sourceClassReflection);
 
+		$loadDataCall = $this->getLoadDataCall($w, $dtoClass);
+
 		// Create methods
 		$this->generateIdMethods($w);
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
-		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass);
-		$this->generateHydratorMethod($w, $sourceClassReflection, $dtoClass);
+		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass, $loadDataCall);
 
 		$w->endClass();
 		return $targetReferenceClassName;
@@ -83,7 +84,7 @@ class DecoratingGenerator extends AbstractGenerator
 
 
 	private function generateDataGetterMethods(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection,
-		ReflectionClass $dtoInterface)
+		ReflectionClass $dtoInterface, string $loadDataCall)
 	{
 		$dtoInterfaceAlias = $w->useClass($dtoInterface->getName());
 
@@ -120,7 +121,7 @@ class DecoratingGenerator extends AbstractGenerator
 			if (!$w->hasMethod($dtoMethodName) && $dtoMethod->isPublic() && (!$sourceMethod || $sourceMethod->isAbstract())) {
 				$w->beginMethodOverride($dtoMethod, $parentCallArgs);
 				{
-					$w->beginBlock("if (\$this->data === null && (\$this->data = \$this->dataSource->loadData(\$this->getMachineId())) === null)");
+					$w->beginBlock("if (\$this->data === null && (\$this->data = $loadDataCall) === null)");
 					{
 						$w->writeln("throw new " . $w->useClass(NotExistsException::class) . "(\"Cannot load data in the Not Exists state.\");");
 					}
@@ -140,7 +141,7 @@ class DecoratingGenerator extends AbstractGenerator
 			{
 				$w->beginBlock("if (\$this->data === null)");
 				{
-					$w->writeln("\$this->data = \$this->dataSource->loadData(\$this->getMachineId());");
+					$w->writeln("\$this->data = $loadDataCall;");
 				}
 				$w->endBlock();
 
@@ -194,7 +195,7 @@ class DecoratingGenerator extends AbstractGenerator
 				{
 					$w->beginMethodOverride($method, $parentCallArgs);
 					{
-						$w->beginBlock("if (\$this->data === null && (\$this->data = \$this->dataSource->loadData(\$this->getMachineId())) === null)");
+						$w->beginBlock("if (\$this->data === null && (\$this->data = $loadDataCall) === null)");
 						{
 							$w->writeln("return null;");
 						}
@@ -213,17 +214,13 @@ class DecoratingGenerator extends AbstractGenerator
 	}
 
 
-	private function generateHydratorMethod(PhpFileWriter $w, ReflectionClass $sourceClassReflection, ReflectionClass $dtoInterface): void
+	private function getLoadDataCall(PhpFileWriter $w, ?ReflectionClass $dtoClass): string
 	{
-		if ($sourceClassReflection->hasMethod('hydrateWithDTO')) {
-			throw new InvalidArgumentException('Method hydrateWithDTO already defined in class ' . $sourceClassReflection->getName() . '.');
+		if ($dtoClass->hasMethod('fromArray') && $dtoClass->getMethod('fromArray')->isStatic()) {
+			return $w->useClass($dtoClass->getName()) . '::fromArray($this->dataSource->loadData($this->getMachineId()))';
+		} else {
+			return '$this->dataSource->loadData($this->getMachineId())';
 		}
-
-		$w->beginStaticMethod('hydrateWithDTO', ['self $target', '?' . $w->useClass($dtoInterface->getName()) . ' $obj'], 'void');
-		{
-			$w->writeln("\$target->data = \$obj;");
-		}
-		$w->endMethod();
 	}
 
 }
