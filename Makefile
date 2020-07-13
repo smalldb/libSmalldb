@@ -1,9 +1,9 @@
 all: doc test
 
-test: test-example ./vendor/bin/phpunit
+test: ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox
 
-test-coverage: test-example ./vendor/bin/phpunit
+test-coverage: ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage --coverage-php test/output/coverage/coverage.php; ret=$$?; \
 	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'; \
 	cp "test/output/coverage/_js/file.js" "test/output/coverage/_js/file.js~"; \
@@ -12,11 +12,8 @@ test-coverage: test-example ./vendor/bin/phpunit
 		-e "s/\$$\\((this)\\|target\\)\\.children()\\.first()/\$$\\1/g"; \
 	exit $$ret
 
-benchmark: test-example ./vendor/bin/phpunit
+benchmark: ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox --testsuite benchmark
-
-test-example:
-	$(MAKE) -C ./test/example.json --no-print-dir
 
 ./vendor/bin/phpunit:
 	composer install --dev
@@ -37,5 +34,5 @@ doc:
 	make -C doc/
 
 
-.PHONY: all test test-coverage test-example doc benchmark analyze
+.PHONY: all test test-coverage doc benchmark analyze
 
