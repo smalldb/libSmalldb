@@ -236,6 +236,16 @@ class DecoratingGenerator extends AbstractGenerator
 			$w->writeln("\$target->data = " . $w->useClass($dtoClass->getName()) . '::fromArray($row);');
 		}
 		$w->endMethod();
+
+		if ($sourceClassReflection->hasMethod('hydrateWithDTO')) {
+			throw new InvalidArgumentException('Method hydrateWithDTO already defined in class ' . $sourceClassReflection->getName() . '.');
+		}
+
+		$w->beginStaticMethod('hydrateWithDTO', ['self $target', $w->useClass($dtoClass->getName()) . ' $dto'], 'void');
+		{
+			$w->writeln("\$target->data = \$dto;");
+		}
+		$w->endMethod();
 	}
 
 }
