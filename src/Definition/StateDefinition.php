@@ -21,11 +21,8 @@ namespace Smalldb\StateMachine\Definition;
 
 class StateDefinition extends ExtensibleDefinition
 {
-	/** @var string */
-	private $name;
-
-	/** @var ?string */
-	private $color;
+	private string $name;
+	private ?string $color;
 
 
 	/**

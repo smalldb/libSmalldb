@@ -27,13 +27,12 @@ use Smalldb\StateMachine\InvalidArgumentException;
 class StateMachineGraph extends Graph
 {
 	/** @var StateMachineEdge[][][] */
-	private $transitionToEdgesMap = [];
+	private array $transitionToEdgesMap = [];
 
 	/** @var StateMachineNode[][] */
-	private $stateToNodesMap = [];
+	private array $stateToNodesMap = [];
 
-	/** @var StateMachineDefinition  */
-	private $stateMachine;
+	private StateMachineDefinition $stateMachine;
 
 
 	public function __construct(StateMachineDefinition $stateMachine)

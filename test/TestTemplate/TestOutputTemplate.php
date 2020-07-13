@@ -26,22 +26,18 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 
 class TestOutputTemplate extends TestOutput implements Template
 {
-	public static $grafovatkoJsUrl = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
+	public static string $grafovatkoJsUrl = 'https://grafovatko.smalldb.org/dist/grafovatko.min.js';
 
-	/** @var string */
-	private $title;
-
-	/** @var bool */
-	private $hasGrafovatko = false;
+	private string $title;
+	private bool $hasGrafovatko = false;
 
 	/** @var string[] */
-	private $jsResources = [];
+	private array $jsResources = [];
 
 	/** @var string[] */
-	private $htmlFragments = [];
+	private array $htmlFragments = [];
 
-	/** @var string|null */
-	private $outputFilename = null;
+	private ?string $outputFilename = null;
 
 
 	public function setTitle(string $title): self

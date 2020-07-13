@@ -31,15 +31,9 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
  */
 class BrokenCrudItemTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-
-	/** @var CrudItemRepository */
-	private $repository;
-
-	/** @var ArrayDaoTables */
-	private $dao;
-
-	/** @var string */
-	private $table;
+	private CrudItemRepository $repository;
+	private ArrayDaoTables $dao;
+	private string $table;
 
 
 	public function __construct(CrudItemRepository $repository, ArrayDaoTables $dao)

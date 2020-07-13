@@ -32,10 +32,9 @@ abstract class ConflictingAnnotationsWithId2 implements ReferenceInterface
 	/**
 	 * This property has conflicting annotations.
 	 *
-	 * @var string
 	 * @SQL\Select("bar")
 	 * @SQL\Id
 	 */
-	protected $foo;
+	protected string $foo;
 
 }

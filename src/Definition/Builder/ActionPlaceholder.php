@@ -28,8 +28,7 @@ use Smalldb\StateMachine\Definition\ActionDefinition;
  */
 class ActionPlaceholder extends ExtensiblePlaceholder
 {
-	/** @var string */
-	public $name;
+	public string $name;
 
 
 	public function __construct(string $name, array $extensionPlaceholders = [])

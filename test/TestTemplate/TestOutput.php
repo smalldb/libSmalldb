@@ -21,8 +21,7 @@ namespace Smalldb\StateMachine\Test\TestTemplate;
 
 class TestOutput
 {
-	/** @var string */
-	protected $outputDir;
+	protected string $outputDir;
 
 
 	public function __construct()

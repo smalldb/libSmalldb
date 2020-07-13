@@ -27,6 +27,5 @@ namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
  */
 class RequireOwner
 {
-	/** @var string */
-	public $ownerProperty;
+	public string $ownerProperty;
 }

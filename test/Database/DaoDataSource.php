@@ -24,11 +24,8 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 
 class DaoDataSource implements ReferenceDataSourceInterface
 {
-	/** @var ArrayDaoTables */
-	private $dao;
-
-	/** @var string */
-	private $table;
+	private ArrayDaoTables $dao;
+	private string $table;
 
 
 	public function __construct(ArrayDaoTables $dao, string $table)

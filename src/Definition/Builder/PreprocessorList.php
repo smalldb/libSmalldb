@@ -22,7 +22,7 @@ namespace Smalldb\StateMachine\Definition\Builder;
 class PreprocessorList implements Preprocessor
 {
 	/** @var Preprocessor[] */
-	private $preprocessors = [];
+	private array $preprocessors = [];
 
 
 	public function addPreprocessor(Preprocessor $preprocessor): void

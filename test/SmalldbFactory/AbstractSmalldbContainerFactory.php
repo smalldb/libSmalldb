@@ -27,8 +27,7 @@ use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 
 abstract class AbstractSmalldbContainerFactory implements SmalldbFactory
 {
-
-	protected $out;
+	protected TestOutput $out;
 
 
 	public function __construct()

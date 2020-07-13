@@ -19,15 +19,13 @@
 namespace Smalldb\StateMachine\Definition\Builder;
 
 use Smalldb\StateMachine\BpmnExtension\Definition\BpmnDefinitionPreprocessor;
-use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreprocessor;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessor;
 
 
 class StateMachineDefinitionBuilderFactory
 {
 
-	/** @var PreprocessorList */
-	private $preprocessorList;
+	private PreprocessorList $preprocessorList;
 
 
 	public function __construct()

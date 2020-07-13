@@ -24,8 +24,7 @@ abstract class AbstractClassGenerator
 	// TODO: Remove this class, do not pass SmalldbClassGenerator to generators;
 	//      return proper class representation instead.
 
-	/** @var SmalldbClassGenerator */
-	private $classGenerator;
+	private SmalldbClassGenerator $classGenerator;
 
 
 	public function __construct(SmalldbClassGenerator $classGenerator)

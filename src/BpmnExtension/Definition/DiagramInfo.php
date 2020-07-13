@@ -27,17 +27,10 @@ class DiagramInfo implements JsonSerializable
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var string */
-	private $bpmnFileName;
-
-	/** @var string */
-	private $targetParticipant;
-
-	/** @var string|null */
-	private $svgFileName;
-
-	/** @var Graph|null */
-	private $bpmnGraph;
+	private string $bpmnFileName;
+	private string $targetParticipant;
+	private ?string $svgFileName;
+	private ?Graph $bpmnGraph;
 
 
 	public function __construct(string $bpmnFileName, string $targetParticipant, ?string $svgFileName, ?Graph $bpmnGraph)

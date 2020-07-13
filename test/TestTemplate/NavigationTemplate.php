@@ -24,7 +24,7 @@ use Smalldb\StateMachine\Test\BpmnTest;
 
 class NavigationTemplate implements Template
 {
-	private $activeFile = null;
+	private ?string $activeFile = null;
 
 	public function setActiveUrl(?string $url): self
 	{

@@ -33,7 +33,7 @@ namespace Smalldb\StateMachine\Utils;
 class Hook
 {
 	/** @var callable[] */
-	private $listeners = [];
+	private array $listeners = [];
 
 
 	/**

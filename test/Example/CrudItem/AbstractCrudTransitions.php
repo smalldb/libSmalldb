@@ -27,14 +27,9 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 
 abstract class AbstractCrudTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-	/** @var CrudItemRepository */
-	private $repository;
-
-	/** @var ArrayDaoTables */
-	private $dao;
-
-	/** @var string */
-	private $table;
+	private AbstractCrudRepository $repository;
+	private ArrayDaoTables $dao;
+	private string $table;
 
 
 	public function __construct(AbstractCrudRepository $repository, ArrayDaoTables $dao)
@@ -55,13 +50,13 @@ abstract class AbstractCrudTransitions extends MethodTransitionsDecorator implem
 
 	protected function update(TransitionEvent $transitionEvent, ReferenceInterface $ref, $data): void
 	{
-		$this->dao->table($this->table)->update((int) $ref->getId(), $data);
+		$this->dao->table($this->table)->update((int) $ref->getMachineId(), $data);
 	}
 
 
 	protected function delete(TransitionEvent $transitionEvent, ReferenceInterface $ref): void
 	{
-		$this->dao->table($this->table)->delete((int) $ref->getId());
+		$this->dao->table($this->table)->delete((int) $ref->getMachineId());
 	}
 
 }

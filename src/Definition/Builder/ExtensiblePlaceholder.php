@@ -30,7 +30,7 @@ abstract class ExtensiblePlaceholder
 {
 
 	/** @var ExtensionPlaceholderInterface[] */
-	private $extensionPlaceholders = [];
+	private array $extensionPlaceholders = [];
 
 
 	/**

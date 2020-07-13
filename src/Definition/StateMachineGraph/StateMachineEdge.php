@@ -26,8 +26,7 @@ use Smalldb\Graph\Node;
 
 class StateMachineEdge extends Edge
 {
-	/** @var TransitionDefinition */
-	private $transition;
+	private TransitionDefinition $transition;
 
 	public function __construct(TransitionDefinition $transition, NestedGraph $graph, string $id, Node $start, Node $end, array $attrs)
 	{

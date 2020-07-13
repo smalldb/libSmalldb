@@ -27,9 +27,7 @@ use Traversable;
 
 class ReferenceQueryResult extends DataSource implements IteratorAggregate
 {
-
-	/** @var Statement */
-	private $stmt;
+	private Statement $stmt;
 
 
 	public function __construct(?DataSource $originalDataSource, Statement $stmt)

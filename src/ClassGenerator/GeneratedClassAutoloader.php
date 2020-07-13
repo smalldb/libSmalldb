@@ -21,18 +21,10 @@ namespace Smalldb\StateMachine\ClassGenerator;
 
 class GeneratedClassAutoloader
 {
-
-	/** @var string */
-	private $namespace;
-
-	/** @var string */
-	private $directory;
-
-	/** @var int */
-	private $namespaceLen;
-
-	/** @var bool */
-	private $prependAutoloader;
+	private string $namespace;
+	private string $directory;
+	private int $namespaceLen;
+	private bool $prependAutoloader;
 
 
 	public function __construct(string $namespace, string $directory, bool $prependAutoloader = false)

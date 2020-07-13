@@ -24,10 +24,10 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 {
 	/** @var StateMachineDefinition[] */
-	private $definitionBag = [];
+	private array $definitionBag = [];
 
 	/** @var string[] */
-	private $aliases = [];
+	private array $aliases = [];
 
 
 	public function __construct()

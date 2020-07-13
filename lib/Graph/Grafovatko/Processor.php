@@ -30,8 +30,7 @@ use Smalldb\Graph\Node;
  */
 class Processor implements ProcessorInterface
 {
-	/** @var string */
-	private $prefix;
+	private string $prefix;
 
 
 	public function setPrefix(string $prefix): void

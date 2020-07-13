@@ -25,7 +25,6 @@ use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Database\DaoDataSource;
-use Smalldb\StateMachine\UnsupportedReferenceException;
 
 
 abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
@@ -33,23 +32,12 @@ abstract class AbstractCrudRepository implements SmalldbRepositoryInterface
 	protected const MACHINE_TYPE = 'crud-item';
 	protected const REFERENCE_CLASS = CrudItem::class;
 
-	/** @var string */
-	private $table;
-
-	/** @var Smalldb */
-	private $smalldb;
-
-	/** @var string|null */
-	private $refClass = null;
-
-	/** @var ArrayDaoTables */
-	private $dao;
-
-	/** @var SmalldbProviderInterface|null */
-	private $machineProvider = null;
-
-	/** @var DaoDataSource */
-	private $dataSource;
+	private string $table;
+	private Smalldb $smalldb;
+	private ?string $refClass = null;
+	private ArrayDaoTables $dao;
+	private ?SmalldbProviderInterface $machineProvider = null;
+	private DaoDataSource $dataSource;
 
 
 	public function __construct(Smalldb $smalldb, ArrayDaoTables $dao)

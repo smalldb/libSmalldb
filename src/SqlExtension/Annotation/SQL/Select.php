@@ -33,8 +33,7 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder
  */
 class Select implements PropertyPlaceholderApplyInterface
 {
-	/** @var string */
-	public $expression;
+	public string $expression;
 
 
 	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void

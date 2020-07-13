@@ -21,11 +21,10 @@ namespace Smalldb\StateMachine\Definition;
 
 class ActionDefinition extends ExtensibleDefinition
 {
-	/** @var string */
-	private $name;
+	private string $name;
 
 	/** @var TransitionDefinition[] */
-	private $transitions;
+	private array $transitions;
 
 
 	/**

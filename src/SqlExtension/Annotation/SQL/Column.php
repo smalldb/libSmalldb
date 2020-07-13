@@ -32,20 +32,17 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder
  */
 class Column implements PropertyPlaceholderApplyInterface
 {
-	/** @var string */
-	public $name;
+	public string $name;
 
 	/**
-	 * @var string
 	 * Ignored; for compatibility with the Doctrine annotation.
 	 */
-	public $type;
+	public string $type;
 
 	/**
-	 * @var bool
 	 * Ignored; for compatibility with the Doctrine annotation.
 	 */
-	public $unique;
+	public bool $unique;
 
 
 	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void

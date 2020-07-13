@@ -27,11 +27,8 @@ use Smalldb\Graph\Node;
 
 class GrafovatkoProcessor implements ProcessorInterface
 {
-	/** @var string */
-	private $prefix = '';
-
-	/** @var string|null */
-	private $targetParticipant = null;
+	private string $prefix = '';
+	private ?string $targetParticipant = null;
 
 
 	public function __construct(?string $targetParticipant = null)

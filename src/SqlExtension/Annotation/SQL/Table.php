@@ -29,8 +29,7 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtensionPlaceholder;
  */
 class Table implements StateMachineBuilderApplyInterface
 {
-	/** @var string */
-	public $sqlTable;
+	public string $sqlTable;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void

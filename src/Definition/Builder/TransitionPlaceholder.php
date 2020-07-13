@@ -29,17 +29,13 @@ use Smalldb\StateMachine\Definition\TransitionDefinition;
  */
 class TransitionPlaceholder extends ExtensiblePlaceholder
 {
-	/** @var string */
-	public $name;
-
-	/** @var string */
-	public $sourceState;
+	public string $name;
+	public string $sourceState;
 
 	/** @var string[] */
-	public $targetStates;
+	public array $targetStates;
 
-	/** @var ?string */
-	public $color;
+	public ?string $color;
 
 
 	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null, array $extensionPlaceholders = [])

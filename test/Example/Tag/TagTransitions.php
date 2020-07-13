@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\Test\Example\Tag;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
-use PDO;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;

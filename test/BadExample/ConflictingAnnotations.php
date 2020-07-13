@@ -32,10 +32,9 @@ abstract class ConflictingAnnotations implements ReferenceInterface
 	/**
 	 * This property has conflicting annotations.
 	 *
-	 * @var string
 	 * @SQL\Column("foo")
 	 * @SQL\Select("bar")
 	 */
-	protected $foo;
+	protected string $foo;
 
 }

@@ -27,17 +27,11 @@ namespace Smalldb\StateMachine\Definition;
  */
 class TransitionDefinition extends ExtensibleDefinition
 {
-	/** @var string */
-	private $name;
-
-	/** @var StateDefinition */
-	private $sourceState;
-
+	private string $name;
+	private StateDefinition $sourceState;
 	/** @var StateDefinition[] */
-	private $targetStates;
-
-	/** @var ?string */
-	private $color;
+	private array $targetStates;
+	private ?string $color;
 
 
 	/**

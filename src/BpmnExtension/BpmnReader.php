@@ -38,23 +38,13 @@ use Smalldb\StateMachine\RuntimeException;
  */
 class BpmnReader
 {
-	/** @var Graph */
-	private $bpmnGraph;
-
-	/** @var string|null */
-	private $bpmnFileName = null;
-
-	/** @var string|null */
-	private $svgFileName = null;
-
-	/** @var bool */
-	private $timeLogEnabled = false;
-
-	/** @var float */
-	private $timeStart;
-
+	private Graph $bpmnGraph;
+	private ?string $bpmnFileName = null;
+	private ?string $svgFileName = null;
+	private bool $timeLogEnabled = false;
+	private float $timeStart;
 	/** @var float[] */
-	private $timeLog = [];
+	private array $timeLog = [];
 
 
 	private function __construct()

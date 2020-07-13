@@ -23,7 +23,7 @@ class ArrayDaoTables
 {
 
 	/** @var ArrayDao[] */
-	private $daoTables = [];
+	private array $daoTables = [];
 
 
 	public function createTable(string $name): ArrayDao

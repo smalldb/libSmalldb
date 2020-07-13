@@ -38,14 +38,14 @@ class Smalldb
 	 *
 	 * @var SmalldbProviderInterface[]
 	 */
-	private $machineProviders = [];
+	private array $machineProviders = [];
 
 	/**
 	 * List of registered machine names without aliases.
 	 *
 	 * @var string[]
 	 */
-	private $machineTypes = [];
+	private array $machineTypes = [];
 
 
 	/**

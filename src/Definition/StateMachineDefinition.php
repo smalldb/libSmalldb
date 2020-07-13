@@ -34,38 +34,29 @@ use Smalldb\Graph\Node;
  */
 class StateMachineDefinition extends ExtensibleDefinition
 {
-	/** @var string */
-	private $machineType;
-
-	/** @var int */
-	private $mtime;
+	private string $machineType;
+	private int $mtime;
 
 	/** @var StateDefinition[] */
-	private $states;
+	private array $states;
 
 	/** @var ActionDefinition[] */
-	private $actions;
+	private array $actions;
 
 	/** @var TransitionDefinition[] */
-	private $transitions;
+	private array $transitions;
 
-	/** @var StateMachineGraph|null */
-	private $stateMachineGraph = null;
+	private ?StateMachineGraph $stateMachineGraph = null;
 
 	/** @var PropertyDefinition[] */
-	private $properties;
+	private array $properties;
 
 	/** @var DefinitionErrorInterface[] */
-	private $errors;
+	private array $errors;
 
-	/** @var string|null */
-	private $referenceClass;
-
-	/** @var string|null */
-	private $repositoryClass;
-
-	/** @var string|null */
-	private $transitionsClass;
+	private ?string $referenceClass;
+	private ?string $repositoryClass;
+	private ?string $transitionsClass;
 
 
 	/**

@@ -28,11 +28,8 @@ use Smalldb\StateMachine\Definition\StateDefinition;
  */
 class StatePlaceholder extends ExtensiblePlaceholder
 {
-	/** @var string */
-	public $name;
-
-	/** @var ?string */
-	public $color;
+	public string $name;
+	public ?string $color;
 
 
 	public function __construct(string $name, ?string $color = null, array $extensionPlaceholders = [])

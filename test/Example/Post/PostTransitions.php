@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
@@ -27,9 +28,8 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 
 class PostTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-	/** @var Connection */
-	private $db;
-	private $table = 'symfony_demo_post';
+	private Connection $db;
+	private string $table = 'symfony_demo_post';
 
 	public function __construct(Connection $db)
 	{
@@ -38,6 +38,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function create(TransitionEvent $transitionEvent, Post $ref, PostData $data): int
 	{
 		$stmt = $this->db->prepare("
@@ -66,6 +69,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data): void
 	{
 		$stmt = $this->db->prepare("
@@ -102,6 +108,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function delete(TransitionEvent $transitionEvent, Post $ref): void
 	{
 		$id = $ref->getMachineId();

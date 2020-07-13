@@ -30,17 +30,11 @@ use Smalldb\PhpFileWriter\PhpFileWriter;
  */
 class SmalldbClassGenerator
 {
-	/** @var string */
-	private $classDirectory;
-
-	/** @var string */
-	private $classNamespace;
-
+	private string $classDirectory;
+	private string $classNamespace;
 	/** @var string[] */
-	private $classFiles = [];
-
-	/** @var ReferenceClassGenerator|null */
-	private $referenceClassGenerator = null;
+	private array $classFiles = [];
+	private ?ReferenceClassGenerator $referenceClassGenerator = null;
 
 
 	public function __construct(string $classNamespace, string $classDirectory)

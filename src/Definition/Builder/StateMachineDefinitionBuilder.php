@@ -30,44 +30,38 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
-	/** @var PreprocessorList */
-	private $preprocessorBag;
+	private PreprocessorList $preprocessorBag;
 
-	/** @var int|null */
-	private $mtime;
+	private ?int $mtime;
 
 	/** @var PreprocessorPass[] */
-	private $preprocessorQueue = [];
+	private array $preprocessorQueue = [];
 
 	/** @var StatePlaceholder[] */
-	private $states = [];
+	private array $states = [];
 
 	/** @var ActionPlaceholder[] */
-	private $actions = [];
+	private array $actions = [];
 
 	/** @var TransitionPlaceholder[] */
-	private $transitions = [];
+	private array $transitions = [];
 
 	/** @var TransitionPlaceholder[][] */
-	private $transitionsByState = [];
+	private array $transitionsByState = [];
 
 	/** @var PropertyPlaceholder[] */
-	private $properties = [];
+	private array $properties = [];
 
-	/** @var string */
-	private $machineType;
+	private string $machineType;
 
 	/** @var DefinitionErrorInterface[] */
-	private $errors = [];
+	private array $errors = [];
 
-	/** @var string|null */
-	private $referenceClass = null;
+	private ?string $referenceClass = null;
 
-	/** @var string|null */
-	private $repositoryClass = null;
+	private ?string $repositoryClass = null;
 
-	/** @var string|null */
-	private $transitionsClass = null;
+	private ?string $transitionsClass = null;
 
 
 	public function __construct(PreprocessorList $preprocessorBag)

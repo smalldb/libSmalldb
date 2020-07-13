@@ -25,7 +25,7 @@ abstract class ExtensibleDefinition implements JsonSerializable
 {
 
 	/** @var ExtensionInterface[] */
-	private $extensions = [];
+	private array $extensions = [];
 
 
 	/**

@@ -28,14 +28,9 @@ use Smalldb\StateMachine\Definition\PropertyDefinition;
  */
 class PropertyPlaceholder extends ExtensiblePlaceholder
 {
-	/** @var string */
-	public $name;
-
-	/** @var string|null */
-	public $type;
-
-	/** @var bool|null */
-	public $isNullable;
+	public string $name;
+	public ?string $type;
+	public ?bool $isNullable;
 
 
 	public function __construct(string $name, ?string $type = null, ?bool $isNullable = null, array $extensionPlaceholders = [])

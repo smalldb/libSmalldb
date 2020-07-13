@@ -26,7 +26,7 @@ namespace Smalldb\StateMachine\Test\Database;
  */
 class ArrayDao
 {
-	private $items = [];
+	private array $items = [];
 
 	public function read(int $id)
 	{

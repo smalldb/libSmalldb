@@ -23,14 +23,9 @@ use JsonSerializable;
 
 class PropertyDefinition extends ExtensibleDefinition implements JsonSerializable
 {
-	/** @var string */
-	private $name;
-
-	/** @var string|null */
-	private $type;
-
-	/** @var bool|null */
-	private $isNullable;
+	private string $name;
+	private ?string $type;
+	private ?bool $isNullable;
 
 
 	/**

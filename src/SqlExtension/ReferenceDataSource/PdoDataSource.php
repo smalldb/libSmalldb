@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
 use PDO;
 use PDOStatement;
-use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 
 
@@ -31,12 +30,8 @@ use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
  */
 class PdoDataSource implements ReferenceDataSourceInterface
 {
-
-	/** @var PDOStatement */
-	private $stateSelectStmt;
-
-	/** @var PDOStatement */
-	private $loadDataStmt;
+	private PDOStatement $stateSelectStmt;
+	private PDOStatement $loadDataStmt;
 
 	/** @var callable|null */
 	private $onQueryCallback = null;

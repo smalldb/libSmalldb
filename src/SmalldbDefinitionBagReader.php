@@ -28,15 +28,9 @@ use Smalldb\ClassLocator\ClassLocator;
 
 class SmalldbDefinitionBagReader
 {
-
-	/** @var SmalldbDefinitionBag */
-	private $definitionBag;
-
-	/** @var StateMachineDefinitionBuilderFactory */
-	private $definitionBuilderFactory;
-
-	/** @var AnnotationReader */
-	private $annotationReader;
+	private SmalldbDefinitionBag $definitionBag;
+	private StateMachineDefinitionBuilderFactory $definitionBuilderFactory;
+	private AnnotationReader $annotationReader;
 
 	public function __construct()
 	{

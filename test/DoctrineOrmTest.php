@@ -31,11 +31,8 @@ use Smalldb\StateMachine\Test\SymfonyDemo\StateMachine\PostRef;
 
 class DoctrineOrmTest extends TestCase
 {
-	/** @var ContainerInterface */
-	private $container;
-
-	/** @var Smalldb */
-	private $smalldb;
+	private ContainerInterface $container;
+	private Smalldb $smalldb;
 
 	public function setUp(): void
 	{

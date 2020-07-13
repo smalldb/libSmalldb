@@ -39,7 +39,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 {
 	protected const PROVIDER_CLASS = LambdaProvider::class;
 
-	private $config;
+	private array $config;
 
 	/**
 	 * Create bundle configuration. Smalldb Bundle overrides this with

@@ -29,11 +29,8 @@ class StateMachineNode extends Node
 	public const TARGET = 2;
 	public const SOURCE_AND_TARGET = self::SOURCE | self::TARGET;
 
-	/** @var StateDefinition */
-	private $state;
-
-	/** @var int */
-	private $sourceOrTarget;
+	private StateDefinition $state;
+	private int $sourceOrTarget;
 
 
 	public function __construct(StateDefinition $state, int $sourceOrTarget, NestedGraph $graph, string $id, array $attrs)

@@ -30,11 +30,8 @@ use Smalldb\Graph\Node;
 
 class StateMachineProcessor implements ProcessorInterface
 {
-	/** @var string */
-	private $prefix;
-
-	/** @var bool */
-	private $horizontalLayout;
+	private string $prefix;
+	private bool $horizontalLayout;
 
 
 	public function __construct(bool $horizontalLayout = false)

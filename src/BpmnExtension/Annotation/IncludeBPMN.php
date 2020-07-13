@@ -32,20 +32,13 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  */
 class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
 {
-	/**
-	 * @var string
-	 * @Required
-	 */
-	public $bpmnFileName;
+	/** @Required */
+	public string $bpmnFileName;
 
-	/**
-	 * @var string
-	 * @Required
-	 */
-	public $targetParticipant;
+	/** @Required */
+	public string $targetParticipant;
 
-	/** @var string */
-	public $svgFileName = null;
+	public ?string $svgFileName = null;
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
