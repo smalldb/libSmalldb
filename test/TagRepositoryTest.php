@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtension;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
@@ -36,6 +36,9 @@ class TagRepositoryTest extends TestCase
 	private TagRepository $tagRepository;
 
 
+	/**
+	 * @throws DBALException
+	 */
 	public function setUp(): void
 	{
 		$containerFactory = new SymfonyDemoContainer();
@@ -58,6 +61,25 @@ class TagRepositoryTest extends TestCase
 		/** @var SqlTableExtension $sqlExt */
 		$sqlExt = $definition->getExtension(SqlTableExtension::class);
 		$this->assertEquals("symfony_demo_tag", $sqlExt->getSqlTable());
+	}
+
+
+	public function testTagDto()
+	{
+		$tag = new TagDataMutable();
+		$tag->setId(1);
+		$tag->setName('Foo');
+
+		$tagImmutable = new TagDataImmutable($tag);
+
+		$this->assertEquals($tag->getId(), $tagImmutable->getId());
+		$this->assertEquals($tag->getName(), $tagImmutable->getName());
+
+		$bar = $tagImmutable->withNameFromSlug('bar-bar');
+		$this->assertEquals('Bar bar', $bar->getName());
+
+		$one = $bar->withResetName();
+		$this->assertEquals('1', $one->getName());
 	}
 
 
