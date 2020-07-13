@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use PDO;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
@@ -27,19 +29,22 @@ use Smalldb\StateMachine\Transition\TransitionEvent;
 
 class TagTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
-	private PDO $pdo;
+	private Connection $db;
 	private string $table = 'symfony_demo_tag';
 
-	public function __construct(PDO $db)
+	public function __construct(Connection $db)
 	{
 		parent::__construct();
-		$this->pdo = $db;
+		$this->db = $db;
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function create(TransitionEvent $transitionEvent, Tag $ref, TagData $data): int
 	{
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			INSERT INTO $this->table (id, name)
 			VALUES (:id, :name)
 		");
@@ -51,7 +56,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 		]);
 
 		if ($id === null) {
-			$newId = (int) $this->pdo->lastInsertId();
+			$newId = (int) $this->db->lastInsertId();
 			$transitionEvent->setNewId($newId);
 			return $newId;
 		} else {
@@ -60,13 +65,16 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function update(TransitionEvent $transitionEvent, Tag $ref, TagData $data): void
 	{
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			UPDATE $this->table
 			SET
 				id = :newId,
-				name = :name,
+				name = :name
 			WHERE
 				id = :oldId
 			LIMIT 1
@@ -86,10 +94,13 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	}
 
 
+	/**
+	 * @throws DBALException
+	 */
 	protected function delete(TransitionEvent $transitionEvent, Tag $ref): void
 	{
 		$id = $ref->getId();
-		$stmt = $this->pdo->prepare("
+		$stmt = $this->db->prepare("
 			DELETE FROM $this->table
 			WHERE id = :id
 			LIMIT 1
