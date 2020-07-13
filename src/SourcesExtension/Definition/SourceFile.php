@@ -24,8 +24,6 @@ use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 class SourceFile implements JsonSerializable
 {
-	use SimpleJsonSerializableTrait;
-
 	private string $filename;
 
 
@@ -38,6 +36,24 @@ class SourceFile implements JsonSerializable
 	public function getFilename(): string
 	{
 		return $this->filename;
+	}
+
+
+	public function jsonSerialize()
+	{
+		$curPath = getcwd() . DIRECTORY_SEPARATOR;
+		$curPathLen = strlen($curPath);
+		$filename = realpath($this->getFilename());
+
+		if (strncmp($filename, $curPath, $curPathLen) === 0) {
+			$relPath = substr($filename, $curPathLen);
+		} else {
+			$relPath = $filename;
+		}
+
+		return array_merge(get_object_vars($this), [
+			"filename" => $relPath,
+		]);
 	}
 
 }
