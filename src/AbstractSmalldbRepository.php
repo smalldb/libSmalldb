@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
-use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
 
 
 abstract class AbstractSmalldbRepository implements SmalldbRepositoryInterface
@@ -27,14 +26,9 @@ abstract class AbstractSmalldbRepository implements SmalldbRepositoryInterface
 	/** @var string */
 	protected const REF_CLASS = null;
 
-	/** @var Smalldb */
-	protected $smalldb;
-
-	/** @var SmalldbProviderInterface */
-	private $machineProvider = null;
-
-	/** @var string */
-	private $refClass = null;
+	protected Smalldb $smalldb;
+	private ?SmalldbProviderInterface $machineProvider = null;
+	private ?string $refClass = null;
 
 
 	public function __construct(Smalldb $smalldb)

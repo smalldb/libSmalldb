@@ -188,67 +188,44 @@ class TagRepositoryTest extends TestCase
 	}
 
 
-	public function testFindBySlug()
+	public function testFindAll()
 	{
-		$slug = 'vae-humani-generis';  // Tag ID 20 in the test database
-		$expectedTagId = 20;
+		$hasEmptyName = 0;
+		$tagCount = 0;
+
+		foreach ($this->tagRepository->findAll() as $tag) {
+			$hasEmptyName |= empty($tag->getName());
+			$tagCount++;
+		}
+
+		$this->assertEmpty($hasEmptyName, 'Some tag is missing its name.');
+		$this->assertGreaterThanOrEqual(9, $tagCount, 'There should be at least 9 tags in the database.');
+
+		// One query to load everything; data source should not query any additional data.
+		$this->assertQueryCount(1);
+	}
+
+
+	public function testFindByName()
+	{
+		$name = 'voluptate';  // Tag ID 7 in the test database
+		$expectedTagId = 7;
 
 		// Check test data that the slug exists
 		$testRef = $this->tagRepository->ref($expectedTagId);
-		$existingSlug = $testRef->getSlug();
-		$this->assertEquals($slug, $existingSlug);
+		$existingName = $testRef->getName();
+		$this->assertEquals($name, $existingName);
 
 		$this->assertQueryCount(1);
 
 		// Try to find
-		$foundRef = $this->tagRepository->findBySlug($slug);
+		$foundRef = $this->tagRepository->findByName($name);
 		$this->assertInstanceOf(Tag::class, $foundRef);
 		$this->assertEquals(Tag::EXISTS, $foundRef->getState());
-		$this->assertEquals($slug, $foundRef->getSlug());
-		$this->assertNotEmpty($foundRef->getTitle());
+		$this->assertEquals($name, $foundRef->getName());
 
 		// Single query to both find the Tag and load the data.
 		$this->assertQueryCount(2);
-	}
-
-
-	public function testFindLatest()
-	{
-		$N = 100;
-		$hasEmptyTitle = 0;
-
-		for ($i = 0; $i < $N; $i++) {
-			$latestTags = $this->tagRepository->findLatest();
-			$this->assertNotEmpty($latestTags);
-
-			// Make sure each reference has its data loaded
-			$count = 0;
-			foreach ($latestTags as $tag) {
-				$hasEmptyTitle |= empty($tag->getTitle());
-				$count++;
-			}
-			$this->assertGreaterThan(1, $count);
-		}
-
-		$this->assertEmpty($hasEmptyTitle, 'Some tag is missing its title.');
-
-		// One query to load everything; data source should not query any additional data.
-		$this->assertQueryCount($N);
-	}
-
-
-	public function testFindAll()
-	{
-		$hasEmptyTitle = 0;
-
-		foreach ($this->tagRepository->findLatest() as $tag) {
-			$hasEmptyTitle |= empty($tag->getTitle());
-		}
-
-		$this->assertEmpty($hasEmptyTitle, 'Some tag is missing its title.');
-
-		// One query to load everything; data source should not query any additional data.
-		$this->assertQueryCount(1);
 	}
 
 

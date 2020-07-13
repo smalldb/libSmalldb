@@ -57,6 +57,7 @@ class DecoratingGenerator extends AbstractGenerator
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass, $loadDataCall);
+		$this->generateHydratorMethod($w, $definition, $sourceClassReflection, $dtoClass);
 
 		$w->endClass();
 		return $targetReferenceClassName;
@@ -221,6 +222,20 @@ class DecoratingGenerator extends AbstractGenerator
 		} else {
 			return '$this->dataSource->loadData($this->getMachineId())';
 		}
+	}
+
+
+	private function generateHydratorMethod(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection, ReflectionClass $dtoClass): void
+	{
+		if ($sourceClassReflection->hasMethod('hydrateFromArray')) {
+			throw new InvalidArgumentException('Method hydrateFromArray already defined in class ' . $sourceClassReflection->getName() . '.');
+		}
+
+		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
+		{
+			$w->writeln("\$target->data = " . $w->useClass($dtoClass->getName()) . '::fromArray($row);');
+		}
+		$w->endMethod();
 	}
 
 }

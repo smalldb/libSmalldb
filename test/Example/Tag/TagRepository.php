@@ -34,4 +34,36 @@ class TagRepository extends AbstractCountingSqlRepository implements SmalldbRepo
 		return $ref;
 	}
 
+
+	public function findAll(): iterable
+	{
+		$q = $this->getDataSource()->createQueryBuilder()
+			->addSelectFromStatements();
+		$q->setMaxResults(1000);
+
+		$result = $q->executeRef();
+		$this->onQuery($q);
+
+		return $result->fetchAll();
+	}
+
+
+	public function findByName(string $name): ?Tag
+	{
+		$q = $this->getDataSource()->createQueryBuilder()
+			->addSelectFromStatements();
+		$q->where('name = :name');
+		$q->setMaxResults(1);
+
+		$q->setParameter('name', $name);
+
+		$result = $q->executeRef();
+		$this->onQuery($q);
+
+		/** @var Tag|null $tag */
+		$tag = $result->fetch();
+		return $tag;
+	}
+
+
 }
