@@ -38,26 +38,22 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
-	/**
-	 * @throws DBALException
-	 */
 	protected function create(TransitionEvent $transitionEvent, Post $ref, PostData $data): int
 	{
-		$stmt = $this->db->prepare("
-			INSERT INTO $this->table (id, author_id, title, slug, summary, content, published_at)
-			VALUES (:id, :authorId, :title, :slug, :summary, :content, :publishedAt)
-		");
-
 		$id = $ref->getMachineId();
-		$stmt->execute([
-			'id' => $id,
-			'authorId' => $data->getAuthorId(),
-			'title' => $data->getTitle(),
-			'slug' => $data->getSlug(),
-			'summary' => $data->getSummary(),
-			'content' => $data->getContent(),
-			'publishedAt' => ($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null,
-		]);
+
+		$qb = $this->db->createQueryBuilder();
+		$qb->insert($this->table)
+			->values([
+				'id' => $qb->createPositionalParameter($id),
+				'author_id' => $qb->createPositionalParameter($data->getAuthorId()),
+				'title' => $qb->createPositionalParameter($data->getTitle()),
+				'slug' => $qb->createPositionalParameter($data->getSlug()),
+				'summary' => $qb->createPositionalParameter($data->getSummary()),
+				'content' => $qb->createPositionalParameter($data->getContent()),
+				'published_at' => $qb->createPositionalParameter(($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null),
+			])
+			->execute();
 
 		if ($id === null) {
 			$newId = (int) $this->db->lastInsertId();
@@ -69,60 +65,41 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	}
 
 
-	/**
-	 * @throws DBALException
-	 */
 	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data): void
 	{
-		$stmt = $this->db->prepare("
-			UPDATE $this->table
-			SET
-				id = :newId,
-				author_id = :authorId,
-				title = :title,
-				slug = :slug,
-				summary = :summary,
-				content = :content,
-				published_at = :publishedAt
-			WHERE
-				id = :oldId
-			LIMIT 1
-		");
-
 		$oldId = $ref->getMachineId();
 		$newId =  $data->getId();
-		$stmt->execute([
-			'oldId' => $oldId,
-			'newId' => $newId,
-			'authorId' => $data->getAuthorId(),
-			'title' => $data->getTitle(),
-			'slug' => $data->getSlug(),
-			'summary' => $data->getSummary(),
-			'content' => $data->getContent(),
-			'publishedAt' => ($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null,
-		]);
 
-		if ($oldId != $newId) {
+		$qb = $this->db->createQueryBuilder();
+		$affectedRows = $qb->update($this->table)
+			->set('id', $qb->createPositionalParameter($newId))
+			->set('author_id', $qb->createPositionalParameter($data->getAuthorId()))
+			->set('title', $qb->createPositionalParameter($data->getTitle()))
+			->set('slug', $qb->createPositionalParameter($data->getSlug()))
+			->set('summary', $qb->createPositionalParameter($data->getSummary()))
+			->set('content', $qb->createPositionalParameter($data->getContent()))
+			->set('published_at', $qb->createPositionalParameter(($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null))
+			->where('id = ' . $qb->createPositionalParameter($oldId))
+			->execute();
+
+		if ($affectedRows > 0 && $oldId != $newId) {
 			$transitionEvent->setNewId($newId);
 		}
 	}
 
 
-	/**
-	 * @throws DBALException
-	 */
 	protected function delete(TransitionEvent $transitionEvent, Post $ref): void
 	{
 		$id = $ref->getMachineId();
-		$stmt = $this->db->prepare("
-			DELETE FROM $this->table
-			WHERE id = :id
-			LIMIT 1
-		");
-		$stmt->execute([
-			'id' => $id,
-		]);
-		$transitionEvent->setNewId(null);
+		$qb = $this->db->createQueryBuilder();
+
+		$affectedRows = $qb->delete($this->table)
+			->andWhere("id = " . $qb->createNamedParameter($id))
+			->execute();
+
+		if ($affectedRows > 0) {
+			$transitionEvent->setNewId(null);
+		}
 	}
 
 }

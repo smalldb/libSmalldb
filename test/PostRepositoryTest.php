@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
@@ -33,6 +34,7 @@ class PostRepositoryTest extends TestCase
 {
 	private Smalldb $smalldb;
 	private PostRepository $postRepository;
+	private Connection $db;
 
 
 	public function setUp(): void
@@ -41,10 +43,9 @@ class PostRepositoryTest extends TestCase
 		$container = $containerFactory->createContainer();
 		$this->postRepository = $container->get(PostRepository::class);
 		$this->smalldb = $container->get(Smalldb::class);
+		$this->db = $container->get(Connection::class);
 
-		/** @var Connection $dbal */
-		$dbal = $container->get(Connection::class);
-		$stmt = $dbal->query("SELECT COUNT(*) FROM symfony_demo_post");
+		$stmt = $this->db->query("SELECT COUNT(*) FROM symfony_demo_post");
 		$this->assertGreaterThan(0, $stmt->fetchColumn());
 	}
 
@@ -96,7 +97,7 @@ class PostRepositoryTest extends TestCase
 	}
 
 
-	private function createPostData(): PostData
+	private function createPostData(): PostDataImmutable
 	{
 		$postData = new PostDataMutable();
 		$postData->setTitle('Foo');
@@ -143,16 +144,25 @@ class PostRepositoryTest extends TestCase
 
 	/**
 	 * @depends testUpdate
+	 * @throws DBALException
 	 */
 	public function testDelete()
 	{
+		$postId = 1000;
+
+		$this->assertPostCount(0, $postId);
+
 		/** @var Post $ref */
-		$ref = $this->smalldb->ref(Post::class, 1000);
+		$ref = $this->smalldb->ref(Post::class, $postId);
 		$ref->create($this->createPostData());
 		$this->assertEquals('Exists', $ref->getState());
 
+		$this->assertPostCount(1, $postId);
+
 		$ref->delete();
 		$this->assertEquals('', $ref->getState());
+
+		$this->assertPostCount(0, $postId);
 	}
 
 
@@ -224,6 +234,17 @@ class PostRepositoryTest extends TestCase
 	{
 		$actual = $this->postRepository->getQueryCount();
 		$this->assertEquals($expected, $actual, "Unexpected query count: $actual (should be $expected)");
+	}
+
+
+	/**
+	 * @throws DBALException
+	 */
+	private function assertPostCount(int $expectedCount, int $postId): void
+	{
+		$postCountQuery = 'SELECT COUNT(*) FROM symfony_demo_post WHERE id = ' . $postId;
+		$countAfter = $this->db->query($postCountQuery)->fetchColumn();
+		$this->assertEquals($expectedCount, $countAfter);
 	}
 
 }
