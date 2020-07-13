@@ -85,6 +85,9 @@ class DefinitionTest extends TestCase
 		$tUpdate = $stateMachineDefinition->getTransition('update', 'Exists');
 		$this->assertInstanceOf(TransitionDefinition::class, $tUpdate);
 		$this->assertEquals('update', $tUpdate->getName());
+
+		// Check that mtime is set
+		$this->assertGreaterThan(0, $stateMachineDefinition->getMTime());
 	}
 
 
