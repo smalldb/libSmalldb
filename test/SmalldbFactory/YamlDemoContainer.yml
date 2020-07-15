@@ -3,14 +3,14 @@ smalldb:
         namespace: Smalldb\GeneratedCode
         path: '%generated_output_dir%'
     definition_classes:
-        use_composer: false
-        class_list:
-            - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
-            - 'Smalldb\StateMachine\Test\Example\Post\Post'
-            - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
-            - 'Smalldb\StateMachine\Test\Example\User\User'
-            - 'Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess'
-            - 'Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery'
+        - 'Smalldb\StateMachine\Test\Example\CrudItem\CrudItem'
+        - 'Smalldb\StateMachine\Test\Example\Post\Post'
+        - 'Smalldb\StateMachine\Test\Example\Tag\Tag'
+        - 'Smalldb\StateMachine\Test\Example\User\User'
+        - 'Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess'
+        - 'Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery'
+    code_cooker:
+        enable: false
 
 parameters:
     generated_output_dir: ~ # Set by the test

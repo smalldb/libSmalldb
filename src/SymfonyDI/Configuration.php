@@ -47,7 +47,13 @@ class Configuration implements ConfigurationInterface
 			->end();
 
 		$children->arrayNode('definition_classes')
-			->info('How to find state machine definitions?')
+			->info('List of state machine definition classes. The class_locator is used if this list is empty.')
+			->defaultValue([])
+			->scalarPrototype()->end()
+			->end();
+
+		$children->arrayNode('class_locator')
+			->info('How to find classes including those with with state machine definitions?')
 			->children()
 				->booleanNode('use_composer')
 					->info('Use composer autoloader configuration to scan all classes.')
@@ -56,10 +62,6 @@ class Configuration implements ConfigurationInterface
 				->booleanNode('ignore_vendor_dir')
 					->info('Do not scan classes inside vendor directory (see use_composer)')
 					->defaultTrue()
-				->end()
-				->arrayNode('class_list')
-					->info('List of additional state machine definitions')
-					->scalarPrototype()->end()
 				->end()
 				->variableNode('psr4_dirs')
 					->info('PSR-4 directories with state machine definitions (map: namespace => directory)')
@@ -71,6 +73,19 @@ class Configuration implements ConfigurationInterface
 				->arrayNode('exclude_dirs')
 					->info('List of directories which should not be scanned')
 					->scalarPrototype()->end()
+				->end()
+			->end();
+
+		$children->arrayNode('code_cooker')
+			->info('How Code Cooker should generate classes?')
+			->children()
+				->booleanNode('enable')
+					->defaultValue('%kernel.debug%')
+					->treatNullLike('%kernel.debug%')
+				->end()
+				->booleanNode('enable_autoloader_generator')
+					->defaultValue('%kernel.debug%')
+					->treatNullLike('%kernel.debug%')
 				->end()
 			->end();
 

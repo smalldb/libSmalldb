@@ -18,6 +18,11 @@
 
 namespace Smalldb\StateMachine\SymfonyDI;
 
+use Smalldb\ClassLocator\ClassLocator;
+use Smalldb\ClassLocator\CompositeClassLocator;
+use Smalldb\CodeCooker\Chef;
+use Smalldb\CodeCooker\Cookbook;
+use Smalldb\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
 use Smalldb\StateMachine\Provider\LambdaProvider;
@@ -62,54 +67,39 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 	public function process(ContainerBuilder $container)
 	{
-		if (!isset($this->config['class_generator'])) {
-			// Stop if configuration is missing.
-			return null;
-		}
-
 		// Define Smalldb entry point
 		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
 			->setPublic(true);
 
+		$baseDir = $container->getParameter('kernel.project_dir');
+		$classLocator = $this->createClassLocator($baseDir);
+
+		// Code Cooker: Generate classes
+		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
+			$cookbook = new Cookbook();
+			$recipeLocator = new RecipeLocator($classLocator);
+			$cookbook->addRecipes($recipeLocator->locateRecipes());
+			$cheff = new Chef($cookbook, $classLocator);
+
+			// FIXME: Cook on demand only
+			$cheff->cookAllRecipes();
+
+			if ($this->config['code_cooker']['enable_autoloader_generator'] ?? false) {
+				$cheff->registerLoadingAutoloader();
+			}
+		}
+
 		// Load all state machine definitions
 		$definitionReader = new SmalldbDefinitionBagReader();
-
-		if (!empty($this->config['definition_classes'])) {
-			$definitionClasses = $this->config['definition_classes'];
-			$baseDir = $container->getParameter('kernel.project_dir');
-
-			if (!empty($definitionClasses['include_dirs'])) {
-				$includeList = new RealPathList($baseDir, $definitionClasses['include_dirs']);
-			} else {
-				$includeList = null;
-			}
-
-			if (!empty($definitionClasses['exclude_dirs'])) {
-				$excludeList = new RealPathList($baseDir, $definitionClasses['exclude_dirs']);
-			} else {
-				$excludeList = null;
-			}
-
-			if (!empty($definitionClasses['class_list'])) {
-				$definitionReader->addFromAnnotatedClasses($this->config['definition_classes']['class_list']);
-			}
-
-			if (!empty($definitionClasses['psr4_dirs'])) {
-				foreach ($definitionClasses['psr4_dirs'] as $namespace => $dir) {
-					$definitionReader->addFromClassLocator(new Psr4ClassLocator($namespace, $dir));
-				}
-			}
-
-			if (!empty($definitionClasses['use_composer'])) {
-				$excludeVendorDir = !empty($definitionClasses['ignore_vendor_dir']);
-				$definitionReader->addFromClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
-			}
-
+		if (empty($this->config['definition_classes'])) {
+			$definitionReader->addFromClassLocator($classLocator);
+		} else {
+			$definitionReader->addFromAnnotatedClasses($this->config['definition_classes']);
 		}
 
 		// Register autoloader for generated classes
-		$genNamespace = $this->config['class_generator']['namespace'];
-		$genPath = $this->config['class_generator']['path'];
+		$genNamespace = $this->config['class_generator']['namespace'] ?? 'Smalldb\\GeneratedCode\\';
+		$genPath = $this->config['class_generator']['path'] ?? $container->getParameter('kernel.cache_dir') . '/smalldb';
 		$smalldb->addMethodCall('registerGeneratedClassAutoloader', [$genNamespace, $genPath]);
 		$autoloader = new GeneratedClassAutoloader($genNamespace, $genPath);
 		$autoloader->registerLoader();
@@ -172,6 +162,43 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 			->addArgument($machineType)
 			->addArgument($realReferenceClass)
 			->addArgument($definitionBagReference);
+	}
+
+
+	protected function createClassLocator(string $baseDir): ClassLocator
+	{
+		$classLocator = new CompositeClassLocator();
+
+		if (!empty($this->config['class_locator'])) {
+			$classLocatorConfig = $this->config['class_locator'];
+
+			if (!empty($classLocatorConfig['include_dirs'])) {
+				$includeList = new RealPathList($baseDir, $classLocatorConfig['include_dirs']);
+			} else {
+				$includeList = null;
+			}
+
+			if (!empty($classLocatorConfig['exclude_dirs'])) {
+				$excludeList = new RealPathList($baseDir, $classLocatorConfig['exclude_dirs']);
+			} else {
+				$excludeList = null;
+			}
+
+			if (!empty($classLocatorConfig['psr4_dirs'])) {
+				foreach ($classLocatorConfig['psr4_dirs'] as $namespace => $dir) {
+					$classLocator->addClassLocator(new Psr4ClassLocator($namespace, $dir));
+				}
+			}
+
+			if (!empty($classLocatorConfig['use_composer'])) {
+				$excludeVendorDir = !empty($classLocatorConfig['ignore_vendor_dir']);
+				$classLocator->addClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
+			}
+		} else {
+			$classLocator->addClassLocator(new ComposerClassLocator($baseDir, [], [], true));
+		}
+
+		return $classLocator;
 	}
 
 }

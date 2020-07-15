@@ -23,7 +23,6 @@ use Smalldb\CodeCooker\Cookbook;
 use Smalldb\CodeCooker\Recipe\ClassRecipe;
 use Smalldb\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
-use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
 
 
 class ClassCheffTest extends TestCase
