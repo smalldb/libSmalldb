@@ -32,18 +32,13 @@ class WrapDTO implements StateMachineBuilderApplyInterface, RecursiveAnnotationI
 {
 	public string $dtoClassName;
 
-	public function __construct($values)
-	{
-		$dtoClassName = $values['value'] ?? null;
-		if (!$dtoClassName || !class_exists($dtoClassName)) {
-			throw new \InvalidArgumentException("WrapDTO requires a class name of existing class.");
-		}
-		$this->dtoClassName = $dtoClassName;
-	}
-
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
+		if (!class_exists($this->dtoClassName)) {
+			throw new \InvalidArgumentException("WrapDTO requires a class name of existing class: " . $this->dtoClassName);
+		}
+
 		/** @var DtoExtensionPlaceholder $extPlaceholder */
 		$extPlaceholder = $builder->getExtensionPlaceholder(DtoExtensionPlaceholder::class);
 		$extPlaceholder->dtoClassName = $this->dtoClassName;
