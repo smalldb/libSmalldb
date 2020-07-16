@@ -55,7 +55,7 @@ class SupervisorProcessDataImmutable extends Source_SupervisorProcessProperties 
 		$t->createdAt = ($v = $source['createdAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
 		$t->modifiedAt = ($v = $source['modifiedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
 		$t->memoryLimit = isset($source['memoryLimit']) ? (int) $source['memoryLimit'] : null;
-		$t->args = $source['args'] ?? null;
+		$t->args = isset($source['args']) ? (is_string($source['args']) ? json_decode($source['args'], TRUE) : $source['args']) : null;
 		return $t;
 	}
 

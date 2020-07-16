@@ -51,7 +51,7 @@ class UserDataImmutable extends Source_UserProperties implements UserData
 		$t->username = (string) $source['username'];
 		$t->email = (string) $source['email'];
 		$t->password = (string) $source['password'];
-		$t->roles = $source['roles'] ?? null;
+		$t->roles = is_string($source['roles']) ? json_decode($source['roles'], TRUE) : (array) $source['roles'];
 		return $t;
 	}
 

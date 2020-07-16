@@ -426,6 +426,18 @@ class DtoGenerator
 						}
 						break;
 
+					case 'array':
+						// TODO: Implement proper SQL to Object mapping.
+						if ($type->allowsNull()) {
+							$w->writeln("\$t->$propertyName = isset(\$source[%s])"
+								. " ? (is_string(\$source[%s]) ? json_decode(\$source[%s], TRUE) : \$source[%s])"
+								. " : null;", $propertyName, $propertyName, $propertyName, $propertyName);
+						} else {
+							$w->writeln("\$t->$propertyName = is_string(\$source[%s]) ? json_decode(\$source[%s], TRUE) : (array) \$source[%s];",
+								$propertyName, $propertyName, $propertyName);
+						}
+						break;
+
 					default:
 						if ($typehint && class_exists($typehint)) {
 							$c = $w->useClass($typehint);
