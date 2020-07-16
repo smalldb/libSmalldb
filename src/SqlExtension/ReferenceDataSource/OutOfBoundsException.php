@@ -21,7 +21,7 @@ namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 use Throwable;
 
 
-class LogicException extends \LogicException implements SqlExtensionException
+class OutOfBoundsException extends \OutOfBoundsException implements SqlExtensionException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)

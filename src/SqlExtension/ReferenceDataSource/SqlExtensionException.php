@@ -18,16 +18,7 @@
 
 namespace Smalldb\StateMachine\SqlExtension\ReferenceDataSource;
 
-use Throwable;
-
-
-class LogicException extends \LogicException implements SqlExtensionException
+interface SqlExtensionException
 {
-	// Just an exception.
-	public function __construct($message = "", $code = 0, Throwable $previous = null)
-	{
-		parent::__construct($message, $code, $previous);
-	}
 
 }
-

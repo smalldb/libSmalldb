@@ -66,16 +66,16 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 	public function execPaginateRef(int $page, int $pageSize): ReferenceQueryResultPaginated
 	{
 		if (!($page >= 1 && $page <= PHP_INT_MAX)) {
-			throw new \InvalidArgumentException("Invalid page: " . var_export($page, true));
+			throw new OutOfBoundsException("Invalid page: " . var_export($page, true));
 		}
 		if (!($pageSize >= 1 && $pageSize <= PHP_INT_MAX)) {
-			throw new \InvalidArgumentException("Invalid page size: " . var_export($pageSize, true));
+			throw new OutOfBoundsException("Invalid page size: " . var_export($pageSize, true));
 		}
 		if (!empty($this->getQueryPart('having'))) {
-			throw new \RuntimeException("HAVING clause not supported when paginating.");
+			throw new UnsupportedQueryException("HAVING clause not supported when paginating.");
 		}
 		if (!empty($this->getQueryPart('groupBy'))) {
-			throw new \RuntimeException("GROUP BY clause not supported when paginating.");
+			throw new UnsupportedQueryException("GROUP BY clause not supported when paginating.");
 		}
 
 		// Get result size

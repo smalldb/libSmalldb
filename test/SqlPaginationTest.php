@@ -21,7 +21,10 @@ namespace Smalldb\StateMachine\Test;
 use Doctrine\DBAL\Connection;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\LogicException;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\OutOfBoundsException;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryBuilder;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\UnsupportedQueryException;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
@@ -40,11 +43,10 @@ class SqlPaginationTest extends TestCase
 		$this->db = $container->get(Connection::class);
 	}
 
+
 	public function testPagination()
 	{
-		$dataSource = new DataSource(null, $this->smalldb, $this->smalldb->getMachineProvider(Post::class), $this->db);
-		$qb = $dataSource->createQueryBuilder();
-		$this->assertInstanceOf(ReferenceQueryBuilder::class, $qb);
+		$qb = $this->createQueryBuilder();
 
 		// Check that there is enough posts
 		$stmt = $this->db->query("SELECT COUNT(*) FROM symfony_demo_post");
@@ -100,6 +102,76 @@ class SqlPaginationTest extends TestCase
 		$this->assertEquals(1, $result->getFirstPage());
 		$this->assertEquals(5, $result->getLastPage());
 
+	}
+
+
+	public function testNegativePage()
+	{
+		$qb = $this->createQueryBuilder();
+
+		$this->expectException(OutOfBoundsException::class);
+
+		$qb->select()
+			->addSelectFromStatements()
+			->execPaginateRef(-2, 10);
+	}
+
+
+	public function testNegativePageSize()
+	{
+		$qb = $this->createQueryBuilder();
+
+		$this->expectException(OutOfBoundsException::class);
+
+		$qb->select()
+			->addSelectFromStatements()
+			->execPaginateRef(1, -10);
+	}
+
+
+	public function testGroupBy()
+	{
+		$qb = $this->createQueryBuilder();
+
+		$this->expectException(UnsupportedQueryException::class);
+
+		$qb->select()
+			->addSelectFromStatements()
+			->groupBy('user_id')
+			->execPaginateRef(1, 10);
+	}
+
+
+	public function testHaving()
+	{
+		$qb = $this->createQueryBuilder();
+
+		$this->expectException(UnsupportedQueryException::class);
+
+		$qb->select()
+			->addSelectFromStatements()
+			->having('user_id > 5')
+			->execPaginateRef(1, 10);
+	}
+
+
+	public function testUpdateQuery()
+	{
+		$qb = $this->createQueryBuilder();
+
+		$this->expectException(LogicException::class);
+
+		$qb->update('symfony_demo_post')
+			->set('title', '"Foo"')
+			->where('1 = 2')        // Do not change data
+			->executeRef();
+	}
+
+
+	private function createQueryBuilder(): ReferenceQueryBuilder
+	{
+		$dataSource = new DataSource(null, $this->smalldb, $this->smalldb->getMachineProvider(Post::class), $this->db);
+		return $dataSource->createQueryBuilder();
 	}
 
 }
