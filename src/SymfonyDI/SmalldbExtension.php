@@ -33,6 +33,7 @@ use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\ClassLocator\ComposerClassLocator;
 use Smalldb\ClassLocator\Psr4ClassLocator;
 use Smalldb\ClassLocator\RealPathList;
+use Symfony\Component\Config\Resource\ReflectionClassResource;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -78,6 +79,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
 			$cookbook = new Cookbook();
 			$recipeLocator = new RecipeLocator($classLocator);
+			$recipeLocator->onRecipeClass(function(\ReflectionClass $sourceClass) use ($container) {
+				$container->addResource(new ReflectionClassResource($sourceClass));
+			});
 			$cookbook->addRecipes($recipeLocator->locateRecipes());
 			$cheff = new Chef($cookbook, $classLocator);
 
@@ -91,6 +95,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 		// Load all state machine definitions
 		$definitionReader = new SmalldbDefinitionBagReader();
+		$definitionReader->onDefinitionClass(function(\ReflectionClass $sourceClass) use ($container) {
+			$container->addResource(new ReflectionClassResource($sourceClass));
+		});
 		if (empty($this->config['definition_classes'])) {
 			$definitionReader->addFromClassLocator($classLocator);
 		} else {
