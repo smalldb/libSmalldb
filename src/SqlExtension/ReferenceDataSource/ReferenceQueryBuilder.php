@@ -63,6 +63,43 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 	}
 
 
+	public function execPaginateRef(int $page, int $pageSize): ReferenceQueryResultPaginated
+	{
+		if (!($page >= 1 && $page <= PHP_INT_MAX)) {
+			throw new \InvalidArgumentException("Invalid page: " . var_export($page, true));
+		}
+		if (!($pageSize >= 1 && $pageSize <= PHP_INT_MAX)) {
+			throw new \InvalidArgumentException("Invalid page size: " . var_export($pageSize, true));
+		}
+		if (!empty($this->getQueryPart('having'))) {
+			throw new \RuntimeException("HAVING clause not supported when paginating.");
+		}
+		if (!empty($this->getQueryPart('groupBy'))) {
+			throw new \RuntimeException("GROUP BY clause not supported when paginating.");
+		}
+
+		// Get result size
+		$countQuery = clone $this;
+		$countQuery->select('COUNT(*)');
+		$countQuery->setFirstResult(null);
+		$countQuery->setMaxResults(null);
+		$stmt = $countQuery->execute();
+		$resultCount = (int) $stmt->fetchColumn();
+
+		// Get result statement
+		$this->setFirstResult(($page - 1) * $pageSize);
+		$this->setMaxResults($pageSize);
+		$stmt = parent::execute();
+
+		if ($stmt instanceof Statement) {
+			// Wrap statement with something we can use to fetch references
+			return new ReferenceQueryResultPaginated($this->dataSource, $stmt, $resultCount, $page, $pageSize);
+		} else {
+			throw new LogicException("Executed statement returns unexpected result.");
+		}
+	}
+
+
 	public function quoteIdentifier(string $identifier): string
 	{
 		return $this->getConnection()->quoteIdentifier($identifier);
