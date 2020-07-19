@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\Transition;
+namespace Smalldb\StateMachine;
 
-use Smalldb\StateMachine\DebugLoggerInterface;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-interface TransitionDecorator
+interface DebugLoggerInterface
 {
-	/**
-	 * TODO: Move $debugLogger somewhere else?
-	 */
-	public function invokeTransition(TransitionEvent $transitionEvent, ?DebugLoggerInterface $debugLogger = null): TransitionEvent;
+	public function logReferenceCreated(ReferenceInterface $ref);
+	public function logTransitionInvoked(TransitionEvent $transitionEvent): ?array;
+	public function logTransitionCompleted(TransitionEvent $transitionEvent, ?array $invokeContext);
 }

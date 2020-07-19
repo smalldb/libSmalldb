@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Transition;
 
+use Smalldb\StateMachine\DebugLoggerInterface;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -33,39 +34,51 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 	}
 
 
-	final public function invokeTransition(TransitionEvent $transitionEvent): TransitionEvent
+	final public function invokeTransition(TransitionEvent $transitionEvent, ?DebugLoggerInterface $debugLogger = null): TransitionEvent
 	{
 		// FIXME: Don't assume the getState() method (marking vs. state). Use a machine-specific event instead.
 
-		// Get the transition definition, check the transition exists and is valid
-		$ref = $transitionEvent->getRef();
-		$sourceState = $ref->getState();
-		$transitionDefinition = $this->getTransitionDefinition($ref, $transitionEvent->getTransitionName());
-
-		// Check user's permissions to invoke the transitions
-		$this->guardTransition($transitionEvent, $transitionDefinition);
-
-		// Invoke the transition
-		$this->doInvokeTransition($transitionEvent, $transitionDefinition);
-
-		// Update machineId if changed
-		if ($transitionEvent->hasNewId()) {
-			// $ref->setMachineId($transitionEvent->getNewId());
-			(function(TransitionEvent $transitionEvent) {
-				if (method_exists($this, 'setMachineId')) {
-					$this->setMachineId($transitionEvent->getNewId());
-				}
-			})->call($ref, $transitionEvent);
+		if ($debugLogger) {
+			$debugLoggerContext = $debugLogger->logTransitionInvoked($transitionEvent);
 		}
 
-		// Verify that the new state is expected according to the definition
-		$ref->invalidateCache();
-		$targetState = $ref->getState();
-		$this->assertTransition($transitionEvent, $transitionDefinition, $sourceState, $targetState);
+		try {
 
-		// Dispatch an event about the transition
-		$this->postTransition($transitionEvent, $transitionDefinition, $sourceState, $targetState);
+			// Get the transition definition, check the transition exists and is valid
+			$ref = $transitionEvent->getRef();
+			$sourceState = $ref->getState();
+			$transitionDefinition = $this->getTransitionDefinition($ref, $transitionEvent->getTransitionName());
 
+			// Check user's permissions to invoke the transitions
+			$this->guardTransition($transitionEvent, $transitionDefinition);
+
+			// Invoke the transition
+			$this->doInvokeTransition($transitionEvent, $transitionDefinition);
+
+			// Update machineId if changed
+			if ($transitionEvent->hasNewId()) {
+				// $ref->setMachineId($transitionEvent->getNewId());
+				(function (TransitionEvent $transitionEvent) {
+					if (method_exists($this, 'setMachineId')) {
+						$this->setMachineId($transitionEvent->getNewId());
+					}
+				})->call($ref, $transitionEvent);
+			}
+
+			// Verify that the new state is expected according to the definition
+			$ref->invalidateCache();
+			$targetState = $ref->getState();
+			$this->assertTransition($transitionEvent, $transitionDefinition, $sourceState, $targetState);
+
+			// Dispatch an event about the transition
+			$this->postTransition($transitionEvent, $transitionDefinition, $sourceState, $targetState);
+
+		}
+		finally {
+			if ($debugLogger) {
+				$debugLogger->logTransitionCompleted($transitionEvent, $debugLoggerContext);
+			}
+		}
 		return $transitionEvent;
 	}
 

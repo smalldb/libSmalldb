@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
@@ -46,6 +47,11 @@ class Smalldb
 	 * @var string[]
 	 */
 	private array $machineTypes = [];
+
+	/**
+	 * Debug logger that is passed to other Smalldb components.
+	 */
+	private ?DebugLoggerInterface $debugLogger = null;
 
 
 	/**
@@ -171,6 +177,19 @@ class Smalldb
 	{
 		return $this->machineTypes;
 	}
+
+
+	public function setDebugLogger(?DebugLoggerInterface $debugLogger): void
+	{
+		$this->debugLogger = $debugLogger;
+	}
+
+
+	public function getDebugLogger(): ?DebugLoggerInterface
+	{
+		return $this->debugLogger;
+	}
+
 
 }
 

@@ -57,6 +57,10 @@ trait ReferenceTrait // implements ReferenceInterface
 		if ($id !== null) {
 			$this->setMachineId($id);
 		}
+
+		if (($dl = $this->smalldb->getDebugLogger())) {
+			$dl->logReferenceCreated($this);
+		}
 	}
 
 
@@ -122,7 +126,7 @@ trait ReferenceTrait // implements ReferenceInterface
 			//	$this->after_pk_changed->emit($this, $oldId, $this->id);
 			//}
 		});
-		$this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent);
+		$this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent, $this->smalldb->getDebugLogger());
 
 		//if ($this->after_transition) {
 		//	$this->after_transition->emit($this, $transitionName, $args, $transitionEvent);

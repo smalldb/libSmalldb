@@ -18,6 +18,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
+use Smalldb\StateMachine\DebugLoggerInterface;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -39,6 +40,7 @@ use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\YamlDemoContainer;
 use Smalldb\StateMachine\Transition\MissingTransitionImplementationException;
 use Smalldb\StateMachine\Transition\TransitionAssertException;
+use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
 class BasicMachineTest extends TestCase
@@ -53,6 +55,14 @@ class BasicMachineTest extends TestCase
 		$smalldbFactory = new $smalldbFactoryClass();
 		$smalldb = $smalldbFactory->createSmalldb();
 		$this->assertInstanceOf(Smalldb::class, $smalldb);
+
+		// Debug Logger -- expect a call of each method at least once
+		$debugLoggerMock = $this->createMock(DebugLoggerInterface::class);
+		$debugLoggerInterface = new \ReflectionClass(DebugLoggerInterface::class);
+		foreach ($debugLoggerInterface->getMethods() as $m) {
+			$debugLoggerMock->expects($this->atLeastOnce())->method($m->getName());
+		}
+		$smalldb->setDebugLogger($debugLoggerMock);
 
 		// Check the provider
 		$crudMachineProvider = $smalldb->getMachineProvider($machineType);
