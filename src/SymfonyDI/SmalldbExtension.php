@@ -45,7 +45,8 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 {
 	protected const PROVIDER_CLASS = LambdaProvider::class;
 
-	private array $config;
+	protected array $config;
+
 
 	/**
 	 * Create bundle configuration. Smalldb Bundle overrides this with
@@ -63,11 +64,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 	{
 		// Get configuration
 		$this->config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
-	}
 
-
-	public function process(ContainerBuilder $container)
-	{
 		// Define Smalldb entry point
 		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
 			->setPublic(true);
@@ -114,6 +111,12 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		// Generate everything
 		$this->generateClasses($container, $smalldb, $definitionReader->getDefinitionBag(),
 			$genNamespace, $genPath);
+	}
+
+
+	public function process(ContainerBuilder $container)
+	{
+		// ...
 	}
 
 
