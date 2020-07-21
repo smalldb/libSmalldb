@@ -18,38 +18,23 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SqlExtension\Definition\SqlTableExtension;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
-use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
 
-class TagRepositoryTest extends TestCase
+class TagRepositoryTest extends TestCaseWithDemoContainer
 {
-	private Smalldb $smalldb;
 	private TagRepository $tagRepository;
 
 
-	/**
-	 * @throws DBALException
-	 */
 	public function setUp(): void
 	{
-		$containerFactory = new SymfonyDemoContainer();
-		$container = $containerFactory->createContainer();
-		$this->tagRepository = $container->get(TagRepository::class);
-		$this->smalldb = $container->get(Smalldb::class);
-
-		/** @var Connection $dbal */
-		$dbal = $container->get(Connection::class);
-		$stmt = $dbal->query("SELECT COUNT(*) FROM symfony_demo_tag");
-		$this->assertGreaterThan(0, $stmt->fetchColumn());
+		parent::setUp();
+		$this->tagRepository = $this->get(TagRepository::class);
 	}
 
 
@@ -90,7 +75,7 @@ class TagRepositoryTest extends TestCase
 		$this->assertEquals('Exists', $state);
 
 		// One query to load the state
-		$this->assertEquals(1, $this->tagRepository->getQueryCount());
+		$this->assertQueryCountEquals(1);
 	}
 
 
@@ -103,7 +88,7 @@ class TagRepositoryTest extends TestCase
 		$this->assertNotEmpty($ref->getName());
 
 		// One query to load the state, second to load data. One would be better.
-		$this->assertLessThanOrEqual(2, $this->tagRepository->getQueryCount());
+		$this->assertQueryCountLessThanOrEqual(2);
 	}
 
 	public function testTagObjects()
@@ -202,7 +187,7 @@ class TagRepositoryTest extends TestCase
 		$this->assertGreaterThanOrEqual(9, $tagCount, 'There should be at least 9 tags in the database.');
 
 		// One query to load everything; data source should not query any additional data.
-		$this->assertQueryCount(1);
+		$this->assertQueryCountEquals(1);
 	}
 
 
@@ -216,7 +201,7 @@ class TagRepositoryTest extends TestCase
 		$existingName = $testRef->getName();
 		$this->assertEquals($name, $existingName);
 
-		$this->assertQueryCount(1);
+		$this->assertQueryCountEquals(1);
 
 		// Try to find
 		$foundRef = $this->tagRepository->findByName($name);
@@ -225,14 +210,7 @@ class TagRepositoryTest extends TestCase
 		$this->assertEquals($name, $foundRef->getName());
 
 		// Single query to both find the Tag and load the data.
-		$this->assertQueryCount(2);
-	}
-
-
-	private function assertQueryCount(int $expected): void
-	{
-		$actual = $this->tagRepository->getQueryCount();
-		$this->assertEquals($expected, $actual, "Unexpected query count: $actual (should be $expected)");
+		$this->assertQueryCountEquals(2);
 	}
 
 }

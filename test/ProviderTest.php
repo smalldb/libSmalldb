@@ -25,7 +25,6 @@ use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 

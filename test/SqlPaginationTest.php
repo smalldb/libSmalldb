@@ -18,32 +18,21 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Doctrine\DBAL\Connection;
-use Smalldb\StateMachine\Smalldb;
+use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\LogicException;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\OutOfBoundsException;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryBuilder;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\UnsupportedQueryException;
 use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
 
-class SqlPaginationTest extends TestCase
+class SqlPaginationTest extends TestCaseWithDemoContainer
 {
-	private Connection $db;
-	private Smalldb $smalldb;
 
-
-	public function setUp(): void
-	{
-		parent::setUp();
-		$container = (new SymfonyDemoContainer())->createContainer();
-		$this->smalldb = $container->get(Smalldb::class);
-		$this->db = $container->get(Connection::class);
-	}
-
-
+	/**
+	 * @throws DBALException
+	 */
 	public function testPagination()
 	{
 		$qb = $this->createQueryBuilder();

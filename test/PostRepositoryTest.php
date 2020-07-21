@@ -19,34 +19,23 @@
 namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
-use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
-use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 
 
-class PostRepositoryTest extends TestCase
+class PostRepositoryTest extends TestCaseWithDemoContainer
 {
-	private Smalldb $smalldb;
 	private PostRepository $postRepository;
-	private Connection $db;
 
 
 	public function setUp(): void
 	{
-		$containerFactory = new SymfonyDemoContainer();
-		$container = $containerFactory->createContainer();
-		$this->postRepository = $container->get(PostRepository::class);
-		$this->smalldb = $container->get(Smalldb::class);
-		$this->db = $container->get(Connection::class);
-
-		$stmt = $this->db->query("SELECT COUNT(*) FROM symfony_demo_post");
-		$this->assertGreaterThan(0, $stmt->fetchColumn());
+		parent::setUp();
+		$this->postRepository = $this->get(PostRepository::class);
 	}
 
 
@@ -57,7 +46,7 @@ class PostRepositoryTest extends TestCase
 		$this->assertEquals('Exists', $state);
 
 		// One query to load the state
-		$this->assertEquals(1, $this->postRepository->getQueryCount());
+		$this->assertQueryCountEquals(1);
 	}
 
 
@@ -70,8 +59,9 @@ class PostRepositoryTest extends TestCase
 		$this->assertNotEmpty($ref->getTitle());
 
 		// One query to load the state, second to load data. One would be better.
-		$this->assertLessThanOrEqual(2, $this->postRepository->getQueryCount());
+		$this->assertQueryCountLessThanOrEqual(2);
 	}
+
 
 	public function testPostObjects()
 	{
@@ -176,7 +166,7 @@ class PostRepositoryTest extends TestCase
 		$existingSlug = $testRef->getSlug();
 		$this->assertEquals($slug, $existingSlug);
 
-		$this->assertQueryCount(1);
+		$this->assertQueryCountEquals(1);
 
 		// Try to find
 		$foundRef = $this->postRepository->findBySlug($slug);
@@ -186,7 +176,7 @@ class PostRepositoryTest extends TestCase
 		$this->assertNotEmpty($foundRef->getTitle());
 
 		// Single query to both find the Post and load the data.
-		$this->assertQueryCount(2);
+		$this->assertQueryCountEquals(2);
 	}
 
 
@@ -210,8 +200,9 @@ class PostRepositoryTest extends TestCase
 
 		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
 
-		// One query to load everything; data source should not query any additional data.
-		$this->assertQueryCount($N);
+		// One query to load everything, second to count pages.
+		// Data source should not query any additional data.
+		$this->assertQueryCountEquals(2 * $N);
 	}
 
 
@@ -219,21 +210,14 @@ class PostRepositoryTest extends TestCase
 	{
 		$hasEmptyTitle = 0;
 
-		foreach ($this->postRepository->findLatest() as $post) {
+		foreach ($this->postRepository->findAll() as $post) {
 			$hasEmptyTitle |= empty($post->getTitle());
 		}
 
 		$this->assertEmpty($hasEmptyTitle, 'Some post is missing its title.');
 
 		// One query to load everything; data source should not query any additional data.
-		$this->assertQueryCount(1);
-	}
-
-
-	private function assertQueryCount(int $expected): void
-	{
-		$actual = $this->postRepository->getQueryCount();
-		$this->assertEquals($expected, $actual, "Unexpected query count: $actual (should be $expected)");
+		$this->assertQueryCountEquals(1);
 	}
 
 

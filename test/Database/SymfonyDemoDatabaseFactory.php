@@ -37,6 +37,7 @@ class SymfonyDemoDatabaseFactory
 		);
 		$conn = DriverManager::getConnection($connectionParams);
 		$this->importDatabase($conn);
+		$conn->getConfiguration()->setSQLLogger(new SqlQueryCounter());
 		return $conn;
 	}
 

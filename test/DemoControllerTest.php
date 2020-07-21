@@ -19,12 +19,9 @@
 namespace Smalldb\StateMachine\Test;
 
 use DateTimeImmutable;
-use PDO;
-use Psr\Container\ContainerInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
-use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataMutable;
@@ -33,7 +30,6 @@ use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataMutable;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
-use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
 /**
@@ -45,44 +41,21 @@ use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
  *
  * @see https://github.com/symfony/demo/blob/master/src/Controller/BlogController.php
  */
-class DemoControllerTest extends TestCase
+class DemoControllerTest extends TestCaseWithDemoContainer
 {
-	protected PDO $db;
-
-
-	private function createContainer(): ContainerInterface
-	{
-		$containerFactory = new SymfonyDemoContainer();
-		return $containerFactory->createContainer();
-	}
-
 
 	public function testContainer()
 	{
-		$container = $this->createContainer();
 		foreach ([Smalldb::class, PostRepository::class, TagRepository::class, UserRepository::class] as $service) {
-			$this->assertInstanceOf($service, $container->get($service));
+			$this->assertInstanceOf($service, $this->get($service));
 		}
-	}
-
-
-	public function testSymfonyDemoDatabase()
-	{
-		/** @var PDO $db */
-		$db = $this->createContainer()->get(SymfonyDemoDatabase::class);
-
-		// Check that the database is ready
-		$stmt = $db->query('select count(*) from symfony_demo_post');
-		$maxPostId = $stmt->fetchColumn(0);
-		$this->assertGreaterThan(0, $maxPostId, "No posts found in the database.");
 	}
 
 
 	public function testDefinitionBag()
 	{
-		$container = $this->createContainer();
 		/** @var SmalldbDefinitionBagInterface $definitionBag */
-		$definitionBag = $container->get(SmalldbDefinitionBagInterface::class);
+		$definitionBag = $this->get(SmalldbDefinitionBagInterface::class);
 
 		foreach ($definitionBag->getAllMachineTypes() as $machineType) {
 			$definition = $definitionBag->getDefinition($machineType);
@@ -125,8 +98,7 @@ class DemoControllerTest extends TestCase
 
 	public function testPostShowController()
 	{
-		$container = $this->createContainer();
-		$postRepository = $container->get(PostRepository::class);
+		$postRepository = $this->get(PostRepository::class);
 
 		// The Post object is loaded by Symfony's argument resolver.
 		$post = $this->createPost($postRepository);
@@ -145,11 +117,10 @@ class DemoControllerTest extends TestCase
 	 */
 	public function testIndexController(?string $tagName)
 	{
-		$container = $this->createContainer();
 		/** @var PostRepository $posts */
-		$posts = $container->get(PostRepository::class);
+		$posts = $this->get(PostRepository::class);
 		/** @var TagRepository $tags */
-		$tags = $container->get(TagRepository::class);
+		$tags = $this->get(TagRepository::class);
 
 		$tagData = new TagDataMutable();
 		$tagData->setName('Foo');
@@ -157,7 +128,7 @@ class DemoControllerTest extends TestCase
 		$ref = $tags->ref(null);
 		$ref->create($tagData);
 
-		$this->indexController(0, $tagName, $posts, $tags);
+		$this->indexController(1, $tagName, $posts, $tags);
 	}
 
 	private function indexController(?int $page, ?string $tagName, PostRepository $posts, TagRepository $tags)
@@ -165,8 +136,7 @@ class DemoControllerTest extends TestCase
 		/** @var Tag $tag */
 		$tag = null;
 		if ($tagName !== null) {
-			$this->markTestIncomplete(); // TODO
-			$tag = $tags->findOneBy(['name' => $tagName]);
+			$tag = $tags->findByName($tagName);
 		}
 
 		$latestPosts = $posts->findLatest($page, $tag);
@@ -177,15 +147,14 @@ class DemoControllerTest extends TestCase
 	public function tagProvider()
 	{
 		yield 'no tag' => [null];
-		// yield 'foo' => ['foo'];         // TODO
+		yield 'voluptate' => ['voluptate'];
 	}
 
 
 	public function testEditController()
 	{
-		$container = $this->createContainer();
 		/** @var PostRepository $posts */
-		$postRepository = $container->get(PostRepository::class);
+		$postRepository = $this->get(PostRepository::class);
 		$post = $this->createPost($postRepository, 1000);
 
 		$newTitle = 'A post about Bar.';
