@@ -24,6 +24,7 @@ use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\DataSource;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryBuilder;
 
 
 /**
@@ -53,6 +54,13 @@ abstract class AbstractSqlRepository extends AbstractSmalldbRepository implement
 	protected function createDataSource(): DataSource
 	{
 		return new DataSource(null, $this->smalldb, $this->getMachineProvider(), $this->db);
+	}
+
+
+	protected function createQueryBuilder(string $tableAlias = 'this'): ReferenceQueryBuilder
+	{
+		return $this->getDataSource()->createQueryBuilder($tableAlias)
+			->addSelectFromStatements();
 	}
 
 
