@@ -24,8 +24,6 @@ use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**
- * Class PostDataImmutable
- *
  * @SQL\Table("symfony_demo_post")
  * @SQL\StateSelect("'Exists'")
  * @GenerateDTO("PostData")

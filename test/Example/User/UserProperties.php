@@ -38,7 +38,7 @@ abstract class UserProperties
 	protected ?int $id = null;
 
 	/**
-	 * @SQL\Column
+	 * @SQL\Column(name = "full_name")
 	 * @Assert\NotBlank()
 	 */
 	protected string $fullName;

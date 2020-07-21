@@ -19,14 +19,23 @@
 namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
+use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Test\Misc\AbstractCountingSqlRepository;
+use function Symfony\Component\String\u;
 
 
-class PostRepository extends AbstractCountingSqlRepository implements SmalldbRepositoryInterface
+class PostRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
 {
 	protected const REF_CLASS = Post::class;
+
+	/**
+	 * Use constants to define configuration options that rarely change instead
+	 * of specifying them under parameters section in config/services.yaml file.
+	 *
+	 * See https://symfony.com/doc/current/best_practices.html#use-constants-to-define-options-that-rarely-change
+	 */
+	public const NUM_ITEMS = 10;
 
 
 	public function ref($id): Post
@@ -39,15 +48,13 @@ class PostRepository extends AbstractCountingSqlRepository implements SmalldbRep
 
 	public function findBySlug(string $slug): ?Post
 	{
-		$q = $this->getDataSource()->createQueryBuilder()
-			->addSelectFromStatements();
+		$q = $this->createQueryBuilder();
 		$q->where('slug = :slug');
 		$q->setMaxResults(1);
 
 		$q->setParameter('slug', $slug);
 
 		$result = $q->executeRef();
-		$this->onQuery($q);
 
 		/** @var Post|null $post */
 		$post = $result->fetch();
@@ -58,35 +65,74 @@ class PostRepository extends AbstractCountingSqlRepository implements SmalldbRep
 	/**
 	 * @return Post[]
 	 */
-	public function findLatest(int $page = 0, ?Tag $tag = null): ReferenceQueryResult
+	public function findLatest(int $page = 1, ?Tag $tag = null): ReferenceQueryResult
 	{
-		assert($page >= 0);
+		assert($page >= 1);
 
-		$pageSize = 25;
-		$pageOffset = $page * $pageSize;
+		$pageSize = self::NUM_ITEMS;
 
-		$q = $this->getDataSource()->createQueryBuilder()
-			->addSelectFromStatements();
+		$q = $this->createQueryBuilder();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
-		$q->setFirstResult($pageOffset);
-		$q->setMaxResults($pageSize);
-		$result = $q->executeRef();
-		$this->onQuery($q);
 
+		if ($tag) {
+			$q->andWhere('EXISTS(SELECT * FROM symfony_demo_post_tag pt WHERE pt.post_id = this.id AND pt.tag_id = :tag)')
+				->setParameter('tag', $tag->getId());
+		}
+
+		$result = $q->execPaginateRef($page, $pageSize);
 		return $result;
 	}
 
 
 	public function findAll(): ReferenceQueryResult
 	{
-		$q = $this->getDataSource()->createQueryBuilder()
-			->addSelectFromStatements();
+		$q = $this->createQueryBuilder();
 		$q->orderBy('published_at', 'DESC');
 		$q->addOrderBy('id', 'DESC');
 		$result = $q->executeRef();
-		$this->onQuery($q);
 		return $result;
+	}
+
+
+	/**
+	 * @return Post[]
+	 */
+	public function findBySearchQuery(string $query, int $limit = self::NUM_ITEMS): ReferenceQueryResult
+	{
+		$searchTerms = $this->extractSearchTerms($query);
+
+		if (0 === \count($searchTerms)) {
+			return [];
+		}
+
+		$queryBuilder = $this->createQueryBuilder();
+
+		foreach ($searchTerms as $key => $term) {
+			$queryBuilder
+				->orWhere('this.title LIKE :t_' . $key)
+				->setParameter('t_' . $key, '%' . $term . '%');
+		}
+
+		return $queryBuilder
+			->orderBy('this.published_at', 'DESC')
+			->setMaxResults($limit)
+			->executeRef();
+	}
+
+
+	/**
+	 * Transforms the search string into an array of search terms.
+	 */
+	private function extractSearchTerms(string $searchQuery): array
+	{
+		$searchQuery = u($searchQuery)->replaceMatches('/[[:space:]]+/', ' ')->trim();
+		$terms = array_unique($searchQuery->split(' '));
+
+		// ignore the search terms that are too short
+		return array_filter($terms, function ($term) {
+			return 2 <= $term->length();
+		});
 	}
 
 }

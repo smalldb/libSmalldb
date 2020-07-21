@@ -24,8 +24,6 @@ use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 
 /**
- * Class TagProperties
- *
  * @SQL\Table("symfony_demo_tag")
  * @GenerateDTO("TagData")
  */
@@ -63,7 +61,7 @@ abstract class TagProperties
 	 */
 	protected function resetName(): void
 	{
-		$this->name = (string) $this->id;
+		$this->name = (string)$this->id;
 	}
 
 }

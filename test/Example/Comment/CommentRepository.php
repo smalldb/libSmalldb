@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,40 +16,34 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\User;
+namespace Smalldb\StateMachine\Test\Example\Comment;
 
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 
 
-class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
+class CommentRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
 {
-	protected const REF_CLASS = User::class;
+	protected const REF_CLASS = Comment::class;
 
 
-	public function ref($id): User
+	public function ref($id): Comment
 	{
-		/** @var User $ref */
+		/** @var Comment $ref */
 		$ref = $this->getDataSource()->ref($id);
 		return $ref;
 	}
 
 
-	public function findByUserName(string $username): ?User
+	public function findByPost(Post $post): ReferenceQueryResult
 	{
 		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
-		$q->where('username = :username');
-		$q->setMaxResults(1);
-
-		$q->setParameter('username', $username);
-
-		$result = $q->executeRef();
-
-		/** @var User|null $ref */
-		$ref = $result->fetch();
-		return $ref;
+		$q->andWhere('post_id = ' . $q->createPositionalParameter($post->getId()));
+		$q->orderBy('published_at', 'ASC');
+		return $q->executeRef();
 	}
 
 }
-

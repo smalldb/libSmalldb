@@ -31,6 +31,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	private Connection $db;
 	private string $table = 'symfony_demo_tag';
 
+
 	public function __construct(Connection $db)
 	{
 		parent::__construct();
@@ -55,7 +56,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 		]);
 
 		if ($id === null) {
-			$newId = (int) $this->db->lastInsertId();
+			$newId = (int)$this->db->lastInsertId();
 			$transitionEvent->setNewId($newId);
 			return $newId;
 		} else {
@@ -80,7 +81,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 		");
 
 		$oldId = $ref->getId();
-		$newId =  $data->getId();
+		$newId = $data->getId();
 		$stmt->execute([
 			'oldId' => $oldId,
 			'newId' => $newId,
@@ -109,6 +110,5 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 		]);
 		$transitionEvent->setNewId(null);
 	}
-
 
 }

@@ -18,6 +18,13 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
+use Smalldb\StateMachine\Test\Example\Comment\Comment;
+use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
+use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Annotation\Access as Access;
 use Smalldb\StateMachine\Annotation\Color;
 use Smalldb\StateMachine\Annotation\State;
@@ -25,15 +32,18 @@ use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
+use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\ReferenceProtectedAPI;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 
 
 /**
  * @StateMachine("post")
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
+ * @WrapDTO(PostDataImmutable::class)
  * @Access\Policy("Author",
  *         @SQL\RequireOwner("authorId"),
  *         @Color("#4a0"))
@@ -41,14 +51,17 @@ use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
  *         @Access\RequireRole("ROLE_EDITOR"))
  * @Access\DefaultPolicy("Author")
  */
-abstract class Post extends PostDataImmutable implements ReferenceInterface
+abstract class Post implements ReferenceInterface, PostData
 {
+	use ReferenceProtectedAPI;
+
 
 	/**
 	 * @State
 	 * @Color("#def")
 	 */
 	const EXISTS = "Exists";
+
 
 	/**
 	 * @Transition("", {"Exists"})
@@ -57,11 +70,13 @@ abstract class Post extends PostDataImmutable implements ReferenceInterface
 	 */
 	abstract public function create(PostDataImmutable $itemData);
 
+
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 * @Access\AllowPolicy("Author")
 	 */
 	abstract public function update(PostDataImmutable $itemData);
+
 
 	/**
 	 * @Transition("Exists", {""})
@@ -69,6 +84,30 @@ abstract class Post extends PostDataImmutable implements ReferenceInterface
 	 * @Access\AllowPolicy("Author")
 	 */
 	abstract public function delete();
+
+
+	public function getAuthor(): User
+	{
+		/** @var User $user */
+		$user = $this->getSmalldb()->ref('user', $this->getAuthorId());
+		return $user;
+	}
+
+
+	public function getTags(): array
+	{
+		/** @var TagRepository $repository */
+		$repository = $this->getSmalldb()->getRepository(Tag::class);
+		return $repository->findByPost($this);
+	}
+
+
+	public function getComments(): ReferenceQueryResult
+	{
+		/** @var CommentRepository $repository */
+		$repository = $this->getSmalldb()->getRepository(Comment::class);
+		return $repository->findByPost($this);
+	}
 
 }
 

@@ -18,11 +18,12 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
-use Smalldb\StateMachine\Test\Misc\AbstractCountingSqlRepository;
+use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
 
 
-class TagRepository extends AbstractCountingSqlRepository implements SmalldbRepositoryInterface
+class TagRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
 {
 	protected const REF_CLASS = Tag::class;
 
@@ -42,9 +43,8 @@ class TagRepository extends AbstractCountingSqlRepository implements SmalldbRepo
 		$q->setMaxResults(1000);
 
 		$result = $q->executeRef();
-		$this->onQuery($q);
 
-		return $result->fetchAll();
+		return $result->getIterator();
 	}
 
 
@@ -58,12 +58,24 @@ class TagRepository extends AbstractCountingSqlRepository implements SmalldbRepo
 		$q->setParameter('name', $name);
 
 		$result = $q->executeRef();
-		$this->onQuery($q);
 
 		/** @var Tag|null $tag */
 		$tag = $result->fetch();
 		return $tag;
 	}
 
+
+	public function findByPost(Post $post): array
+	{
+		$q = $this->getDataSource()->createQueryBuilder()
+			->addSelectFromStatements()
+			->join('this', 'symfony_demo_post_tag', 'pt', 'this.id = pt.tag_id')
+			->andWhere('pt.post_id = :post_id');
+
+		$q->setParameter('post_id', $post->getId());
+
+		$result = $q->executeRef();
+		return $result->fetchAll();
+	}
 
 }

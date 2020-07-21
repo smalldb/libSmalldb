@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
  *
  */
 
-namespace Smalldb\StateMachine\Test\Example\User;
+namespace Smalldb\StateMachine\Test\Example\Comment;
 
-use Smalldb\StateMachine\Test\Example\User\UserData\UserData;
-use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -27,18 +29,19 @@ use Smalldb\StateMachine\Annotation\UseRepository;
 use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Smalldb\StateMachine\ReferenceProtectedAPI;
 
 
 /**
- * @StateMachine("user")
- * @UseRepository(UserRepository::class)
- * @UseTransitions(UserTransitions::class)
- * @WrapDTO(UserDataImmutable::class)
- * @SQL\StateSelect("'Exists'")
+ * @StateMachine("comment")
+ * @WrapDTO(CommentDataImmutable::class)
+ * @UseRepository(CommentRepository::class)
+ * @UseTransitions(CommentTransitions::class)
  */
-abstract class User implements ReferenceInterface, UserData
+abstract class Comment implements ReferenceInterface, CommentData
 {
+	use ReferenceProtectedAPI;
+
 
 	/**
 	 * @State(color = "#def")
@@ -49,19 +52,22 @@ abstract class User implements ReferenceInterface, UserData
 	/**
 	 * @Transition("", {"Exists"}, color = "#4a0")
 	 */
-	abstract public function create(UserData $itemData);
+	abstract public function create(CommentData $commentData);
 
 
-	/**
-	 * @Transition("Exists", {"Exists"})
-	 */
-	abstract public function update(UserData $itemData);
+	public function getPost(): Post
+	{
+		/** @var Post $ref */
+		$ref = $this->getSmalldb()->ref(Post::class, $this->getPostId());
+		return $ref;
+	}
 
 
-	/**
-	 * @Transition("Exists", {""}, color = "#a40")
-	 */
-	abstract public function delete();
+	public function getAuthor(): User
+	{
+		/** @var User $ref */
+		$ref = $this->getSmalldb()->ref(User::class, $this->getAuthorId());
+		return $ref;
+	}
 
 }
-
