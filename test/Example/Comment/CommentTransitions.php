@@ -32,10 +32,10 @@ class CommentTransitions extends MethodTransitionsDecorator implements Transitio
 {
 	private Connection $db;
 	private string $table = 'symfony_demo_comment';
-	private EventDispatcherInterface $eventDispatcher;
+	private ?EventDispatcherInterface $eventDispatcher;
 
 
-	public function __construct(Connection $db, EventDispatcherInterface $eventDispatcher)
+	public function __construct(Connection $db, ?EventDispatcherInterface $eventDispatcher)
 	{
 		parent::__construct();
 		$this->db = $db;
@@ -67,12 +67,14 @@ class CommentTransitions extends MethodTransitionsDecorator implements Transitio
 			$transitionEvent->setNewId($newId);
 		}
 
-		// When an event is dispatched, Symfony notifies it to all the listeners
-		// and subscribers registered to it. Listeners can modify the information
-		// passed in the event and they can even modify the execution flow, so
-		// there's no guarantee that the rest of this controller will be executed.
-		// See https://symfony.com/doc/current/components/event_dispatcher.html
-		$this->eventDispatcher->dispatch(new CommentCreatedEvent($ref));
+		if ($this->eventDispatcher) {
+			// When an event is dispatched, Symfony notifies it to all the listeners
+			// and subscribers registered to it. Listeners can modify the information
+			// passed in the event and they can even modify the execution flow, so
+			// there's no guarantee that the rest of this controller will be executed.
+			// See https://symfony.com/doc/current/components/event_dispatcher.html
+			$this->eventDispatcher->dispatch(new CommentCreatedEvent($ref));
+		}
 
 		return $newId ?? $id;
 	}
