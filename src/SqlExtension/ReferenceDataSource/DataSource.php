@@ -34,9 +34,6 @@ class DataSource implements ReferenceDataSourceInterface
 	protected string $refClass;
 	private Connection $db;
 
-	/** @var callable|null */
-	private $onQueryCallback = null;
-
 
 	public function __construct(?DataSource $originalDataSource, Smalldb $smalldb = null, SmalldbProviderInterface $machineProvider = null, Connection $db = null)
 	{
@@ -55,12 +52,6 @@ class DataSource implements ReferenceDataSourceInterface
 			$this->refClass = $originalDataSource->refClass;
 			$this->db = $originalDataSource->db;
 		}
-	}
-
-
-	public function setOnQueryCallback(?callable $onQueryCallback): void
-	{
-		$this->onQueryCallback = $onQueryCallback;
 	}
 
 
@@ -90,10 +81,6 @@ class DataSource implements ReferenceDataSourceInterface
 			->andWhereId($id);
 
 		$stmt = $q->execute();
-
-		if ($this->onQueryCallback) {
-			($this->onQueryCallback)($q);
-		}
 
 		if ($stmt instanceof Statement) {
 			$data = $stmt->fetch(FetchMode::ASSOCIATIVE);
