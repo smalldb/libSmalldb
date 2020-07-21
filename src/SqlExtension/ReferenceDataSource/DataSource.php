@@ -85,7 +85,7 @@ class DataSource implements ReferenceDataSourceInterface
 		if ($stmt instanceof Statement) {
 			$data = $stmt->fetch(FetchMode::ASSOCIATIVE);
 		} else {
-			throw new LogicException("Load data select does not return a result set.");
+			throw new LogicException("Load data select does not return a result set.");  // @codeCoverageIgnore
 		}
 
 		return $data ?: null;
