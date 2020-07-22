@@ -13,11 +13,11 @@
 	<testsuites>
 		<testsuite name="unit-tests">
 			<directory suffix="Test.php">test</directory>
-			<exclude>test/BpmnBenchmarkTest.php</exclude>
 			<exclude>test/output</exclude>
 		</testsuite>
 		<testsuite name="benchmark">
-			<file>test/BpmnBenchmarkTest.php</file>
+			<directory suffix="Benchmark.php">test</directory>
+			<exclude>test/output</exclude>
 		</testsuite>
 	</testsuites>
 

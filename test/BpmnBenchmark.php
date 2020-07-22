@@ -20,7 +20,7 @@
 namespace Smalldb\StateMachine\Test;
 
 
-class BpmnBenchmarkTest extends BpmnTest
+class BpmnBenchmark extends BpmnTest
 {
 
 	/** @var int Minimum number of tasks to generate */
