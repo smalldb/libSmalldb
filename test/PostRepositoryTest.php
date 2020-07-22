@@ -132,6 +132,28 @@ class PostRepositoryTest extends TestCaseWithDemoContainer
 	}
 
 
+	public function testUpdateWithIdChange()
+	{
+		/** @var Post $ref */
+		$ref = $this->smalldb->ref(Post::class, 1000);
+		$ref->create($this->createPostData());
+		$this->assertEquals('Exists', $ref->getState());
+		$this->assertEquals('Foo', $ref->getTitle());
+
+		$postData = new PostDataImmutable($ref);
+		$postData = $postData->withTitle('Bar');
+		$postData = $postData->withId(1001);
+
+		$ref->update($postData);
+		$this->assertEquals('Exists', $ref->getState());
+		$this->assertEquals(1001, $ref->getId());
+		$this->assertEquals('Bar', $ref->getTitle());
+
+		$oldRef = $this->smalldb->ref(Post::class, 1000);
+		$this->assertEquals('', $oldRef->getState(), 'The post with the old ID should not exist.');
+	}
+
+
 	/**
 	 * @depends testUpdate
 	 * @throws DBALException
@@ -206,6 +228,24 @@ class PostRepositoryTest extends TestCaseWithDemoContainer
 	}
 
 
+	public function testGetRelated()
+	{
+		$ref = $this->postRepository->ref(1);
+		$this->assertEquals(Post::EXISTS, $ref->getState());
+
+		$authorName = $ref->getAuthor()->getFullName();
+		$this->assertNotEmpty($authorName);
+
+		$tags = $ref->getTags();
+		$this->assertNotEmpty($tags);
+
+		$comments = $ref->getComments();
+		$this->assertNotEmpty($comments);
+
+		$this->assertQueryCountEquals(4);
+	}
+
+
 	public function testFindAll()
 	{
 		$hasEmptyTitle = 0;
@@ -218,6 +258,47 @@ class PostRepositoryTest extends TestCaseWithDemoContainer
 
 		// One query to load everything; data source should not query any additional data.
 		$this->assertQueryCountEquals(1);
+	}
+
+
+	public function testFindAllPostAuthors()
+	{
+		$hasEmptyAuthorName = 0;
+
+		/** @var Post $post */
+		foreach ($this->postRepository->findAll() as $post) {
+			$author = $post->getAuthor();
+			$hasEmptyAuthorName |= $author->getState() == '' || empty($author->getFullName());
+		}
+
+		$this->assertEmpty($hasEmptyAuthorName, 'Some author is missing or has no name.');
+
+		// One query to load everything; data source should not query any additional data.
+		$this->assertQueryCountEquals(31); // FIXME: Only 2 queries should be required
+	}
+
+
+	public function testFindByEmptySearchQuery()
+	{
+		$result = $this->postRepository->findBySearchQuery('', 5);
+		$items = $result->fetchAll();
+		$this->assertCount(0, $items);
+	}
+
+
+	public function testFindBySearchQuery()
+	{
+		// There are more than 5 matching posts
+		$result = $this->postRepository->findBySearchQuery('de', 5);
+		/** @var Post[] $items */
+		$items = $result->fetchAll();
+		$this->assertCount(5, $items);
+		$this->assertContainsOnlyInstancesOf(Post::class, $items);
+
+		foreach ($items as $i) {
+			$title = $i->getTitle();
+			$this->assertStringContainsString('de', $title);
+		}
 	}
 
 

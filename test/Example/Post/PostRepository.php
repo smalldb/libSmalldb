@@ -102,13 +102,13 @@ class PostRepository extends AbstractSqlRepository implements SmalldbRepositoryI
 	{
 		$searchTerms = $this->extractSearchTerms($query);
 
-		if (0 === \count($searchTerms)) {
-			return [];
-		}
-
 		$queryBuilder = $this->createQueryBuilder();
 
-		foreach ($searchTerms as $key => $term) {
+		if (empty($searchTerms)) {
+			// Empty result set, but keep the structure of the result.
+			$queryBuilder->andWhere('FALSE');
+		}
+		else foreach ($searchTerms as $key => $term) {
 			$queryBuilder
 				->orWhere('this.title LIKE :t_' . $key)
 				->setParameter('t_' . $key, '%' . $term . '%');

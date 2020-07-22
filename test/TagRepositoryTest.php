@@ -150,11 +150,15 @@ class TagRepositoryTest extends TestCaseWithDemoContainer
 
 		$tagData = new TagDataImmutable($ref);
 		$tagData = $tagData->withName('Bar');
+		$tagData = $tagData->withId(1001);
 
 		$ref->update($tagData);
 		$this->assertEquals('Exists', $ref->getState());
-		$this->assertEquals(1000, $ref->getId());
+		$this->assertEquals(1001, $ref->getId());
 		$this->assertEquals('Bar', $ref->getName());
+
+		$oldRef = $this->smalldb->ref(Tag::class, 1000);
+		$this->assertEquals('', $oldRef->getState(), 'The tag with the old ID should not exist.');
 	}
 
 

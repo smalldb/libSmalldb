@@ -28,6 +28,9 @@ use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory;
 use Smalldb\StateMachine\Test\Database\SymfonyDemoDatabase;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
+use Smalldb\StateMachine\Test\Example\Comment\Comment;
+use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
+use Smalldb\StateMachine\Test\Example\Comment\CommentTransitions;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
@@ -57,6 +60,7 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$bagReader->addFromAnnotatedClass(Post::class);
 		$bagReader->addFromAnnotatedClass(Tag::class);
 		$bagReader->addFromAnnotatedClass(User::class);
+		$bagReader->addFromAnnotatedClass(Comment::class);
 		$bagReader->addFromAnnotatedClass(SupervisorProcess::class);
 		$bagReader->addFromAnnotatedClass(PizzaDelivery::class);
 		return $bagReader;
@@ -88,12 +92,14 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$c->autowire(PostRepository::class)->setPublic(true);
 		$c->autowire(TagRepository::class)->setPublic(true);
 		$c->autowire(UserRepository::class)->setPublic(true);
+		$c->autowire(CommentRepository::class)->setPublic(true);
 		$c->autowire(CrudItemRepository::class)->setPublic(true);
 
 		// Add transition implementations
 		$c->autowire(PostTransitions::class)->setPublic(true);
 		$c->autowire(TagTransitions::class)->setPublic(true);
 		$c->autowire(UserTransitions::class)->setPublic(true);
+		$c->autowire(CommentTransitions::class)->setPublic(true);
 		$c->autowire(CrudItemTransitions::class)->setPublic(true);
 
 		$c->addCompilerPass($this);
