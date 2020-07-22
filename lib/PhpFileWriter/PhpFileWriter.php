@@ -58,7 +58,12 @@ class PhpFileWriter
 	{
 		$this->eof();
 
-		$tmpFilename = tempnam(dirname($filename), '.' . basename($filename) . '.');
+		$dir = dirname($filename);
+		if (!is_writable($dir)) {
+			throw new \RuntimeException("Target directory is not writable: " . $dir);
+		}
+
+		$tmpFilename = tempnam($dir, '.' . basename($filename) . '.');
 		try {
 			file_put_contents($tmpFilename, $this->getPhpCode());
 			chmod($tmpFilename, 0444 & ~umask());
