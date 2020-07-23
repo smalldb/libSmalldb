@@ -23,6 +23,7 @@ use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
 abstract class AbstractCrudTransitions extends MethodTransitionsDecorator implements TransitionDecorator
@@ -32,9 +33,9 @@ abstract class AbstractCrudTransitions extends MethodTransitionsDecorator implem
 	private string $table;
 
 
-	public function __construct(AbstractCrudRepository $repository, ArrayDaoTables $dao)
+	public function __construct(TransitionGuard $guard, AbstractCrudRepository $repository, ArrayDaoTables $dao)
 	{
-		parent::__construct();
+		parent::__construct($guard);
 		$this->repository = $repository;
 		$this->dao = $dao;
 		$this->table = $repository->getTableName();

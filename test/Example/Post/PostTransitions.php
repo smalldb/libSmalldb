@@ -24,6 +24,7 @@ use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
 class PostTransitions extends MethodTransitionsDecorator implements TransitionDecorator
@@ -32,9 +33,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	private string $table = 'symfony_demo_post';
 
 
-	public function __construct(Connection $db)
+	public function __construct(TransitionGuard $guard, Connection $db)
 	{
-		parent::__construct();
+		parent::__construct($guard);
 		$this->db = $db;
 	}
 

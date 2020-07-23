@@ -30,6 +30,10 @@ services:
         resource: '../Example/*/*Transitions.php'
         autowire: true
 
+    Smalldb\StateMachine\Transition\TransitionGuard:
+        class: Smalldb\StateMachine\Transition\AllowingTransitionGuard
+        autowire: true
+
     # Dummy Database
     Smalldb\StateMachine\Test\Database\ArrayDaoTables:
         autowire: true

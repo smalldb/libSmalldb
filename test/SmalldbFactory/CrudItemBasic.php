@@ -28,6 +28,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
 
@@ -71,7 +72,7 @@ class CrudItemBasic implements SmalldbFactory
 
 	protected function createCrudItemTransitions(CrudItemRepository $repository, ArrayDaoTables $dao): TransitionDecorator
 	{
-		return new CrudItemTransitions($repository, $dao);
+		return new CrudItemTransitions(new AllowingTransitionGuard(), $repository, $dao);
 	}
 
 }

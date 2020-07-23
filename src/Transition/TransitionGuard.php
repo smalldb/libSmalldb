@@ -18,7 +18,9 @@
 
 namespace Smalldb\StateMachine\Transition;
 
-use Smalldb\StateMachine\Reference;
+use Smalldb\StateMachine\AccessControlExtension\AccessControlRule;
+use Smalldb\StateMachine\Definition\TransitionDefinition;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 /**
@@ -43,7 +45,8 @@ interface TransitionGuard
 	 * the transition right now (e.g., when rendering a menu with available
 	 * transitions).
 	 */
-	public function isTransitionAllowed(Reference $ref, string $transitionName): bool;
+	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool;
+
 
 	/**
 	 * Guard the transition before it is invoked.
@@ -54,7 +57,8 @@ interface TransitionGuard
 	 *
 	 * If transition is not allowed, the guard calls $event->abortTransition().
 	 */
-	public function guardTransition(TransitionEvent $event): void;
+//	public function guardTransition(TransitionEvent $event): void;
+
 
 	/**
 	 * Assert the state of the state machine after the transition finishes.
@@ -66,6 +70,6 @@ interface TransitionGuard
 	 *
 	 * Both guardTransition() and assertTransition() will receive the same $event.
 	 */
-	public function assertTransition(TransitionEvent $event): void;
+//	public function assertTransition(TransitionEvent $event): void;
 
 }

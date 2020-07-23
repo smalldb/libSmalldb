@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,17 @@ use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\StateMachineHasErrorsException;
+use Smalldb\StateMachine\TransitionAccessException;
 
 
 abstract class AbstractTransitionDecorator implements TransitionDecorator
 {
+	private TransitionGuard $guard;
 
-	public function __construct()
+	public function __construct(TransitionGuard $guard)
 	{
+		$this->guard = $guard;
+
 		// TODO: Add an event dispatcher
 	}
 
@@ -98,12 +102,22 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 	}
 
 
+	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool
+	{
+		return $this->guard ? $this->guard->isTransitionAllowed($ref, $transition) : true;
+	}
+
+
 	/**
 	 * Guard the transition before it is invoked. Throw an exception if there is something wrong.
 	 */
 	private function guardTransition(TransitionEvent $transitionEvent, TransitionDefinition $transition): void
 	{
-		// TODO: Dispatch an event to voters.
+		if (!$this->isTransitionAllowed($transitionEvent->getRef(), $transition)) {
+			throw new TransitionAccessException("Access denied to \"" . $transition->getName() . "\" transition.");
+		}
+
+		// TODO: Dispatch an event to voters?
 	}
 
 

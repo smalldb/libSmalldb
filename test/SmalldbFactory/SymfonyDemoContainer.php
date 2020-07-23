@@ -45,6 +45,8 @@ use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Test\Example\User\UserRepository;
 use Smalldb\StateMachine\Test\Example\User\UserTransitions;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
+use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -87,6 +89,8 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$c->autowire(Connection::class)
 			->setPublic(true)
 			->setFactory([new Reference(SymfonyDemoDatabaseFactory::class), 'connect']);
+
+		$c->autowire(TransitionGuard::class, AllowingTransitionGuard::class);
 
 		// Add Repositories
 		$c->autowire(PostRepository::class)->setPublic(true);

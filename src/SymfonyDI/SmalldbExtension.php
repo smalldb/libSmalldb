@@ -33,6 +33,8 @@ use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\ClassLocator\ComposerClassLocator;
 use Smalldb\ClassLocator\Psr4ClassLocator;
 use Smalldb\ClassLocator\RealPathList;
+use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -68,6 +70,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		// Define Smalldb entry point
 		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
 			->setPublic(true);
+
+		// TODO: Use proper guard
+		$container->autowire(TransitionGuard::class, AllowingTransitionGuard::class);
 
 		$baseDir = $container->getParameter('kernel.project_dir');
 		$classLocator = $this->createClassLocator($baseDir);

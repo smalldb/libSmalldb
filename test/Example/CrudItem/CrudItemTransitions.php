@@ -19,9 +19,11 @@
 namespace Smalldb\StateMachine\Test\Example\CrudItem;
 
 use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
+use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
 class CrudItemTransitions extends MethodTransitionsDecorator implements TransitionDecorator
@@ -31,9 +33,9 @@ class CrudItemTransitions extends MethodTransitionsDecorator implements Transiti
 	private string $table;
 
 
-	public function __construct(CrudItemRepository $repository, ArrayDaoTables $dao)
+	public function __construct(TransitionGuard $guard, CrudItemRepository $repository, ArrayDaoTables $dao)
 	{
-		parent::__construct();
+		parent::__construct($guard);
 		$this->repository = $repository;
 		$this->dao = $dao;
 		$this->table = $repository->getTableName();

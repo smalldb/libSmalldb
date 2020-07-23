@@ -25,6 +25,7 @@ use Doctrine\DBAL\DBALException;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 
@@ -35,9 +36,9 @@ class CommentTransitions extends MethodTransitionsDecorator implements Transitio
 	private ?EventDispatcherInterface $eventDispatcher;
 
 
-	public function __construct(Connection $db, ?EventDispatcherInterface $eventDispatcher)
+	public function __construct(TransitionGuard $guard, Connection $db, ?EventDispatcherInterface $eventDispatcher)
 	{
-		parent::__construct();
+		parent::__construct($guard);
 		$this->db = $db;
 		$this->eventDispatcher = $eventDispatcher;
 	}

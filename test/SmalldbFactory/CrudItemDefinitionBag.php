@@ -28,6 +28,8 @@ use Smalldb\StateMachine\Test\Database\ArrayDaoTables;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
+use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -52,6 +54,7 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 		$c->autowire(CrudItemRepository::class);
 
 		// Transitions implementation
+		$c->autowire(TransitionGuard::class, AllowingTransitionGuard::class);
 		$c->autowire(CrudItemTransitions::class);
 
 		$realRefClass = $scg->generateReferenceClass(CrudItem::class, $definition);

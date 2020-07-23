@@ -24,6 +24,7 @@ use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
+use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
 class TagTransitions extends MethodTransitionsDecorator implements TransitionDecorator
@@ -32,9 +33,9 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	private string $table = 'symfony_demo_tag';
 
 
-	public function __construct(Connection $db)
+	public function __construct(TransitionGuard $guard, Connection $db)
 	{
-		parent::__construct();
+		parent::__construct($guard);
 		$this->db = $db;
 	}
 
