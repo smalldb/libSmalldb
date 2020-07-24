@@ -73,6 +73,17 @@ abstract class ExtensibleDefinition implements JsonSerializable
 	}
 
 
+	/**
+	 * Get a list of existing extensions
+	 *
+	 * @return string[]
+	 */
+	public function getExtensionClassNames(): array
+	{
+		return array_keys($this->extensions);
+	}
+
+
 	public function jsonSerialize()
 	{
 		return [
