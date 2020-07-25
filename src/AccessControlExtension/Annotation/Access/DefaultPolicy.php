@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
 
 /**

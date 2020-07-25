@@ -25,7 +25,7 @@ use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\User;
-use Smalldb\StateMachine\Annotation\Access as Access;
+use Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 use Smalldb\StateMachine\Annotation\Color;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;

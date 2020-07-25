@@ -16,19 +16,29 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
-/**
- * List of access policies
- *
- * @Annotation
- * @Target({"CLASS"})
- */
-class Policy
+use Smalldb\StateMachine\AccessControlExtension\AccessControlRule;
+use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+
+
+class AccessControlExtension implements ExtensionInterface
 {
-	/**
-	 * @var array
-	 * FIXME: Policy[] ?
-	 */
-	public array $policies;
+	use SimpleJsonSerializableTrait;
+
+	private AccessControlRule $accessControlRule;
+
+
+	public function __construct(AccessControlRule $accessControlRule)
+	{
+		$this->accessControlRule = $accessControlRule;
+	}
+
+
+	public function getAccessControlRule(): AccessControlRule
+	{
+		return $this->accessControlRule;
+	}
+
 }

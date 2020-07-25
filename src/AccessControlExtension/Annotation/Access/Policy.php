@@ -16,15 +16,19 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
 /**
- * Policy that guards access to given transition
+ * List of access policies
  *
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"CLASS"})
  */
-class AllowPolicy
+class Policy
 {
-	public string $policy;
+	/**
+	 * @var array
+	 * FIXME: Policy[] ?
+	 */
+	public array $policies;
 }
