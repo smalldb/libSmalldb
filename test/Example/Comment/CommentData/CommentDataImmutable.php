@@ -6,10 +6,10 @@
 // 
 namespace Smalldb\StateMachine\Test\Example\Comment\CommentData;
 
+use Smalldb\StateMachine\Test\Example\Comment\CommentProperties as Source_CommentProperties;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
-use Smalldb\StateMachine\Test\Example\Comment\CommentProperties as Source_CommentProperties;
 
 
 /**

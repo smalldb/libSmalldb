@@ -44,12 +44,12 @@ use Smalldb\StateMachine\StyleExtension\Annotation\Color;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
- * @Access\Policy("Author",
+ * @Access\DefinePolicy("Author",
  *     @Access\AllOf(
  *         @SQL\RequireOwner("authorId"),
  *         @Access\RequireRole("ROLE_EDITOR")
  *     ), @Color("#4a0"))
- * @Access\Policy("Editor",
+ * @Access\DefinePolicy("Editor",
  *     @Access\RequireRole("ROLE_EDITOR"))
  * @Access\DefaultPolicy("Author")
  */
@@ -68,14 +68,14 @@ abstract class Post implements ReferenceInterface, PostData
 	/**
 	 * @Transition("", {"Exists"})
 	 * @Color("#4a0")
-	 * @Access\AllowPolicy("Editor")
+	 * @Access\UsePolicy("Editor")
 	 */
 	abstract public function create(PostDataImmutable $itemData);
 
 
 	/**
 	 * @Transition("Exists", {"Exists"})
-	 * @Access\AllowPolicy("Author")
+	 * @Access\UsePolicy("Author")
 	 */
 	abstract public function update(PostDataImmutable $itemData);
 
@@ -83,7 +83,7 @@ abstract class Post implements ReferenceInterface, PostData
 	/**
 	 * @Transition("Exists", {""})
 	 * @Color("#a40")
-	 * @Access\AllowPolicy("Author")
+	 * @Access\UsePolicy("Author")
 	 */
 	abstract public function delete();
 

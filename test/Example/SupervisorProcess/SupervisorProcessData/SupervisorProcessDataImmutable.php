@@ -6,10 +6,10 @@
 // 
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData;
 
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessProperties as Source_SupervisorProcessProperties;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
-use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessProperties as Source_SupervisorProcessProperties;
 
 
 /**
