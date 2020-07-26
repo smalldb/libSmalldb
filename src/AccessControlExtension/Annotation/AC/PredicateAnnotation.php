@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,14 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-use Smalldb\StateMachine\AccessControlExtension\Predicate;
+use Smalldb\StateMachine\AccessControlExtension\Predicate\Predicate;
 
 
-/**
- * List of access policies
- *
- * @Annotation
- * @Target({"ANNOTATION"})
- */
-class Deny implements PredicateAnnotation
+interface PredicateAnnotation
 {
 
-	public function buildPredicate(): Predicate\Deny
-	{
-		return new Predicate\Deny();
-	}
+	public function buildPredicate(): Predicate;
 
 }

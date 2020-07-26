@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL\AC;
 
 
-use Smalldb\StateMachine\AccessControlExtension\Annotation\Access\PredicateAnnotation;
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC\PredicateAnnotation;
 use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 

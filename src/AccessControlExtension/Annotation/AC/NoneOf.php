@@ -16,16 +16,23 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
+
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 
 /**
- * Default access policy for transitions
+ * List of access policies
  *
  * @Annotation
- * @Target({"CLASS"})
+ * @Target({"ANNOTATION"})
  */
-class DefaultPolicy
+class NoneOf extends PredicateOperatorAnnotation implements PredicateAnnotation
 {
-	public string $accessPolicy;
+
+	public function buildPredicate(): Predicate\NoneOf
+	{
+		return new Predicate\NoneOf(...$this->buildChildPredicates());
+	}
+
 }

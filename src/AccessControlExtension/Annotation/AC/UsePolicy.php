@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;

@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
-use Smalldb\StateMachine\AccessControlExtension\Annotation\Access as A;
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 
 
 class AccessControlTest extends TestCaseWithDemoContainer

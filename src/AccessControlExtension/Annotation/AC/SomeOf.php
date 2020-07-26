@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
 use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
@@ -27,12 +27,12 @@ use Smalldb\StateMachine\AccessControlExtension\Predicate;
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class Allow implements PredicateAnnotation
+class SomeOf extends PredicateOperatorAnnotation implements PredicateAnnotation
 {
 
-	public function buildPredicate(): Predicate\Allow
+	public function buildPredicate(): Predicate\SomeOf
 	{
-		return new Predicate\Allow();
+		return new Predicate\SomeOf(...$this->buildChildPredicates());
 	}
 
 }

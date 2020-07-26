@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
 use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
@@ -27,12 +27,12 @@ use Smalldb\StateMachine\AccessControlExtension\Predicate;
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class AllOf extends PredicateOperatorAnnotation implements PredicateAnnotation
+class Deny implements PredicateAnnotation
 {
 
-	public function buildPredicate(): Predicate\AllOf
+	public function buildPredicate(): Predicate\Deny
 	{
-		return new Predicate\AllOf(...$this->buildChildPredicates());
+		return new Predicate\Deny();
 	}
 
 }

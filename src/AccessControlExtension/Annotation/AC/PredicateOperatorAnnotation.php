@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-use Smalldb\StateMachine\AccessControlExtension\Predicate;
-
-
-/**
- * List of access policies
- *
- * @Annotation
- * @Target({"ANNOTATION"})
- */
-class SomeOf extends PredicateOperatorAnnotation implements PredicateAnnotation
+abstract class PredicateOperatorAnnotation
 {
 
-	public function buildPredicate(): Predicate\SomeOf
+	/**
+	 * @var \Smalldb\StateMachine\AccessControlExtension\Annotation\AC\PredicateAnnotation[]
+	 * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+	 */
+	public array $predicates = [];
+
+
+	protected function buildChildPredicates(): array
 	{
-		return new Predicate\SomeOf(...$this->buildChildPredicates());
+		return array_map(fn(PredicateAnnotation $p) => $p->buildPredicate(), $this->predicates);
 	}
 
 }

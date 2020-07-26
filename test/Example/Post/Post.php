@@ -25,7 +25,7 @@ use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\User;
-use Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -44,14 +44,14 @@ use Smalldb\StateMachine\StyleExtension\Annotation\Color;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
- * @Access\DefinePolicy("Author",
- *     @Access\AllOf(
- *         @SQL\IsOwner("authorId"),
- *         @Access\HasRole("ROLE_EDITOR")
+ * @AC\DefinePolicy("Author",
+ *     @AC\AllOf(
+ *         @SQL\AC\IsOwner("authorId"),
+ *         @AC\HasRole("ROLE_EDITOR")
  *     ), @Color("#4a0"))
- * @Access\DefinePolicy("Editor",
- *     @Access\HasRole("ROLE_EDITOR"))
- * @Access\DefaultPolicy("Author")
+ * @AC\DefinePolicy("Editor",
+ *     @AC\HasRole("ROLE_EDITOR"))
+ * @AC\DefaultPolicy("Author")
  */
 abstract class Post implements ReferenceInterface, PostData
 {
@@ -68,14 +68,14 @@ abstract class Post implements ReferenceInterface, PostData
 	/**
 	 * @Transition("", {"Exists"})
 	 * @Color("#4a0")
-	 * @Access\UsePolicy("Editor")
+	 * @AC\UsePolicy("Editor")
 	 */
 	abstract public function create(PostDataImmutable $itemData);
 
 
 	/**
 	 * @Transition("Exists", {"Exists"})
-	 * @Access\UsePolicy("Author")
+	 * @AC\UsePolicy("Author")
 	 */
 	abstract public function update(PostDataImmutable $itemData);
 
@@ -83,7 +83,7 @@ abstract class Post implements ReferenceInterface, PostData
 	/**
 	 * @Transition("Exists", {""})
 	 * @Color("#a40")
-	 * @Access\UsePolicy("Author")
+	 * @AC\UsePolicy("Author")
 	 */
 	abstract public function delete();
 

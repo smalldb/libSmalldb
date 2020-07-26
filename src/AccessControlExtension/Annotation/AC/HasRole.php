@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,25 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-abstract class PredicateOperatorAnnotation
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
+
+
+/**
+ * Access Policy: User has a role
+ *
+ * @Annotation
+ * @Target({"ANNOTATION"})
+ */
+class HasRole implements PredicateAnnotation
 {
-
-	/**
-	 * @var \Smalldb\StateMachine\AccessControlExtension\Annotation\Access\PredicateAnnotation[]
-	 * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
-	 */
-	public array $predicates = [];
+	public string $role;
 
 
-	protected function buildChildPredicates(): array
+	public function buildPredicate(): Predicate\HasRole
 	{
-		return array_map(fn(PredicateAnnotation $p) => $p->buildPredicate(), $this->predicates);
+		return new Predicate\HasRole($this->role);
 	}
 
 }
