@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,31 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+use Smalldb\StateMachine\AccessControlExtension\Predicate\Predicate;
 
 
-class AccessControlExtension implements ExtensionInterface
+class AccessControlPolicy
 {
-	use SimpleJsonSerializableTrait;
-
-	/** @var AccessControlPolicy[] */
-	private array $policies;
+	private string $name;
+	private Predicate $predicate;
 
 
-	public function __construct(array $policies)
+	public function __construct(string $name, Predicate $predicate)
 	{
-		$this->policies = $policies;
+		$this->name = $name;
+		$this->predicate = $predicate;
+	}
+
+
+	public function getName(): string
+	{
+		return $this->name;
+	}
+
+
+	public function getPredicate(): Predicate
+	{
+		return $this->predicate;
 	}
 
 }

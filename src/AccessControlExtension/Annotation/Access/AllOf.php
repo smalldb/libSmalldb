@@ -18,17 +18,21 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
+
+
 /**
  * List of access policies
  *
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class AllOf
+class AllOf extends PredicateOperatorAnnotation implements PredicateAnnotation
 {
-	/**
-	 * @var array
-	 * FIXME: Policy[] ?
-	 */
-	public array $policies;
+
+	public function buildPredicate(): Predicate\AllOf
+	{
+		return new Predicate\AllOf(...$this->buildChildPredicates());
+	}
+
 }

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
-
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 
-class AccessControlExtension implements ExtensionInterface
+class Deny implements Predicate
 {
-	use SimpleJsonSerializableTrait;
 
-	/** @var AccessControlPolicy[] */
-	private array $policies;
-
-
-	public function __construct(array $policies)
+	public function evaluate(): bool
 	{
-		$this->policies = $policies;
+		return false;
+	}
+
+
+	public function getNestedPredicates(): array
+	{
+		return [];
 	}
 
 }

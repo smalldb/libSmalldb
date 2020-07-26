@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,32 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 
 
-class AccessControlExtension implements ExtensionInterface
+class AccessPolicyExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	use SimpleJsonSerializableTrait;
-
-	/** @var AccessControlPolicy[] */
-	private array $policies;
+	public ?string $policyName = null;
 
 
-	public function __construct(array $policies)
+	public function __construct()
 	{
-		$this->policies = $policies;
+	}
+
+
+	public function buildExtension(): ?AccessPolicyExtension
+	{
+		if ($this->policyName !== null) {
+			return new AccessPolicyExtension($this->policyName);
+		} else {
+			return null;
+		}
+	}
+
+
+	public function setPolicyName(string $policyName): void
+	{
+		$this->policyName = $policyName;
 	}
 
 }

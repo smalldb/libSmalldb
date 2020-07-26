@@ -46,11 +46,11 @@ use Smalldb\StateMachine\StyleExtension\Annotation\Color;
  * @WrapDTO(PostDataImmutable::class)
  * @Access\DefinePolicy("Author",
  *     @Access\AllOf(
- *         @SQL\RequireOwner("authorId"),
- *         @Access\RequireRole("ROLE_EDITOR")
+ *         @SQL\IsOwner("authorId"),
+ *         @Access\HasRole("ROLE_EDITOR")
  *     ), @Color("#4a0"))
  * @Access\DefinePolicy("Editor",
- *     @Access\RequireRole("ROLE_EDITOR"))
+ *     @Access\HasRole("ROLE_EDITOR"))
  * @Access\DefaultPolicy("Author")
  */
 abstract class Post implements ReferenceInterface, PostData

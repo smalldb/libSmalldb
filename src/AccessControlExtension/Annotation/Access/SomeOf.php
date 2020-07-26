@@ -18,14 +18,21 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
+
 
 /**
- * Access Policy: User has a role
+ * List of access policies
  *
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class RequireRole
+class SomeOf extends PredicateOperatorAnnotation implements PredicateAnnotation
 {
-	public string $role;
+
+	public function buildPredicate(): Predicate\SomeOf
+	{
+		return new Predicate\SomeOf(...$this->buildChildPredicates());
+	}
+
 }

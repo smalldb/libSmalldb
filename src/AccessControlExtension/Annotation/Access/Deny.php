@@ -18,27 +18,21 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 
 /**
- * Policy that guards access to given transition
+ * List of access policies
  *
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"ANNOTATION"})
  */
-class UsePolicy implements TransitionPlaceholderApplyInterface
+class Deny implements PredicateAnnotation
 {
-	public string $policy;
 
-
-	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
+	public function buildPredicate(): Predicate\Deny
 	{
-		/** @var AccessPolicyExtensionPlaceholder $ext */
-		$ext = $placeholder->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class);
-		$ext->setPolicyName($this->policy);
+		return new Predicate\Deny();
 	}
 
 }

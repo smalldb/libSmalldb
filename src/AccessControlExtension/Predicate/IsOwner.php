@@ -16,34 +16,35 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-
-
-class AccessAllowPolicyExtensionPlaceholder implements ExtensionPlaceholderInterface
+class IsOwner implements Predicate
 {
-	public ?string $policyName = null;
+	private string $ownerProperty;
 
 
-	public function __construct()
+	public function __construct(string $ownerProperty)
 	{
+		$this->ownerProperty = $ownerProperty;
 	}
 
 
-	public function buildExtension(): ?AccessAllowPolicyExtension
+	public function evaluate(): bool
 	{
-		if ($this->policyName !== null) {
-			return new AccessAllowPolicyExtension($this->policyName);
-		} else {
-			return null;
-		}
+		// TODO: Implement evaluate() method.
+		return true;
 	}
 
 
-	public function setPolicyName(string $policyName): void
+	public function getOwnerProperty(): string
 	{
-		$this->policyName = $policyName;
+		return $this->ownerProperty;
+	}
+
+
+	public function getNestedPredicates(): array
+	{
+		return [];
 	}
 
 }

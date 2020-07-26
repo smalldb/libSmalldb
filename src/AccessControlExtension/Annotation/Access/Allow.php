@@ -16,16 +16,23 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 
 /**
- * Access Policy: Owner of the entity
+ * List of access policies
  *
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class RequireOwner
+class Allow implements PredicateAnnotation
 {
-	public string $ownerProperty;
+
+	public function buildPredicate(): Predicate\Allow
+	{
+		return new Predicate\Allow();
+	}
+
 }

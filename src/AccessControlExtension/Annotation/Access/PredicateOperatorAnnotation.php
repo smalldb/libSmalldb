@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,21 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
-
-
-class AccessControlExtension implements ExtensionInterface
+abstract class PredicateOperatorAnnotation
 {
-	use SimpleJsonSerializableTrait;
 
-	/** @var AccessControlPolicy[] */
-	private array $policies;
+	/**
+	 * @var \Smalldb\StateMachine\AccessControlExtension\Annotation\Access\PredicateAnnotation[]
+	 * @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+	 */
+	public array $predicates = [];
 
 
-	public function __construct(array $policies)
+	protected function buildChildPredicates(): array
 	{
-		$this->policies = $policies;
+		return array_map(fn(PredicateAnnotation $p) => $p->buildPredicate(), $this->predicates);
 	}
 
 }

@@ -18,17 +18,35 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
+use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+
+
 /**
  * List of access policies
  *
  * @Annotation
  * @Target({"CLASS"})
  */
-class DefinePolicy
+class DefinePolicy implements StateMachineBuilderApplyInterface
 {
-	/**
-	 * @var array
-	 * FIXME: Policy[] ?
-	 */
-	public array $policies;
+	public string $policyName;
+	public PredicateAnnotation $predicate;
+
+
+	public function __construct($values)
+	{
+		[$this->policyName, $this->predicate] = $values['value'];
+	}
+
+
+	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
+	{
+		/** @var AccessControlExtensionPlaceholder $ext */
+		$ext = $builder->getExtensionPlaceholder(AccessControlExtensionPlaceholder::class);
+		$ext->addPolicy(new AccessControlPolicy($this->policyName, $this->predicate->buildPredicate()));
+	}
+
 }

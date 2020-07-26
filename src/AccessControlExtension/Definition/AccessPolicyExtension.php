@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,22 @@ use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class AccessControlExtension implements ExtensionInterface
+class AccessPolicyExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
-	/** @var AccessControlPolicy[] */
-	private array $policies;
+	private string $policyName;
 
 
-	public function __construct(array $policies)
+	public function __construct(string $policyName)
 	{
-		$this->policies = $policies;
+		$this->policyName = $policyName;
+	}
+
+
+	public function getPolicyName(): string
+	{
+		return $this->policyName;
 	}
 
 }

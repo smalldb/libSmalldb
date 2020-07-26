@@ -16,14 +16,28 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
+namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL\AC;
+
+
+use Smalldb\StateMachine\AccessControlExtension\Annotation\Access\PredicateAnnotation;
+use Smalldb\StateMachine\AccessControlExtension\Predicate;
+
 
 /**
- * List of access policies
+ * Access Policy: Owner of the entity
  *
  * @Annotation
  * @Target({"ANNOTATION"})
  */
-class AllowAll
+class IsOwner implements PredicateAnnotation
 {
+	public string $ownerProperty;
+
+
+	public function buildPredicate(): Predicate\IsOwner
+	{
+		// TODO: Implement buildPredicate() method.
+		return new Predicate\IsOwner($this->ownerProperty);
+	}
+
 }
