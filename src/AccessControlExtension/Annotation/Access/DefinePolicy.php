@@ -18,27 +18,17 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessAllowPolicyExtensionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
-
-
 /**
- * Policy that guards access to given transition
+ * List of access policies
  *
  * @Annotation
- * @Target({"METHOD"})
+ * @Target({"CLASS"})
  */
-class AllowPolicy implements TransitionPlaceholderApplyInterface
+class DefinePolicy
 {
-	public string $policy;
-
-
-	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
-	{
-		/** @var AccessAllowPolicyExtensionPlaceholder $ext */
-		$ext = $placeholder->getExtensionPlaceholder(AccessAllowPolicyExtensionPlaceholder::class);
-		$ext->setPolicyName($this->policy);
-	}
-
+	/**
+	 * @var array
+	 * FIXME: Policy[] ?
+	 */
+	public array $policies;
 }
