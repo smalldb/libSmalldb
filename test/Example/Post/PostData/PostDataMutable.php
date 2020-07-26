@@ -6,10 +6,10 @@
 // 
 namespace Smalldb\StateMachine\Test\Example\Post\PostData;
 
-use Smalldb\StateMachine\Test\Example\Post\PostProperties as Source_PostProperties;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
+use Smalldb\StateMachine\Test\Example\Post\PostProperties as Source_PostProperties;
 
 
 /**

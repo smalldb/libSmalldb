@@ -16,29 +16,11 @@
  *
  */
 
-namespace Smalldb\StateMachine\StyleExtension\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
-use Smalldb\StateMachine\Definition\Builder\PlaceholderApplyInterface;
-use Smalldb\StateMachine\StyleExtension\Definition\StyleExtensionPlaceholder;
+namespace Smalldb\StateMachine\Definition\Builder;
 
 
-/**
- * A color of anything.
- *
- * @Annotation
- */
-class Color implements PlaceholderApplyInterface
+interface PlaceholderApplyInterface
 {
-	/** @var string */
-	public string $color;
-
-
-	public function applyToPlaceholder(ExtensiblePlaceholder $placeholder): void
-	{
-		/** @var StyleExtensionPlaceholder $ext */
-		$ext = $placeholder->getExtensionPlaceholder(StyleExtensionPlaceholder::class);
-		$ext->color = $this->color;
-	}
-
+	public function applyToPlaceholder(ExtensiblePlaceholder $placeholder): void;
 }
