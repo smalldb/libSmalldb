@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,12 @@ use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
  * @Access\Policy("Author",
+ *     @Access\AllOf(
  *         @SQL\RequireOwner("authorId"),
- *         @Color("#4a0"))
+ *         @Access\RequireRole("ROLE_EDITOR")
+ *     ), @Color("#4a0"))
  * @Access\Policy("Editor",
- *         @Access\RequireRole("ROLE_EDITOR"))
+ *     @Access\RequireRole("ROLE_EDITOR"))
  * @Access\DefaultPolicy("Author")
  */
 abstract class Post implements ReferenceInterface, PostData
