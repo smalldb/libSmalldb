@@ -8,9 +8,9 @@ then
 	exit 1
 fi
 
-if ! git diff-index --quiet HEAD
+if git diff-index HEAD | grep -q -e '\stest/Example/.*\.php$'
 then
-	echo "Workdir is not clean. Aborting." >&2
+	echo "Workdir under test/Example/ is not clean. Aborting." >&2
 	exit 2
 fi
 
