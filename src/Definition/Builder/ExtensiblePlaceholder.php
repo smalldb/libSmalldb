@@ -55,6 +55,11 @@ abstract class ExtensiblePlaceholder
 	}
 
 
+	/**
+	 * @template ExtensionPlaceholderInterface
+	 * @param class-string<ExtensionPlaceholderInterface> $extensionPlaceholderClassName
+	 * @return ExtensionPlaceholderInterface
+	 */
 	public function getExtensionPlaceholder(string $extensionPlaceholderClassName): ExtensionPlaceholderInterface
 	{
 		$ext = $this->extensionPlaceholders[$extensionPlaceholderClassName] ?? null;

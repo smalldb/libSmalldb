@@ -57,6 +57,10 @@ abstract class ExtensibleDefinition implements JsonSerializable
 	 * Get an extension of given type.
 	 *
 	 * It would be nice to write getExtension<T>(): T ...
+	 *
+	 * @template ExtensionInterface
+	 * @param class-string<ExtensionInterface> $extensionClassName
+	 * @return ExtensionInterface
 	 */
 	public function getExtension(string $extensionClassName): ExtensionInterface
 	{
