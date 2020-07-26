@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\InvalidArgumentException;
 
@@ -46,14 +45,9 @@ class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 	}
 
 
-	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
-	{
-	}
-
-
 	public function buildExtension(): ?ExtensionInterface
 	{
-		return new AccessControlExtension($this->policies);
+		return empty($this->policies) ? null : new AccessControlExtension($this->policies);
 	}
 
 }

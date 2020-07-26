@@ -18,8 +18,15 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\InvalidArgumentException;
 
 
 class AccessControlTest extends TestCaseWithDemoContainer
@@ -93,6 +100,83 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$this->assertInstanceOf(P\AllOf::class, (new A\AllOf())->buildPredicate());
 		$this->assertInstanceOf(P\SomeOf::class, (new A\SomeOf())->buildPredicate());
 		$this->assertInstanceOf(P\NoneOf::class, (new A\NoneOf())->buildPredicate());
+	}
+
+
+	public function testNestedPredicates()
+	{
+		$p = new P\AllOf(
+			new P\SomeOf(
+				new P\Allow(),
+				new P\Deny()
+			),
+			new P\NoneOf(
+				new P\Deny()
+			)
+		);
+
+		$n = $p->getNestedPredicates();
+		$this->assertContainsOnlyInstancesOf(P\Predicate::class, $n);
+
+		$nn = iterator_to_array($this->iterateNestedPredicatedRecursively($p), false);
+		$this->assertContainsOnlyInstancesOf(P\Predicate::class, $nn);
+		$this->assertCount(6, $nn);
+	}
+
+
+	private function iterateNestedPredicatedRecursively(P\Predicate $p): \Generator
+	{
+		yield $p;
+		foreach ($p->getNestedPredicates() as $np) {
+			yield from $this->iterateNestedPredicatedRecursively($np);
+		}
+	}
+
+
+	public function testDuplicateAccessPolicyInPlaceholder()
+	{
+		$ext = new AccessControlExtensionPlaceholder();
+		$ext->addPolicy(new AccessControlPolicy("Foo", new P\Allow()));
+		$ext->addPolicy(new AccessControlPolicy("Bar", new P\Deny()));
+
+		$this->expectException(InvalidArgumentException::class);
+		$ext->addPolicy(new AccessControlPolicy("Foo", new P\Deny()));
+	}
+
+
+	public function testEmptyAccessControlExtension()
+	{
+		$placeholder = new AccessControlExtensionPlaceholder();
+		$emptyExt = $placeholder->buildExtension();
+		$this->assertNull($emptyExt);
+	}
+
+
+	public function testAccessControlPolicy()
+	{
+		$predicate = new P\Allow();
+		$name = "Foo";
+		$p = new AccessControlPolicy($name, $predicate);
+		$this->assertSame($name, $p->getName());
+		$this->assertSame($predicate, $p->getPredicate());
+	}
+
+
+	public function testAccessPolicyExtension()
+	{
+		$name = "Foo";
+		$placeholder = new AccessPolicyExtensionPlaceholder();
+		$placeholder->setPolicyName($name);
+		$ext = $placeholder->buildExtension();
+		$this->assertSame($name, $ext->getPolicyName());
+	}
+
+
+	public function testEmptyAccessPolicyExtension()
+	{
+		$placeholder = new AccessPolicyExtensionPlaceholder();
+		$ext = $placeholder->buildExtension();
+		$this->assertNull($ext);
 	}
 
 }
