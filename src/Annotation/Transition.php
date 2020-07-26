@@ -32,8 +32,6 @@ class Transition
 	/** @var string[] */
 	public array $targets = [];
 
-	public ?string $color = null;
-
 
 	public function __construct(array $values)
 	{
@@ -46,10 +44,6 @@ class Transition
 			} else {
 				throw new \InvalidArgumentException("Transition annotation requires none or two arguments - a source state and a list of target states.");
 			}
-		}
-
-		if (isset($values['color'])) {
-			$this->color = $values['color'];
 		}
 	}
 

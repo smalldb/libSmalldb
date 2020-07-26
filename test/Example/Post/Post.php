@@ -26,7 +26,6 @@ use Smalldb\StateMachine\Test\Example\Tag\Tag;
 use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
 use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\Access;
-use Smalldb\StateMachine\Annotation\Color;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -37,6 +36,7 @@ use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceProtectedAPI;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
+use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 
 
 /**

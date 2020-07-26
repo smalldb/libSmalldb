@@ -28,6 +28,7 @@ use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagData;
 use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
+use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 
 
 /**
@@ -41,12 +42,14 @@ abstract class Tag implements ReferenceInterface, TagData
 {
 
 	/**
-	 * @State(color = "#def")
+	 * @State
+	 * @Color("#def")
 	 */
 	const EXISTS = "Exists";
 
 	/**
-	 * @Transition("", {"Exists"}, color = "#4a0")
+	 * @Transition("", {"Exists"})
+	 * @Color("#4a0")
 	 */
 	abstract public function create(TagData $itemData);
 
@@ -56,7 +59,8 @@ abstract class Tag implements ReferenceInterface, TagData
 	abstract public function update(TagData $itemData);
 
 	/**
-	 * @Transition("Exists", {""}, color = "#a40")
+	 * @Transition("Exists", {""})
+	 * @Color("#4a0")
 	 */
 	abstract public function delete();
 

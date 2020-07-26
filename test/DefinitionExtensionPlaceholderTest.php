@@ -38,11 +38,11 @@ class DefinitionExtensionPlaceholderTest extends TestCase
 	{
 
 		yield StatePlaceholder::class => [function($extensions) {
-			return new StatePlaceholder('Foo', null, $extensions);
+			return new StatePlaceholder('Foo', $extensions);
 		}];
 
 		yield TransitionPlaceholder::class => [function($extensions) {
-			return new TransitionPlaceholder('foo', 'Foo', ['Bar'], null, $extensions);
+			return new TransitionPlaceholder('foo', 'Foo', ['Bar'], $extensions);
 		}];
 
 		yield ActionPlaceholder::class => [function($extensions) {

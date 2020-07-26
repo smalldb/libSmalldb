@@ -30,8 +30,6 @@ use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 class State implements StatePlaceholderApplyInterface
 {
 	public string $name;
-	public ?string $label = null;
-	public ?string $color = null;
 
 	public function __construct(array $values)
 	{
@@ -43,6 +41,6 @@ class State implements StatePlaceholderApplyInterface
 
 	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
 	{
-		$placeholder->color = $this->color;
 	}
+
 }

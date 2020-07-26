@@ -39,11 +39,11 @@ class DefinitionExtensionTest extends TestCase
 		}];
 
 		yield StateDefinition::class => [function($extensions) {
-			return new StateDefinition('Foo', null, $extensions);
+			return new StateDefinition('Foo', $extensions);
 		}];
 
 		yield TransitionDefinition::class => [function($extensions) {
-			return new TransitionDefinition('Foo', new StateDefinition('Foo'), [new StateDefinition('Bar')], null, $extensions);
+			return new TransitionDefinition('Foo', new StateDefinition('Foo'), [new StateDefinition('Bar')], $extensions);
 		}];
 
 		yield ActionDefinition::class => [function($extensions) {

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,28 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition\Builder;
+namespace Smalldb\StateMachine\StyleExtension\Definition;
 
-use Smalldb\StateMachine\Definition\StateDefinition;
+use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 
 
-/**
- * Class StatePlaceholder
- *
- * @internal
- */
-class StatePlaceholder extends ExtensiblePlaceholder
+class StyleExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	public string $name;
+	public ?string $color = null;
 
 
-	public function __construct(string $name, array $extensionPlaceholders = [])
+	public function __construct()
 	{
-		parent::__construct($extensionPlaceholders);
-		$this->name = $name;
 	}
 
 
-	public function buildStateDefinition(): StateDefinition
+	public function buildExtension(): ?StyleExtension
 	{
-		return new StateDefinition($this->name, $this->buildExtensions());
+		if ($this->color !== null) {
+			return new StyleExtension($this->color);
+		} else {
+			return null;
+		}
 	}
 
 }

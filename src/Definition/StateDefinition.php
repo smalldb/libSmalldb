@@ -22,34 +22,25 @@ namespace Smalldb\StateMachine\Definition;
 class StateDefinition extends ExtensibleDefinition
 {
 	private string $name;
-	private ?string $color;
 
 
 	/**
 	 * StateDefinition constructor.
 	 *
 	 * @param string $name
-	 * @param string|null $color
 	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
-	public function __construct(string $name, ?string $color = null, array $extensions = [])
+	public function __construct(string $name, array $extensions = [])
 	{
 		parent::__construct($extensions);
 		$this->name = $name;
-		$this->color = $color;
 	}
 
 
 	public function getName(): string
 	{
 		return $this->name;
-	}
-
-
-	public function getColor(): ?string
-	{
-		return $this->color;
 	}
 
 

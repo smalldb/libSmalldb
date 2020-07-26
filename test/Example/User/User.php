@@ -28,6 +28,7 @@ use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
+use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 
 
 /**
@@ -41,13 +42,15 @@ abstract class User implements ReferenceInterface, UserData
 {
 
 	/**
-	 * @State(color = "#def")
+	 * @State
+	 * @Color("#def")
 	 */
 	const EXISTS = "Exists";
 
 
 	/**
-	 * @Transition("", {"Exists"}, color = "#4a0")
+	 * @Transition("", {"Exists"})
+	 * @Color("#4a0")
 	 */
 	abstract public function create(UserData $itemData);
 
@@ -59,7 +62,8 @@ abstract class User implements ReferenceInterface, UserData
 
 
 	/**
-	 * @Transition("Exists", {""}, color = "#a40")
+	 * @Transition("Exists", {""})
+	 * @Color("#4a0")
 	 */
 	abstract public function delete();
 

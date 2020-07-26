@@ -30,6 +30,7 @@ use Smalldb\StateMachine\Annotation\UseTransitions;
 use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceProtectedAPI;
+use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 
 
 /**
@@ -44,13 +45,15 @@ abstract class Comment implements ReferenceInterface, CommentData
 
 
 	/**
-	 * @State(color = "#def")
+	 * @State
+	 * @Color("#def")
 	 */
 	const EXISTS = "Exists";
 
 
 	/**
-	 * @Transition("", {"Exists"}, color = "#4a0")
+	 * @Transition("", {"Exists"})
+	 * @Color("#a40")
 	 */
 	abstract public function create(CommentData $commentData);
 

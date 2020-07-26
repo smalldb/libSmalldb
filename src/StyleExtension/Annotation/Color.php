@@ -16,12 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine\Annotation;
+namespace Smalldb\StateMachine\StyleExtension\Annotation;
 
+use Smalldb\StateMachine\Definition\Builder\ActionPlaceholder;
+use Smalldb\StateMachine\Definition\Builder\ActionPlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
+use Smalldb\StateMachine\StyleExtension\Definition\StyleExtensionPlaceholder;
 
 
 /**
@@ -29,19 +33,35 @@ use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
  *
  * @Annotation
  */
-class Color implements StatePlaceholderApplyInterface, TransitionPlaceholderApplyInterface
+class Color implements StatePlaceholderApplyInterface, ActionPlaceholderApplyInterface, TransitionPlaceholderApplyInterface
 {
 	/** @var string */
 	public string $color;
 
+
+	private function applyStyle(ExtensiblePlaceholder $placeholder): void
+	{
+		/** @var StyleExtensionPlaceholder $ext */
+		$ext = $placeholder->getExtensionPlaceholder(StyleExtensionPlaceholder::class);
+		$ext->color = $this->color;
+	}
+
+
 	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
 	{
-		$placeholder->color = $this->color;
+		$this->applyStyle($placeholder);
 	}
+
 
 	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
 	{
-		$placeholder->color = $this->color;
+		$this->applyStyle($placeholder);
+	}
+
+
+	public function applyToActionPlaceholder(ActionPlaceholder $placeholder): void
+	{
+		$this->applyStyle($placeholder);
 	}
 
 }

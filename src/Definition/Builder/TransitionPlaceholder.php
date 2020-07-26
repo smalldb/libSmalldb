@@ -35,22 +35,19 @@ class TransitionPlaceholder extends ExtensiblePlaceholder
 	/** @var string[] */
 	public array $targetStates;
 
-	public ?string $color;
 
-
-	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null, array $extensionPlaceholders = [])
+	public function __construct(string $transitionName, string $sourceStateName, array $targetStateNames, array $extensionPlaceholders = [])
 	{
 		parent::__construct($extensionPlaceholders);
 		$this->name = $transitionName;
 		$this->sourceState = $sourceStateName;
 		$this->targetStates = $targetStateNames;
-		$this->color = $color;
 	}
 
 
 	public function buildTransitionDefinition(StateDefinition $sourceState, array $targetStates): TransitionDefinition
 	{
-		return new TransitionDefinition($this->name, $sourceState, $targetStates, $this->color, $this->buildExtensions());
+		return new TransitionDefinition($this->name, $sourceState, $targetStates, $this->buildExtensions());
 	}
 
 }

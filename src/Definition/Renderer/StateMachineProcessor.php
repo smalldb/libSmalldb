@@ -26,6 +26,7 @@ use Smalldb\Graph\Grafovatko\ProcessorInterface;
 use Smalldb\Graph\Graph;
 use Smalldb\Graph\NestedGraph;
 use Smalldb\Graph\Node;
+use Smalldb\StateMachine\StyleExtension\Definition\StyleExtension;
 
 
 class StateMachineProcessor implements ProcessorInterface
@@ -71,7 +72,13 @@ class StateMachineProcessor implements ProcessorInterface
 			$state = $node->getState();
 			$stateName = $state->getName();
 			$exportedNode['label'] = $stateName;
-			$exportedNode['fill'] = $state->getColor() ?: "#eee";
+
+			if ($state->hasExtension(StyleExtension::class)) {
+				/** @var StyleExtension $ext */
+				$ext = $state->getExtension(StyleExtension::class);
+				$color = $ext->getColor();
+			}
+			$exportedNode['fill'] = $color ?? "#eee";
 
 			if ($stateName === '') {
 				if ($node->isSourceNode()) {
@@ -100,7 +107,13 @@ class StateMachineProcessor implements ProcessorInterface
 		if ($edge instanceof StateMachineEdge) {
 			$transition = $edge->getTransition();
 			$exportedEdge['label'] = $transition->getName();
-			$exportedEdge['color'] = $transition->getColor() ?: "#000";
+
+			if ($transition->hasExtension(StyleExtension::class)) {
+				/** @var StyleExtension $ext */
+				$ext = $transition->getExtension(StyleExtension::class);
+				$color = $ext->getColor();
+			}
+			$exportedEdge['color'] = $color ?? "#000";
 		}
 		return $exportedEdge;
 	}

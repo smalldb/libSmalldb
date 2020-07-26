@@ -856,9 +856,9 @@ class BpmnReader
 			}
 		}
 		foreach ($actions as $action_name => $action_transitions) {
-			$builder->addAction((string) $action_name);
+			$builder->addAction((string)$action_name);
 			foreach ($action_transitions as $source_state => $target_states) {
-				$builder->addTransition((string) $action_name, (string) $source_state, $target_states);
+				$builder->addTransition((string)$action_name, (string)$source_state, $target_states);
 			}
 		}
 		$this->logTime('4-def');

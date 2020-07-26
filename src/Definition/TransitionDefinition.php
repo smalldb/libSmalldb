@@ -31,7 +31,6 @@ class TransitionDefinition extends ExtensibleDefinition
 	private StateDefinition $sourceState;
 	/** @var StateDefinition[] */
 	private array $targetStates;
-	private ?string $color;
 
 
 	/**
@@ -40,17 +39,15 @@ class TransitionDefinition extends ExtensibleDefinition
 	 * @param string $name
 	 * @param StateDefinition $sourceState
 	 * @param array $targetStates
-	 * @param string|null $color
 	 * @param ExtensionInterface[] $extensions
 	 * @internal
 	 */
-	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, ?string $color = null, array $extensions = [])
+	public function __construct(string $name, StateDefinition $sourceState, array $targetStates, array $extensions = [])
 	{
 		parent::__construct($extensions);
 		$this->name = $name;
 		$this->sourceState = $sourceState;
 		$this->targetStates = $targetStates;
-		$this->color = $color;
 	}
 
 
@@ -77,12 +74,6 @@ class TransitionDefinition extends ExtensibleDefinition
 	public function getTargetStates(): array
 	{
 		return $this->targetStates;
-	}
-
-
-	public function getColor()
-	{
-		return $this->color;
 	}
 
 

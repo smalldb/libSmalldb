@@ -195,7 +195,7 @@ class AnnotationReader
 			if ($annotation instanceof Transition) {
 				$isTransition = true;
 				if ($annotation->definesTransition()) {
-					$transitionPlaceholders[] = $builder->addTransition($transitionName, $annotation->source, $annotation->targets, $annotation->color);
+					$transitionPlaceholders[] = $builder->addTransition($transitionName, $annotation->source, $annotation->targets);
 				} else {
 					$actionPlaceholders[] = $builder->addAction($transitionName);
 				}

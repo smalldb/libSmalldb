@@ -245,7 +245,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
-	public function addAction(string $name, ?string $color = null): ActionPlaceholder
+	public function addAction(string $name): ActionPlaceholder
 	{
 		if ($name === '') {
 			throw new InvalidArgumentException("Empty action name.");
@@ -273,7 +273,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
-	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames, ?string $color = null): TransitionPlaceholder
+	public function addTransition(string $transitionName, string $sourceStateName, array $targetStateNames): TransitionPlaceholder
 	{
 		if ($transitionName === '') {
 			throw new InvalidArgumentException("Empty transition name.");
@@ -285,7 +285,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 				$this->addAction($transitionName);
 			}
 
-			$placeholder = new TransitionPlaceholder($transitionName, $sourceStateName, $targetStateNames, $color);
+			$placeholder = new TransitionPlaceholder($transitionName, $sourceStateName, $targetStateNames);
 			$this->transitionsByState[$sourceStateName][$transitionName] = $placeholder;
 			$this->transitions[] = $placeholder;
 			return $placeholder;
