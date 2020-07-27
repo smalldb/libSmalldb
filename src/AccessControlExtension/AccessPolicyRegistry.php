@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,37 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension;
 
-use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
 use Smalldb\StateMachine\InvalidArgumentException;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class AccessControlExtension implements ExtensionInterface
+class AccessPolicyRegistry
 {
-	use SimpleJsonSerializableTrait;
 
-	/** @var AccessControlPolicy[] */
-	private array $policies;
+	/** @var AccessControlPolicy[] $policies */
+	protected array $policies = [];
 
 
-	public function __construct(array $policies)
+	/**
+	 * @param AccessControlPolicy[] $policies
+	 */
+	public function __construct(array $policies = [])
 	{
-		$this->policies = $policies;
+		foreach ($policies as $p) {
+			$this->addPolicy($p);
+		}
+	}
+
+
+	public function addPolicy(AccessControlPolicy $policy)
+	{
+		$name = $policy->getName();
+		if (isset($this->policies[$name])) {
+			throw new InvalidArgumentException("Duplicate global access policy: $name");
+		}
+		$this->policies[$name] = $policy;
 	}
 
 
@@ -44,6 +57,15 @@ class AccessControlExtension implements ExtensionInterface
 		} else {
 			return null;
 		}
+	}
+
+
+	/**
+	 * @return AccessControlPolicy[]
+	 */
+	public function getPolicies(): array
+	{
+		return $this->policies;
 	}
 
 }

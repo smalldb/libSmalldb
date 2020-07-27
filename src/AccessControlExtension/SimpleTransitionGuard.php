@@ -19,26 +19,72 @@
 namespace Smalldb\StateMachine\AccessControlExtension;
 
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
-class SimpleTransitionGuard implements TransitionGuard
+class SimpleTransitionGuard extends AccessPolicyRegistry implements TransitionGuard
 {
+
+	public function __construct(array $policies = [])
+	{
+		parent::__construct($policies);
+	}
+
 
 	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool
 	{
-		/** @var AccessControlExtension $acrExt */
-		$acrExt = $transition->getExtension(AccessControlExtension::class);
-
-		if (!$acrExt) {
+		$policyName = $this->getPolicyName($transition);
+		if ($policyName === null) {
 			return $this->getDefaultAccess();
 		}
 
-		$rule = $acrExt->getAccessControlRule();
+		$policy = $this->findPolicy($policyName, $ref->getDefinition());
 
-		return $this->isAccessAllowed($rule, $ref);
+		return $this->isAccessAllowed($policy, $ref);
+	}
+
+
+	private function getPolicyName(TransitionDefinition $transition): ?string
+	{
+		if ($transition->hasExtension(AccessPolicyExtension::class)) {
+			/** @var AccessPolicyExtension $trPolicyExt */
+			$trPolicyExt = $transition->getExtension(AccessPolicyExtension::class);
+			return $trPolicyExt->getPolicyName();
+		}
+
+		// TODO: Lookup default policy name.
+
+		return null;
+	}
+
+
+	private function findPolicy(string $policyName, StateMachineDefinition $stateMachineDefinition): AccessControlPolicy
+	{
+		// Try state machine definition
+		if ($stateMachineDefinition->hasExtension(AccessControlExtension::class)) {
+			/** @var AccessControlExtension $ext */
+			$ext = $stateMachineDefinition->getExtension(AccessControlExtension::class);
+
+			$policy = $ext->getPolicy($policyName);
+			if ($policy) {
+				return $policy;
+			}
+		}
+
+		// Try global policies
+		$globalPolicy = $this->getPolicy($policyName);
+		if ($globalPolicy) {
+			return $globalPolicy;
+		}
+
+		throw new RuntimeException("Access control policy \"$policyName\" not not found"
+			. " in state machine \"" . $stateMachineDefinition->getMachineType() . "\".");
 	}
 
 
@@ -49,10 +95,10 @@ class SimpleTransitionGuard implements TransitionGuard
 	}
 
 
-	public function isAccessAllowed(AccessControlRule $rule, ReferenceInterface $ref): bool
+	public function isAccessAllowed(AccessControlPolicy $policy, ReferenceInterface $ref): bool
 	{
-		// TODO: Implement isAccessAllowed() method.
-		return true;
+		// TODO: HasRole? IsOwner?
+		return $policy->getPredicate()->evaluate();
 	}
 
 }

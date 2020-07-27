@@ -18,7 +18,6 @@
 
 namespace Smalldb\StateMachine\Transition;
 
-use Smalldb\StateMachine\AccessControlExtension\AccessControlRule;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 
