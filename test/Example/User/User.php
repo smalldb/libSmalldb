@@ -18,8 +18,6 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
-use Smalldb\StateMachine\Test\Example\User\UserData\UserData;
-use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -29,6 +27,8 @@ use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
+use Smalldb\StateMachine\Test\Example\User\UserData\UserData;
+use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
 
 
 /**

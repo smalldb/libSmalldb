@@ -18,9 +18,9 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
-use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 
 
 class TagRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface

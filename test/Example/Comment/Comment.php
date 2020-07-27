@@ -18,10 +18,6 @@
 
 namespace Smalldb\StateMachine\Test\Example\Comment;
 
-use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
-use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentDataImmutable;
-use Smalldb\StateMachine\Test\Example\Post\Post;
-use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -31,6 +27,10 @@ use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceProtectedAPI;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentDataImmutable;
+use Smalldb\StateMachine\Test\Example\Post\Post;
+use Smalldb\StateMachine\Test\Example\User\User;
 
 
 /**

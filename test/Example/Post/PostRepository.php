@@ -18,11 +18,11 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
+use function Symfony\Component\String\u;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use function Symfony\Component\String\u;
 
 
 class PostRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface

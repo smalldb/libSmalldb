@@ -18,10 +18,10 @@
 
 namespace Smalldb\StateMachine\Test\Example\Comment;
 
-use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 
 
 class CommentRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface

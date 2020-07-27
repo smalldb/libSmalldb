@@ -6,9 +6,9 @@
 // 
 namespace Smalldb\StateMachine\Test\Example\Tag\TagData;
 
-use Smalldb\StateMachine\Test\Example\Tag\TagProperties as Source_TagProperties;
 use InvalidArgumentException;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
+use Smalldb\StateMachine\Test\Example\Tag\TagProperties as Source_TagProperties;
 
 
 /**

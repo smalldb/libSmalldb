@@ -18,13 +18,6 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use Smalldb\StateMachine\Test\Example\Comment\Comment;
-use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
-use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
-use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
-use Smalldb\StateMachine\Test\Example\Tag\Tag;
-use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
-use Smalldb\StateMachine\Test\Example\User\User;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
@@ -37,6 +30,13 @@ use Smalldb\StateMachine\ReferenceProtectedAPI;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
+use Smalldb\StateMachine\Test\Example\Comment\Comment;
+use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+use Smalldb\StateMachine\Test\Example\Tag\Tag;
+use Smalldb\StateMachine\Test\Example\Tag\TagRepository;
+use Smalldb\StateMachine\Test\Example\User\User;
 
 
 /**

@@ -18,9 +18,9 @@
 
 namespace Smalldb\StateMachine\Test\Example\Post;
 
-use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;

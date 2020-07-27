@@ -11,9 +11,9 @@
 
 namespace Smalldb\StateMachine\Test\Example\Comment;
 
+use function Symfony\Component\String\u;
 use Smalldb\CodeCooker\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use function Symfony\Component\String\u;
 use Symfony\Component\Validator\Constraints as Assert;
 
 

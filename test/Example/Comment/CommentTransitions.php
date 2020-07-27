@@ -19,9 +19,9 @@
 namespace Smalldb\StateMachine\Test\Example\Comment;
 
 use App\Events\CommentCreatedEvent;
-use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
