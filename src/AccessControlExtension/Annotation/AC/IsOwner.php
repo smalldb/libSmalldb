@@ -16,10 +16,8 @@
  *
  */
 
-namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL\AC;
+namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-
-use Smalldb\StateMachine\AccessControlExtension\Annotation\AC\PredicateAnnotation;
 use Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 

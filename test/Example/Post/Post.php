@@ -46,7 +46,7 @@ use Smalldb\StateMachine\StyleExtension\Annotation\Color;
  * @WrapDTO(PostDataImmutable::class)
  * @AC\DefinePolicy("Author",
  *     @AC\AllOf(
- *         @SQL\AC\IsOwner("authorId"),
+ *         @AC\IsOwner("authorId"),
  *         @AC\HasRole("ROLE_EDITOR")
  *     ), @Color("#4a0"))
  * @AC\DefinePolicy("Editor",
