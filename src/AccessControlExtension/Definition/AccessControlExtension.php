@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
@@ -27,13 +26,16 @@ class AccessControlExtension implements ExtensionInterface
 {
 	use SimpleJsonSerializableTrait;
 
+
 	/** @var AccessControlPolicy[] */
 	private array $policies;
+	private ?string $defaultPolicyName;
 
 
-	public function __construct(array $policies)
+	public function __construct(array $policies, ?string $defaultPolicyName)
 	{
 		$this->policies = $policies;
+		$this->defaultPolicyName = $defaultPolicyName;
 	}
 
 
@@ -44,6 +46,12 @@ class AccessControlExtension implements ExtensionInterface
 		} else {
 			return null;
 		}
+	}
+
+
+	public function getDefaultPolicyName(): ?string
+	{
+		return $this->defaultPolicyName;
 	}
 
 }

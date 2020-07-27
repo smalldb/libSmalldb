@@ -39,26 +39,38 @@ class SimpleTransitionGuard extends AccessPolicyRegistry implements TransitionGu
 
 	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool
 	{
-		$policyName = $this->getPolicyName($transition);
+		$definition = $ref->getDefinition();
+
+		$policyName = $this->getPolicyName($transition, $definition);
 		if ($policyName === null) {
 			return $this->getDefaultAccess();
 		}
 
-		$policy = $this->findPolicy($policyName, $ref->getDefinition());
+		$policy = $this->findPolicy($policyName, $definition);
 
 		return $this->isAccessAllowed($policy, $ref);
 	}
 
 
-	private function getPolicyName(TransitionDefinition $transition): ?string
+	private function getPolicyName(TransitionDefinition $transition, StateMachineDefinition $definition): ?string
 	{
 		if ($transition->hasExtension(AccessPolicyExtension::class)) {
 			/** @var AccessPolicyExtension $trPolicyExt */
 			$trPolicyExt = $transition->getExtension(AccessPolicyExtension::class);
-			return $trPolicyExt->getPolicyName();
+			$policyName = $trPolicyExt->getPolicyName();
+			if ($policyName !== null) {
+				return $policyName;
+			}
 		}
 
-		// TODO: Lookup default policy name.
+		if ($definition->hasExtension(AccessControlExtension::class)) {
+			/** @var AccessControlExtension $ext */
+			$ext = $definition->getExtension(AccessControlExtension::class);
+			$defaultPolicyName = $ext->getDefaultPolicyName();
+			if ($defaultPolicyName !== null) {
+				return $defaultPolicyName;
+			}
+		}
 
 		return null;
 	}

@@ -29,6 +29,8 @@ class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 	/** @var AccessControlPolicy[] */
 	public array $policies = [];
 
+	public ?string $defaultPolicyName = null;
+
 
 	public function __construct()
 	{
@@ -47,7 +49,8 @@ class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 
 	public function buildExtension(): ?ExtensionInterface
 	{
-		return empty($this->policies) ? null : new AccessControlExtension($this->policies);
+		return empty($this->policies) && $this->defaultPolicyName === null ? null
+			: new AccessControlExtension($this->policies, $this->defaultPolicyName);
 	}
 
 }

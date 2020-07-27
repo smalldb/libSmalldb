@@ -18,6 +18,10 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+
 
 /**
  * Default access policy for transitions
@@ -25,7 +29,18 @@ namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
  * @Annotation
  * @Target({"CLASS"})
  */
-class DefaultPolicy
+class DefaultPolicy implements StateMachineBuilderApplyInterface
 {
-	public string $accessPolicy;
+	public string $policyName;
+
+
+	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
+	{
+		if (isset($this->policyName)) {
+			/** @var AccessControlExtensionPlaceholder $ext */
+			$ext = $builder->getExtensionPlaceholder(AccessControlExtensionPlaceholder::class);
+			$ext->defaultPolicyName = $this->policyName;
+		}
+	}
+
 }

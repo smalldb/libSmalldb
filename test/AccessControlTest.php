@@ -18,11 +18,13 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\InvalidArgumentException;
 
 
@@ -174,6 +176,26 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$placeholder = new AccessPolicyExtensionPlaceholder();
 		$ext = $placeholder->buildExtension();
 		$this->assertNull($ext);
+	}
+
+
+	public function testDefaultPolicy()
+	{
+		$policyName = "default_policy";
+
+		$annotation = new A\DefaultPolicy();
+		$annotation->policyName = $policyName;
+
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$annotation->applyToBuilder($builder);
+
+		$definition = $builder->build();
+		$this->assertTrue($definition->hasExtension(AccessControlExtension::class));
+
+		/** @var AccessControlExtension $ext */
+		$ext = $definition->getExtension(AccessControlExtension::class);
+		$this->assertSame($policyName, $ext->getDefaultPolicyName());
 	}
 
 }
