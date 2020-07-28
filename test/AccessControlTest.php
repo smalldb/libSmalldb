@@ -31,10 +31,16 @@ use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 
 class AccessControlTest extends TestCaseWithDemoContainer
 {
+
+	const ROLE_EDITOR = 'ROLE_EDITOR';
+	const ROLE_USER = 'ROLE_USER';
+
 
 	private function getRef(): ReferenceInterface
 	{
@@ -251,7 +257,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		yield 'AllOf' => [ P\AllOf::class, [], P\AllOfCompiled::class ];
 		yield 'SomeOf' => [ P\SomeOf::class, [], P\SomeOfCompiled::class ];
 		yield 'NoneOf' => [ P\NoneOf::class, [], P\NoneOfCompiled::class ];
-		yield 'HasRole' => [ P\HasRole::class, ['ROLE_USER'], P\HasRoleCompiled::class ];
+		yield 'HasRole' => [ P\HasRole::class, [self::ROLE_USER], P\HasRoleCompiled::class ];
 		yield 'IsOwner' => [ P\IsOwner::class, ['authorId'], P\IsOwnerCompiled::class ];
 	}
 
@@ -262,40 +268,70 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	public function testCompileWithContainer()
 	{
 		$container = new ContainerBuilder();
-		$ca = new P\SymfonyContainerAdapter($container);
+		$containerAdapter = new P\SymfonyContainerAdapter($container);
 
+		// Yes is always allowed
 		$yes = new P\AllOf(new P\Allow());
-		$yesCompiled = $yes->compile($ca);
+		$yesCompiled = $yes->compile($containerAdapter);
 		$this->assertInstanceOf(Reference::class, $yesCompiled);
 
+		// No is always denied
 		$no = new P\Deny();
-		$noCompiled = $no->compile($ca);
+		$noCompiled = $no->compile($containerAdapter);
 		$this->assertInstanceOf(Reference::class, $noCompiled);
 
+		// Role depends on mocked user's roles
+		$hasRole = new P\HasRole(self::ROLE_EDITOR);
+		$this->assertEquals(self::ROLE_EDITOR, $hasRole->getRole());
+		$hasRoleCompiled = $hasRole->compile($containerAdapter);
+		$this->assertInstanceOf(Reference::class, $noCompiled);
+
+		// Configure Guard
 		$transitionPredicates = [
 			'foo' => [
 				'yes' => $yesCompiled,
 				'no' => $noCompiled,
+				'role' => $hasRoleCompiled,
 			]
 		];
-
 		$container->autowire(SimpleTransitionGuard::class, SimpleTransitionGuard::class)
 			->setArguments([$transitionPredicates])
 			->setPublic(true);
 
+		// Mocked security context for HasRole predicate
+		$container->register(Security::class)
+			->setSynthetic(true);
+
 		$container->compile();
 
+		// Create security mock
+		$securityMock = $this->createMock(Security::class);
+		$userRoles = [self::ROLE_USER];
+		$userMock = $this->createMock(UserInterface::class);
+		$userMock->method('getRoles')->willReturnCallback(function() use (&$userRoles) {
+			return $userRoles;
+		});
+		$securityMock->method('getUser')->willReturn($userMock);
+		$container->set(Security::class, $securityMock);
+
+		// Get & check Guard
 		/** @var SimpleTransitionGuard $guard */
 		$guard = $container->get(SimpleTransitionGuard::class);
+		$guardPredicates = $guard->getTransitionPredicates();
+		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['yes'] ?? null);
 
+		// Check Yes
 		$yesAllowed = $guard->isAccessAllowed('foo', 'yes', $this->getRef());
 		$this->assertTrue($yesAllowed);
 
+		// Check No
 		$noAllowed = $guard->isAccessAllowed('foo', 'no', $this->getRef());
 		$this->assertFalse($noAllowed);
 
-		$guardPredicates = $guard->getTransitionPredicates();
-		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['yes'] ?? null);
+		// Check HasRole before and after adding a role
+		$this->assertFalse($guard->isAccessAllowed('foo', 'role', $this->getRef()));
+		$userRoles[] = self::ROLE_EDITOR;
+		$this->assertTrue($guard->isAccessAllowed('foo', 'role', $this->getRef()));
 	}
 
 }
