@@ -9,7 +9,8 @@ test-coverage: ./vendor/bin/phpunit
 		--coverage-php test/output/coverage/coverage.php \
 		--coverage-clover test/output/coverage/coverage.xml \
 		; ret=$$?; \
-	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'; \
+	find test/output/coverage/ -type f -name '*.html' -print0 \
+		| xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'; \
 	cp "test/output/coverage/_js/file.js" "test/output/coverage/_js/file.js~"; \
 	sed -i "test/output/coverage/_js/file.js" \
 		-e "s/^\\s*\$$('\\.popin')/  \$$('.popin td[data-content]')/" \
