@@ -30,6 +30,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -60,15 +61,15 @@ class CrudItemDefinitionBag extends AbstractSmalldbContainerFactory implements S
 		$realRefClass = $scg->generateReferenceClass(CrudItem::class, $definition);
 
 		// Glue them together using a machine provider
-		$machineProvider = $c->autowire(LambdaProvider::class)
-			->addTag('container.service_locator')
-			->addArgument([
-				LambdaProvider::TRANSITIONS_DECORATOR => new Reference(CrudItemTransitions::class),
-				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
-			])
-			->addArgument('crud-item')
-			->addArgument($realRefClass)
-			->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
+		$machineProvider = $c->register(LambdaProvider::class)
+			->setFactory(LambdaProvider::class . '::createWithDefinitionBag')
+			->setArguments([
+				'crud-item',
+				$realRefClass,
+				new Reference(SmalldbDefinitionBagInterface::class),
+				new ServiceClosureArgument(new Reference(CrudItemTransitions::class)),
+				new ServiceClosureArgument(new Reference(CrudItemRepository::class)),
+			]);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider, [CrudItem::class]]);

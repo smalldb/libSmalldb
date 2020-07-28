@@ -29,6 +29,7 @@ use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemRepository;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItemTransitions;
 use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -68,15 +69,13 @@ class CrudItemServiceLocator extends AbstractSmalldbContainerFactory implements 
 
 		// Glue them together using a machine provider
 		$machineProvider = $c->register(LambdaProvider::class)
-			->addTag('container.service_locator')
-			->addArgument([
-				LambdaProvider::DEFINITION => new Reference($definitionId),
-				LambdaProvider::TRANSITIONS_DECORATOR => new Reference($transitionsId),
-				LambdaProvider::REPOSITORY => new Reference(CrudItemRepository::class),
-			])
-			->addArgument('crud-item')
-			->addArgument($realRefClass)
-			->addArgument(null);
+			->setArguments([
+				'crud-item',
+				$realRefClass,
+				new ServiceClosureArgument(new Reference($definitionId)),
+				new ServiceClosureArgument(new Reference($transitionsId)),
+				new ServiceClosureArgument(new Reference(CrudItemRepository::class)),
+			]);
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider, [CrudItem::class]]);

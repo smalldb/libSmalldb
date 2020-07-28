@@ -36,6 +36,7 @@ use Smalldb\ClassLocator\RealPathList;
 use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -143,9 +144,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 			// Register the provider
 			$this->registerProvider($container, $providerId, $machineType, $realReferenceClass,
-				$repositoryClass ? new Reference($repositoryClass) : null,
+				new Reference(SmalldbDefinitionBagInterface::class),
 				$transitionsClass ? new Reference($transitionsClass) : null,
-				new Reference(SmalldbDefinitionBagInterface::class));
+				$repositoryClass ? new Reference($repositoryClass) : null);
 
 			// Register state machine type
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId), [$referenceClass]]);
@@ -158,25 +159,19 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 
 	protected function registerProvider(ContainerBuilder $container, string $providerId, $machineType,
-		?string $realReferenceClass, ?Reference $repositoryReference, ?Reference $transitionsReference,
-		Reference $definitionBagReference): Definition
+		?string $realReferenceClass, Reference $definitionBagReference,
+		?Reference $transitionsReference, ?Reference $repositoryReference): Definition
 	{
-		// Collect lazy-loaded references
-		$serviceReferences = [];
-		if ($repositoryReference) {
-			$serviceReferences[LambdaProvider::REPOSITORY] = $repositoryReference;
-		}
-		if ($transitionsReference) {
-			$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = $transitionsReference;
-		}
-
 		// Glue them together using a machine provider
 		return $container->autowire($providerId, static::PROVIDER_CLASS)
-			->addTag('container.service_locator')
-			->addArgument($serviceReferences)
-			->addArgument($machineType)
-			->addArgument($realReferenceClass)
-			->addArgument($definitionBagReference);
+			->setFactory(LambdaProvider::class . '::createWithDefinitionBag')
+			->setArguments([
+				$machineType,
+				$realReferenceClass,
+				$definitionBagReference,
+				$transitionsReference ? new ServiceClosureArgument($transitionsReference) : null,
+				$repositoryReference ? new ServiceClosureArgument($repositoryReference) : null,
+			]);
 	}
 
 

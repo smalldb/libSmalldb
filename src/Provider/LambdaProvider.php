@@ -38,22 +38,40 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 	/** @var callable */
 	private $repositoryFactory;
 
-	const DEFINITION = 'd';
-	const DEFINITION_BAG = 'db';
-	const TRANSITIONS_DECORATOR = 't';
-	const REPOSITORY = 'r';
 
-
-	public function __construct(array $closureMap = null, ?string $machineType = null,
-		?string $referenceClass = null, ?SmalldbDefinitionBagInterface $definitionBag = null)
+	public static function createWithDefinitionBag( string $machineType, string $referenceClass,
+		SmalldbDefinitionBagInterface $definitionBag,
+		?callable $transitionsDecoratorFactory, ?callable $repositoryFactory): self
 	{
-		if (!empty($closureMap)) {
-			$this->definitionFactory = $closureMap[self::DEFINITION] ?? null;
-			$this->definitionBagFactory = $closureMap[self::DEFINITION_BAG] ?? null;
-			$this->transitionsDecoratorFactory = $closureMap[self::TRANSITIONS_DECORATOR] ?? null;
-			$this->repositoryFactory = $closureMap[self::REPOSITORY] ?? null;
-		}
+		$self = new self();
+		$self->setMachineType($machineType);
+		$self->setReferenceClass($referenceClass);
+		$self->setDefinitionBag($definitionBag);
+		$self->transitionsDecoratorFactory = $transitionsDecoratorFactory;
+		$self->repositoryFactory = $repositoryFactory;
+		return $self;
+	}
 
+
+	public static function createWithDefinitionBagFactory(string $machineType, string $referenceClass,
+		?callable $definitionBagFactory,
+		?callable $transitionsDecoratorFactory, ?callable $repositoryFactory): self
+	{
+		$self = new self();
+		$self->setMachineType($machineType);
+		$self->setReferenceClass($referenceClass);
+		$self->definitionBagFactory = $definitionBagFactory;
+		$self->transitionsDecoratorFactory = $transitionsDecoratorFactory;
+		$self->repositoryFactory = $repositoryFactory;
+		return $self;
+	}
+
+
+	public function __construct(?string $machineType = null, ?string $referenceClass = null,
+		?callable $definitionFactory = null,
+		?callable $transitionsDecoratorFactory = null,
+		?callable $repositoryFactory = null
+	) {
 		if ($machineType !== null) {
 			$this->setMachineType($machineType);
 		}
@@ -62,9 +80,9 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 			$this->setReferenceClass($referenceClass);
 		}
 
-		if ($definitionBag !== null) {
-			$this->setDefinitionBag($definitionBag);
-		}
+		$this->definitionFactory = $definitionFactory;
+		$this->transitionsDecoratorFactory = $transitionsDecoratorFactory;
+		$this->repositoryFactory = $repositoryFactory;
 	}
 
 

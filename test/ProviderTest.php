@@ -111,17 +111,16 @@ class ProviderTest extends TestCase
 	}
 
 
-	public function testLambdaProviderClosureMap()
+	public function testLambdaProviderClosure()
 	{
 		$definition = $this->createMock(StateMachineDefinition::class);
 		$repository = $this->createMock(SmalldbRepositoryInterface::class);
 		$transitionDecorator = $this->createMock(TransitionDecorator::class);
 
-		$provider = new LambdaProvider([
-			LambdaProvider::DEFINITION => function() use ($definition) { return $definition; },
-			LambdaProvider::REPOSITORY => function() use ($repository) { return $repository; },
-			LambdaProvider::TRANSITIONS_DECORATOR => function() use ($transitionDecorator) { return $transitionDecorator; },
-		]);
+		$provider = new LambdaProvider(null, null,
+			function() use ($definition) { return $definition; },
+			function() use ($transitionDecorator) { return $transitionDecorator; },
+			function() use ($repository) { return $repository; });
 
 		$this->assertEquals($definition, $provider->getDefinition());
 		$this->assertEquals($repository, $provider->getRepository());

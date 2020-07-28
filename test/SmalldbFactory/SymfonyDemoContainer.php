@@ -47,6 +47,7 @@ use Smalldb\StateMachine\Test\Example\User\UserTransitions;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutput;
 use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -119,34 +120,26 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 
 		// Definition Bag
 		$definitionBag = $this->createDefinitionReader($c)->getDefinitionBag();
+		$definitionBagReference = new Reference(SmalldbDefinitionBagInterface::class);
 
 		// Register & Autowire all state machine components
 		foreach ($definitionBag->getAllDefinitions() as $machineType => $definition) {
 			$referenceClass = $definition->getReferenceClass();
 			$repositoryClass = $definition->getRepositoryClass();
 			$transitionsClass = $definition->getTransitionsClass();
-
-			$serviceReferences = [];
-
-			if ($repositoryClass) {
-				$serviceReferences[LambdaProvider::REPOSITORY] = new Reference($repositoryClass);
-			}
-
-			if ($transitionsClass) {
-				$serviceReferences[LambdaProvider::TRANSITIONS_DECORATOR] = new Reference($transitionsClass);
-			}
-
 			$realReferenceClass = $referenceClass ? $scg->generateReferenceClass($referenceClass, $definition) : null;
-
 
 			// Glue them together using a machine provider
 			$providerId = "smalldb.$machineType.provider";
 			$c->register($providerId, LambdaProvider::class)
-				->addTag('container.service_locator')
-				->addArgument($serviceReferences)
-				->addArgument($machineType)
-				->addArgument($realReferenceClass)
-				->addArgument(new Reference(SmalldbDefinitionBagInterface::class));
+				->setFactory(LambdaProvider::class . '::createWithDefinitionBag')
+				->setArguments([
+					$machineType,
+					$realReferenceClass,
+					$definitionBagReference,
+					$transitionsClass ? new ServiceClosureArgument(new Reference($transitionsClass)) : null,
+					$repositoryClass ? new ServiceClosureArgument(new Reference($repositoryClass)) : null,
+				]);
 
 			// Register state machine type
 			$smalldb->addMethodCall('registerMachineType', [new Reference($providerId), [$referenceClass]]);
