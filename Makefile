@@ -4,7 +4,11 @@ test: ./vendor/bin/phpunit
 	./vendor/bin/phpunit -c phpunit.xml --testdox
 
 test-coverage: ./vendor/bin/phpunit
-	./vendor/bin/phpunit -c phpunit.xml --testdox --coverage-html test/output/coverage --coverage-php test/output/coverage/coverage.php; ret=$$?; \
+	./vendor/bin/phpunit -c phpunit.xml --testdox \
+		--coverage-html test/output/coverage \
+		--coverage-php test/output/coverage/coverage.php \
+		--coverage-clover test/output/coverage/coverage.xml \
+		; ret=$$?; \
 	find test/output/coverage/ -type f -name '*.html' -print0 | xargs -0 sed -i 's!$(PWD)!libsmalldb: !g'; \
 	cp "test/output/coverage/_js/file.js" "test/output/coverage/_js/file.js~"; \
 	sed -i "test/output/coverage/_js/file.js" \
