@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\AccessControlExtension\Predicate\PredicateCompiled;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -28,27 +29,45 @@ use Smalldb\StateMachine\RuntimeException;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 
 
-class SimpleTransitionGuard extends AccessPolicyRegistry implements TransitionGuard
+class SimpleTransitionGuard implements TransitionGuard
 {
 
-	public function __construct(array $policies = [])
+	/** @var PredicateCompiled[][] */
+	private array $transitionPredicates;
+
+
+	/**
+	 * @param PredicateCompiled[][] $transitionPredicates
+	 */
+	public function __construct(array $transitionPredicates = [])
 	{
-		parent::__construct($policies);
+		$this->transitionPredicates = $transitionPredicates;
 	}
 
 
 	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool
 	{
-		$definition = $ref->getDefinition();
+		return $this->isAccessAllowed($ref->getMachineType(), $transition->getName(), $ref);
+	}
 
-		$policyName = $this->getPolicyName($transition, $definition);
-		if ($policyName === null) {
-			return $this->getDefaultAccess();
+
+	public function isAccessAllowed(string $machineType, string $transitionName, ReferenceInterface $ref): bool
+	{
+		if (!empty($this->transitionPredicates[$machineType])) {
+			if (isset($this->transitionPredicates[$machineType][$transitionName])) {
+				return $this->transitionPredicates[$machineType][$transitionName]->evaluate($ref);
+			} else {
+				return false;
+			}
+		} else {
+			return true;
 		}
+	}
 
-		$policy = $this->findPolicy($policyName, $definition);
 
-		return $this->isAccessAllowed($policy, $ref);
+	public function getTransitionPredicates(): array
+	{
+		return $this->transitionPredicates;
 	}
 
 
@@ -97,20 +116,6 @@ class SimpleTransitionGuard extends AccessPolicyRegistry implements TransitionGu
 
 		throw new RuntimeException("Access control policy \"$policyName\" not not found"
 			. " in state machine \"" . $stateMachineDefinition->getMachineType() . "\".");
-	}
-
-
-	protected function getDefaultAccess(): bool
-	{
-		// No Access Control Extension implies no access control.
-		return true;
-	}
-
-
-	public function isAccessAllowed(AccessControlPolicy $policy, ReferenceInterface $ref): bool
-	{
-		// TODO: HasRole? IsOwner?
-		return $policy->getPredicate()->evaluate();
 	}
 
 }

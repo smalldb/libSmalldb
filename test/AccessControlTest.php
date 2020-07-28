@@ -25,10 +25,12 @@ use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
+use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Test\Example\Post\Post;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 
 class AccessControlTest extends TestCaseWithDemoContainer
@@ -251,6 +253,49 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		yield 'NoneOf' => [ P\NoneOf::class, [], P\NoneOfCompiled::class ];
 		yield 'HasRole' => [ P\HasRole::class, ['ROLE_USER'], P\HasRoleCompiled::class ];
 		yield 'IsOwner' => [ P\IsOwner::class, ['authorId'], P\IsOwnerCompiled::class ];
+	}
+
+
+	/**
+	 * @throws \Exception
+	 */
+	public function testCompileWithContainer()
+	{
+		$container = new ContainerBuilder();
+		$ca = new P\SymfonyContainerAdapter($container);
+
+		$yes = new P\AllOf(new P\Allow());
+		$yesCompiled = $yes->compile($ca);
+		$this->assertInstanceOf(Reference::class, $yesCompiled);
+
+		$no = new P\Deny();
+		$noCompiled = $no->compile($ca);
+		$this->assertInstanceOf(Reference::class, $noCompiled);
+
+		$transitionPredicates = [
+			'foo' => [
+				'yes' => $yesCompiled,
+				'no' => $noCompiled,
+			]
+		];
+
+		$container->autowire(SimpleTransitionGuard::class, SimpleTransitionGuard::class)
+			->setArguments([$transitionPredicates])
+			->setPublic(true);
+
+		$container->compile();
+
+		/** @var SimpleTransitionGuard $guard */
+		$guard = $container->get(SimpleTransitionGuard::class);
+
+		$yesAllowed = $guard->isAccessAllowed('foo', 'yes', $this->getRef());
+		$this->assertTrue($yesAllowed);
+
+		$noAllowed = $guard->isAccessAllowed('foo', 'no', $this->getRef());
+		$this->assertFalse($noAllowed);
+
+		$guardPredicates = $guard->getTransitionPredicates();
+		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['yes'] ?? null);
 	}
 
 }
