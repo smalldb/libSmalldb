@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
+
 class IsOwner implements Predicate
 {
 	private string $ownerProperty;
@@ -29,22 +30,15 @@ class IsOwner implements Predicate
 	}
 
 
-	public function evaluate(): bool
-	{
-		// TODO: Implement evaluate() method.
-		return true;
-	}
-
-
 	public function getOwnerProperty(): string
 	{
 		return $this->ownerProperty;
 	}
 
 
-	public function getNestedPredicates(): array
+	public function compile(ContainerAdapter $container)
 	{
-		return [];
+		return $container->registerService(null, IsOwnerCompiled::class, [$this->getOwnerProperty()]);
 	}
 
 }

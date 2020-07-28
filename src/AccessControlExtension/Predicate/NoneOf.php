@@ -18,17 +18,8 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class NoneOf extends PredicateOperator implements Predicate
+
+class NoneOf extends AbstractPredicateOperator implements Predicate
 {
-
-	public function evaluate(): bool
-	{
-		foreach ($this->predicates as $p) {
-			if ($p->evaluate()) {
-				return false;
-			}
-		}
-		return true;
-	}
-
+	protected const COMPILED_CLASS_NAME = NoneOfCompiled::class;
 }

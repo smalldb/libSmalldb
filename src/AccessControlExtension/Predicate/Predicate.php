@@ -18,8 +18,16 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
+
 interface Predicate
 {
-	public function evaluate(): bool;
-	public function getNestedPredicates(): array;
+
+	/**
+	 * Register compiled predicate into the DI container.
+	 *
+	 * @param ContainerAdapter $container
+	 * @return object|string|int Service reference returned by ContainerAdapter::registerService().
+	 */
+	public function compile(ContainerAdapter $container);
+
 }

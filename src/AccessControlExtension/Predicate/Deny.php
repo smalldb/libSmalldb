@@ -18,19 +18,12 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-
 class Deny implements Predicate
 {
 
-	public function evaluate(): bool
+	public function compile(ContainerAdapter $container)
 	{
-		return false;
-	}
-
-
-	public function getNestedPredicates(): array
-	{
-		return [];
+		return $container->registerService(null, DenyCompiled::class);
 	}
 
 }

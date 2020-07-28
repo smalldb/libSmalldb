@@ -18,12 +18,31 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class Allow implements Predicate
+
+abstract class AbstractPredicateOperator implements Predicate, PredicateOperator
 {
+	protected const COMPILED_CLASS_NAME = AbstractPredicateOperatorCompiled::class;
+
+	/** @var Predicate[] */
+	protected array $predicates;
+
+
+	public final function __construct(Predicate ...$predicates)
+	{
+		$this->predicates = $predicates;
+	}
+
 
 	public function compile(ContainerAdapter $container)
 	{
-		return $container->registerService(null, AllowCompiled::class);
+		return $container->registerService(null, static::COMPILED_CLASS_NAME,
+			array_map(fn($p) => $p->compile($container), $this->predicates));
+	}
+
+
+	public final function getNestedPredicates(): array
+	{
+		return $this->predicates;
 	}
 
 }

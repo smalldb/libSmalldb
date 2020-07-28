@@ -18,12 +18,28 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class Allow implements Predicate
+use Smalldb\StateMachine\ReferenceInterface;
+use Symfony\Component\Security\Core\Security;
+
+
+class HasRoleCompiled implements PredicateCompiled
 {
 
-	public function compile(ContainerAdapter $container)
+	private string $role;
+	private Security $security;
+
+
+	public function __construct(string $role, Security $security)
 	{
-		return $container->registerService(null, AllowCompiled::class);
+		$this->role = $role;
+		$this->security = $security;
+	}
+
+
+	public function evaluate(ReferenceInterface $ref): bool
+	{
+		// FIXME: Is there a hasRole() method?
+		return in_array($this->role, $this->security->getUser()->getRoles(), true);
 	}
 
 }

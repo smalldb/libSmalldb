@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Generator;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
@@ -26,69 +27,82 @@ use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 
 
 class AccessControlTest extends TestCaseWithDemoContainer
 {
 
+	private function getRef(): ReferenceInterface
+	{
+		return $this->createMock(ReferenceInterface::class);
+	}
+
+
+	private function neverAllow(): P\AllowCompiled
+	{
+		$notCalledAllow = $this->createMock(P\AllowCompiled::class);
+		$notCalledAllow->expects($this->never())->method('evaluate');
+		return $notCalledAllow;
+	}
+
+
 	public function testAllow()
 	{
-		$predicate = new P\Allow();
-		$result = $predicate->evaluate();
+		$ref = $this->getRef();
+		$predicate = new P\AllowCompiled();
+		$result = $predicate->evaluate($ref);
 		$this->assertTrue($result);
 	}
 
 
 	public function testDeny()
 	{
-		$predicate = new P\Deny();
-		$result = $predicate->evaluate();
+		$ref = $this->getRef();
+		$predicate = new P\DenyCompiled();
+		$result = $predicate->evaluate($ref);
 		$this->assertFalse($result);
 	}
 
 
 	public function testAllOf()
 	{
-		$this->assertTrue((new P\AllOf())->evaluate());
-		$this->assertTrue((new P\AllOf(new P\Allow()))->evaluate());
-		$this->assertFalse((new P\AllOf(new P\Deny()))->evaluate());
+		$ref = $this->getRef();
+		$this->assertTrue((new P\AllOfCompiled())->evaluate($ref));
+		$this->assertTrue((new P\AllOfCompiled(new P\AllowCompiled()))->evaluate($ref));
+		$this->assertFalse((new P\AllOfCompiled(new P\DenyCompiled()))->evaluate($ref));
 
-		$this->assertTrue((new P\AllOf(new P\Allow(), new P\Allow(), new P\Allow()))->evaluate());
-		$this->assertTrue((new P\AllOf(new P\Allow(), new P\AllOf(new P\Allow(), new P\Allow())))->evaluate());
-		$this->assertTrue((new P\AllOf(new P\AllOf(new P\Allow(), new P\Allow(), new P\Allow())))->evaluate());
-		$this->assertTrue((new P\AllOf(new P\AllOf(new P\AllOf(new P\AllOf(new P\Allow())))))->evaluate());
+		$this->assertTrue((new P\AllOfCompiled(new P\AllowCompiled(), new P\AllowCompiled(), new P\AllowCompiled()))->evaluate($ref));
+		$this->assertTrue((new P\AllOfCompiled(new P\AllowCompiled(), new P\AllOfCompiled(new P\AllowCompiled(), new P\AllowCompiled())))->evaluate($ref));
+		$this->assertTrue((new P\AllOfCompiled(new P\AllOfCompiled(new P\AllowCompiled(), new P\AllowCompiled(), new P\AllowCompiled())))->evaluate($ref));
+		$this->assertTrue((new P\AllOfCompiled(new P\AllOfCompiled(new P\AllOfCompiled(new P\AllOfCompiled(new P\AllowCompiled())))))->evaluate($ref));
 
 
-		$this->assertFalse((new P\AllOf(new P\Allow(), new P\Deny()))->evaluate());
-		$this->assertFalse((new P\AllOf(new P\Deny(), $this->neverAllow()))->evaluate());
-		$this->assertFalse((new P\AllOf(new P\AllOf(new P\AllOf(new P\AllOf(new P\Deny())))))->evaluate());
+		$this->assertFalse((new P\AllOfCompiled(new P\AllowCompiled(), new P\DenyCompiled()))->evaluate($ref));
+		$this->assertFalse((new P\AllOfCompiled(new P\DenyCompiled(), $this->neverAllow()))->evaluate($ref));
+		$this->assertFalse((new P\AllOfCompiled(new P\AllOfCompiled(new P\AllOfCompiled(new P\AllOfCompiled(new P\DenyCompiled())))))->evaluate($ref));
 	}
 
 
 	public function testSomeOf()
 	{
-		$this->assertFalse((new P\SomeOf())->evaluate());
-		$this->assertTrue((new P\SomeOf(new P\Allow()))->evaluate());
-		$this->assertFalse((new P\SomeOf(new P\Deny()))->evaluate());
-		$this->assertFalse((new P\SomeOf(new P\Deny(), new P\Deny(), new P\Deny()))->evaluate());
-		$this->assertTrue((new P\SomeOf(new P\Deny(), new P\Allow(), $this->neverAllow()))->evaluate());
+		$ref = $this->getRef();
+		$this->assertFalse((new P\SomeOfCompiled())->evaluate($ref));
+		$this->assertTrue((new P\SomeOfCompiled(new P\AllowCompiled()))->evaluate($ref));
+		$this->assertFalse((new P\SomeOfCompiled(new P\DenyCompiled()))->evaluate($ref));
+		$this->assertFalse((new P\SomeOfCompiled(new P\DenyCompiled(), new P\DenyCompiled(), new P\DenyCompiled()))->evaluate($ref));
+		$this->assertTrue((new P\SomeOfCompiled(new P\DenyCompiled(), new P\AllowCompiled(), $this->neverAllow()))->evaluate($ref));
 	}
 
 
 	public function testNoneOf()
 	{
-		$this->assertTrue((new P\NoneOf())->evaluate());
-		$this->assertTrue((new P\NoneOf(new P\Deny()))->evaluate());
-		$this->assertTrue((new P\NoneOf(new P\Deny(), new P\Deny(), new P\Deny()))->evaluate());
-		$this->assertFalse((new P\NoneOf(new P\Allow(), $this->neverAllow()))->evaluate());
-	}
-
-
-	private function neverAllow(): P\Allow
-	{
-		$notCalledAllow = $this->createMock(P\Allow::class);
-		$notCalledAllow->expects($this->never())->method('evaluate');
-		return $notCalledAllow;
+		$ref = $this->getRef();
+		$this->assertTrue((new P\NoneOfCompiled())->evaluate($ref));
+		$this->assertTrue((new P\NoneOfCompiled(new P\DenyCompiled()))->evaluate($ref));
+		$this->assertTrue((new P\NoneOfCompiled(new P\DenyCompiled(), new P\DenyCompiled(), new P\DenyCompiled()))->evaluate($ref));
+		$this->assertFalse((new P\NoneOfCompiled(new P\AllowCompiled(), $this->neverAllow()))->evaluate($ref));
 	}
 
 
@@ -114,7 +128,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 			)
 		);
 
-		$n = $p->getNestedPredicates();
+		$n = $p instanceof P\PredicateOperator ? $p->getNestedPredicates() : [];
 		$this->assertContainsOnlyInstancesOf(P\Predicate::class, $n);
 
 		$nn = iterator_to_array($this->iterateNestedPredicatedRecursively($p), false);
@@ -123,11 +137,13 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	}
 
 
-	private function iterateNestedPredicatedRecursively(P\Predicate $p): \Generator
+	private function iterateNestedPredicatedRecursively(P\Predicate $p): Generator
 	{
 		yield $p;
-		foreach ($p->getNestedPredicates() as $np) {
-			yield from $this->iterateNestedPredicatedRecursively($np);
+		if ($p instanceof P\PredicateOperator) {
+			foreach ($p->getNestedPredicates() as $np) {
+				yield from $this->iterateNestedPredicatedRecursively($np);
+			}
 		}
 	}
 
@@ -196,6 +212,45 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		/** @var AccessControlExtension $ext */
 		$ext = $definition->getExtension(AccessControlExtension::class);
 		$this->assertSame($policyName, $ext->getDefaultPolicyName());
+	}
+
+
+	/**
+	 * @dataProvider predicateCompileProvider
+	 */
+	public function testPredicateCompile(string $predicateClassName, ?array $args, string $expectedCompiledClassName)
+	{
+		$compiledClassName = null;
+		$compiledArgs = null;
+
+		$container = $this->createMock(P\ContainerAdapter::class);
+		$container->expects($this->once())->method('registerService')
+			->willReturnCallback(function($id, string $className, ?array $args = null) use (&$compiledClassName, &$compiledArgs) {
+				$compiledClassName = $className;
+				$compiledArgs = $args;
+			});
+
+		/** @var P\Predicate $predicate */
+		$predicate = new $predicateClassName(...($args ?? []));
+		$predicate->compile($container);
+
+		$this->assertNotNull($compiledClassName, 'ContainerAdapter::registerService has not been called.');
+		$this->assertSame($expectedCompiledClassName, $compiledClassName);
+
+		// Compiled args should be the same as the original args.
+		$this->assertSame($args, $compiledArgs);
+	}
+
+
+	public function predicateCompileProvider()
+	{
+		yield 'Allow' => [ P\Allow::class, null, P\AllowCompiled::class ];
+		yield 'Deny' => [ P\Deny::class, null, P\DenyCompiled::class ];
+		yield 'AllOf' => [ P\AllOf::class, [], P\AllOfCompiled::class ];
+		yield 'SomeOf' => [ P\SomeOf::class, [], P\SomeOfCompiled::class ];
+		yield 'NoneOf' => [ P\NoneOf::class, [], P\NoneOfCompiled::class ];
+		yield 'HasRole' => [ P\HasRole::class, ['ROLE_USER'], P\HasRoleCompiled::class ];
+		yield 'IsOwner' => [ P\IsOwner::class, ['authorId'], P\IsOwnerCompiled::class ];
 	}
 
 }

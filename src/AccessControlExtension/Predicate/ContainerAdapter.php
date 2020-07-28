@@ -18,12 +18,8 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class Allow implements Predicate
+
+interface ContainerAdapter
 {
-
-	public function compile(ContainerAdapter $container)
-	{
-		return $container->registerService(null, AllowCompiled::class);
-	}
-
+	public function registerService(?string $id, string $className, ?array $args = null);
 }

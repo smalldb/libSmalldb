@@ -18,24 +18,11 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-abstract class PredicateOperator implements Predicate
+
+interface PredicateOperator extends Predicate
 {
-	/** @var Predicate[] */
-	protected array $predicates;
 
-
-	public final function __construct(Predicate ...$predicates)
-	{
-		$this->predicates = $predicates;
-	}
-
-
-	abstract public function evaluate(): bool;
-
-
-	public final function getNestedPredicates(): array
-	{
-		return $this->predicates;
-	}
+	/** @return Predicate[] */
+	public function getNestedPredicates(): array;
 
 }

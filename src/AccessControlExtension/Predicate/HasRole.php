@@ -30,12 +30,6 @@ class HasRole implements Predicate
 	}
 
 
-	public function evaluate(): bool
-	{
-		// TODO: Implement evaluate() method.
-		return true;
-	}
-
 
 	public function getRole(): string
 	{
@@ -43,9 +37,9 @@ class HasRole implements Predicate
 	}
 
 
-	public function getNestedPredicates(): array
+	public function compile(ContainerAdapter $container)
 	{
-		return [];
+		return $container->registerService(null, HasRoleCompiled::class, [$this->role]);
 	}
 
 }

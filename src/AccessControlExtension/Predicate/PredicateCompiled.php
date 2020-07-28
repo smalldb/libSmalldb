@@ -18,12 +18,10 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class Allow implements Predicate
+use Smalldb\StateMachine\ReferenceInterface;
+
+
+interface PredicateCompiled
 {
-
-	public function compile(ContainerAdapter $container)
-	{
-		return $container->registerService(null, AllowCompiled::class);
-	}
-
+	public function evaluate(ReferenceInterface $ref): bool;
 }

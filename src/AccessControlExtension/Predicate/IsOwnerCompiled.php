@@ -18,12 +18,29 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class Allow implements Predicate
-{
+use Smalldb\StateMachine\ReferenceInterface;
+use Symfony\Component\Security\Core\Security;
 
-	public function compile(ContainerAdapter $container)
+
+class IsOwnerCompiled implements PredicateCompiled
+{
+	private Security $security;
+	private string $ownerProperty;
+
+
+	public function __construct(string $ownerProperty, Security $security)
 	{
-		return $container->registerService(null, AllowCompiled::class);
+		$this->security = $security;
+		$this->ownerProperty = $ownerProperty;
+	}
+
+
+	public function evaluate(ReferenceInterface $ref): bool
+	{
+		// FIXME: Get the proper user ID.
+		$userId = $this->security->getUser()->getUsername();
+		$getter = 'get' . ucfirst($this->ownerProperty);
+		return ($ref->$getter)($this->ownerProperty) === $userId;
 	}
 
 }

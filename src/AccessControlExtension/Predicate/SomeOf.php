@@ -18,17 +18,8 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
-class SomeOf extends PredicateOperator implements Predicate
+
+class SomeOf extends AbstractPredicateOperator implements Predicate
 {
-
-	public function evaluate(): bool
-	{
-		foreach ($this->predicates as $p) {
-			if ($p->evaluate()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
+	protected const COMPILED_CLASS_NAME = SomeOfCompiled::class;
 }
