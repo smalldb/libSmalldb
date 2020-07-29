@@ -18,7 +18,16 @@
 
 namespace Smalldb\StateMachine\Definition;
 
+use Throwable;
+
+
 class UndefinedPropertyException extends UndefinedException
 {
-	// Just an exception
+
+	public function __construct($message = "", $code = 0, Throwable $previous = null)
+	{
+		// Just an exception
+		parent::__construct($message, $code, $previous);
+	}
+
 }
