@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Test\BadExample;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
 
 
 /**
@@ -31,6 +32,7 @@ abstract class TransitionWithoutDefinition implements ReferenceInterface
 
 	/**
 	 * @Transition
+	 * @ApplyToEverything
 	 */
 	abstract public function create($data);
 

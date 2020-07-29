@@ -104,6 +104,8 @@ class AnnotationReaderTest extends TestCase
 
 	public function testTransitionWithoutDefinition()
 	{
+		ApplyToEverything::resetCounters();
+
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(TransitionWithoutDefinition::class));
 
@@ -112,6 +114,10 @@ class AnnotationReaderTest extends TestCase
 
 		$transitions = $definition->getTransitions();
 		$this->assertCount(0, $transitions);
+
+		$this->assertEquals(1, ApplyToEverything::$calledMethodCounter[ApplyToEverything::class . '::applyToPlaceholder']);
+		$this->assertEquals(1, ApplyToEverything::$calledMethodCounter[ApplyToEverything::class . '::applyToActionPlaceholder']);
+		ApplyToEverything::resetCounters();
 	}
 
 
