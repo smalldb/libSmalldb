@@ -56,9 +56,8 @@ class AnnotationReader
 	}
 
 
-	public function getStateMachineDefinition(string $className): StateMachineDefinition
+	public function getStateMachineDefinition(ReflectionClass $reflectionClass): StateMachineDefinition
 	{
-		$reflectionClass = new ReflectionClass($className);
 		$builder = $this->definitionBuilderFactory->createDefinitionBuilder();
 		$this->processClassReflection($reflectionClass, $this->annotationReader, $builder);
 		return $builder->build();

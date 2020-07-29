@@ -63,14 +63,15 @@ class SmalldbDefinitionBagReader
 
 	public function addFromAnnotatedClass(string $className): StateMachineDefinition
 	{
-		$definition = $this->annotationReader->getStateMachineDefinition($className);
+		$reflectionClass = new ReflectionClass($className);
+		$definition = $this->annotationReader->getStateMachineDefinition($reflectionClass);
 		try {
 			$machineType = $this->definitionBag->addDefinition($definition);
 			if ($machineType !== $className) {
 				$this->definitionBag->addAlias($className, $machineType);
 			}
 			if ($this->onDefinitionClassCallback) {
-				($this->onDefinitionClassCallback)(new ReflectionClass($className));
+				($this->onDefinitionClassCallback)($reflectionClass);
 			}
 		}
 		catch(InvalidArgumentException $ex) {

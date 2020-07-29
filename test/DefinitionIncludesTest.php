@@ -66,7 +66,7 @@ class DefinitionIncludesTest extends TestCase
 	public function testGraphML()
 	{
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
-		$definition = $reader->getStateMachineDefinition(SupervisorProcess::class);
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(SupervisorProcess::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertNotEmpty($definition->getStates());
 		$this->assertNotEmpty($definition->getTransitions());
@@ -76,7 +76,7 @@ class DefinitionIncludesTest extends TestCase
 	public function testBPMN()
 	{
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
-		$definition = $reader->getStateMachineDefinition(PizzaDelivery::class);
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(PizzaDelivery::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertNotEmpty($definition->getStates());
 		$this->assertNotEmpty($definition->getTransitions());

@@ -37,7 +37,7 @@ class AnnotationReaderTest extends TestCase
 	public function testCrudItem()
 	{
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
-		$definition = $reader->getStateMachineDefinition(CrudItem::class);
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(CrudItem::class));
 		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
 		$this->assertEquals('crud-item', $definition->getMachineType());
 
@@ -54,7 +54,7 @@ class AnnotationReaderTest extends TestCase
 	{
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(SqlAnnotationException::class);
-		$reader->getStateMachineDefinition($className);
+		$reader->getStateMachineDefinition(new \ReflectionClass($className));
 	}
 
 
@@ -71,7 +71,7 @@ class AnnotationReaderTest extends TestCase
 	{
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(\InvalidArgumentException::class);
-		$reader->getStateMachineDefinition(UseReferenceTrait::class);
+		$reader->getStateMachineDefinition(new \ReflectionClass(UseReferenceTrait::class));
 	}
 
 }

@@ -44,7 +44,7 @@ class CrudItemBasic implements SmalldbFactory
 
 		// Definition
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
-		$definition = $reader->getStateMachineDefinition(CrudItem::class);
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(CrudItem::class));
 
 		// Repository
 		$dao = new ArrayDaoTables();
