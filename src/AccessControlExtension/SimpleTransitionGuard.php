@@ -35,14 +35,16 @@ class SimpleTransitionGuard implements TransitionGuard
 
 	/** @var PredicateCompiled[][][] */
 	private array $transitionPredicates;
+	private bool $defaultAllow;
 
 
 	/**
 	 * @param PredicateCompiled[][][] $transitionPredicates
 	 */
-	public function __construct(array $transitionPredicates = [])
+	public function __construct(array $transitionPredicates = [], bool $defaultAllow = true)
 	{
 		$this->transitionPredicates = $transitionPredicates;
+		$this->defaultAllow = $defaultAllow;
 	}
 
 
@@ -95,7 +97,7 @@ class SimpleTransitionGuard implements TransitionGuard
 				return false;
 			}
 		} else {
-			return true;
+			return $this->defaultAllow;
 		}
 	}
 

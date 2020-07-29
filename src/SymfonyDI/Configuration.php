@@ -31,6 +31,17 @@ class Configuration implements ConfigurationInterface
 		$treeBuilder = new TreeBuilder('smalldb');
 		$children = $treeBuilder->getRootNode()->children();
 
+		$children->arrayNode('access_control')
+			->info('Access control options')
+			->children()
+				->scalarNode('default_allow')
+					->info('Allow all transitions if state machine has no access policies defined')
+					->defaultValue(true)
+					->treatNullLike(true)
+					->cannotBeEmpty()
+				->end()
+			->end();
+
 		$children->arrayNode('class_generator')
 			->info('Definition bag & References generator')
 			->children()
