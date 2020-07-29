@@ -29,5 +29,5 @@ tests:
                 - tags
                 - master
         script:
-                - 'make test'
+                - 'make test-coverage'
 
