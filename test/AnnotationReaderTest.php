@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
@@ -23,11 +24,13 @@ use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\SqlExtension\AnnotationException as SqlAnnotationException;
+use Smalldb\StateMachine\Test\BadExample\ApplyToMachineDefinition;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations2;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
+use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
 
 
@@ -72,6 +75,34 @@ class AnnotationReaderTest extends TestCase
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(\InvalidArgumentException::class);
 		$reader->getStateMachineDefinition(new \ReflectionClass(UseReferenceTrait::class));
+	}
+
+
+	public function testAnnotationInterfaceCalls()
+	{
+		ApplyToEverything::resetCounters();
+
+		$reflectionClass = new \ReflectionClass(ApplyToMachineDefinition::class);
+		$annotationReader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $annotationReader->getStateMachineDefinition($reflectionClass);
+		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$this->assertNotEmpty(ApplyToEverything::$calledMethods);
+
+		foreach (ApplyToEverything::$calledMethodCounter as $method => $count) {
+			switch($method) {
+				case ApplyToEverything::class . '::applyToPlaceholder':
+					$this->assertEquals(4, $count, $method);
+					break;
+				case ApplyToEverything::class . '::applyToActionPlaceholder':
+					$this->assertEquals(0, $count, $method);
+					break;
+				default:
+					$this->assertEquals(1, $count, $method);
+					break;
+			}
+		}
+
+		ApplyToEverything::resetCounters();
 	}
 
 }
