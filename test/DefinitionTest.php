@@ -18,6 +18,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\Definition\ActionDefinition;
+use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
@@ -25,6 +26,7 @@ use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedActionException;
+use Smalldb\StateMachine\Definition\UndefinedPropertyException;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 use Smalldb\StateMachine\Definition\UndefinedTransitionException;
 use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
@@ -48,13 +50,17 @@ class DefinitionTest extends TestCase
 		$aUpdate = new ActionDefinition('update', [$tUpdate->getSourceState()->getName() => $tUpdate]);
 		$aDelete = new ActionDefinition('delete', [$tDelete->getSourceState()->getName() => $tDelete]);
 
+		// Properties
+		$idProperty = new PropertyDefinition('id', 'int', false, []);
+		$titleProperty = new PropertyDefinition('title', 'string', false, []);
+
 		// State machine
-		$stateMachineDefinition = new StateMachineDefinition('crud-item', time(),
+		return new StateMachineDefinition('crud-item', time(),
 			['' => $sNotExists, 'Exists' => $sExists],
 			['create' => $aCreate, 'update' => $aUpdate, 'delete' => $aDelete],
-			[$tCreate, $tUpdate, $tDelete], [], []);
-
-		return $stateMachineDefinition;
+			[$tCreate, $tUpdate, $tDelete],
+			['id' => $idProperty, 'title' => $titleProperty],
+			[]);
 	}
 
 
@@ -119,6 +125,50 @@ class DefinitionTest extends TestCase
 	}
 
 
+	public function testGetState()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$state = $stateMachineDefinition->getState('Exists');
+		$this->assertEquals('Exists', $state->getName());
+
+		$this->expectException(UndefinedStateException::class);
+		$stateMachineDefinition->getState('foo');
+	}
+
+
+	public function testGetAction()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$action = $stateMachineDefinition->getAction('create');
+		$this->assertEquals('create', $action->getName());
+
+		$this->expectException(UndefinedActionException::class);
+		$stateMachineDefinition->getAction('foo');
+	}
+
+
+	public function testGetTransition()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$transition = $stateMachineDefinition->getTransition('create', '');
+		$this->assertEquals('create', $transition->getName());
+
+		$this->expectException(UndefinedTransitionException::class);
+		$stateMachineDefinition->getTransition('create', 'Exists');
+	}
+
+
+	public function testGetProperty()
+	{
+		$stateMachineDefinition = $this->buildCrudStateMachine();
+		$id = $stateMachineDefinition->getProperty('id');
+		$this->assertEquals('id', $id->getName());
+
+		$this->expectException(UndefinedPropertyException::class);
+		$stateMachineDefinition->getProperty('foo');
+	}
+
+
 	/*
 	public function testRawCrudDefinitionPerformance()
 	{
@@ -138,6 +188,7 @@ class DefinitionTest extends TestCase
 		$this->assertTrue(true);
 	}
 	*/
+
 
 	public function testGraph()
 	{
