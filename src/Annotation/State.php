@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\Annotation;
 
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
-use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStatePlaceholderInterface;
 
 /**
  * State annotation
@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
  * @Annotation
  * @Target({"CONSTANT"})
  */
-class State implements StatePlaceholderApplyInterface
+class State implements ApplyToStatePlaceholderInterface
 {
 	public string $name;
 

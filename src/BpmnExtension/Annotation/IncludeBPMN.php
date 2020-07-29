@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\BpmnExtension\Annotation;
 
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
 use Smalldb\StateMachine\BpmnExtension\Definition\BpmnDefinitionPreprocessorPass;
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
 
@@ -30,7 +30,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class IncludeBPMN extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
+class IncludeBPMN extends AbstractIncludeAnnotation implements ApplyToStateMachineBuilderInterface
 {
 	/** @Required */
 	public string $bpmnFileName;

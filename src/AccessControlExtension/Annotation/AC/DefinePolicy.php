@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
 
@@ -30,7 +30,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class DefinePolicy implements StateMachineBuilderApplyInterface
+class DefinePolicy implements ApplyToStateMachineBuilderInterface
 {
 	public string $policyName;
 	public PredicateAnnotation $predicate;

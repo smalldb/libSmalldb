@@ -25,15 +25,8 @@ use ReflectionProperty;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\Transition;
-use Smalldb\StateMachine\Definition\Builder\ActionPlaceholderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
-use Smalldb\StateMachine\Definition\Builder\PlaceholderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
-use Smalldb\StateMachine\Definition\Builder\StatePlaceholderApplyInterface;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceTrait;
@@ -137,10 +130,10 @@ class AnnotationReader
 			if ($annotation instanceof ReflectionClassAwareAnnotationInterface) {
 				$annotation->setReflectionClass($reflectionClass);
 			}
-			if ($annotation instanceof PlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToPlaceholderInterface) {
 				$annotation->applyToPlaceholder($builder);
 			}
-			if ($annotation instanceof StateMachineBuilderApplyInterface) {
+			if ($annotation instanceof ApplyToStateMachineBuilderInterface) {
 				$annotation->applyToBuilder($builder);
 			}
 			if ($annotation instanceof RecursiveAnnotationIncludeInterface) {
@@ -180,10 +173,10 @@ class AnnotationReader
 
 		// Apply all annotations to the state placeholder
 		foreach ($annotations as $annotation) {
-			if ($annotation instanceof PlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToPlaceholderInterface) {
 				$annotation->applyToPlaceholder($placeholder);
 			}
-			if ($annotation instanceof StatePlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToStatePlaceholderInterface) {
 				$annotation->applyToStatePlaceholder($placeholder);
 			}
 		}
@@ -216,7 +209,7 @@ class AnnotationReader
 
 		foreach ($annotations as $annotation) {
 			// Apply all annotations to both placeholders
-			if ($annotation instanceof PlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToPlaceholderInterface) {
 				foreach ($actionPlaceholders as $placeholder) {
 					$annotation->applyToPlaceholder($placeholder);
 				}
@@ -226,14 +219,14 @@ class AnnotationReader
 			}
 
 			// Apply all annotations to the action placeholder
-			if ($annotation instanceof ActionPlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToActionPlaceholderInterface) {
 				foreach ($actionPlaceholders as $placeholder) {
 					$annotation->applyToActionPlaceholder($placeholder);
 				}
 			}
 
 			// Apply all annotations to the transition placeholders
-			if ($annotation instanceof TransitionPlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToTransitionPlaceholderInterface) {
 				foreach ($transitionPlaceholders as $placeholder) {
 					$annotation->applyToTransitionPlaceholder($placeholder);
 				}
@@ -263,10 +256,10 @@ class AnnotationReader
 		}
 
 		foreach ($annotations as $annotation) {
-			if ($annotation instanceof PlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToPlaceholderInterface) {
 				$annotation->applyToPlaceholder($placeholder);
 			}
-			if ($annotation instanceof PropertyPlaceholderApplyInterface) {
+			if ($annotation instanceof ApplyToPropertyPlaceholderInterface) {
 				$annotation->applyToPropertyPlaceholder($placeholder);
 			}
 		}

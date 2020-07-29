@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\GraphMLExtension\Annotation;
 
 use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessorPass;
 
@@ -30,7 +30,7 @@ use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessorPass;
  * @Annotation
  * @Target({"CLASS"})
  */
-class IncludeGraphML extends AbstractIncludeAnnotation implements StateMachineBuilderApplyInterface
+class IncludeGraphML extends AbstractIncludeAnnotation implements ApplyToStateMachineBuilderInterface
 {
 	/**
 	 * @Required

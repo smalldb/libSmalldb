@@ -16,10 +16,13 @@
  *
  */
 
-namespace Smalldb\StateMachine\Definition\Builder;
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
+
+use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
 
 
-interface PropertyPlaceholderApplyInterface
+interface ApplyToStatePlaceholderInterface
 {
-	public function applyToPropertyPlaceholder(PropertyPlaceholder $propertyPlaceholder): void;
+	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void;
+
 }

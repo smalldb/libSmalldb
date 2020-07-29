@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
 /**
@@ -27,7 +27,7 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class UseReference implements StateMachineBuilderApplyInterface
+class UseReference implements ApplyToStateMachineBuilderInterface
 {
 	public string $referenceClass;
 

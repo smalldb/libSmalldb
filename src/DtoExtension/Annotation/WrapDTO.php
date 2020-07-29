@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\DtoExtension\Annotation;
 
 use Smalldb\StateMachine\Definition\AnnotationReader\RecursiveAnnotationIncludeInterface;
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\DtoExtension\Definition\DtoExtensionPlaceholder;
 
@@ -28,7 +28,7 @@ use Smalldb\StateMachine\DtoExtension\Definition\DtoExtensionPlaceholder;
  * @Annotation
  * @Target({"CLASS"})
  */
-class WrapDTO implements StateMachineBuilderApplyInterface, RecursiveAnnotationIncludeInterface
+class WrapDTO implements ApplyToStateMachineBuilderInterface, RecursiveAnnotationIncludeInterface
 {
 	public string $dtoClassName;
 

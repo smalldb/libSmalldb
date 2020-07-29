@@ -16,11 +16,13 @@
  *
  */
 
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
-namespace Smalldb\StateMachine\Definition\Builder;
+use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
 
 
-interface PlaceholderApplyInterface
+interface ApplyToPlaceholderInterface
 {
 	public function applyToPlaceholder(ExtensiblePlaceholder $placeholder): void;
+
 }

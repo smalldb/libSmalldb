@@ -20,7 +20,7 @@ namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToTransitionPlaceholderInterface;
 
 
 /**
@@ -29,7 +29,7 @@ use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholderApplyInterface;
  * @Annotation
  * @Target({"METHOD"})
  */
-class UsePolicy implements TransitionPlaceholderApplyInterface
+class UsePolicy implements ApplyToTransitionPlaceholderInterface
 {
 	public string $policy;
 

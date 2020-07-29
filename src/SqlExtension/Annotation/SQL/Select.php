@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 
 use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholder;
-use Smalldb\StateMachine\Definition\Builder\PropertyPlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToPropertyPlaceholderInterface;
 use Smalldb\StateMachine\SqlExtension\AnnotationException;
 use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder;
 
@@ -31,7 +31,7 @@ use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtensionPlaceholder
  * @Annotation
  * @Target({"PROPERTY"})
  */
-class Select implements PropertyPlaceholderApplyInterface
+class Select implements ApplyToPropertyPlaceholderInterface
 {
 	public string $expression;
 

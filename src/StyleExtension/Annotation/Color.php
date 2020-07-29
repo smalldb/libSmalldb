@@ -19,7 +19,7 @@
 namespace Smalldb\StateMachine\StyleExtension\Annotation;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
-use Smalldb\StateMachine\Definition\Builder\PlaceholderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToPlaceholderInterface;
 use Smalldb\StateMachine\StyleExtension\Definition\StyleExtensionPlaceholder;
 
 
@@ -28,7 +28,7 @@ use Smalldb\StateMachine\StyleExtension\Definition\StyleExtensionPlaceholder;
  *
  * @Annotation
  */
-class Color implements PlaceholderApplyInterface
+class Color implements ApplyToPlaceholderInterface
 {
 	/** @var string */
 	public string $color;

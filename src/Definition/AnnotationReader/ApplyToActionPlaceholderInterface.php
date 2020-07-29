@@ -16,11 +16,13 @@
  *
  */
 
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
-namespace Smalldb\StateMachine\Definition\Builder;
+use Smalldb\StateMachine\Definition\Builder\ActionPlaceholder;
 
 
-interface StateMachineBuilderApplyInterface
+interface ApplyToActionPlaceholderInterface
 {
-	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void;
+	public function applyToActionPlaceholder(ActionPlaceholder $placeholder): void;
+
 }

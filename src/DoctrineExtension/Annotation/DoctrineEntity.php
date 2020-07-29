@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\DoctrineExtension\Annotation;
 
-use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderApplyInterface;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreprocessorPass;
 
@@ -29,7 +29,7 @@ use Smalldb\StateMachine\DoctrineExtension\Definition\DoctrineDefinitionPreproce
  * @Annotation
  * @Target({"CLASS"})
  */
-class DoctrineEntity implements StateMachineBuilderApplyInterface
+class DoctrineEntity implements ApplyToStateMachineBuilderInterface
 {
 	public string $className;
 

@@ -16,11 +16,13 @@
  *
  */
 
+namespace Smalldb\StateMachine\Definition\AnnotationReader;
 
-namespace Smalldb\StateMachine\Definition\Builder;
+use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
 
 
-interface StatePlaceholderApplyInterface
+interface ApplyToTransitionPlaceholderInterface
 {
-	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void;
+	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void;
+
 }
