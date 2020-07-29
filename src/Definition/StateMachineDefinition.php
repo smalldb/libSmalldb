@@ -182,6 +182,16 @@ class StateMachineDefinition extends ExtensibleDefinition
 	}
 
 
+	public function getProperty(string $name): PropertyDefinition
+	{
+		if (isset($this->properties[$name])) {
+			return $this->properties[$name];
+		} else {
+			throw new UndefinedPropertyException("Undefined property: $name");
+		}
+	}
+
+
 	public function getGraph(): StateMachineGraph
 	{
 		return $this->stateMachineGraph ?? ($this->stateMachineGraph = new StateMachineGraph($this));
