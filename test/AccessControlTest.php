@@ -327,10 +327,12 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		// Configure Guard
 		$transitionPredicates = [
 			'foo' => [
-				'yes' => $yesCompiled,
-				'no' => $noCompiled,
-				'role' => $hasRoleCompiled,
-				'owner' => $isOwnerCompiled,
+				'' => [
+					'yes' => $yesCompiled,
+					'no' => $noCompiled,
+					'role' => $hasRoleCompiled,
+					'owner' => $isOwnerCompiled,
+				]
 			]
 		];
 		$container->autowire(SimpleTransitionGuard::class, SimpleTransitionGuard::class)
@@ -358,7 +360,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		/** @var SimpleTransitionGuard $guard */
 		$guard = $container->get(SimpleTransitionGuard::class);
 		$guardPredicates = $guard->getTransitionPredicates();
-		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['yes'] ?? null);
+		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['']['yes'] ?? null);
 
 		// Mock ref & definition
 		$ref = $this->createMock(Post::class);

@@ -23,8 +23,13 @@ use Smalldb\ClassLocator\CompositeClassLocator;
 use Smalldb\CodeCooker\Chef;
 use Smalldb\CodeCooker\Cookbook;
 use Smalldb\CodeCooker\RecipeLocator;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\AccessControlExtension\Predicate\SymfonyContainerAdapter;
+use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
 use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
@@ -72,9 +77,6 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
 			->setPublic(true);
 
-		// TODO: Use proper guard
-		$container->autowire(TransitionGuard::class, AllowingTransitionGuard::class);
-
 		$baseDir = $container->getParameter('kernel.project_dir');
 		$classLocator = $this->createClassLocator($baseDir);
 
@@ -82,7 +84,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
 			$cookbook = new Cookbook();
 			$recipeLocator = new RecipeLocator($classLocator);
-			$recipeLocator->onRecipeClass(function(\ReflectionClass $sourceClass) use ($container) {
+			$recipeLocator->onRecipeClass(function (\ReflectionClass $sourceClass) use ($container) {
 				$container->addResource(new ReflectionClassResource($sourceClass));
 			});
 			$cookbook->addRecipes($recipeLocator->locateRecipes());
@@ -96,17 +98,6 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 			}
 		}
 
-		// Load all state machine definitions
-		$definitionReader = new SmalldbDefinitionBagReader();
-		$definitionReader->onDefinitionClass(function(\ReflectionClass $sourceClass) use ($container) {
-			$container->addResource(new ReflectionClassResource($sourceClass));
-		});
-		if (empty($this->config['definition_classes'])) {
-			$definitionReader->addFromClassLocator($classLocator);
-		} else {
-			$definitionReader->addFromAnnotatedClasses($this->config['definition_classes']);
-		}
-
 		// Register autoloader for generated classes
 		$genNamespace = $this->config['class_generator']['namespace'] ?? 'Smalldb\\GeneratedCode\\';
 		$genPath = $this->config['class_generator']['path'] ?? $container->getParameter('kernel.cache_dir') . '/smalldb';
@@ -114,9 +105,24 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		$autoloader = new GeneratedClassAutoloader($genNamespace, $genPath);
 		$autoloader->registerLoader();
 
+		// Load all state machine definitions
+		$definitionReader = new SmalldbDefinitionBagReader();
+		$definitionReader->onDefinitionClass(function (\ReflectionClass $sourceClass) use ($container) {
+			$container->addResource(new ReflectionClassResource($sourceClass));
+		});
+		if (empty($this->config['definition_classes'])) {
+			$definitionReader->addFromClassLocator($classLocator);
+		} else {
+			$definitionReader->addFromAnnotatedClasses($this->config['definition_classes']);
+		}
+		$definitionBag = $definitionReader->getDefinitionBag();
+
 		// Generate everything
-		$this->generateClasses($container, $smalldb, $definitionReader->getDefinitionBag(),
-			$genNamespace, $genPath);
+		$this->generateClasses($container, $smalldb, $definitionBag, $genNamespace, $genPath);
+
+		// Register Guard
+		$container->autowire(TransitionGuard::class, SimpleTransitionGuard::class)
+			->setArguments([SimpleTransitionGuard::compileTransitionPredicates($definitionBag, $container)]);
 	}
 
 

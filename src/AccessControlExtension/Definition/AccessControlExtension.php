@@ -18,7 +18,9 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
+use Smalldb\StateMachine\AccessControlExtension\Predicate\ContainerAdapter;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
@@ -58,6 +60,16 @@ class AccessControlExtension implements ExtensionInterface
 	public function getDefaultPolicyName(): ?string
 	{
 		return $this->defaultPolicyName;
+	}
+
+
+	public function compilePolicyPredicates(ContainerAdapter $container): array
+	{
+		$policyPredicates = [];
+		foreach ($this->policies as $policyName => $policy) {
+			$policyPredicates[$policy->getName()] = $policy->getPredicate()->compile($container);
+		}
+		return $policyPredicates;
 	}
 
 }
