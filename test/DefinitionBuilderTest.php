@@ -26,9 +26,13 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
 use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
 use Smalldb\StateMachine\Definition\DefinitionError;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Definition\UndefinedPropertyException;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
 use Smalldb\StateMachine\Test\Example\Post\PostTransitions;
@@ -328,5 +332,71 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addPreprocessorPass($preprocessorPass);
 		$builder->build();
 	}
+
+
+	public function testNoNameAddState()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		// Empty state name is valid; no exception should be thrown.
+		$s = $builder->addState('');
+		$this->assertInstanceOf(StatePlaceholder::class, $s);
+	}
+
+
+	public function testNoNameGetState()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		// Empty state name is valid; no exception should be thrown.
+		$s = $builder->getState('');
+		$this->assertInstanceOf(StatePlaceholder::class, $s);
+	}
+
+
+	public function testNoNameGetAction()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->getAction('');
+	}
+
+
+	public function testNoNameAddAction()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->addAction('');
+	}
+
+
+	public function testNoNameGetTransition()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->getTransition('', '');
+	}
+
+
+	public function testNoNameAddTransition()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->addTransition('', '', []);
+	}
+
+	public function testNoNameGetProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->getProperty('');
+	}
+
+
+	public function testNoNameAddProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->expectException(InvalidArgumentException::class);
+		$builder->addProperty('');
+	}
+
 
 }

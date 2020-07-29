@@ -32,7 +32,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
 	private PreprocessorList $preprocessorList;
 
-	private ?int $mtime;
+	private ?int $mtime = null;
 
 	/** @var PreprocessorPass[] */
 	private array $preprocessorQueue = [];
@@ -52,7 +52,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	/** @var PropertyPlaceholder[] */
 	private array $properties = [];
 
-	private string $machineType;
+	private ?string $machineType = null;
 
 	/** @var DefinitionErrorInterface[] */
 	private array $errors = [];
@@ -241,6 +241,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 		if ($name === '') {
 			throw new InvalidArgumentException("Empty action name.");
 		}
+
 		return $this->actions[$name] ?? ($this->actions[$name] = new ActionPlaceholder($name));
 	}
 
@@ -278,6 +279,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 		if ($transitionName === '') {
 			throw new InvalidArgumentException("Empty transition name.");
 		}
+
 		if (isset($this->transitionsByState[$sourceStateName][$transitionName])) {
 			throw new DuplicateTransitionException("Transition \"$transitionName\" already exists in state \"$sourceStateName\".");
 		} else {
@@ -298,6 +300,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 		if ($name === '') {
 			throw new InvalidArgumentException("Empty property name.");
 		}
+
 		if (isset($this->properties[$name])) {
 			return $this->properties[$name];
 		} else {
@@ -311,6 +314,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 		if ($name === '') {
 			throw new InvalidArgumentException("Empty property name.");
 		}
+
 		if (isset($this->properties[$name])) {
 			throw new DuplicatePropertyException("Property already exists: $name");
 		} else {
@@ -319,7 +323,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	}
 
 
-	public function getMachineType(): string
+	public function getMachineType(): ?string
 	{
 		return $this->machineType;
 	}
