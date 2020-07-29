@@ -40,7 +40,7 @@ class IsOwnerCompiled implements PredicateCompiled
 		// FIXME: Get the proper user ID.
 		$userId = $this->security->getUser()->getUsername();
 		$getter = 'get' . ucfirst($this->ownerProperty);
-		return ($ref->$getter)($this->ownerProperty) === $userId;
+		return $ref->$getter($this->ownerProperty) === $userId;
 	}
 
 }

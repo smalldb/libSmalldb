@@ -27,8 +27,10 @@ use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Security\Core\Security;
@@ -207,19 +209,31 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	{
 		$policyName = "default_policy";
 
-		$annotation = new A\DefaultPolicy();
-		$annotation->policyName = $policyName;
-
 		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
 		$builder->setMachineType("foo");
-		$annotation->applyToBuilder($builder);
+
+		$defaultPolicyAnnotation = new A\DefaultPolicy();
+		$defaultPolicyAnnotation->policyName = $policyName;
+		$defaultPolicyAnnotation->applyToBuilder($builder);
+
+		$policyAnnotation = new A\DefinePolicy(["value" => [$policyName, new A\Allow()]]);
+		$policyAnnotation->applyToBuilder($builder);
 
 		$definition = $builder->build();
 		$this->assertTrue($definition->hasExtension(AccessControlExtension::class));
 
 		/** @var AccessControlExtension $ext */
 		$ext = $definition->getExtension(AccessControlExtension::class);
-		$this->assertSame($policyName, $ext->getDefaultPolicyName());
+		$defaultPolicyName = $ext->getDefaultPolicyName();
+		$this->assertSame($policyName, $defaultPolicyName);
+
+		$defaultPolicy = $ext->getPolicy($defaultPolicyName);
+		$this->assertInstanceOf(AccessControlPolicy::class, $defaultPolicy);
+
+		$defaultPredicate = $defaultPolicy->getPredicate();
+		$this->assertInstanceOf(P\Predicate::class, $defaultPredicate);
+
+		$this->assertNull($ext->getPolicy("some_undefined_policy"));
 	}
 
 
@@ -267,6 +281,8 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	 */
 	public function testCompileWithContainer()
 	{
+		$ownerProperty = "authorId";
+
 		$container = new ContainerBuilder();
 		$containerAdapter = new P\SymfonyContainerAdapter($container);
 
@@ -284,7 +300,13 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$hasRole = new P\HasRole(self::ROLE_EDITOR);
 		$this->assertEquals(self::ROLE_EDITOR, $hasRole->getRole());
 		$hasRoleCompiled = $hasRole->compile($containerAdapter);
-		$this->assertInstanceOf(Reference::class, $noCompiled);
+		$this->assertInstanceOf(Reference::class, $hasRoleCompiled);
+
+		// Allow Owner
+		$isOwner = new P\IsOwner($ownerProperty);
+		$this->assertEquals($ownerProperty, $isOwner->getOwnerProperty());
+		$isOwnerCompiled = $isOwner->compile($containerAdapter);
+		$this->assertInstanceOf(Reference::class, $isOwnerCompiled);
 
 		// Configure Guard
 		$transitionPredicates = [
@@ -292,6 +314,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 				'yes' => $yesCompiled,
 				'no' => $noCompiled,
 				'role' => $hasRoleCompiled,
+				'owner' => $isOwnerCompiled,
 			]
 		];
 		$container->autowire(SimpleTransitionGuard::class, SimpleTransitionGuard::class)
@@ -308,6 +331,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$securityMock = $this->createMock(Security::class);
 		$userRoles = [self::ROLE_USER];
 		$userMock = $this->createMock(UserInterface::class);
+		$userMock->method('getUserName')->willReturn(123);
 		$userMock->method('getRoles')->willReturnCallback(function() use (&$userRoles) {
 			return $userRoles;
 		});
@@ -320,18 +344,36 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$guardPredicates = $guard->getTransitionPredicates();
 		$this->assertInstanceOf(P\AllofCompiled::class, $guardPredicates['foo']['yes'] ?? null);
 
+		// Mock ref & definition
+		$ref = $this->createMock(Post::class);
+		$ref->method('getMachineType')->willReturn('foo');
+		$ref->method('getAuthorId')->willReturn(123);
+		$yesTransitionDefinition = $this->createMock(TransitionDefinition::class);
+		$yesTransitionDefinition->method('getName')->willReturn('yes');
+		$noTransitionDefinition = $this->createMock(TransitionDefinition::class);
+		$noTransitionDefinition->method('getName')->willReturn('no');
+
 		// Check Yes
-		$yesAllowed = $guard->isAccessAllowed('foo', 'yes', $this->getRef());
-		$this->assertTrue($yesAllowed);
+		$this->assertTrue($guard->isAccessAllowed('foo', 'yes', $this->getRef()));
+		$this->assertTrue($guard->isTransitionAllowed($ref, $yesTransitionDefinition));
 
 		// Check No
-		$noAllowed = $guard->isAccessAllowed('foo', 'no', $this->getRef());
-		$this->assertFalse($noAllowed);
+		$this->assertFalse($guard->isAccessAllowed('foo', 'no', $this->getRef()));
+		$this->assertFalse($guard->isTransitionAllowed($ref, $noTransitionDefinition));
 
 		// Check HasRole before and after adding a role
 		$this->assertFalse($guard->isAccessAllowed('foo', 'role', $this->getRef()));
 		$userRoles[] = self::ROLE_EDITOR;
 		$this->assertTrue($guard->isAccessAllowed('foo', 'role', $this->getRef()));
+
+		// Check IsOwner
+		$this->assertTrue($guard->isAccessAllowed('foo', 'owner', $ref));
+
+		// Check machine with no access control at all
+		$this->assertTrue($guard->isAccessAllowed('bar', 'something', $this->getRef()));
+
+		// Check transition with no predicate but with other defined transitions
+		$this->assertFalse($guard->isAccessAllowed('foo', 'something', $this->getRef()));
 	}
 
 }
