@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\Definition\Builder\DuplicateActionException;
@@ -26,12 +27,10 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
 use Smalldb\StateMachine\Definition\Builder\PreprocessorPass;
 use Smalldb\StateMachine\Definition\Builder\StateMachineBuilderException;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
 use Smalldb\StateMachine\Definition\DefinitionError;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
-use Smalldb\StateMachine\Definition\UndefinedPropertyException;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\Example\Post\PostRepository;
@@ -383,6 +382,7 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addTransition('', '', []);
 	}
 
+
 	public function testNoNameGetProperty()
 	{
 		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
@@ -398,5 +398,28 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addProperty('');
 	}
 
+
+	public function testMTime()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$this->assertNull($builder->getMTime());
+
+		$t = time();
+
+		$builder->setMTime($t - 2000);
+		$this->assertEquals($t - 2000, $builder->getMTime());
+
+		$builder->addMTime($t - 1000);
+		$this->assertEquals($t - 1000, $builder->getMTime());
+
+		$builder->addMTime($t - 1500);
+		$this->assertEquals($t - 1000, $builder->getMTime());
+
+		$builder->setMTime(null);
+		$this->assertNull($builder->getMTime());
+
+		$builder->addMTime($t - 1500);
+		$this->assertEquals($t - 1500, $builder->getMTime());
+	}
 
 }
