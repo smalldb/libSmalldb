@@ -227,6 +227,12 @@ class DefinitionBuilderTest extends TestCase
 		$this->assertEquals('bar', $properties['bar']->getName());
 		$this->assertEquals('int', $properties['bar']->getType());
 		$this->assertFalse($properties['bar']->isNullable());
+
+		$fooProperty = $definition->getProperty('foo');
+		$this->assertSame($properties['foo'], $fooProperty);
+
+		$barProperty = $definition->getProperty('bar');
+		$this->assertSame($properties['bar'], $barProperty);
 	}
 
 
@@ -237,6 +243,16 @@ class DefinitionBuilderTest extends TestCase
 		$builder->addProperty('a');
 		$this->expectException(DuplicatePropertyException::class);
 		$builder->addProperty('a');
+	}
+
+
+	public function testMissingProperty()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$builder->setMachineType('foo');
+		$builder->addProperty('a');
+		$newProperty = $builder->getProperty('b'); // not 'a'
+		$this->assertEquals('b', $newProperty->name);
 	}
 
 
