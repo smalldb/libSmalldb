@@ -39,6 +39,12 @@ class AccessControlExtension implements ExtensionInterface
 	}
 
 
+	public function getPolicies(): array
+	{
+		return $this->policies;
+	}
+
+
 	public function getPolicy(string $policyName): ?AccessControlPolicy
 	{
 		if (isset($this->policies[$policyName])) {

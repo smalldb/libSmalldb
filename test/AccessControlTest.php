@@ -158,6 +158,22 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	}
 
 
+	public function testAccessControlExtension()
+	{
+		$placeholder = new AccessControlExtensionPlaceholder();
+		$placeholder->addPolicy(new AccessControlPolicy("Foo", new P\Allow()));
+		$placeholder->addPolicy(new AccessControlPolicy("Bar", new P\Deny()));
+
+		$ext = $placeholder->buildExtension();
+		$policies = $ext->getPolicies();
+		$this->assertCount(2, $policies);
+		$this->assertContainsOnlyInstancesOf(AccessControlPolicy::class, $policies);
+
+		$foo = $ext->getPolicy('Foo');
+		$this->assertInstanceOf(P\Allow::class, $foo->getPredicate());
+	}
+
+
 	public function testDuplicateAccessPolicyInPlaceholder()
 	{
 		$ext = new AccessControlExtensionPlaceholder();

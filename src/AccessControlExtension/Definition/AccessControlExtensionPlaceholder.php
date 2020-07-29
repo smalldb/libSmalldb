@@ -47,7 +47,7 @@ class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 	}
 
 
-	public function buildExtension(): ?ExtensionInterface
+	public function buildExtension(): ?AccessControlExtension
 	{
 		return empty($this->policies) && $this->defaultPolicyName === null ? null
 			: new AccessControlExtension($this->policies, $this->defaultPolicyName);
