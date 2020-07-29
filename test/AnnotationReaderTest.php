@@ -31,6 +31,8 @@ use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
 use Smalldb\StateMachine\Test\BadExample\MultipleConstants;
 use Smalldb\StateMachine\Test\BadExample\MultipleStateAnnotations;
+use Smalldb\StateMachine\Test\BadExample\PropertyDefinition;
+use Smalldb\StateMachine\Test\BadExample\PropertyGetterDefinition;
 use Smalldb\StateMachine\Test\BadExample\TransitionWithoutDefinition;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
@@ -137,6 +139,40 @@ class AnnotationReaderTest extends TestCase
 		}
 
 		ApplyToEverything::resetCounters();
+	}
+
+
+	public function testPropertyDefinition()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(PropertyDefinition::class));
+		$properties = $definition->getProperties();
+		$this->assertCount(2, $properties);
+
+		$idProperty = $definition->getProperty('id');
+		$this->assertEquals('int', $idProperty->getType());
+		$this->assertFalse($idProperty->isNullable());
+
+		$fooProperty = $definition->getProperty('foo');
+		$this->assertEquals('string', $fooProperty->getType());
+		$this->assertTrue($fooProperty->isNullable());
+	}
+
+
+	public function testPropertyGetterDefinition()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(PropertyGetterDefinition::class));
+		$properties = $definition->getProperties();
+		$this->assertCount(2, $properties);
+
+		$idProperty = $definition->getProperty('id');
+		$this->assertEquals('string', $idProperty->getType());
+		$this->assertFalse($idProperty->isNullable());
+
+		$fooProperty = $definition->getProperty('foo');
+		$this->assertEquals('string', $fooProperty->getType());
+		$this->assertFalse($fooProperty->isNullable());
 	}
 
 }

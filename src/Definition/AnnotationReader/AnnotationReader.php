@@ -245,13 +245,15 @@ class AnnotationReader
 		$name = $reflectionProperty->getName();
 
 		// Get getter type as default property type
-		// TODO: When PHP 7.4 comes, use property typehint first.
 		$getterName = 'get' . ucfirst($name);
 		$classReflection = $reflectionProperty->getDeclaringClass();
 		if ($classReflection->hasMethod($getterName) && ($type = $classReflection->getMethod($getterName)->getReturnType())) {
-			$placeholder = $builder->addProperty($name, $type->getName(), $type->allowsNull());
+			$typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
+			$placeholder = $builder->addProperty($name, $typeName, $type->allowsNull());
 		} else {
-			$placeholder = $builder->addProperty($name);
+			$type = $reflectionProperty->getType();
+			$typeName = $type instanceof \ReflectionNamedType ? $type->getName() : null;
+			$placeholder = $builder->addProperty($name, $typeName, $type->allowsNull());
 		}
 
 		foreach ($annotations as $annotation) {
