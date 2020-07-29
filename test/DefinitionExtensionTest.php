@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Definition\ExtensibleDefinition;
@@ -27,6 +28,8 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\Definition\UndefinedExtensionException;
 use Smalldb\StateMachine\Definition\InvalidExtensionException;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtension;
+use Smalldb\StateMachine\StyleExtension\Definition\StyleExtension;
 
 
 class DefinitionExtensionTest extends TestCase
@@ -79,6 +82,33 @@ class DefinitionExtensionTest extends TestCase
 
 		$this->expectException(UndefinedExtensionException::class);
 		$definition->getExtension('Foo');
+	}
+
+
+	/**
+	 * @dataProvider definitionFactoryProvider
+	 */
+	public function testDefinitionGetExtensionClassNames(callable $definitionFactory)
+	{
+		$extensions = [
+			AccessControlExtension::class => new AccessControlExtension([], null),
+			SourcesExtension::class => new SourcesExtension([]),
+			StyleExtension::class => new StyleExtension('blue'),
+		];
+
+		/** @var ExtensibleDefinition $definition */
+		$definition = $definitionFactory($extensions);
+		$this->assertInstanceOf(ExtensibleDefinition::class, $definition);
+
+		$extensionClassNames = $definition->getExtensionClassNames();
+		$this->assertContainsEquals(AccessControlExtension::class, $extensionClassNames);
+		$this->assertContainsEquals(SourcesExtension::class, $extensionClassNames);
+		$this->assertContainsEquals(StyleExtension::class, $extensionClassNames);
+		$this->assertCount(3, $extensionClassNames);
+
+		foreach ($extensionClassNames as $ecn) {
+			$this->assertTrue($definition->hasExtension($ecn));
+		}
 	}
 
 
