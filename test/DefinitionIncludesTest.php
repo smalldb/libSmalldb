@@ -18,15 +18,50 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\BpmnExtension\Definition\BpmnDefinitionPreprocessor;
+use Smalldb\StateMachine\BpmnExtension\Definition\BpmnDefinitionPreprocessorPass;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorPassException;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessor;
+use Smalldb\StateMachine\GraphMLExtension\GraphMLDefinitionPreprocessorPass;
 use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 
 
 class DefinitionIncludesTest extends TestCase
 {
+
+	public function testPreprocessors()
+	{
+		$factory = new StateMachineDefinitionBuilderFactory();
+		$factory->addPreprocessor(new BpmnDefinitionPreprocessor());
+		$factory->addPreprocessor(new GraphMLDefinitionPreprocessor());
+
+		$plist = $factory->getPreprocessorList();
+		$this->assertTrue($plist->supports(new BpmnDefinitionPreprocessorPass('foo.bpmn', 'foo')));
+		$this->assertTrue($plist->supports(new GraphMLDefinitionPreprocessorPass('foo.graphml')));
+	}
+
+
+	public function testInvalidPreprocessorPass()
+	{
+		$factory = new StateMachineDefinitionBuilderFactory();
+		$factory->addPreprocessor(new BpmnDefinitionPreprocessor());
+
+		$plist = $factory->getPreprocessorList();
+		$pass = new GraphMLDefinitionPreprocessorPass('foo.graphml');
+		$this->assertFalse($plist->supports($pass));
+
+		$builder = new StateMachineDefinitionBuilder($plist);
+		$builder->addPreprocessorPass($pass);
+
+		$this->expectException(PreprocessorPassException::class);
+		$builder->build();
+	}
+
 
 	public function testGraphML()
 	{

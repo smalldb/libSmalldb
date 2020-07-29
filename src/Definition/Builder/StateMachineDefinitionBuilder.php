@@ -30,7 +30,7 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 {
-	private PreprocessorList $preprocessorBag;
+	private PreprocessorList $preprocessorList;
 
 	private ?int $mtime;
 
@@ -64,10 +64,10 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	private ?string $transitionsClass = null;
 
 
-	public function __construct(PreprocessorList $preprocessorBag)
+	public function __construct(PreprocessorList $preprocessorList)
 	{
 		parent::__construct([]);
-		$this->preprocessorBag = $preprocessorBag;
+		$this->preprocessorList = $preprocessorList;
 	}
 
 
@@ -80,7 +80,7 @@ class StateMachineDefinitionBuilder extends ExtensiblePlaceholder
 	public function runPreprocessor(): void
 	{
 		while (($preprocessorPass = array_shift($this->preprocessorQueue))) {
-			$this->preprocessorBag->preprocessDefinition($this, $preprocessorPass);
+			$this->preprocessorList->preprocessDefinition($this, $preprocessorPass);
 		}
 	}
 
