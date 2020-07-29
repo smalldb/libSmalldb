@@ -29,6 +29,9 @@ use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotations2;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId;
 use Smalldb\StateMachine\Test\BadExample\ConflictingAnnotationsWithId2;
+use Smalldb\StateMachine\Test\BadExample\MultipleConstants;
+use Smalldb\StateMachine\Test\BadExample\MultipleStateAnnotations;
+use Smalldb\StateMachine\Test\BadExample\TransitionWithoutDefinition;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -78,14 +81,45 @@ class AnnotationReaderTest extends TestCase
 	}
 
 
+	public function testMultipleStateAnnotations()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage("Multiple @State annotations at EXISTS constant.");
+		$reader->getStateMachineDefinition(new \ReflectionClass(MultipleStateAnnotations::class));
+	}
+
+
+	public function testMultipleConstants()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(MultipleConstants::class));
+
+		$states = $definition->getStates();
+		$this->assertCount(2, $states);
+	}
+
+
+	public function testTransitionWithoutDefinition()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(TransitionWithoutDefinition::class));
+
+		$actions = $definition->getActions();
+		$this->assertCount(1, $actions);
+
+		$transitions = $definition->getTransitions();
+		$this->assertCount(0, $transitions);
+	}
+
+
 	public function testAnnotationInterfaceCalls()
 	{
 		ApplyToEverything::resetCounters();
 
-		$reflectionClass = new \ReflectionClass(ApplyToMachineDefinition::class);
-		$annotationReader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
-		$definition = $annotationReader->getStateMachineDefinition($reflectionClass);
-		$this->assertInstanceOf(StateMachineDefinition::class, $definition);
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$reader->getStateMachineDefinition(new \ReflectionClass(ApplyToMachineDefinition::class));
+
 		$this->assertNotEmpty(ApplyToEverything::$calledMethods);
 
 		foreach (ApplyToEverything::$calledMethodCounter as $method => $count) {
