@@ -16,7 +16,7 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Transition;
 
 use Throwable;
 
@@ -25,7 +25,7 @@ use Throwable;
  * State machine has errors
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
-class StateMachineHasErrorsException extends \RuntimeException
+class StateMachineHasErrorsException extends TransitionException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)
