@@ -40,7 +40,6 @@ use Smalldb\StateMachine\Test\SmalldbFactory\SymfonyDemoContainer;
 use Smalldb\StateMachine\Test\SmalldbFactory\YamlDemoContainer;
 use Smalldb\StateMachine\Transition\MissingTransitionImplementationException;
 use Smalldb\StateMachine\Transition\TransitionAssertException;
-use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
 class BasicMachineTest extends TestCase
