@@ -20,14 +20,16 @@ namespace Smalldb\StateMachine\Test;
 
 use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
-use Smalldb\StateMachine\Definition\TransitionDefinition;
-use Smalldb\StateMachine\Provider\AbstractCachingProvider;
+use Smalldb\StateMachine\Definition\DefinitionError;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
+use Smalldb\StateMachine\Transition\TransitionAccessException;
+use Smalldb\StateMachine\Transition\TransitionDecorator;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 use Smalldb\StateMachine\Transition\TransitionException;
 use Smalldb\StateMachine\Transition\TransitionGuard;
@@ -36,23 +38,56 @@ use Smalldb\StateMachine\Transition\TransitionGuard;
 class TransitionTest extends TestCase
 {
 
+	public function testTransition()
+	{
+		$definition = $this->createBuilder()->build();
+
+		$ref = $this->createReference($definition, true, 123);
+
+		$ev = $ref->invokeTransition('create');
+		$this->assertEquals(123, $ev->getReturnValue());
+	}
+
+
 	public function testTransitionDenied()
+	{
+		$definition = $this->createBuilder()->build();
+
+		$ref = $this->createReference($definition, false, null);
+
+		$this->expectException(TransitionAccessException::class);
+		$ref->invokeTransition('create');
+	}
+
+
+	public function testTransitionWithErrors()
+	{
+		$builder = $this->createBuilder();
+		$builder->addError(new DefinitionError('Something is wrong.'));
+		$definition = $builder->build();
+
+		$ref = $this->createReference($definition, true, null);
+
+		$this->expectException(TransitionException::class);
+		$ref->invokeTransition('create');
+	}
+
+
+	/**
+	 * @return StateMachineDefinitionBuilder
+	 */
+	private function createBuilder(): StateMachineDefinitionBuilder
 	{
 		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
 		$builder->setMachineType('foo');
-		$builder->addState('Exists');
-		$builder->addTransition('create', '', ['Exists']);
-		$definition = $builder->build();
+		$builder->addTransition('create', '', ['']);
+		return $builder;
+	}
 
-		$guard = $this->createMock(TransitionGuard::class);
-		$guard->method('isTransitionAllowed')->willReturn(false);
 
-		$tr = new class($guard) extends MethodTransitionsDecorator {
-			public function create(TransitionEvent $transitionEvent, ReferenceInterface $ref): void
-			{
-				throw new \Exception('This should not happen.');
-			}
-		};
+	private function createReference(StateMachineDefinition $definition, bool $allow, ?int $id): ReferenceInterface
+	{
+		$tr = $this->createTransitionDecorator($allow);
 
 		$provider = $this->createMock(SmalldbProviderInterface::class);
 		$provider->method('getTransitionsDecorator')->willReturn($tr);
@@ -63,9 +98,11 @@ class TransitionTest extends TestCase
 		$ref = new class(new Smalldb, $provider, $dataSource) implements ReferenceInterface {
 			use ReferenceTrait;
 
+			public ?int $id = null;
+
 			public function getMachineId()
 			{
-				return 1;
+				return $this->id;
 			}
 
 			public function getState(): string
@@ -73,17 +110,33 @@ class TransitionTest extends TestCase
 				return '';
 			}
 
-
 			public function invalidateCache(): void
 			{
 				// No-op.
 			}
 
 		};
-
-		$this->expectException(TransitionException::class);
-		$ref->invokeTransition('create');
+		$ref->id = $id;
+		return $ref;
 	}
 
+
+	private function createTransitionDecorator(bool $allow): TransitionDecorator
+	{
+		$guard = $this->createMock(TransitionGuard::class);
+		$guard->method('isTransitionAllowed')->willReturn($allow);
+
+		return new class($guard) extends MethodTransitionsDecorator {
+			public function create(TransitionEvent $transitionEvent, ReferenceInterface $ref): ?int
+			{
+				$id = $ref->getMachineId();
+				if ($id === null) {
+					throw new \Exception('This should not happen.');
+				} else {
+					return $id;
+				}
+			}
+		};
+	}
 
 }
