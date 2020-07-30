@@ -43,9 +43,7 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 		SmalldbDefinitionBagInterface $definitionBag,
 		?callable $transitionsDecoratorFactory, ?callable $repositoryFactory): self
 	{
-		$self = new self();
-		$self->setMachineType($machineType);
-		$self->setReferenceClass($referenceClass);
+		$self = new self($machineType, $referenceClass);
 		$self->setDefinitionBag($definitionBag);
 		$self->transitionsDecoratorFactory = $transitionsDecoratorFactory;
 		$self->repositoryFactory = $repositoryFactory;
@@ -57,9 +55,7 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 		?callable $definitionBagFactory,
 		?callable $transitionsDecoratorFactory, ?callable $repositoryFactory): self
 	{
-		$self = new self();
-		$self->setMachineType($machineType);
-		$self->setReferenceClass($referenceClass);
+		$self = new self($machineType, $referenceClass);
 		$self->definitionBagFactory = $definitionBagFactory;
 		$self->transitionsDecoratorFactory = $transitionsDecoratorFactory;
 		$self->repositoryFactory = $repositoryFactory;
@@ -111,6 +107,9 @@ class LambdaProvider extends AbstractCachingProvider implements SmalldbProviderI
 	{
 		if (isset($this->definitionFactory)) {
 			return ($this->definitionFactory)();
+		} else if (isset($this->definitionBagFactory)) {
+			$this->setDefinitionBag(($this->definitionBagFactory)());
+			return parent::getDefinition();
 		} else {
 			throw new \LogicException("Definition not set.");
 		}

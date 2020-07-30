@@ -24,7 +24,10 @@ use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\ContainerProvider;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
+use Smalldb\StateMachine\SmalldbDefinitionBagInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
+use Smalldb\StateMachine\Test\Example\Post\Post;
 use Smalldb\StateMachine\Test\SmalldbFactory\CrudItemContainer;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
 
@@ -134,6 +137,44 @@ class ProviderTest extends TestCase
 
 		$this->expectException(InvalidArgumentException::class);
 		$provider->setReferenceClass('Fooo');
+	}
+
+
+	public function testCreateLambdaProviderWithDefinitionBag()
+	{
+		$definition = new StateMachineDefinition('post', 1, [], [], [], [], []);
+		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBag->addDefinition($definition);
+		$transitionsDecorator = $this->createMock(TransitionDecorator::class);
+		$repository = $this->createMock(SmalldbRepositoryInterface::class);
+
+		$provider = LambdaProvider::createWithDefinitionBag('post', Post::class,
+			$definitionBag,
+			fn() => $transitionsDecorator,
+			fn() => $repository);
+
+		$this->assertSame($definition, $provider->getDefinition());
+		$this->assertSame($transitionsDecorator, $provider->getTransitionsDecorator());
+		$this->assertSame($repository, $provider->getRepository());
+	}
+
+
+	public function testCreateLambdaProviderWithDefinitionBagFactory()
+	{
+		$definition = new StateMachineDefinition('post', 1, [], [], [], [], []);
+		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBag->addDefinition($definition);
+		$transitionsDecorator = $this->createMock(TransitionDecorator::class);
+		$repository = $this->createMock(SmalldbRepositoryInterface::class);
+
+		$provider = LambdaProvider::createWithDefinitionBagFactory('post', Post::class,
+			fn() => $definitionBag,
+			fn() => $transitionsDecorator,
+			fn() => $repository);
+
+		$this->assertSame($definition, $provider->getDefinition());
+		$this->assertSame($transitionsDecorator, $provider->getTransitionsDecorator());
+		$this->assertSame($repository, $provider->getRepository());
 	}
 
 }
