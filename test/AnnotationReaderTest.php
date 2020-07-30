@@ -36,7 +36,7 @@ use Smalldb\StateMachine\Test\BadExample\PropertyDefinition;
 use Smalldb\StateMachine\Test\BadExample\PropertyGetterDefinition;
 use Smalldb\StateMachine\Test\BadExample\TransitionWithoutDefinition;
 use Smalldb\StateMachine\Test\BadExample\TransitionWithoutStates;
-use Smalldb\StateMachine\Test\BadExample\TransitionWithTooManyStates;
+use Smalldb\StateMachine\Test\BadExample\UseReferenceDefinition;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -83,6 +83,15 @@ class AnnotationReaderTest extends TestCase
 		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
 		$this->expectException(\InvalidArgumentException::class);
 		$reader->getStateMachineDefinition(new \ReflectionClass(UseReferenceTrait::class));
+	}
+
+
+	public function testUseReferenceAnnotation()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new \ReflectionClass(UseReferenceDefinition::class));
+		$refClass = $definition->getReferenceClass();
+		$this->assertEquals(CrudItem::class, $refClass);
 	}
 
 
