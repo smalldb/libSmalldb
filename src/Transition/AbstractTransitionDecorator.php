@@ -112,7 +112,8 @@ abstract class AbstractTransitionDecorator implements TransitionDecorator
 	private function guardTransition(TransitionEvent $transitionEvent, TransitionDefinition $transition): void
 	{
 		if (!$this->isTransitionAllowed($transitionEvent->getRef(), $transition)) {
-			throw new TransitionAccessException("Access denied to \"" . $transition->getName() . "\" transition.");
+			throw new TransitionAccessException("Access denied to \"" . $transition->getName() . "\""
+				." transition of \"" . $transitionEvent->getRef()->getMachineType(). "\" state machine.");
 		}
 
 		// TODO: Dispatch an event to voters?
