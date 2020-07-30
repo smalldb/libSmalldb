@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ class TransitionEvent
 	private ReferenceInterface $ref;
 	private string $transitionName;
 	private array $transitionArgs;
-	private bool $isTransitionFailed = false;
 	private bool $hasNewId = false;
 
 	/** @var mixed */
@@ -55,6 +54,7 @@ class TransitionEvent
 		return $this->ref;
 	}
 
+
 	/**
 	 * Name of the transition.
 	 */
@@ -63,31 +63,13 @@ class TransitionEvent
 		return $this->transitionName;
 	}
 
+
 	/**
 	 * Transition arguments.
 	 */
 	public function getTransitionArgs(): array
 	{
 		return $this->transitionArgs;
-	}
-
-	/**
-	 * Request abortion of this transition.
-	 *
-	 * This may be called before the transition to prevent the transition,
-	 * or after the transition to report a problem with the new state.
-	 */
-	public function abortTransition(): void
-	{
-		$this->isTransitionFailed = true;
-	}
-
-	/**
-	 * Returns true iff abortTransition() has been called.
-	 */
-	public function isTransitionFailed(): bool
-	{
-		return $this->isTransitionFailed;
 	}
 
 
@@ -104,6 +86,7 @@ class TransitionEvent
 		}
 	}
 
+
 	/**
 	 * Returns true if there is a new ID.
 	 */
@@ -111,6 +94,7 @@ class TransitionEvent
 	{
 		return $this->hasNewId;
 	}
+
 
 	/**
 	 * Get the new ID. The new ID may be null.
@@ -120,12 +104,14 @@ class TransitionEvent
 		return $this->newId;
 	}
 
+
 	public function onNewId(callable $callback): Hook
 	{
 		$hook = $this->onNewIdHook ?? ($this->onNewIdHook = new Hook());
 		$hook->addListener($callback);
 		return $hook;
 	}
+
 
 	/**
 	 * @return mixed
@@ -134,6 +120,7 @@ class TransitionEvent
 	{
 		return $this->returnValue;
 	}
+
 
 	/**
 	 * @param mixed $returnValue

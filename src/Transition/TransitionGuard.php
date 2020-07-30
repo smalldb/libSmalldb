@@ -46,29 +46,4 @@ interface TransitionGuard
 	 */
 	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool;
 
-
-	/**
-	 * Guard the transition before it is invoked.
-	 *
-	 * This check MUST perform the same check as the isTransitionAllowed
-	 * method, but it may collect additional data for the assert after
-	 * the transition finishes.
-	 *
-	 * If transition is not allowed, the guard calls $event->abortTransition().
-	 */
-//	public function guardTransition(TransitionEvent $event): void;
-
-
-	/**
-	 * Assert the state of the state machine after the transition finishes.
-	 *
-	 * This check is called after the transition to verify that the state
-	 * of the state machine has been updated accordingly to the definition.
-	 *
-	 * If transition is wrong, the guard calls $event->abortTransition().
-	 *
-	 * Both guardTransition() and assertTransition() will receive the same $event.
-	 */
-//	public function assertTransition(TransitionEvent $event): void;
-
 }
