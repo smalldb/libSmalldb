@@ -23,6 +23,9 @@
 
 	<filter>
 		<whitelist processUncoveredFilesFromWhitelist="true">
+			<exclude>
+				<file>src/.phpstorm.meta.php</file>
+			</exclude>
 			<directory suffix=".php">src</directory>
 			<directory suffix=".php">lib</directory>
 			<directory suffix=".php">test/Example</directory>
