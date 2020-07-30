@@ -108,7 +108,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	/**
 	 * Invoke transition of the state machine.
 	 */
-	public function invokeTransition(string $transitionName, ...$args)
+	public function invokeTransition(string $transitionName, ...$args): TransitionEvent
 	{
 		// TODO: Hooks ?
 		//if ($this->before_transition) {
