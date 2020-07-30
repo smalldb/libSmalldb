@@ -21,6 +21,7 @@ namespace Smalldb\StateMachine\Annotation;
 use Smalldb\StateMachine\Definition\Builder\StatePlaceholder;
 use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStatePlaceholderInterface;
 
+
 /**
  * State annotation
  *
@@ -30,13 +31,6 @@ use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStatePlaceholderInte
 class State implements ApplyToStatePlaceholderInterface
 {
 	public string $name;
-
-	public function __construct(array $values)
-	{
-		foreach ($values as $k => $v) {
-			$this->$k = $v;
-		}
-	}
 
 
 	public function applyToStatePlaceholder(StatePlaceholder $placeholder): void
