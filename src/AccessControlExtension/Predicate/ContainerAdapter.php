@@ -22,4 +22,5 @@ namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 interface ContainerAdapter
 {
 	public function registerService(?string $id, string $className, ?array $args = null);
+	public function closureWrap($service);
 }

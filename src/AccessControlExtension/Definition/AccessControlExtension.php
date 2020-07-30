@@ -20,7 +20,6 @@ namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
 use Smalldb\StateMachine\AccessControlExtension\Predicate\ContainerAdapter;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 

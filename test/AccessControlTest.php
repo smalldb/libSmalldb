@@ -22,14 +22,21 @@ use Generator;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
+use Smalldb\StateMachine\Definition\ActionDefinition;
+use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\Definition\StateDefinition;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -46,7 +53,9 @@ class AccessControlTest extends TestCaseWithDemoContainer
 
 	private function getRef(): ReferenceInterface
 	{
-		return $this->createMock(ReferenceInterface::class);
+		$m = $this->createMock(ReferenceInterface::class);
+		$m->method('getState')->willReturn('');
+		return $m;
 	}
 
 
@@ -253,6 +262,28 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	}
 
 
+	public function testLazyPredicate()
+	{
+		$transitionPredicates = [
+			'foo' => [
+				'' => [
+					'yes' => new P\AllowCompiled(),
+					'no' => (fn() => new P\DenyCompiled()),
+				]
+			]
+		];
+
+		$guard = new SimpleTransitionGuard($transitionPredicates);
+
+		$this->assertTrue($guard->isAccessAllowed('foo', 'yes', $this->getRef()));
+		$this->assertFalse($guard->isAccessAllowed('foo', 'no', $this->getRef()));
+		$this->assertFalse($guard->isAccessAllowed('foo', 'maybe', $this->getRef()));
+
+		// No access control defined => default allow
+		$this->assertTrue($guard->isAccessAllowed('bar', 'yes', $this->getRef()));
+	}
+
+
 	/**
 	 * @dataProvider predicateCompileProvider
 	 */
@@ -289,6 +320,32 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		yield 'NoneOf' => [ P\NoneOf::class, [], P\NoneOfCompiled::class ];
 		yield 'HasRole' => [ P\HasRole::class, [self::ROLE_USER], P\HasRoleCompiled::class ];
 		yield 'IsOwner' => [ P\IsOwner::class, ['authorId'], P\IsOwnerCompiled::class ];
+	}
+
+
+	public function testCompileMissingPredicate()
+	{
+		$builder = new StateMachineDefinitionBuilder(new PreprocessorList());
+		$builder->setMachineType('foo');
+		$builder->addState('Exists');
+		$trGood = $builder->addTransition('good', '', ['Exists']);
+		$trBad = $builder->addTransition('bad', '', ['Exists']);
+
+		$mock = $this->createMock(AccessPolicyExtensionPlaceholder::class);
+		$mock->policyName = 'foo';
+
+		$trGood->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class)->policyName = 'good_policy';
+		$trBad->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class)->policyName = 'bad_policy';
+		$builder->getExtensionPlaceholder(AccessControlExtensionPlaceholder::class)
+			->addPolicy(new AccessControlPolicy('good_policy', new P\Allow()));
+
+		$definition = $builder->build();
+		$definitionBag = new SmalldbDefinitionBag();
+		$definitionBag->addDefinition($definition);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage("Access policy not found: bad_policy");
+		SimpleTransitionGuard::compileTransitionPredicatesSymfony($definitionBag, new ContainerBuilder());
 	}
 
 

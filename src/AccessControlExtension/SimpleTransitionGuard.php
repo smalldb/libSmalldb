@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\AccessControlExtension;
 
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\AccessControlExtension\Predicate\ContainerAdapter;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\PredicateCompiled;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\SymfonyContainerAdapter;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
@@ -33,13 +34,15 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 class SimpleTransitionGuard implements TransitionGuard
 {
 
-	/** @var PredicateCompiled[][][] */
+	/** @var \Closure[][][] */
 	private array $transitionPredicates;
+	/** @var PredicateCompiled[][][] */
+	private array $transitionPredicateCache = [];
 	private bool $defaultAllow;
 
 
 	/**
-	 * @param PredicateCompiled[][][] $transitionPredicates
+	 * @param \Closure[][][] $transitionPredicates
 	 */
 	public function __construct(array $transitionPredicates = [], bool $defaultAllow = true)
 	{
@@ -48,10 +51,15 @@ class SimpleTransitionGuard implements TransitionGuard
 	}
 
 
-	public static function compileTransitionPredicates(SmalldbDefinitionBagInterface $definitionBag, ContainerBuilder $container)
+	public static function compileTransitionPredicatesSymfony(SmalldbDefinitionBagInterface $definitionBag, ContainerBuilder $container)
 	{
 		$containerAdapter = new SymfonyContainerAdapter($container);
+		return static::compileTransitionPredicates($definitionBag, $containerAdapter);
+	}
 
+
+	public static function compileTransitionPredicates(SmalldbDefinitionBagInterface $definitionBag, ContainerAdapter $containerAdapter)
+	{
 		$guardPredicates = [];
 
 		foreach ($definitionBag->getAllDefinitions() as $definition) {
@@ -72,7 +80,8 @@ class SimpleTransitionGuard implements TransitionGuard
 					if (empty($predicates[$policyName])) {
 						throw new InvalidArgumentException("Access policy not found: $policyName");
 					}
-					$guardPredicates[$machineType][$sourceState][$transitionName] = $predicates[$policyName];
+					$guardPredicates[$machineType][$sourceState][$transitionName]
+						= $containerAdapter->closureWrap($predicates[$policyName]);
 				}
 			}
 		}
@@ -91,11 +100,21 @@ class SimpleTransitionGuard implements TransitionGuard
 	{
 		if (!empty($this->transitionPredicates[$machineType])) {
 			$sourceState = $ref->getState();
-			if (isset($this->transitionPredicates[$machineType][$sourceState][$transitionName])) {
-				return $this->transitionPredicates[$machineType][$sourceState][$transitionName]->evaluate($ref);
-			} else {
-				return false;
+
+			// Check cached predicate
+			if (isset($this->transitionPredicateCache[$machineType][$sourceState][$transitionName])) {
+				return $this->transitionPredicateCache[$machineType][$sourceState][$transitionName]->evaluate($ref);
 			}
+
+			// Load predicate
+			$predicate = $this->getTransitionPredicate($machineType, $sourceState, $transitionName);
+			if ($predicate !== null) {
+				$this->transitionPredicateCache[$machineType][$sourceState][$transitionName] = $predicate;
+				return $predicate->evaluate($ref);
+			}
+
+			// No predicate
+			return false;
 		} else {
 			return $this->defaultAllow;
 		}
@@ -105,6 +124,19 @@ class SimpleTransitionGuard implements TransitionGuard
 	public function getTransitionPredicates(): array
 	{
 		return $this->transitionPredicates;
+	}
+
+
+	private function getTransitionPredicate(string $machineType, string $sourceState, string $transitionName): ?PredicateCompiled
+	{
+		$p = $this->transitionPredicates[$machineType][$sourceState][$transitionName] ?? null;
+		if ($p instanceof PredicateCompiled) {
+			return $p;
+		} else if (is_callable($p)) {
+			return $p();
+		} else {
+			return null;
+		}
 	}
 
 }

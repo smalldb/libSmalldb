@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
@@ -47,6 +48,16 @@ class SymfonyContainerAdapter implements ContainerAdapter
 			$definition->setArguments($args);
 		}
 		return new Reference($realId);
+	}
+
+
+	/**
+	 * @param Reference $service
+	 * @return ServiceClosureArgument
+	 */
+	public function closureWrap($service)
+	{
+		return new ServiceClosureArgument($service);
 	}
 
 }
