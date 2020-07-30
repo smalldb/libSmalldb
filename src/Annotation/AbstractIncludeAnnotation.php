@@ -40,12 +40,12 @@ abstract class AbstractIncludeAnnotation implements ReflectionClassAwareAnnotati
 		}
 
 		if ($fileName[0] !== DIRECTORY_SEPARATOR) {
-			$fileName = $this->baseDirName . DIRECTORY_SEPARATOR . $fileName;
+			$fileName = $this->baseDirName ? $this->baseDirName . DIRECTORY_SEPARATOR . $fileName : $fileName;
 
 			// Try to resolve relative path to current working directory
 			$cwd = getcwd();
 			if ($cwd === false) {
-				return $fileName;
+				return $fileName;  // @codeCoverageIgnore
 			}
 			$realCwd = realpath($cwd) . DIRECTORY_SEPARATOR;
 			$realFileName = realpath($fileName) ?: $fileName;

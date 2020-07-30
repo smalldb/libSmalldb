@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\Annotation\AbstractIncludeAnnotation;
 use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\StateDefinition;
@@ -190,6 +191,30 @@ class AnnotationReaderTest extends TestCase
 		$fooProperty = $definition->getProperty('foo');
 		$this->assertEquals('string', $fooProperty->getType());
 		$this->assertFalse($fooProperty->isNullable());
+	}
+
+
+	public function testCanonizeFileName()
+	{
+		$a = new class extends AbstractIncludeAnnotation {
+			public ?string $baseDirName = null;
+			public function canonizeFileName(?string $fileName): ?string
+			{
+				return parent::canonizeFileName($fileName);
+			}
+		};
+
+		$this->assertNull($a->canonizeFileName(null));
+		$this->assertEquals('foo', $a->canonizeFileName('foo'));
+		$this->assertEquals('/foo', $a->canonizeFileName('/foo'));
+		$this->assertEquals('foo/bar', $a->canonizeFileName('foo/bar'));
+
+		$a->baseDirName = __DIR__;
+
+		$this->assertNull($a->canonizeFileName(null));
+		$this->assertEquals('test/foo', $a->canonizeFileName('foo'));
+		$this->assertEquals('/foo', $a->canonizeFileName('/foo'));
+		$this->assertEquals('test/foo/bar', $a->canonizeFileName('foo/bar'));
 	}
 
 }
