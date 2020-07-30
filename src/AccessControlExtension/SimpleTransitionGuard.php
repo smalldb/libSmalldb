@@ -73,9 +73,13 @@ class SimpleTransitionGuard implements TransitionGuard
 				foreach ($definition->getTransitions() as $tr) {
 					$transitionName = $tr->getName();
 					$sourceState = $tr->getSourceState()->getName();
-					/** @var AccessPolicyExtension $policyExt */
-					$policyExt = $tr->getExtension(AccessPolicyExtension::class);
-					$policyName = $policyExt ? $policyExt->getPolicyName() : $defaultPolicyName;
+					if ($tr->hasExtension(AccessPolicyExtension::class)) {
+						/** @var AccessPolicyExtension $policyExt */
+						$policyExt = $tr->getExtension(AccessPolicyExtension::class);
+						$policyName = $policyExt->getPolicyName();
+					} else {
+						$policyName = $defaultPolicyName;
+					}
 
 					if (empty($predicates[$policyName])) {
 						throw new InvalidArgumentException("Access policy not found: $policyName");
