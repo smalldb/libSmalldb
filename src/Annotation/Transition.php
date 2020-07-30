@@ -35,7 +35,7 @@ class Transition
 
 	public function __construct(array $values)
 	{
-		if (!empty($values['value'])) {
+		if (isset($values['value'])) {
 			if (is_array($values['value']) && count($values['value']) === 2
 				&& is_string($values['value'][0])
 				&& is_array($values['value'][1]) && count($values['value'][1]) > 0)

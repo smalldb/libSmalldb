@@ -34,6 +34,8 @@ use Smalldb\StateMachine\Test\BadExample\MultipleStateAnnotations;
 use Smalldb\StateMachine\Test\BadExample\PropertyDefinition;
 use Smalldb\StateMachine\Test\BadExample\PropertyGetterDefinition;
 use Smalldb\StateMachine\Test\BadExample\TransitionWithoutDefinition;
+use Smalldb\StateMachine\Test\BadExample\TransitionWithoutStates;
+use Smalldb\StateMachine\Test\BadExample\TransitionWithTooManyStates;
 use Smalldb\StateMachine\Test\BadExample\UseReferenceTrait;
 use Smalldb\StateMachine\Test\Example\Annotation\ApplyToEverything;
 use Smalldb\StateMachine\Test\Example\CrudItem\CrudItem;
@@ -118,6 +120,15 @@ class AnnotationReaderTest extends TestCase
 		$this->assertEquals(1, ApplyToEverything::$calledMethodCounter[ApplyToEverything::class . '::applyToPlaceholder']);
 		$this->assertEquals(1, ApplyToEverything::$calledMethodCounter[ApplyToEverything::class . '::applyToActionPlaceholder']);
 		ApplyToEverything::resetCounters();
+	}
+
+
+	public function testTransitionWithoutState()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage("Transition annotation requires none or two arguments - a source state and a list of target states.");
+		$reader->getStateMachineDefinition(new \ReflectionClass(TransitionWithoutStates::class));
 	}
 
 
