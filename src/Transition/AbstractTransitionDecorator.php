@@ -23,7 +23,6 @@ use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\StateMachineHasErrorsException;
-use Smalldb\StateMachine\TransitionAccessException;
 
 
 abstract class AbstractTransitionDecorator implements TransitionDecorator

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2013, Josef Kufner  <jk@frozen-doe.net>
+ * Copyright (c) 2015, Josef Kufner  <jk@frozen-doe.net>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
  *
  */
 
-namespace Smalldb\StateMachine;
+namespace Smalldb\StateMachine\Transition;
 
 use Throwable;
 
 
 /**
- * Something is wrong with current transition.
+ * Transition aborted by pre-check method.
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
-class TransitionException extends \DomainException
+class TransitionPreCheckException extends TransitionException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)

@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Transition;
 
+use Smalldb\StateMachine\RuntimeException;
 use Throwable;
 
 
@@ -25,7 +26,7 @@ use Throwable;
  * Something is wrong with current transition.
  * Just simple exception in %Smalldb namespace, so it is clear who threw it.
  */
-class TransitionException extends \RuntimeException
+class TransitionException extends RuntimeException
 {
 	// Just an exception.
 	public function __construct($message = "", $code = 0, Throwable $previous = null)
