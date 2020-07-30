@@ -26,6 +26,7 @@ use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\PhpFileWriter\PhpFileWriter;
+use Smalldb\StateMachine\SqlExtension\Definition\SqlPropertyExtension;
 
 
 class DecoratingGenerator extends AbstractGenerator
@@ -192,8 +193,7 @@ class DecoratingGenerator extends AbstractGenerator
 				// Implement data loader methods
 				if ($returnType instanceof \ReflectionNamedType
 					&& $returnType->getName() === $dtoInterface->getName()
-					&& empty($method->getParameters()))
-				{
+					&& empty($method->getParameters())) {
 					$w->beginMethodOverride($method, $parentCallArgs);
 					{
 						$w->beginBlock("if (\$this->data === null && (\$this->data = $loadDataCall) === null)");
@@ -234,6 +234,23 @@ class DecoratingGenerator extends AbstractGenerator
 		$w->beginStaticMethod('hydrateFromArray', ['self $target', 'array $row'], 'void');
 		{
 			$w->writeln("\$target->data = " . $w->useClass($dtoClass->getName()) . '::fromArray($row);');
+
+			// TODO: Retrieve ID properly.
+			$idProps = [];
+			foreach ($definition->getProperties() as $p) {
+				if ($p->hasExtension(SqlPropertyExtension::class)) {
+					$sqlExt = $p->getExtension(SqlPropertyExtension::class);
+					if ($sqlExt->isId()) {
+						$idProps[] = $p;
+					}
+				}
+			}
+			$getters = array_map(fn($p) => "\$target->data->get" . ucfirst($p->getName() . "()"), $idProps);
+			if (count($idProps) === 1) {
+				$w->writeln("\$target->machineId = " . $getters[0] . ";");
+			} else {
+				$w->writeln("\$target->machineId = [" . join(', ', $getters) . "];");
+			}
 		}
 		$w->endMethod();
 
