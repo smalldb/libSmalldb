@@ -1,0 +1,54 @@
+<?php declare(strict_types = 1);
+/*
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+namespace Smalldb\StateMachine\Test;
+
+use ReflectionClass;
+use Smalldb\StateMachine\Definition\AnnotationReader\AnnotationReader;
+use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\DtoExtension\Definition\DtoExtension;
+use Smalldb\StateMachine\Test\BadExample\WrapDtoDefinition;
+use Smalldb\StateMachine\Test\BadExample\WrapDtoInvalid;
+use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
+
+
+class DtoExtensionTest extends TestCase
+{
+
+	public function testWrapDto()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$definition = $reader->getStateMachineDefinition(new ReflectionClass(WrapDtoDefinition::class));
+
+		$this->assertTrue($definition->hasExtension(DtoExtension::class));
+		/** @var DtoExtension $ext */
+		$ext = $definition->getExtension(DtoExtension::class);
+		$dtoClassName = $ext->getDtoClassName();
+		$this->assertEquals(PostDataImmutable::class, $dtoClassName);
+	}
+
+
+	public function testInvalidWrapDto()
+	{
+		$reader = new AnnotationReader(StateMachineDefinitionBuilderFactory::createDefaultFactory());
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage("WrapDTO requires a class name of existing class: Foo");
+		$reader->getStateMachineDefinition(new ReflectionClass(WrapDtoInvalid::class));
+	}
+
+}
