@@ -22,17 +22,13 @@ use Generator;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
 use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
-use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
-use Smalldb\StateMachine\Definition\StateDefinition;
-use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -319,7 +315,6 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		yield 'AllOf' => [ P\AllOf::class, [], P\AllOfCompiled::class ];
 		yield 'SomeOf' => [ P\SomeOf::class, [], P\SomeOfCompiled::class ];
 		yield 'NoneOf' => [ P\NoneOf::class, [], P\NoneOfCompiled::class ];
-		yield 'HasRole' => [ P\HasRole::class, [self::ROLE_USER], P\HasRoleCompiled::class ];
 		yield 'IsOwner' => [ P\IsOwner::class, ['authorId'], P\IsOwnerCompiled::class ];
 	}
 
@@ -370,12 +365,6 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$noCompiled = $no->compile($containerAdapter);
 		$this->assertInstanceOf(Reference::class, $noCompiled);
 
-		// Role depends on mocked user's roles
-		$hasRole = new P\HasRole(self::ROLE_EDITOR);
-		$this->assertEquals(self::ROLE_EDITOR, $hasRole->getRole());
-		$hasRoleCompiled = $hasRole->compile($containerAdapter);
-		$this->assertInstanceOf(Reference::class, $hasRoleCompiled);
-
 		// Is Granted check
 		$isGranted = new P\IsGranted('IS_AUTHENTICATED');
 		$isGrantedCompiled = $isGranted->compile($containerAdapter);
@@ -393,7 +382,6 @@ class AccessControlTest extends TestCaseWithDemoContainer
 				'' => [
 					'yes' => $yesCompiled,
 					'no' => $noCompiled,
-					'role' => $hasRoleCompiled,
 					'is_granted' => $isGrantedCompiled,
 					'owner' => $isOwnerCompiled,
 				]
@@ -403,7 +391,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 			->setArguments([$transitionPredicates])
 			->setPublic(true);
 
-		// Mocked security context for HasRole predicate
+		// Mocked security context for IsOwner and IsGranted predicates
 		$container->register(Security::class)
 			->setSynthetic(true);
 		$container->register(AuthorizationCheckerInterface::class)
@@ -452,11 +440,6 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		// Check No
 		$this->assertFalse($guard->isAccessAllowed('foo', 'no', $this->getRef()));
 		$this->assertFalse($guard->isTransitionAllowed($ref, $noTransitionDefinition));
-
-		// Check HasRole before and after adding a role
-		$this->assertFalse($guard->isAccessAllowed('foo', 'role', $this->getRef()));
-		$userRoles[] = self::ROLE_EDITOR;
-		$this->assertTrue($guard->isAccessAllowed('foo', 'role', $this->getRef()));
 
 		// Check IsGranted before and after authentication
 		$this->assertFalse($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
