@@ -40,6 +40,7 @@ use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -375,6 +376,11 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$hasRoleCompiled = $hasRole->compile($containerAdapter);
 		$this->assertInstanceOf(Reference::class, $hasRoleCompiled);
 
+		// Is Granted check
+		$isGranted = new P\IsGranted('IS_AUTHENTICATED');
+		$isGrantedCompiled = $isGranted->compile($containerAdapter);
+		$this->assertInstanceOf(Reference::class, $isGrantedCompiled);
+
 		// Allow Owner
 		$isOwner = new P\IsOwner($ownerProperty);
 		$this->assertEquals($ownerProperty, $isOwner->getOwnerProperty());
@@ -388,6 +394,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 					'yes' => $yesCompiled,
 					'no' => $noCompiled,
 					'role' => $hasRoleCompiled,
+					'is_granted' => $isGrantedCompiled,
 					'owner' => $isOwnerCompiled,
 				]
 			]
@@ -398,6 +405,8 @@ class AccessControlTest extends TestCaseWithDemoContainer
 
 		// Mocked security context for HasRole predicate
 		$container->register(Security::class)
+			->setSynthetic(true);
+		$container->register(AuthorizationCheckerInterface::class)
 			->setSynthetic(true);
 
 		$container->compile();
@@ -412,6 +421,14 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		});
 		$securityMock->method('getUser')->willReturn($userMock);
 		$container->set(Security::class, $securityMock);
+
+		// Create authorization checker mock
+		$isAuthenticated = false;
+		$authMock = $this->createMock(AuthorizationCheckerInterface::class);
+		$authMock->method('isGranted')->willReturnCallback(function() use (&$isAuthenticated) {
+			return $isAuthenticated;
+		});
+		$container->set(AuthorizationCheckerInterface::class, $authMock);
 
 		// Get & check Guard
 		/** @var SimpleTransitionGuard $guard */
@@ -440,6 +457,11 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$this->assertFalse($guard->isAccessAllowed('foo', 'role', $this->getRef()));
 		$userRoles[] = self::ROLE_EDITOR;
 		$this->assertTrue($guard->isAccessAllowed('foo', 'role', $this->getRef()));
+
+		// Check IsGranted before and after authentication
+		$this->assertFalse($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
+		$isAuthenticated = true;
+		$this->assertTrue($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
 
 		// Check IsOwner
 		$this->assertTrue($guard->isAccessAllowed('foo', 'owner', $ref));
