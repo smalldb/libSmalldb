@@ -105,6 +105,13 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
+	public function isTransitionAllowed(string $transitionName): bool
+	{
+		$transition = $this->getDefinition()->getTransition($transitionName, $this->getState());
+		return $this->getMachineProvider()->getTransitionsDecorator()->isTransitionAllowed($this, $transition);
+	}
+
+
 	/**
 	 * Invoke transition of the state machine.
 	 */

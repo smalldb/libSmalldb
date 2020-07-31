@@ -19,6 +19,8 @@
 namespace Smalldb\StateMachine\Transition;
 
 use Smalldb\StateMachine\DebugLoggerInterface;
+use Smalldb\StateMachine\Definition\TransitionDefinition;
+use Smalldb\StateMachine\ReferenceInterface;
 
 
 interface TransitionDecorator
@@ -27,4 +29,7 @@ interface TransitionDecorator
 	 * TODO: Move $debugLogger somewhere else?
 	 */
 	public function invokeTransition(TransitionEvent $transitionEvent, ?DebugLoggerInterface $debugLogger = null): TransitionEvent;
+
+	public function isTransitionAllowed(ReferenceInterface $ref, TransitionDefinition $transition): bool;
+
 }

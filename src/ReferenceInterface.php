@@ -62,6 +62,11 @@ interface ReferenceInterface
 	public function getDefinition(): StateMachineDefinition;
 
 	/**
+	 * Return true when the transition is available.
+	 */
+	public function isTransitionAllowed(string $transitionName): bool;
+
+	/**
 	 * Invoke transition of the state machine.
 	 */
 	public function invokeTransition(string $transitionName, ...$args): TransitionEvent;
