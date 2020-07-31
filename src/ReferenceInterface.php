@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-interface ReferenceInterface
+interface ReferenceInterface extends \ArrayAccess
 {
 	/**
 	 * @State

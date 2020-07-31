@@ -446,6 +446,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$ref = $this->createMock(Post::class);
 		$ref->method('getMachineType')->willReturn('foo');
 		$ref->method('getAuthorId')->willReturn(123);
+		$ref->method('offsetGet')->willReturn(123);
 		$yesTransitionDefinition = $this->createMock(TransitionDefinition::class);
 		$yesTransitionDefinition->method('getName')->willReturn('yes');
 		$noTransitionDefinition = $this->createMock(TransitionDefinition::class);

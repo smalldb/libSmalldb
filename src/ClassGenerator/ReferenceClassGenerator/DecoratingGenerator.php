@@ -58,6 +58,7 @@ class DecoratingGenerator extends AbstractGenerator
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass, $loadDataCall);
+		$this->generateArrayAccess($w, $definition, $sourceClassReflection);
 		$this->generateHydratorMethod($w, $definition, $sourceClassReflection, $dtoClass);
 
 		$w->endClass();
@@ -69,7 +70,7 @@ class DecoratingGenerator extends AbstractGenerator
 	{
 		$dtoInterface = null;
 		foreach ($sourceClassReflection->getInterfaces() as $interface) {
-			if (!$interface->implementsInterface(ReferenceInterface::class)) {
+			if (!$interface->implementsInterface(ReferenceInterface::class) && $interface->getName() !== \ArrayAccess::class) {
 				if ($dtoInterface) {
 					// TODO: This may not be that bad. We may support multiple DTOs.
 					throw new InvalidArgumentException("Multiple DTO interfaces found in " . $sourceClassReflection->getName());
@@ -89,6 +90,7 @@ class DecoratingGenerator extends AbstractGenerator
 		ReflectionClass $dtoInterface, string $loadDataCall)
 	{
 		$dtoInterfaceAlias = $w->useClass($dtoInterface->getName());
+		$referenceInterface = new ReflectionClass(ReferenceInterface::class);
 
 		$w->writeln("private ?$dtoInterfaceAlias \$data = null;");
 
@@ -110,6 +112,11 @@ class DecoratingGenerator extends AbstractGenerator
 
 			if (!$sourceClassReflection->hasMethod($dtoMethodName)) {
 				// Skip methods that do not exist in the reference class.
+				continue;
+			}
+
+			if ($referenceInterface->hasMethod($dtoMethodName)) {
+				// Skip helper methods of ReferenceInterface
 				continue;
 			}
 

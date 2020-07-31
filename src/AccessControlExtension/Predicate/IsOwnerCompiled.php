@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 use Smalldb\StateMachine\ReferenceInterface;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Security;
 
 
@@ -49,8 +48,7 @@ class IsOwnerCompiled implements PredicateCompiled
 			$userId = $user->getUsername();
 		}
 
-		$getter = 'get' . ucfirst($this->ownerProperty);
-		return $ref->$getter($this->ownerProperty) === $userId;
+		return $ref[$this->ownerProperty] === $userId;
 	}
 
 }

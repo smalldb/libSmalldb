@@ -85,7 +85,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			} else {
 				$implementsInterface = [];
 				foreach ($sourceClassReflection->getInterfaces() as $interfaceReflection) {
-					if (!$interfaceReflection->implementsInterface(ReferenceInterface::class)) {
+					if (!$interfaceReflection->implementsInterface(ReferenceInterface::class)
+						&& $interfaceReflection->getName() !== \ArrayAccess::class)
+					{
 						$implementsInterface[] = $interfaceReflection;
 					}
 				}

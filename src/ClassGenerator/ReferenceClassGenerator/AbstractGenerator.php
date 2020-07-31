@@ -22,6 +22,7 @@ use ReflectionClass;
 use Smalldb\StateMachine\ClassGenerator\AbstractClassGenerator;
 use Smalldb\StateMachine\ClassGenerator\ReflectionException;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceTrait;
 use Smalldb\PhpFileWriter\PhpFileWriter;
@@ -172,6 +173,41 @@ abstract class AbstractGenerator extends AbstractClassGenerator
 				$w->endMethod();
 			}
 		}
+	}
+
+
+	protected function generateArrayAccess(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection)
+	{
+
+		$w->beginMethod("offsetExists", ["\$propertyName"], "bool");
+		{
+			$w->beginBlock("switch(\$propertyName)");
+			{
+				foreach ($definition->getProperties() as $p) {
+					$w->writeln("case %s: return true;", $p->getName());
+				}
+				$w->writeln("default: return false;");
+			}
+			$w->endBlock();
+		}
+		$w->endMethod();
+
+		$w->beginMethod("offsetGet", ["\$propertyName"]);
+		{
+			$w->beginBlock("switch(\$propertyName)");
+			{
+				foreach ($definition->getProperties() as $p) {
+					$pName = $p->getName();
+					// TODO: Get the getter properly.
+					$getter = 'get' . ucfirst($pName);
+					$w->writeln("case %s: return \$this->$getter();", $pName);
+				}
+				$w->writeln("default: throw new " . $w->useClass(InvalidArgumentException::class) . "(\"Undefined property: \$propertyName\");");
+			}
+			$w->endBlock();
+		}
+		$w->endMethod();
+
 	}
 
 }
