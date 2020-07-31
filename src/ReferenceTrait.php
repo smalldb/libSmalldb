@@ -46,7 +46,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	 * @param ReferenceDataSourceInterface $dataSource
 	 * @param $id
 	 */
-	public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null)
+	final public function __construct(Smalldb $smalldb, ?SmalldbProviderInterface $machineProvider, ReferenceDataSourceInterface $dataSource, $id = null)
 	{
 		$this->smalldb = $smalldb;
 		$this->machineProvider = $machineProvider;
@@ -64,7 +64,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
-	protected function getSmalldb(): Smalldb
+	final protected function getSmalldb(): Smalldb
 	{
 		return $this->smalldb;
 	}
@@ -73,13 +73,13 @@ trait ReferenceTrait // implements ReferenceInterface
 	/**
 	 * Lazy-load the provider from Smalldb
 	 */
-	protected function getMachineProvider(): SmalldbProviderInterface
+	final protected function getMachineProvider(): SmalldbProviderInterface
 	{
 		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider($this->getMachineType()));
 	}
 
 
-	protected function getDataSource(): ReferenceDataSourceInterface
+	final protected function getDataSource(): ReferenceDataSourceInterface
 	{
 		return $this->dataSource;
 	}
@@ -88,7 +88,7 @@ trait ReferenceTrait // implements ReferenceInterface
 	/**
 	 * Get state machine definition
 	 */
-	public function getDefinition(): StateMachineDefinition
+	final public function getDefinition(): StateMachineDefinition
 	{
 		return $this->getMachineProvider()->getDefinition();
 	}
@@ -105,17 +105,18 @@ trait ReferenceTrait // implements ReferenceInterface
 	}
 
 
-	public function isTransitionAllowed(string $transitionName): bool
+	final public function isTransitionAllowed(string $transitionName): bool
 	{
-		$transition = $this->getDefinition()->getTransition($transitionName, $this->getState());
-		return $this->getMachineProvider()->getTransitionsDecorator()->isTransitionAllowed($this, $transition);
+		$provider = $this->getMachineProvider();
+		$transition = $provider->getDefinition()->getTransition($transitionName, $this->getState());
+		return $provider->getTransitionsDecorator()->isTransitionAllowed($this, $transition);
 	}
 
 
 	/**
 	 * Invoke transition of the state machine.
 	 */
-	public function invokeTransition(string $transitionName, ...$args): TransitionEvent
+	final public function invokeTransition(string $transitionName, ...$args): TransitionEvent
 	{
 		// TODO: Hooks ?
 		//if ($this->before_transition) {
