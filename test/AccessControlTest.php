@@ -37,6 +37,7 @@ use Smalldb\StateMachine\Test\Example\Post\Post;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -259,6 +260,19 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	}
 
 
+	public function testIsGrantedCompile()
+	{
+		$annotation = new A\IsGranted();
+		$annotation->attribute = "IS_AUTHENTICATED_FULLY";
+
+		$predicate = $annotation->buildPredicate();
+		$this->assertEquals($annotation->attribute, $predicate->getAttribute());
+
+		$compiledPredicate = $predicate->compile(new P\SymfonyContainerAdapter(new ContainerBuilder()));
+		$this->assertNotEmpty($compiledPredicate);
+	}
+
+
 	public function testLazyPredicate()
 	{
 		$transitionPredicates = [
@@ -366,7 +380,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$this->assertInstanceOf(Reference::class, $noCompiled);
 
 		// Is Granted check
-		$isGranted = new P\IsGranted('IS_AUTHENTICATED');
+		$isGranted = new P\IsGranted('IS_AUTHENTICATED_FULLY');
 		$isGrantedCompiled = $isGranted->compile($containerAdapter);
 		$this->assertInstanceOf(Reference::class, $isGrantedCompiled);
 
@@ -411,10 +425,14 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$container->set(Security::class, $securityMock);
 
 		// Create authorization checker mock
-		$isAuthenticated = false;
+		$isAuthenticated = null;
 		$authMock = $this->createMock(AuthorizationCheckerInterface::class);
 		$authMock->method('isGranted')->willReturnCallback(function() use (&$isAuthenticated) {
-			return $isAuthenticated;
+			if ($isAuthenticated === null) {
+				throw new AuthenticationCredentialsNotFoundException();
+			} else {
+				return $isAuthenticated;
+			}
 		});
 		$container->set(AuthorizationCheckerInterface::class, $authMock);
 
@@ -445,6 +463,8 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$this->assertFalse($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
 		$isAuthenticated = true;
 		$this->assertTrue($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
+		$isAuthenticated = false;
+		$this->assertFalse($guard->isAccessAllowed('foo', 'is_granted', $this->getRef()));
 
 		// Check IsOwner
 		$this->assertTrue($guard->isAccessAllowed('foo', 'owner', $ref));
