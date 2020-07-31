@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\Comment;
 
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -38,6 +39,8 @@ use Smalldb\StateMachine\Test\Example\User\User;
  * @WrapDTO(CommentDataImmutable::class)
  * @UseRepository(CommentRepository::class)
  * @UseTransitions(CommentTransitions::class)
+ * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"))
+ * @AC\DefaultPolicy("User")
  */
 abstract class Comment implements ReferenceInterface, CommentData
 {

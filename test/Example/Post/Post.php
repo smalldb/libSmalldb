@@ -31,6 +31,7 @@ use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 use Smalldb\StateMachine\Test\Example\Comment\Comment;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
 use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostDataImmutable;
@@ -44,13 +45,9 @@ use Smalldb\StateMachine\Test\Example\User\User;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
- * @AC\DefinePolicy("Author",
- *     @AC\AllOf(
- *         @AC\IsOwner("authorId"),
- *         @AC\HasRole("ROLE_EDITOR")
- *     ), @Color("#4a0"))
- * @AC\DefinePolicy("Editor",
- *     @AC\HasRole("ROLE_EDITOR"))
+ * @AC\DefinePolicy("Author", @AC\SomeOf(@AC\IsOwner("authorId"), @AC\IsGranted("IS_AUTHENTICATED_FULLY")), @Color("#4a0"))
+ * @AC\DefinePolicy("Editor", @AC\IsGranted("ROLE_ADMIN"))
+ * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"))
  * @AC\DefaultPolicy("Author")
  */
 abstract class Post implements ReferenceInterface, PostData
@@ -79,6 +76,12 @@ abstract class Post implements ReferenceInterface, PostData
 	 */
 	abstract public function update(PostDataImmutable $itemData);
 
+
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 * @AC\UsePolicy("User")
+	 */
+	abstract public function addComment(CommentData $comment);
 
 	/**
 	 * @Transition("Exists", {""})

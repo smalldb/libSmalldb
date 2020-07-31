@@ -20,6 +20,9 @@ namespace Smalldb\StateMachine\Test\Example\Post;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
+use Smalldb\StateMachine\Test\Example\Comment\Comment;
+use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
+use Smalldb\StateMachine\Test\Example\Comment\CommentRepository;
 use Smalldb\StateMachine\Test\Example\Post\PostData\PostData;
 use Smalldb\StateMachine\Transition\MethodTransitionsDecorator;
 use Smalldb\StateMachine\Transition\TransitionDecorator;
@@ -31,12 +34,14 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 {
 	private Connection $db;
 	private string $table = 'symfony_demo_post';
+	private CommentRepository $commentRepository;
 
 
-	public function __construct(TransitionGuard $guard, Connection $db)
+	public function __construct(TransitionGuard $guard, Connection $db, CommentRepository $commentRepository)
 	{
 		parent::__construct($guard);
 		$this->db = $db;
+		$this->commentRepository = $commentRepository;
 	}
 
 
@@ -107,6 +112,14 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 		if ($oldId != $newId) {
 			$transitionEvent->setNewId($newId);
 		}
+	}
+
+
+	protected function addComment(TransitionEvent $transitionEvent, Post $ref, CommentData $commentData): Comment
+	{
+		$commentRef = $this->commentRepository->ref(null);
+		$commentRef->create($commentData);
+		return $commentRef;
 	}
 
 

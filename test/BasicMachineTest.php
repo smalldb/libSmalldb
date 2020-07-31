@@ -71,7 +71,7 @@ class BasicMachineTest extends TestCase
 		$definition = $crudMachineProvider->getDefinition();
 		$this->assertEquals($machineType, $definition->getMachineType());
 		$this->assertCount(2, $definition->findReachableStates());
-		$this->assertCount(3, $definition->getActions());
+		$this->assertGreaterThanOrEqual(3, count($definition->getActions()));
 
 		// Try to create a null reference
 		/** @var CrudItem $ref */
