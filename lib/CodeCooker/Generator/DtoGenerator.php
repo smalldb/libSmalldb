@@ -18,6 +18,7 @@
 
 namespace Smalldb\CodeCooker\Generator;
 
+use DateTimeImmutable;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
@@ -441,7 +442,12 @@ class DtoGenerator
 					default:
 						if ($typehint && class_exists($typehint)) {
 							$c = $w->useClass($typehint);
-							$w->writeln("\$t->$propertyName = (\$v = \$source[%s] ?? null) instanceof $c || \$v === null ? \$v : new $c(\$v);", $propertyName);
+							if ($typehint === DateTimeImmutable::class) {
+								$w->writeln("\$t->$propertyName = (\$v = \$source[%s] ?? null) instanceof \\DateTimeImmutable || \$v === null ? \$v "
+									. ": (\$v instanceof \\DateTime ? \\DateTimeImmutable::createFromMutable(\$v) : new \\DateTimeImmutable(\$v));", $propertyName);
+							} else {
+								$w->writeln("\$t->$propertyName = (\$v = \$source[%s] ?? null) instanceof $c || \$v === null ? \$v : new $c(\$v);", $propertyName);
+							}
 						} else {
 							$w->writeln("\$t->$propertyName = \$source[%s] ?? null;", $propertyName);
 						}
@@ -461,7 +467,12 @@ class DtoGenerator
 				{
 					foreach ($sourceClass->getProperties() as $property) {
 						$propertyName = $property->getName();
-						$w->writeln("case '$propertyName': \$t->$propertyName = \$mapFunction ? \$mapFunction(\$value) : \$value; break;");
+						$propertyType = $property->getType();
+						if ($propertyType instanceof ReflectionNamedType && $propertyType->getName() === DateTimeImmutable::class) {
+							$w->writeln("case '$propertyName': \$t->$propertyName = \$value instanceof \\DateTime ? \\DateTimeImmutable::createFromMutable(\$value) : \$value; break;");
+						} else {
+							$w->writeln("case '$propertyName': \$t->$propertyName = \$value; break;");
+						}
 					}
 					$w->writeln("default: throw new " . $w->useClass(InvalidArgumentException::class) . "('Unknown property: \"' . \$prop . '\" not in ' . __CLASS__);");
 				}
