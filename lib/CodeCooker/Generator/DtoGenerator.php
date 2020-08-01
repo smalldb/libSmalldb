@@ -174,7 +174,7 @@ class DtoGenerator
 
 			$w->beginMethod('mapFormsToData', ['iterable $forms', '& $viewData']);
 			{
-				$w->writeln('$viewData = ' . $w->useClass($immutableClassName) . '::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });');
+				$w->writeln('$viewData = ' . $w->useClass($immutableClassName) . '::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());');
 			}
 			$w->endMethod();
 
@@ -452,7 +452,7 @@ class DtoGenerator
 		}
 		$w->endMethod();
 
-		$w->beginStaticMethod('fromIterable', ['?' . $w->useClass($copyInterfaceName) . ' $sourceObj', 'iterable $source', '?callable $mapFunction = null'], 'self');
+		$w->beginStaticMethod('fromIterable', ['?' . $w->useClass($copyInterfaceName) . ' $sourceObj', 'iterable $source'], 'self');
 		{
 			$w->writeln("\$t = \$sourceObj instanceof self ? clone \$sourceObj : new self(\$sourceObj);");
 			$w->beginBlock("foreach (\$source as \$prop => \$value)");
