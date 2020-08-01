@@ -145,27 +145,13 @@ trait ReferenceTrait // implements ReferenceInterface
 
 
 	/**
-	 * Detect a property.
-	 *
-	 * ReferenceClassGenerator overrides this method with an optimized implementation.
-	 *
-	 * @codeCoverageIgnore
-	 */
-	public function offsetExists($propertyName): bool
-	{
-		$properties = $this->getDefinition()->getProperties();
-		return isset($properties[$propertyName]);
-	}
-
-
-	/**
 	 * Retrieve a property value by name of the property.
 	 *
 	 * ReferenceClassGenerator overrides this method with an optimized implementation.
 	 *
 	 * @codeCoverageIgnore
 	 */
-	public function offsetGet($propertyName)
+	public function get(string $propertyName)
 	{
 		$property = $this->getDefinition()->getProperty($propertyName);
 		$getter = 'get' . ucfirst($property->getName());
@@ -174,24 +160,6 @@ trait ReferenceTrait // implements ReferenceInterface
 		} else {
 			throw new RuntimeException(sprintf("Getter not found: %s::%s()" . get_class($this), $getter));
 		}
-	}
-
-
-	/**
-	 * ArrayAccess is read-only.
-	 */
-	final public function offsetSet($propertyName, $value): void
-	{
-		throw new LogicException(sprintf("Cannot set state machine property directly: %s (of %s)", $propertyName, $this->getMachineType()));
-	}
-
-
-	/**
-	 * ArrayAccess is read-only.
-	 */
-	final public function offsetUnset($propertyName): void
-	{
-		throw new LogicException(sprintf("Cannot unset state machine property directly: %s (of %s)", $propertyName, $this->getMachineType()));
 	}
 
 }

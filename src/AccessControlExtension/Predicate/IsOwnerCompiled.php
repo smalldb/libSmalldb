@@ -48,7 +48,7 @@ class IsOwnerCompiled implements PredicateCompiled
 			$userId = $user->getUsername();
 		}
 
-		return $ref[$this->ownerProperty] === $userId;
+		return $ref->get($this->ownerProperty) === $userId;
 	}
 
 }

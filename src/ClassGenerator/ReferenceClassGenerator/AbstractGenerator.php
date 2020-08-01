@@ -176,23 +176,10 @@ abstract class AbstractGenerator extends AbstractClassGenerator
 	}
 
 
-	protected function generateArrayAccess(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection)
+	protected function generateGetMethod(PhpFileWriter $w, StateMachineDefinition $definition, ReflectionClass $sourceClassReflection)
 	{
 
-		$w->beginMethod("offsetExists", ["\$propertyName"], "bool");
-		{
-			$w->beginBlock("switch(\$propertyName)");
-			{
-				foreach ($definition->getProperties() as $p) {
-					$w->writeln("case %s: return true;", $p->getName());
-				}
-				$w->writeln("default: return false;");
-			}
-			$w->endBlock();
-		}
-		$w->endMethod();
-
-		$w->beginMethod("offsetGet", ["\$propertyName"]);
+		$w->beginMethod("get", ["string \$propertyName"]);
 		{
 			$w->beginBlock("switch(\$propertyName)");
 			{

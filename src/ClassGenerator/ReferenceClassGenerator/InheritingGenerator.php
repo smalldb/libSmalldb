@@ -43,7 +43,7 @@ class InheritingGenerator extends AbstractGenerator
 		$this->generateIdMethods($w);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection);
-		$this->generateArrayAccess($w, $definition, $sourceClassReflection);
+		$this->generateGetMethod($w, $definition, $sourceClassReflection);
 		$this->generateHydratorMethod($w, $definition, $sourceClassReflection);
 
 		$w->endClass();

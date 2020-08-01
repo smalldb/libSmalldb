@@ -58,7 +58,7 @@ class DecoratingGenerator extends AbstractGenerator
 		$this->generateReferenceMethods($w, $definition);
 		$this->generateTransitionMethods($w, $definition, $sourceClassReflection);
 		$this->generateDataGetterMethods($w, $definition, $sourceClassReflection, $dtoClass, $loadDataCall);
-		$this->generateArrayAccess($w, $definition, $sourceClassReflection);
+		$this->generateGetMethod($w, $definition, $sourceClassReflection);
 		$this->generateHydratorMethod($w, $definition, $sourceClassReflection, $dtoClass);
 
 		$w->endClass();

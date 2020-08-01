@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-interface ReferenceInterface extends \ArrayAccess
+interface ReferenceInterface
 {
 	/**
 	 * @State
@@ -70,5 +70,10 @@ interface ReferenceInterface extends \ArrayAccess
 	 * Invoke transition of the state machine.
 	 */
 	public function invokeTransition(string $transitionName, ...$args): TransitionEvent;
+
+	/**
+	 * Return value of the given property.
+	 */
+	public function get(string $propertyName);
 
 }
