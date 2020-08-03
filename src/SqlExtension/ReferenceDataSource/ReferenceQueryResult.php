@@ -91,4 +91,32 @@ class ReferenceQueryResult extends DataSource implements IteratorAggregate
 		}
 	}
 
+
+	public function join(string $separator, ?callable $mapFunction = null): string
+	{
+		$iter = $this->getIterator();
+		$str = '';
+		if ($mapFunction) {
+			foreach ($iter as $first) {
+				$str = (string)$mapFunction($first);
+				break;
+			}
+			foreach ($iter as $item) {
+				$str .= $separator;
+				$str .= (string)$mapFunction($item);
+			}
+			return $str;
+		} else {
+			foreach ($iter as $first) {
+				$str = (string)$first;
+				break;
+			}
+			foreach ($iter as $item) {
+				$str .= $separator;
+				$str .= $item;
+			}
+			return $str;
+		}
+	}
+
 }
