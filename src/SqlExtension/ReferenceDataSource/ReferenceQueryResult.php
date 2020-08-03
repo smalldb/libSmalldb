@@ -83,4 +83,12 @@ class ReferenceQueryResult extends DataSource implements IteratorAggregate
 		}
 	}
 
+
+	public function map(callable $mapFunction): Traversable
+	{
+		foreach ($this->getIterator() as $k => $item) {
+			yield $k => $mapFunction($item);
+		}
+	}
+
 }
