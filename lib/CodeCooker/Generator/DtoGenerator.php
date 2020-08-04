@@ -132,7 +132,7 @@ class DtoGenerator
 
 			foreach ($sourceClass->getMethods() as $methodReflection) {
 				$methodName = $methodReflection->getName();
-				if ($methodName !== '__construct' && $methodReflection->isPublic()) {
+				if ($methodName !== '__construct' && $methodReflection->isPublic() && !$w->hasMethod($methodName)) {
 					[$argMethod, $argCall] = $w->getMethodParametersCode($methodReflection);
 					$w->writeInterfaceMethod($methodName, $argMethod,
 						$w->getTypeAsCode($methodReflection->getReturnType()));
