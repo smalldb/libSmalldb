@@ -35,7 +35,7 @@ class SupervisorProcessDataFormDataMapper implements DataMapperInterface
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = SupervisorProcessDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
+		$viewData = SupervisorProcessDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
 	}
 
 

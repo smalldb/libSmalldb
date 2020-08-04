@@ -35,7 +35,7 @@ class UserDataFormDataMapper implements DataMapperInterface
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = UserDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
+		$viewData = UserDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
 	}
 
 

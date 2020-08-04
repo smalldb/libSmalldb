@@ -18,11 +18,13 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
+use Smalldb\SmalldbBundle\Security\UserRepositoryInterface;
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 
 
-class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
+class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface, UserRepositoryInterface
 {
 	protected const REF_CLASS = User::class;
 
@@ -49,6 +51,17 @@ class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryI
 		/** @var User|null $ref */
 		$ref = $result->fetch();
 		return $ref;
+	}
+
+
+	public function findAll(?int $maxResults): ReferenceQueryResult
+	{
+		$q = $this->createQueryBuilder();
+		$q->orderBy('id', 'DESC');
+		if ($maxResults !== null) {
+			$q->setMaxResults($maxResults);
+		}
+		return $q->executeRef();
 	}
 
 }

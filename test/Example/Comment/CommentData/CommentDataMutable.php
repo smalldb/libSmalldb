@@ -48,22 +48,22 @@ class CommentDataMutable extends Source_CommentProperties implements CommentData
 		$t->id = isset($source['id']) ? (int) $source['id'] : null;
 		$t->postId = (int) $source['postId'];
 		$t->content = (string) $source['content'];
-		$t->publishedAt = ($v = $source['publishedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->publishedAt = ($v = $source['publishedAt'] ?? null) instanceof \DateTimeImmutable || $v === null ? $v : ($v instanceof \DateTime ? \DateTimeImmutable::createFromMutable($v) : new \DateTimeImmutable($v));
 		$t->authorId = (int) $source['authorId'];
 		return $t;
 	}
 
 
-	public static function fromIterable(?CommentData $sourceObj, iterable $source, ?callable $mapFunction = null): self
+	public static function fromIterable(?CommentData $sourceObj, iterable $source): self
 	{
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		foreach ($source as $prop => $value) {
 			switch ($prop) {
-				case 'id': $t->id = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'postId': $t->postId = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'content': $t->content = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'publishedAt': $t->publishedAt = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'authorId': $t->authorId = $mapFunction ? $mapFunction($value) : $value; break;
+				case 'id': $t->id = $value; break;
+				case 'postId': $t->postId = $value; break;
+				case 'content': $t->content = $value; break;
+				case 'publishedAt': $t->publishedAt = $value instanceof \DateTime ? \DateTimeImmutable::createFromMutable($value) : $value; break;
+				case 'authorId': $t->authorId = $value; break;
 				default: throw new InvalidArgumentException('Unknown property: "' . $prop . '" not in ' . __CLASS__);
 			}
 		}

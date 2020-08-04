@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\Tag;
 
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -37,6 +38,8 @@ use Smalldb\StateMachine\Test\Example\Tag\TagData\TagDataImmutable;
  * @UseTransitions(TagTransitions::class)
  * @WrapDTO(TagDataImmutable::class)
  * @SQL\StateSelect("'Exists'")
+ * @AC\DefinePolicy("Admin", @AC\IsGranted("ROLE_ADMIN"))
+ * @AC\DefaultPolicy("Admin")
  */
 abstract class Tag implements ReferenceInterface, TagData
 {

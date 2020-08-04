@@ -18,9 +18,7 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
-use Smalldb\CodeCooker\Annotation\GenerateDTO;
 use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
-use Smalldb\StateMachine\Test\Example\User\UserProfileData\UserProfileData;
 use Symfony\Component\Validator\Constraints as Assert;
 
 
@@ -28,33 +26,20 @@ use Symfony\Component\Validator\Constraints as Assert;
  * User - An entity based on Symfony Demo
  *
  * @SQL\Table("symfony_demo_user")
- * @GenerateDTO("UserData")
  */
-abstract class UserProperties implements UserProfileData
+trait UserProfilePropertiesTrait
 {
-	// A subset of the properties shared between UserData and UserProfileData.
-	use UserProfilePropertiesTrait;
 
 	/**
-	 * @SQL\Id
+	 * @SQL\Column(name = "full_name")
+	 * @Assert\NotBlank()
 	 */
-	protected ?int $id = null;
+	protected string $fullName;
 
 	/**
 	 * @SQL\Column
-	 * @Assert\NotBlank()
-	 * @Assert\Length(min=2, max=50)
+	 * @Assert\Email()
 	 */
-	protected string $username;
-
-	/**
-	 * @SQL\Column(type="string")
-	 */
-	protected string $password;
-
-	/**
-	 * @SQL\Column(type="json")
-	 */
-	protected array $roles;
+	protected string $email;
 
 }

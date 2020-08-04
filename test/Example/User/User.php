@@ -18,6 +18,9 @@
 
 namespace Smalldb\StateMachine\Test\Example\User;
 
+use Smalldb\SmalldbBundle\Security\UserProxy;
+use Smalldb\SmalldbBundle\Security\UserReferenceInterface;
+use Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 use Smalldb\StateMachine\Annotation\State;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\StateMachine\Annotation\Transition;
@@ -29,6 +32,7 @@ use Smalldb\StateMachine\SqlExtension\Annotation\SQL;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
 use Smalldb\StateMachine\Test\Example\User\UserData\UserData;
 use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 
 /**
@@ -37,8 +41,11 @@ use Smalldb\StateMachine\Test\Example\User\UserData\UserDataImmutable;
  * @UseTransitions(UserTransitions::class)
  * @WrapDTO(UserDataImmutable::class)
  * @SQL\StateSelect("'Exists'")
+ * @AC\DefinePolicy("Admin", @AC\IsGranted("ROLE_ADMIN"))
+ * @AC\DefinePolicy("Self", @AC\SomeOf(@AC\IsOwner("id"), @AC\IsGranted("ROLE_ADMIN")))
+ * @AC\DefaultPolicy("Admin")
  */
-abstract class User implements ReferenceInterface, UserData
+abstract class User implements ReferenceInterface, UserData, UserReferenceInterface, UserInterface
 {
 
 	/**
@@ -50,22 +57,41 @@ abstract class User implements ReferenceInterface, UserData
 
 	/**
 	 * @Transition("", {"Exists"})
-	 * @Color("#4a0")
+	 * @Color("#888")
 	 */
-	abstract public function create(UserData $itemData);
+	abstract public function register(UserData $itemData, string $plainPassword);
 
 
 	/**
 	 * @Transition("Exists", {"Exists"})
+	 * @AC\UsePolicy("Self")
 	 */
-	abstract public function update(UserData $itemData);
+	abstract public function updateProfile(UserData $itemData);
+
+
+	/**
+	 * @Transition("Exists", {"Exists"})
+	 * @AC\UsePolicy("Self")
+	 */
+	abstract public function changePassword(string $newPassword);
 
 
 	/**
 	 * @Transition("Exists", {""})
-	 * @Color("#4a0")
+	 * @Color("#888")
 	 */
 	abstract public function delete();
+
+
+	public function getSalt(): string
+	{
+		return "";
+	}
+
+	public function eraseCredentials()
+	{
+		throw new \LogicException("This should not happen. Use " . UserProxy::class . " instead.");
+	}
 
 }
 

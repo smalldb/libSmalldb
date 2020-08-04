@@ -4,25 +4,17 @@
 // Do NOT edit! All changes will be lost!
 // 
 // 
-namespace Smalldb\StateMachine\Test\Example\User\UserData;
+namespace Smalldb\StateMachine\Test\Example\User\UserProfileData;
 
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
 
 
 /**
  * @GeneratedClass
- * @see \Smalldb\StateMachine\Test\Example\User\UserProperties
+ * @see \Smalldb\StateMachine\Test\Example\User\UserProfileProperties
  */
-interface UserData
+interface UserProfileData
 {
-
-	public function getId(): ?int;
-
-	public function getUsername(): string;
-
-	public function getPassword(): string;
-
-	public function getRoles(): array;
 
 	public function getFullName(): string;
 

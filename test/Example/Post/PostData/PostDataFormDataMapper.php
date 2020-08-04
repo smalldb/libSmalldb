@@ -35,7 +35,7 @@ class PostDataFormDataMapper implements DataMapperInterface
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = PostDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
+		$viewData = PostDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
 	}
 
 

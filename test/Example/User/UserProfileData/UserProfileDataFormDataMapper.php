@@ -4,7 +4,7 @@
 // Do NOT edit! All changes will be lost!
 // 
 // 
-namespace Smalldb\StateMachine\Test\Example\Tag\TagData;
+namespace Smalldb\StateMachine\Test\Example\User\UserProfileData;
 
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
 use Symfony\Component\Form\DataMapperInterface;
@@ -14,35 +14,35 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
  * @GeneratedClass
- * @see \Smalldb\StateMachine\Test\Example\Tag\TagProperties
+ * @see \Smalldb\StateMachine\Test\Example\User\UserProfileProperties
  */
-class TagDataFormDataMapper implements DataMapperInterface
+class UserProfileDataFormDataMapper implements DataMapperInterface
 {
 
 	public function mapDataToForms($viewData, iterable $forms)
 	{
 		if ($viewData === null) {
 			return;
-		} else if ($viewData instanceof TagData) {
+		} else if ($viewData instanceof UserProfileData) {
 			foreach ($forms as $prop => $field) {
-				$field->setData(TagDataImmutable::get($viewData, $prop));
+				$field->setData(UserProfileDataImmutable::get($viewData, $prop));
 			}
 		} else {
-			throw new UnexpectedTypeException($viewData, TagDataImmutable::class);
+			throw new UnexpectedTypeException($viewData, UserProfileDataImmutable::class);
 		}
 	}
 
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = TagDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
+		$viewData = UserProfileDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
 	}
 
 
 	public function configureOptions(OptionsResolver $optionsResolver)
 	{
 		$optionsResolver->setDefault("empty_data", null);
-		$optionsResolver->setDefault("data_class", TagData::class);
+		$optionsResolver->setDefault("data_class", UserProfileData::class);
 	}
 
 }

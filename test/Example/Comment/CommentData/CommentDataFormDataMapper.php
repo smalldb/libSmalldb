@@ -35,7 +35,7 @@ class CommentDataFormDataMapper implements DataMapperInterface
 
 	public function mapFormsToData(iterable $forms, & $viewData)
 	{
-		$viewData = CommentDataImmutable::fromIterable($viewData, $forms, function ($field) { return $field->getData(); });
+		$viewData = CommentDataImmutable::fromIterable($viewData, (function() use ($forms) { foreach($forms as $k => $field) yield $k => $field->getData(); })());
 	}
 
 

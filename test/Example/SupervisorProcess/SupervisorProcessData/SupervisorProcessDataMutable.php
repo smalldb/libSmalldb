@@ -52,26 +52,26 @@ class SupervisorProcessDataMutable extends Source_SupervisorProcessProperties im
 		$t->id = isset($source['id']) ? (int) $source['id'] : null;
 		$t->state = (string) $source['state'];
 		$t->command = (string) $source['command'];
-		$t->createdAt = ($v = $source['createdAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
-		$t->modifiedAt = ($v = $source['modifiedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->createdAt = ($v = $source['createdAt'] ?? null) instanceof \DateTimeImmutable || $v === null ? $v : ($v instanceof \DateTime ? \DateTimeImmutable::createFromMutable($v) : new \DateTimeImmutable($v));
+		$t->modifiedAt = ($v = $source['modifiedAt'] ?? null) instanceof \DateTimeImmutable || $v === null ? $v : ($v instanceof \DateTime ? \DateTimeImmutable::createFromMutable($v) : new \DateTimeImmutable($v));
 		$t->memoryLimit = isset($source['memoryLimit']) ? (int) $source['memoryLimit'] : null;
 		$t->args = isset($source['args']) ? (is_string($source['args']) ? json_decode($source['args'], TRUE) : $source['args']) : null;
 		return $t;
 	}
 
 
-	public static function fromIterable(?SupervisorProcessData $sourceObj, iterable $source, ?callable $mapFunction = null): self
+	public static function fromIterable(?SupervisorProcessData $sourceObj, iterable $source): self
 	{
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		foreach ($source as $prop => $value) {
 			switch ($prop) {
-				case 'id': $t->id = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'state': $t->state = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'command': $t->command = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'createdAt': $t->createdAt = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'modifiedAt': $t->modifiedAt = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'memoryLimit': $t->memoryLimit = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'args': $t->args = $mapFunction ? $mapFunction($value) : $value; break;
+				case 'id': $t->id = $value; break;
+				case 'state': $t->state = $value; break;
+				case 'command': $t->command = $value; break;
+				case 'createdAt': $t->createdAt = $value instanceof \DateTime ? \DateTimeImmutable::createFromMutable($value) : $value; break;
+				case 'modifiedAt': $t->modifiedAt = $value instanceof \DateTime ? \DateTimeImmutable::createFromMutable($value) : $value; break;
+				case 'memoryLimit': $t->memoryLimit = $value; break;
+				case 'args': $t->args = $value; break;
 				default: throw new InvalidArgumentException('Unknown property: "' . $prop . '" not in ' . __CLASS__);
 			}
 		}

@@ -21,5 +21,7 @@ interface TagData
 	public function getName(): string;
 
 	public function getSlug(): string;
+
+	public function __toString();
 }
 

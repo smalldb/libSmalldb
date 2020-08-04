@@ -45,7 +45,7 @@ use Smalldb\StateMachine\Test\Example\User\User;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
- * @AC\DefinePolicy("Author", @AC\SomeOf(@AC\IsOwner("authorId"), @AC\IsGranted("IS_AUTHENTICATED_FULLY")), @Color("#4a0"))
+ * @AC\DefinePolicy("Author", @AC\AllOf(@AC\IsOwner("authorId"), @AC\IsGranted("ROLE_ADMIN")), @Color("#4a0"))
  * @AC\DefinePolicy("Editor", @AC\IsGranted("ROLE_ADMIN"))
  * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"))
  * @AC\DefaultPolicy("Author")
@@ -67,14 +67,14 @@ abstract class Post implements ReferenceInterface, PostData
 	 * @Color("#4a0")
 	 * @AC\UsePolicy("Editor")
 	 */
-	abstract public function create(PostDataImmutable $itemData);
+	abstract public function create(PostDataImmutable $itemData, array $tags);
 
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 * @AC\UsePolicy("Author")
 	 */
-	abstract public function update(PostDataImmutable $itemData);
+	abstract public function update(PostDataImmutable $itemData, array $tags);
 
 
 	/**
@@ -82,6 +82,7 @@ abstract class Post implements ReferenceInterface, PostData
 	 * @AC\UsePolicy("User")
 	 */
 	abstract public function addComment(CommentData $comment);
+
 
 	/**
 	 * @Transition("Exists", {""})
@@ -91,6 +92,9 @@ abstract class Post implements ReferenceInterface, PostData
 	abstract public function delete();
 
 
+	/**
+	 * TODO: RelationToOne("authorId", User::class) ?
+	 */
 	public function getAuthor(): User
 	{
 		/** @var User $user */
@@ -99,7 +103,10 @@ abstract class Post implements ReferenceInterface, PostData
 	}
 
 
-	public function getTags(): array
+	/**
+	 * TODO: RelationToMany(Tag::class) ?
+	 */
+	public function getTags(): ReferenceQueryResult
 	{
 		/** @var TagRepository $repository */
 		$repository = $this->getSmalldb()->getRepository(Tag::class);

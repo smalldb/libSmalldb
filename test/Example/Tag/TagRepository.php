@@ -20,6 +20,7 @@ namespace Smalldb\StateMachine\Test\Example\Tag;
 
 use Smalldb\StateMachine\SmalldbRepositoryInterface;
 use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
+use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 use Smalldb\StateMachine\Test\Example\Post\Post;
 
 
@@ -36,15 +37,13 @@ class TagRepository extends AbstractSqlRepository implements SmalldbRepositoryIn
 	}
 
 
-	public function findAll(): iterable
+	public function findAll(): ReferenceQueryResult
 	{
 		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements();
 		$q->setMaxResults(1000);
 
-		$result = $q->executeRef();
-
-		return $result->getIterator();
+		return $q->executeRef();
 	}
 
 
@@ -65,7 +64,22 @@ class TagRepository extends AbstractSqlRepository implements SmalldbRepositoryIn
 	}
 
 
-	public function findByPost(Post $post): array
+	/**
+	 * @param string[] $names
+	 */
+	public function findByNames(array $names): ReferenceQueryResult
+	{
+		$q = $this->getDataSource()->createQueryBuilder()
+			->addSelectFromStatements();
+		$q->where('name IN (:names)');
+
+		$q->setParameter('names', $names, \Doctrine\DBAL\Connection::PARAM_STR_ARRAY);
+
+		return $q->executeRef();
+	}
+
+
+	public function findByPost(Post $post): ReferenceQueryResult
 	{
 		$q = $this->getDataSource()->createQueryBuilder()
 			->addSelectFromStatements()
@@ -74,8 +88,7 @@ class TagRepository extends AbstractSqlRepository implements SmalldbRepositoryIn
 
 		$q->setParameter('post_id', $post->getId());
 
-		$result = $q->executeRef();
-		return $result->fetchAll();
+		return $q->executeRef();
 	}
 
 }

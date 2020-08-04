@@ -30,7 +30,6 @@ use Smalldb\StateMachine\Transition\TransitionGuard;
 class TagTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
 	private Connection $db;
-	private string $table = 'symfony_demo_tag';
 
 
 	public function __construct(TransitionGuard $guard, Connection $db)
@@ -46,7 +45,7 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	protected function create(TransitionEvent $transitionEvent, Tag $ref, TagData $data): int
 	{
 		$stmt = $this->db->prepare("
-			INSERT INTO $this->table (id, name)
+			INSERT INTO symfony_demo_tag (id, name)
 			VALUES (:id, :name)
 		");
 
@@ -72,13 +71,12 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	protected function update(TransitionEvent $transitionEvent, Tag $ref, TagData $data): void
 	{
 		$stmt = $this->db->prepare("
-			UPDATE $this->table
+			UPDATE symfony_demo_tag
 			SET
 				id = :newId,
 				name = :name
 			WHERE
 				id = :oldId
-			LIMIT 1
 		");
 
 		$oldId = $ref->getId();
@@ -102,9 +100,8 @@ class TagTransitions extends MethodTransitionsDecorator implements TransitionDec
 	{
 		$id = $ref->getId();
 		$stmt = $this->db->prepare("
-			DELETE FROM $this->table
+			DELETE FROM symfony_demo_tag
 			WHERE id = :id
-			LIMIT 1
 		");
 		$stmt->execute([
 			'id' => $id,

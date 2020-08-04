@@ -44,13 +44,13 @@ class TagDataImmutable extends Source_TagProperties implements TagData
 	}
 
 
-	public static function fromIterable(?TagData $sourceObj, iterable $source, ?callable $mapFunction = null): self
+	public static function fromIterable(?TagData $sourceObj, iterable $source): self
 	{
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		foreach ($source as $prop => $value) {
 			switch ($prop) {
-				case 'id': $t->id = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'name': $t->name = $mapFunction ? $mapFunction($value) : $value; break;
+				case 'id': $t->id = $value; break;
+				case 'name': $t->name = $value; break;
 				default: throw new InvalidArgumentException('Unknown property: "' . $prop . '" not in ' . __CLASS__);
 			}
 		}

@@ -23,18 +23,18 @@ class UserDataMutable extends Source_UserProperties implements UserData
 		if ($source !== null) {
 			if ($source instanceof Source_UserProperties) {
 				$this->id = $source->id;
-				$this->fullName = $source->fullName;
 				$this->username = $source->username;
-				$this->email = $source->email;
 				$this->password = $source->password;
 				$this->roles = $source->roles;
+				$this->fullName = $source->fullName;
+				$this->email = $source->email;
 			} else {
 				$this->id = $source->getId();
-				$this->fullName = $source->getFullName();
 				$this->username = $source->getUsername();
-				$this->email = $source->getEmail();
 				$this->password = $source->getPassword();
 				$this->roles = $source->getRoles();
+				$this->fullName = $source->getFullName();
+				$this->email = $source->getEmail();
 			}
 		}
 	}
@@ -47,26 +47,26 @@ class UserDataMutable extends Source_UserProperties implements UserData
 		}
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		$t->id = isset($source['id']) ? (int) $source['id'] : null;
-		$t->fullName = (string) $source['fullName'];
 		$t->username = (string) $source['username'];
-		$t->email = (string) $source['email'];
 		$t->password = (string) $source['password'];
 		$t->roles = is_string($source['roles']) ? json_decode($source['roles'], TRUE) : (array) $source['roles'];
+		$t->fullName = (string) $source['fullName'];
+		$t->email = (string) $source['email'];
 		return $t;
 	}
 
 
-	public static function fromIterable(?UserData $sourceObj, iterable $source, ?callable $mapFunction = null): self
+	public static function fromIterable(?UserData $sourceObj, iterable $source): self
 	{
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		foreach ($source as $prop => $value) {
 			switch ($prop) {
-				case 'id': $t->id = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'fullName': $t->fullName = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'username': $t->username = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'email': $t->email = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'password': $t->password = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'roles': $t->roles = $mapFunction ? $mapFunction($value) : $value; break;
+				case 'id': $t->id = $value; break;
+				case 'username': $t->username = $value; break;
+				case 'password': $t->password = $value; break;
+				case 'roles': $t->roles = $value; break;
+				case 'fullName': $t->fullName = $value; break;
+				case 'email': $t->email = $value; break;
 				default: throw new InvalidArgumentException('Unknown property: "' . $prop . '" not in ' . __CLASS__);
 			}
 		}
@@ -80,21 +80,9 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function getFullName(): string
-	{
-		return $this->fullName;
-	}
-
-
 	public function getUsername(): string
 	{
 		return $this->username;
-	}
-
-
-	public function getEmail(): string
-	{
-		return $this->email;
 	}
 
 
@@ -110,15 +98,27 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	}
 
 
+	public function getFullName(): string
+	{
+		return $this->fullName;
+	}
+
+
+	public function getEmail(): string
+	{
+		return $this->email;
+	}
+
+
 	public static function get(UserData $source, string $propertyName)
 	{
 		switch ($propertyName) {
 			case 'id': return $source->getId();
-			case 'fullName': return $source->getFullName();
 			case 'username': return $source->getUsername();
-			case 'email': return $source->getEmail();
 			case 'password': return $source->getPassword();
 			case 'roles': return $source->getRoles();
+			case 'fullName': return $source->getFullName();
+			case 'email': return $source->getEmail();
 			default: throw new \InvalidArgumentException("Unknown property: " . $propertyName);
 		}
 	}
@@ -130,21 +130,9 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	}
 
 
-	public function setFullName(string $fullName): void
-	{
-		$this->fullName = $fullName;
-	}
-
-
 	public function setUsername(string $username): void
 	{
 		$this->username = $username;
-	}
-
-
-	public function setEmail(string $email): void
-	{
-		$this->email = $email;
 	}
 
 
@@ -157,6 +145,18 @@ class UserDataMutable extends Source_UserProperties implements UserData
 	public function setRoles(array $roles): void
 	{
 		$this->roles = $roles;
+	}
+
+
+	public function setFullName(string $fullName): void
+	{
+		$this->fullName = $fullName;
+	}
+
+
+	public function setEmail(string $email): void
+	{
+		$this->email = $email;
 	}
 
 }

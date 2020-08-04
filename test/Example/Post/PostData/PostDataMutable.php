@@ -56,26 +56,26 @@ class PostDataMutable extends Source_PostProperties implements PostData
 		$t->slug = (string) $source['slug'];
 		$t->summary = (string) $source['summary'];
 		$t->content = (string) $source['content'];
-		$t->publishedAt = ($v = $source['publishedAt'] ?? null) instanceof DateTimeImmutable || $v === null ? $v : new DateTimeImmutable($v);
+		$t->publishedAt = ($v = $source['publishedAt'] ?? null) instanceof \DateTimeImmutable || $v === null ? $v : ($v instanceof \DateTime ? \DateTimeImmutable::createFromMutable($v) : new \DateTimeImmutable($v));
 		$t->authorId = (int) $source['authorId'];
 		$t->commentCount = isset($source['commentCount']) ? (int) $source['commentCount'] : null;
 		return $t;
 	}
 
 
-	public static function fromIterable(?PostData $sourceObj, iterable $source, ?callable $mapFunction = null): self
+	public static function fromIterable(?PostData $sourceObj, iterable $source): self
 	{
 		$t = $sourceObj instanceof self ? clone $sourceObj : new self($sourceObj);
 		foreach ($source as $prop => $value) {
 			switch ($prop) {
-				case 'id': $t->id = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'title': $t->title = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'slug': $t->slug = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'summary': $t->summary = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'content': $t->content = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'publishedAt': $t->publishedAt = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'authorId': $t->authorId = $mapFunction ? $mapFunction($value) : $value; break;
-				case 'commentCount': $t->commentCount = $mapFunction ? $mapFunction($value) : $value; break;
+				case 'id': $t->id = $value; break;
+				case 'title': $t->title = $value; break;
+				case 'slug': $t->slug = $value; break;
+				case 'summary': $t->summary = $value; break;
+				case 'content': $t->content = $value; break;
+				case 'publishedAt': $t->publishedAt = $value instanceof \DateTime ? \DateTimeImmutable::createFromMutable($value) : $value; break;
+				case 'authorId': $t->authorId = $value; break;
+				case 'commentCount': $t->commentCount = $value; break;
 				default: throw new InvalidArgumentException('Unknown property: "' . $prop . '" not in ' . __CLASS__);
 			}
 		}

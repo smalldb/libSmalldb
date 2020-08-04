@@ -64,4 +64,10 @@ abstract class TagProperties
 		$this->name = (string)$this->id;
 	}
 
+
+	public function __toString()
+	{
+		return $this->name;
+	}
+
 }
