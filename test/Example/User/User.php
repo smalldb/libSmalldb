@@ -45,7 +45,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
  * @AC\DefinePolicy("Self", @AC\SomeOf(@AC\IsOwner("id"), @AC\IsGranted("ROLE_ADMIN")))
  * @AC\DefaultPolicy("Admin")
  */
-abstract class User implements ReferenceInterface, UserData
+abstract class User implements ReferenceInterface, UserData /* UserReferenceInterface */ /* UserInterface */
 {
 
 	/**

@@ -33,3 +33,9 @@ rsync -arv \
 	"$src/src/StateMachine/" "./"
 
 find -type f -name '*.php' -exec ./convert-php.sh '{}' \;
+
+sed -i "./User/User.php" \
+	-e '/^abstract class /s/, \(UserReferenceInterface\|UserInterface\)/ \/* \1 *\//g'
+
+sed -i "./User/UserRepository.php" \
+	-e '/^class /s/, \(UserRepositoryInterface\)/ \/* \1 *\//g'

@@ -24,7 +24,7 @@ use Smalldb\StateMachine\SqlExtension\AbstractSqlRepository;
 use Smalldb\StateMachine\SqlExtension\ReferenceDataSource\ReferenceQueryResult;
 
 
-class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface
+class UserRepository extends AbstractSqlRepository implements SmalldbRepositoryInterface /* UserRepositoryInterface */
 {
 	protected const REF_CLASS = User::class;
 
