@@ -22,6 +22,7 @@ use ReflectionClass;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\DtoExtension\Definition\DtoExtension;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\MachineIdentifierInterface;
 use Smalldb\StateMachine\ReferenceDataSource\NotExistsException;
 use Smalldb\StateMachine\ReferenceDataSource\StatefulEntity;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -70,7 +71,7 @@ class DecoratingGenerator extends AbstractGenerator
 	{
 		$dtoInterface = null;
 		foreach ($sourceClassReflection->getInterfaces() as $interface) {
-			if (!$interface->implementsInterface(ReferenceInterface::class) && $interface->getName() !== \ArrayAccess::class) {
+			if (!$interface->implementsInterface(ReferenceInterface::class) && $interface->getName() !== MachineIdentifierInterface::class) {
 				if ($dtoInterface) {
 					// TODO: This may not be that bad. We may support multiple DTOs.
 					throw new InvalidArgumentException("Multiple DTO interfaces found in " . $sourceClassReflection->getName());

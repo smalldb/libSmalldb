@@ -25,6 +25,7 @@ use Smalldb\StateMachine\ClassGenerator\ReferenceClassGenerator\InheritingGenera
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\DtoExtension\Definition\DtoExtension;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\MachineIdentifierInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 
 
@@ -85,7 +86,9 @@ class ReferenceClassGenerator extends AbstractClassGenerator
 			} else {
 				$implementsInterface = [];
 				foreach ($sourceClassReflection->getInterfaces() as $interfaceReflection) {
-					if (!$interfaceReflection->implementsInterface(ReferenceInterface::class)) {
+					if (!$interfaceReflection->implementsInterface(ReferenceInterface::class)
+						&& $interfaceReflection->getName() !== MachineIdentifierInterface::class)
+					{
 						$implementsInterface[] = $interfaceReflection;
 					}
 				}
