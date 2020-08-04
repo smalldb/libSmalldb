@@ -34,6 +34,8 @@ use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\String\Slugger\AsciiSlugger;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 
 class CrudItemContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory
@@ -80,6 +82,10 @@ class CrudItemContainer extends AbstractSmalldbContainerFactory implements Small
 
 		// Register state machine type
 		$smalldb->addMethodCall('registerMachineType', [$machineProvider, [CrudItem::class]]);
+
+		// Additional services
+		$c->setAlias(SluggerInterface::class, AsciiSlugger::class);
+		$c->autowire(AsciiSlugger::class);
 
 		return $c;
 	}

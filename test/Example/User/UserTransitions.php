@@ -33,10 +33,10 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class UserTransitions extends MethodTransitionsDecorator implements TransitionDecorator
 {
 	private Connection $db;
-	private UserPasswordEncoderInterface $encoder;
+	private ?UserPasswordEncoderInterface $encoder;
 
 
-	public function __construct(TransitionGuard $guard, Connection $db, UserPasswordEncoderInterface $encoder)
+	public function __construct(TransitionGuard $guard, Connection $db, ?UserPasswordEncoderInterface $encoder = null)
 	{
 		parent::__construct($guard);
 		$this->db = $db;
@@ -49,6 +49,10 @@ class UserTransitions extends MethodTransitionsDecorator implements TransitionDe
 	 */
 	protected function register(TransitionEvent $transitionEvent, User $ref, UserData $data, string $plainPassword): void
 	{
+		if (!$this->encoder) {
+			throw new \RuntimeException("Password encoder not available.");
+		}
+
 		$stmt = $this->db->prepare("
 			INSERT INTO symfony_demo_user (id, username, password, roles, full_name, email)
 			VALUES (:id, :username, :password, :roles, :fullName, :email)
@@ -91,6 +95,9 @@ class UserTransitions extends MethodTransitionsDecorator implements TransitionDe
 	 */
 	protected function changePassword(TransitionEvent $transitionEvent, User $ref, string $newPassword): void
 	{
+		if (!$this->encoder) {
+			throw new \RuntimeException("Password encoder not available.");
+		}
 
 		$stmt = $this->db->prepare("
 			UPDATE symfony_demo_user

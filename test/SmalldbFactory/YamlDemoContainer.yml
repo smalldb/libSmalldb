@@ -53,3 +53,9 @@ services:
         autowire: true
         factory: [Smalldb\StateMachine\Test\Database\SymfonyDemoDatabaseFactory, connect]
 
+    # Some additional services
+    Symfony\Component\String\Slugger\AsciiSlugger:
+        autowire: true
+    Symfony\Component\String\Slugger\SluggerInterface:
+        alias: Symfony\Component\String\Slugger\AsciiSlugger
+

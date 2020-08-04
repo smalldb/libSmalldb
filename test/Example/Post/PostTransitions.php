@@ -55,7 +55,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	/**
 	 * @throws DBALException
 	 */
-	protected function create(TransitionEvent $transitionEvent, Post $ref, PostData $data, array $tags): int
+	protected function create(TransitionEvent $transitionEvent, Post $ref, PostData $data, ?array $tags = null): int
 	{
 		$this->db->beginTransaction();
 
@@ -79,7 +79,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 
 		if ($id === null) {
 			$newId = (int)$this->db->lastInsertId();
-			$this->assignTags($newId, $tags);
+			if ($tags !== null) {
+				$this->assignTags($newId, $tags);
+			}
 			$this->db->commit();
 			$transitionEvent->setNewId($newId);
 			return $newId;
@@ -93,7 +95,7 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 	/**
 	 * @throws DBALException
 	 */
-	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data, array $tags): void
+	protected function update(TransitionEvent $transitionEvent, Post $ref, PostData $data, ?array $tags = null): void
 	{
 		$this->db->beginTransaction();
 
@@ -127,7 +129,9 @@ class PostTransitions extends MethodTransitionsDecorator implements TransitionDe
 			'publishedAt' => ($d = $data->getPublishedAt()) ? $d->format(DATE_ISO8601) : null,
 		]);
 
-		$this->assignTags($newId, $tags);
+		if ($tags !== null) {
+			$this->assignTags($newId, $tags);
+		}
 		$this->db->commit();
 
 		if ($oldId != $newId) {

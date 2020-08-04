@@ -51,6 +51,8 @@ use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\String\Slugger\AsciiSlugger;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 
 class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements SmalldbFactory, CompilerPassInterface
@@ -106,6 +108,10 @@ class SymfonyDemoContainer extends AbstractSmalldbContainerFactory implements Sm
 		$c->autowire(UserTransitions::class)->setPublic(true);
 		$c->autowire(CommentTransitions::class)->setPublic(true);
 		$c->autowire(CrudItemTransitions::class)->setPublic(true);
+
+		// Additional services
+		$c->setAlias(SluggerInterface::class, AsciiSlugger::class);
+		$c->autowire(AsciiSlugger::class);
 
 		$c->addCompilerPass($this);
 		return $c;

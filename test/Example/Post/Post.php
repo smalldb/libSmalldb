@@ -67,14 +67,14 @@ abstract class Post implements ReferenceInterface, PostData
 	 * @Color("#4a0")
 	 * @AC\UsePolicy("Editor")
 	 */
-	abstract public function create(PostDataImmutable $itemData, array $tags);
+	abstract public function create(PostDataImmutable $itemData, ?array $tags = null);
 
 
 	/**
 	 * @Transition("Exists", {"Exists"})
 	 * @AC\UsePolicy("Author")
 	 */
-	abstract public function update(PostDataImmutable $itemData, array $tags);
+	abstract public function update(PostDataImmutable $itemData, ?array $tags = null);
 
 
 	/**
