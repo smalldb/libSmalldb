@@ -23,7 +23,7 @@ use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Transition\TransitionEvent;
 
 
-interface ReferenceInterface
+interface ReferenceInterface extends MachineIdentifierInterface
 {
 	/**
 	 * @State
@@ -39,17 +39,6 @@ interface ReferenceInterface
 	 * @deprecated
 	 */
 	public function invalidateCache(): void;
-
-	/**
-	 * Get state machine type.
-	 */
-	public function getMachineType(): string;
-
-	/**
-	 * Get ID of the state machine.
-	 * The ID must be unique within state machine type.
-	 */
-	public function getMachineId();
 
 	/**
 	 * Read state machine state

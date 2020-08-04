@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\AccessControlExtension\Predicate;
 
 use Smalldb\StateMachine\ReferenceInterface;
+use Smalldb\StateMachine\MachineIdentifierInterface;
 use Symfony\Component\Security\Core\Security;
 
 
@@ -40,7 +41,7 @@ class IsOwnerCompiled implements PredicateCompiled
 		$user = $this->security->getUser();
 
 		// FIXME: Get the proper user ID.
-		if ($user instanceof ReferenceInterface) {
+		if ($user instanceof MachineIdentifierInterface) {
 			$userId = $user->getMachineId();
 		} else if (method_exists($user, 'getId')) {
 			$userId = $user->getId();
