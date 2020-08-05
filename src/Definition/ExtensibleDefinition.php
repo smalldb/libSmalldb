@@ -54,7 +54,7 @@ abstract class ExtensibleDefinition implements JsonSerializable
 
 
 	/**
-	 * Get an extension of given type.
+	 * Get an extension of given type. Throws UndefinedExtensionException if the extension is not found.
 	 *
 	 * It would be nice to write getExtension<T>(): T ...
 	 *
@@ -68,6 +68,30 @@ abstract class ExtensibleDefinition implements JsonSerializable
 
 		if ($ext === null) {
 			throw new UndefinedExtensionException("Extension not defined: $extensionClassName");
+		} else if ($ext instanceof $extensionClassName) {
+			return $ext;
+		} else {
+			throw new InvalidExtensionException("Unexpected extension type: $extensionClassName"
+				. " should not be an instance of " . get_class($ext));
+		}
+	}
+
+
+	/**
+	 * Get an extension of given type. Just like getExtension(), but returns null if the extension is not found.
+	 *
+	 * It would be nice to write getExtension<T>(): T ...
+	 *
+	 * @template ExtensionInterface
+	 * @param class-string<ExtensionInterface> $extensionClassName
+	 * @return ExtensionInterface
+	 */
+	public function findExtension(string $extensionClassName): ?ExtensionInterface
+	{
+		$ext = $this->extensions[$extensionClassName] ?? null;
+
+		if ($ext === null) {
+			return null;
 		} else if ($ext instanceof $extensionClassName) {
 			return $ext;
 		} else {

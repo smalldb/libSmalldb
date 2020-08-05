@@ -77,8 +77,10 @@ class DefinitionExtensionTest extends TestCase
 
 		$this->assertTrue($definition->hasExtension($extClassName));
 		$this->assertSame($extMock, $definition->getExtension($extClassName));
+		$this->assertSame($extMock, $definition->findExtension($extClassName));
 
 		$this->assertFalse($definition->hasExtension('Foo'));
+		$this->assertNull($definition->findExtension('Foo'));
 
 		$this->expectException(UndefinedExtensionException::class);
 		$definition->getExtension('Foo');
@@ -129,7 +131,7 @@ class DefinitionExtensionTest extends TestCase
 	/**
 	 * @dataProvider definitionFactoryProvider
 	 */
-	public function testInvalidDefinitionExtension(callable $definitionFactory)
+	public function testGetInvalidDefinitionExtension(callable $definitionFactory)
 	{
 		$extMock = $this->createMock(ExtensionInterface::class);
 
@@ -145,6 +147,28 @@ class DefinitionExtensionTest extends TestCase
 
 		$this->expectException(InvalidExtensionException::class);
 		$definition->getExtension('Foo');
+	}
+
+
+	/**
+	 * @dataProvider definitionFactoryProvider
+	 */
+	public function testFindInvalidDefinitionExtension(callable $definitionFactory)
+	{
+		$extMock = $this->createMock(ExtensionInterface::class);
+
+		$extensions = [
+			'Foo' => $extMock,
+		];
+
+		/** @var ExtensibleDefinition $definition */
+		$definition = $definitionFactory($extensions);
+		$this->assertInstanceOf(ExtensibleDefinition::class, $definition);
+
+		$this->assertTrue($definition->hasExtension('Foo'));
+
+		$this->expectException(InvalidExtensionException::class);
+		$definition->findExtension('Foo');
 	}
 
 }
