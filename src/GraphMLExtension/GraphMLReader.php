@@ -23,6 +23,7 @@ use DOMXpath;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\Graph\Graph;
 use Smalldb\Graph\MissingElementException;
+use Smalldb\StateMachine\StyleExtension\Definition\StyleExtensionPlaceholder;
 
 
 /**
@@ -83,7 +84,7 @@ class GraphMLReader
 			$root_graph = $xpath->query('/g:graphml/g:graph')->item(0);
 		}
 		if ($root_graph == null) {
-			throw new GraphMLException('Graph node not found.');
+			throw new GraphMLException('Graph node not found: ' . $graphml_group_name);
 		}
 
 		// Load keys
@@ -161,8 +162,12 @@ class GraphMLReader
 					$targetNode->getAttr('label', $target)));
 			}
 			$label = $label_query_result->textContent;
-			if ($label !== null) {
-				$edge->setAttr('label', trim($label));
+			if ($label === null || ($label = trim($label)) === "") {
+				throw new GraphMLException(sprintf('Empty edge label. Edge: %s -> %s',
+					$sourceNode->getAttr('label', $source),
+					$targetNode->getAttr('label', $target)));
+			} else {
+				$edge->setAttr('label', $label);
 			}
 			$color_query_result = $xpath->query('.//y:LineStyle', $el)->item(0);
 			if ($color_query_result) {
@@ -188,7 +193,10 @@ class GraphMLReader
 			$stateName = (string) $n->getAttr('label');
 			if ($stateName !== '') {
 				$state = $this->builder->addState($stateName);
-				$state->color = $n->getAttr('color');
+
+				/** @var StyleExtensionPlaceholder $ext */
+				$ext = $state->getExtensionPlaceholder(StyleExtensionPlaceholder::class);
+				$ext->color = $n->getAttr('color');
 
 				// TODO: Process node attrs.
 			}
@@ -200,15 +208,13 @@ class GraphMLReader
 			$label = (string) $e->getAttr('label');
 			$sourceStateName = (string) $e->getStart()->getAttr('label');
 			$targetStateName = (string) $e->getEnd()->getAttr('label');
-			if (!$label) {
-				throw new GraphMLException(sprintf('Missing label at edge "%s" -> "%s".', $sourceStateName, $targetStateName));
-			}
 
 			$transition = $this->builder->getTransition($label, $sourceStateName);
 			$transition->targetStates[] = $targetStateName;
-			if (($color = $e->getAttr('color')) !== null) {
-				$transition->color = $color;
-			}
+
+			/** @var StyleExtensionPlaceholder $ext */
+			$ext = $transition->getExtensionPlaceholder(StyleExtensionPlaceholder::class);
+			$ext->color = $e->getAttr('color');
 
 			// TODO: Process edge attrs.
 		}
