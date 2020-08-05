@@ -44,6 +44,8 @@ class TransitionTest extends TestCase
 
 		$ref = $this->createReference($definition, true, 123);
 
+		$this->assertTrue($ref->isTransitionAllowed('create'));
+
 		$ev = $ref->invokeTransition('create');
 		$this->assertEquals(123, $ev->getReturnValue());
 	}
@@ -54,6 +56,8 @@ class TransitionTest extends TestCase
 		$definition = $this->createBuilder()->build();
 
 		$ref = $this->createReference($definition, false, null);
+
+		$this->assertFalse($ref->isTransitionAllowed('create'));
 
 		$this->expectException(TransitionAccessException::class);
 		$ref->invokeTransition('create');
