@@ -28,7 +28,7 @@ use Smalldb\StateMachine\Definition\CrudMachineDefinition;
  * @UseRepository(CrudItemRepository::class)
  * @UseTransitions(CrudItemTransitions::class)
  */
-interface CrudItem extends CrudMachineDefinition
+abstract class CrudItem implements CrudMachineDefinition
 {
 
 }

@@ -90,19 +90,19 @@ class ClassLocatorTest extends TestCase
 		$classes = iterator_to_array($locator->getClasses(), false);
 
 		// A plain class
-		$this->assertTrue(class_exists(PostRepository::class));
+		$this->assertClassExists(PostRepository::class);
 		$this->assertContainsEquals(PostRepository::class, $classes);
 
 		// An abstract class
-		$this->assertTrue(class_exists(Post::class));
+		$this->assertClassExists(Post::class);
 		$this->assertContainsEquals(Post::class, $classes);
 
 		// An interface
-		$this->assertTrue(interface_exists(CrudItem::class));
+		$this->assertClassExists(CrudItem::class);
 		$this->assertContainsEquals(CrudItem::class, $classes);
 
 		// Excluded class
-		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
+		$this->assertClassExists(SymfonyDemoDatabase::class);
 		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
 	}
 
@@ -123,7 +123,7 @@ class ClassLocatorTest extends TestCase
 
 	private function checkFileNameToClassName(ClassLocator $locator, string $className, bool $shouldBeFound = true)
 	{
-		$this->assertTrue(class_exists($className));
+		$this->assertClassExists($className);
 		$filename = (new ReflectionClass($className))->getFileName();
 
 		$mappedClassName = $locator->mapFileNameToClassName($filename);
@@ -168,25 +168,25 @@ class ClassLocatorTest extends TestCase
 		$this->assertContainsOnlyInstancesOf(ClassLocator::class, $locator->getClassLocators());
 
 		// A plain class outside tests
-		$this->assertTrue(class_exists(Graph::class));
+		$this->assertClassExists(Graph::class);
 		$this->assertContainsEquals(Graph::class, $classes);
-		$this->assertTrue(class_exists(Smalldb::class));
+		$this->assertClassExists(Smalldb::class);
 		$this->assertNotContainsEquals(Smalldb::class, $classes);
 
 		// A plain class
-		$this->assertTrue(class_exists(PostRepository::class));
+		$this->assertClassExists(PostRepository::class);
 		$this->assertContainsEquals(PostRepository::class, $classes);
 
 		// An abstract class
-		$this->assertTrue(class_exists(Post::class));
+		$this->assertClassExists(Post::class);
 		$this->assertContainsEquals(Post::class, $classes);
 
 		// An interface
-		$this->assertTrue(interface_exists(CrudItem::class));
+		$this->assertClassExists(CrudItem::class);
 		$this->assertContainsEquals(CrudItem::class, $classes);
 
 		// Excluded class
-		$this->assertTrue(class_exists(SymfonyDemoDatabase::class));
+		$this->assertClassExists(SymfonyDemoDatabase::class);
 		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
 
 		// Check mapping
