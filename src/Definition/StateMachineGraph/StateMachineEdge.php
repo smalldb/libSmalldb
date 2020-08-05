@@ -16,17 +16,20 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\Graph\Edge;
 use Smalldb\Graph\NestedGraph;
 use Smalldb\Graph\Node;
+use Smalldb\StateMachine\LogicException;
+
 
 class StateMachineEdge extends Edge
 {
 	private TransitionDefinition $transition;
+
 
 	public function __construct(TransitionDefinition $transition, NestedGraph $graph, string $id, Node $start, Node $end, array $attrs)
 	{
@@ -34,9 +37,21 @@ class StateMachineEdge extends Edge
 		$this->transition = $transition;
 	}
 
+
 	public function getTransition(): TransitionDefinition
 	{
 		return $this->transition;
+	}
+
+
+	public function getStateMachine(): StateMachineDefinition
+	{
+		$rootGraph = $this->getRootGraph();
+		if ($rootGraph instanceof StateMachineGraph) {
+			return $rootGraph->getStateMachine();
+		} else {
+			throw new LogicException("The root graph is not a " . StateMachineGraph::class);
+		}
 	}
 
 }

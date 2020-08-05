@@ -16,12 +16,14 @@
  *
  */
 
-
 namespace Smalldb\StateMachine\Definition\StateMachineGraph;
 
 use Smalldb\StateMachine\Definition\StateDefinition;
 use Smalldb\Graph\NestedGraph;
 use Smalldb\Graph\Node;
+use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\LogicException;
+
 
 class StateMachineNode extends Node
 {
@@ -52,9 +54,21 @@ class StateMachineNode extends Node
 		return ($this->sourceOrTarget & self::SOURCE) === self::SOURCE;
 	}
 
+
 	public function isTargetNode(): bool
 	{
 		return ($this->sourceOrTarget & self::TARGET) === self::TARGET;
+	}
+
+
+	public function getStateMachine(): StateMachineDefinition
+	{
+		$rootGraph = $this->getRootGraph();
+		if ($rootGraph instanceof StateMachineGraph) {
+			return $rootGraph->getStateMachine();
+		} else {
+			throw new LogicException("The root graph is not a " . StateMachineGraph::class);
+		}
 	}
 
 }

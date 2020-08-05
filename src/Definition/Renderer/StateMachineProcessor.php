@@ -18,6 +18,7 @@
 
 namespace Smalldb\StateMachine\Definition\Renderer;
 
+use Smalldb\StateMachine\Definition\ExtensibleDefinition;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
@@ -26,7 +27,6 @@ use Smalldb\Graph\Grafovatko\ProcessorInterface;
 use Smalldb\Graph\Graph;
 use Smalldb\Graph\NestedGraph;
 use Smalldb\Graph\Node;
-use Smalldb\StateMachine\StyleExtension\Definition\StyleExtension;
 
 
 class StateMachineProcessor implements ProcessorInterface
@@ -58,6 +58,8 @@ class StateMachineProcessor implements ProcessorInterface
 	{
 		if ($graph instanceof StateMachineGraph) {
 			$exportedGraph['layoutOptions']['rankdir'] = $this->horizontalLayout ? 'LR' : 'TB';
+
+			$this->runGraphProcessor($graph->getStateMachine(), $graph, $exportedGraph);
 		}
 		return $exportedGraph;
 	}
@@ -72,13 +74,7 @@ class StateMachineProcessor implements ProcessorInterface
 			$state = $node->getState();
 			$stateName = $state->getName();
 			$exportedNode['label'] = $stateName;
-
-			if ($state->hasExtension(StyleExtension::class)) {
-				/** @var StyleExtension $ext */
-				$ext = $state->getExtension(StyleExtension::class);
-				$color = $ext->getColor();
-			}
-			$exportedNode['fill'] = $color ?? "#eee";
+			$exportedNode['fill'] = "#eee";
 
 			if ($stateName === '') {
 				if ($node->isSourceNode()) {
@@ -92,8 +88,10 @@ class StateMachineProcessor implements ProcessorInterface
 				$exportedNode['shape'] = 'uml.state';
 			}
 
-			// TODO: Highlight unreachable and undefined states
+			$this->runNodeProcessor($node->getStateMachine(), $node, $exportedNode);
+			$this->runNodeProcessor($state, $node, $exportedNode);
 
+			// TODO: Highlight unreachable and undefined states
 		}
 		return $exportedNode;
 	}
@@ -107,16 +105,48 @@ class StateMachineProcessor implements ProcessorInterface
 		if ($edge instanceof StateMachineEdge) {
 			$transition = $edge->getTransition();
 			$exportedEdge['label'] = $transition->getName();
+			$exportedEdge['color'] = "#000";
 
-			if ($transition->hasExtension(StyleExtension::class)) {
-				/** @var StyleExtension $ext */
-				$ext = $transition->getExtension(StyleExtension::class);
-				$color = $ext->getColor();
-			}
-			$exportedEdge['color'] = $color ?? "#000";
+			$this->runEdgeProcessor($transition, $edge, $exportedEdge);
+			$this->runEdgeProcessor($edge->getStateMachine(), $edge, $exportedEdge);
 		}
 		return $exportedEdge;
 	}
+
+
+
+	private function runGraphProcessor(ExtensibleDefinition $definition, StateMachineGraph $graph, array &$exportedGraph)
+	{
+		foreach ($definition->getExtensionClassNames() as $extName) {
+			$ext = $definition->getExtension($extName);
+			if ($ext instanceof StateMachineGraphProcessor) {
+				$ext->processGraphAttrs($graph, $exportedGraph);
+			}
+		}
+	}
+
+
+	private function runNodeProcessor(ExtensibleDefinition $definition, StateMachineNode $node, array &$exportedNode)
+	{
+		foreach ($definition->getExtensionClassNames() as $extName) {
+			$ext = $definition->getExtension($extName);
+			if ($ext instanceof StateMachineNodeProcessor) {
+				$ext->processNodeAttrs($node, $exportedNode);
+			}
+		}
+	}
+
+
+	private function runEdgeProcessor(ExtensibleDefinition $definition, StateMachineEdge $edge, array &$exportedEdge)
+	{
+		foreach ($definition->getExtensionClassNames() as $extName) {
+			$ext = $definition->getExtension($extName);
+			if ($ext instanceof StateMachineEdgeProcessor) {
+				$ext->processEdgeAttrs($edge, $exportedEdge);
+			}
+		}
+	}
+
 
 	/**
 	 * Returns Htag-style array of additional SVG elements which will be appended to the rendered SVG image.
