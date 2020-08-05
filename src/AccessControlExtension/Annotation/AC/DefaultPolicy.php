@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtensionPlaceholder;
 use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 

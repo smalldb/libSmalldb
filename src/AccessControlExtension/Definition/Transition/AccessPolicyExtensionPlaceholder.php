@@ -16,28 +16,34 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension\Definition\Transition;
 
-use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
+use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
 
 
-class AccessPolicyExtension implements ExtensionInterface
+class AccessPolicyExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	use SimpleJsonSerializableTrait;
-
-	private string $policyName;
+	public ?string $policyName = null;
 
 
-	public function __construct(string $policyName)
+	public function __construct()
 	{
-		$this->policyName = $policyName;
 	}
 
 
-	public function getPolicyName(): string
+	public function buildExtension(): ?AccessPolicyExtension
 	{
-		return $this->policyName;
+		if ($this->policyName !== null) {
+			return new AccessPolicyExtension($this->policyName);
+		} else {
+			return null;
+		}
+	}
+
+
+	public function setPolicyName(string $policyName): void
+	{
+		$this->policyName = $policyName;
 	}
 
 }

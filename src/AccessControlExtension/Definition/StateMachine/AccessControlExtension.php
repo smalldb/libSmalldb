@@ -16,16 +16,21 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine;
 
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachineEdgeProcessorTrait;
+use Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtension;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\ContainerAdapter;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Definition\Renderer\StateMachineEdgeProcessor;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class AccessControlExtension implements ExtensionInterface
+class AccessControlExtension implements ExtensionInterface, StateMachineEdgeProcessor
 {
 	use SimpleJsonSerializableTrait;
+	use StateMachineEdgeProcessorTrait;
 
 
 	/** @var AccessControlPolicy[] */
@@ -69,6 +74,16 @@ class AccessControlExtension implements ExtensionInterface
 			$policyPredicates[$policy->getName()] = $policy->getPredicate()->compile($container);
 		}
 		return $policyPredicates;
+	}
+
+
+	public function processEdgeAttrs(StateMachineEdge $edge, array &$exportedEdge)
+	{
+		if (!$edge->getTransition()->hasExtension(AccessPolicyExtension::class)) {
+			// AccessPolicy not defined on the edge => use the default.
+			$defaultPolicy = $this->getPolicy($this->getDefaultPolicyName());
+			$this->runEdgeProcessor($defaultPolicy, $edge, $exportedEdge);
+		}
 	}
 
 }

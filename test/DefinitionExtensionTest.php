@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtension;
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\Definition\ExtensibleDefinition;

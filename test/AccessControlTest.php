@@ -19,10 +19,11 @@
 namespace Smalldb\StateMachine\Test;
 
 use Generator;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlPolicyPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\AccessControlExtension\Predicate as P;
 use Smalldb\StateMachine\AccessControlExtension\Annotation\AC as A;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
@@ -168,8 +169,8 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	public function testAccessControlExtension()
 	{
 		$placeholder = new AccessControlExtensionPlaceholder();
-		$placeholder->addPolicy(new AccessControlPolicy("Foo", new P\Allow()));
-		$placeholder->addPolicy(new AccessControlPolicy("Bar", new P\Deny()));
+		$placeholder->addPolicy(AccessControlPolicyPlaceholder::create("Foo", new P\Allow()));
+		$placeholder->addPolicy(AccessControlPolicyPlaceholder::create("Bar", new P\Deny()));
 
 		$ext = $placeholder->buildExtension();
 		$policies = $ext->getPolicies();
@@ -184,11 +185,11 @@ class AccessControlTest extends TestCaseWithDemoContainer
 	public function testDuplicateAccessPolicyInPlaceholder()
 	{
 		$ext = new AccessControlExtensionPlaceholder();
-		$ext->addPolicy(new AccessControlPolicy("Foo", new P\Allow()));
-		$ext->addPolicy(new AccessControlPolicy("Bar", new P\Deny()));
+		$ext->addPolicy(AccessControlPolicyPlaceholder::create("Foo", new P\Allow()));
+		$ext->addPolicy(AccessControlPolicyPlaceholder::create("Bar", new P\Deny()));
 
 		$this->expectException(InvalidArgumentException::class);
-		$ext->addPolicy(new AccessControlPolicy("Foo", new P\Deny()));
+		$ext->addPolicy(AccessControlPolicyPlaceholder::create("Foo", new P\Deny()));
 	}
 
 
@@ -347,7 +348,7 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		$trGood->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class)->policyName = 'good_policy';
 		$trBad->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class)->policyName = 'bad_policy';
 		$builder->getExtensionPlaceholder(AccessControlExtensionPlaceholder::class)
-			->addPolicy(new AccessControlPolicy('good_policy', new P\Allow()));
+			->addPolicy(AccessControlPolicyPlaceholder::create('good_policy', new P\Allow()));
 
 		$definition = $builder->build();
 		$definitionBag = new SmalldbDefinitionBag();

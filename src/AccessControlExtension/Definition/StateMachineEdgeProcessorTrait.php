@@ -18,32 +18,22 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Definition;
 
-use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlPolicy;
+use Smalldb\StateMachine\Definition\Renderer\StateMachineEdgeProcessor;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
 
 
-class AccessPolicyExtensionPlaceholder implements ExtensionPlaceholderInterface
+trait StateMachineEdgeProcessorTrait
 {
-	public ?string $policyName = null;
 
-
-	public function __construct()
+	private function runEdgeProcessor(AccessControlPolicy $policy, StateMachineEdge $edge, array &$exportedEdge)
 	{
-	}
-
-
-	public function buildExtension(): ?AccessPolicyExtension
-	{
-		if ($this->policyName !== null) {
-			return new AccessPolicyExtension($this->policyName);
-		} else {
-			return null;
+		foreach ($policy->getExtensionClassNames() as $policyExtName) {
+			$policyExt = $policy->getExtension($policyExtName);
+			if ($policyExt instanceof StateMachineEdgeProcessor) {
+				$policyExt->processEdgeAttrs($edge, $exportedEdge);
+			}
 		}
-	}
-
-
-	public function setPolicyName(string $policyName): void
-	{
-		$this->policyName = $policyName;
 	}
 
 }

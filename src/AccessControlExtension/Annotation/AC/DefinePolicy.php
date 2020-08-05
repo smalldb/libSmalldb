@@ -18,8 +18,10 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtensionPlaceholder;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlPolicy;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlPolicyPlaceholder;
+use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToPlaceholderInterface;
 use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToStateMachineBuilderInterface;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 
@@ -34,19 +36,32 @@ class DefinePolicy implements ApplyToStateMachineBuilderInterface
 {
 	public string $policyName;
 	public PredicateAnnotation $predicate;
-
+	public array $nestedAnnotations;
 
 	public function __construct($values)
 	{
-		[$this->policyName, $this->predicate] = $values['value'];
+		$v = $values['value'];
+		$this->policyName = array_shift($v);
+		$this->predicate = array_shift($v);
+		$this->nestedAnnotations = $v;
 	}
 
 
 	public function applyToBuilder(StateMachineDefinitionBuilder $builder): void
 	{
+		$policyPlaceholder = new AccessControlPolicyPlaceholder();
+		$policyPlaceholder->name = $this->policyName;
+		$policyPlaceholder->predicate = $this->predicate->buildPredicate();
+
+		foreach ($this->nestedAnnotations as $nestedAnnotation) {
+			if ($nestedAnnotation instanceof ApplyToPlaceholderInterface) {
+				$nestedAnnotation->applyToPlaceholder($policyPlaceholder);
+			}
+		}
+
 		/** @var AccessControlExtensionPlaceholder $ext */
 		$ext = $builder->getExtensionPlaceholder(AccessControlExtensionPlaceholder::class);
-		$ext->addPolicy(new AccessControlPolicy($this->policyName, $this->predicate->buildPredicate()));
+		$ext->addPolicy($policyPlaceholder);
 	}
 
 }

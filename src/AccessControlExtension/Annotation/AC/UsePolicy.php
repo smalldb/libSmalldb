@@ -18,7 +18,7 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension\Annotation\AC;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtensionPlaceholder;
+use Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtensionPlaceholder;
 use Smalldb\StateMachine\Definition\Builder\TransitionPlaceholder;
 use Smalldb\StateMachine\Definition\AnnotationReader\ApplyToTransitionPlaceholderInterface;
 
@@ -36,7 +36,7 @@ class UsePolicy implements ApplyToTransitionPlaceholderInterface
 
 	public function applyToTransitionPlaceholder(TransitionPlaceholder $placeholder): void
 	{
-		/** @var AccessPolicyExtensionPlaceholder $ext */
+		/** @var \Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtensionPlaceholder $ext */
 		$ext = $placeholder->getExtensionPlaceholder(AccessPolicyExtensionPlaceholder::class);
 		$ext->setPolicyName($this->policy);
 	}

@@ -45,9 +45,9 @@ use Smalldb\StateMachine\Test\Example\User\User;
  * @UseRepository(PostRepository::class)
  * @UseTransitions(PostTransitions::class)
  * @WrapDTO(PostDataImmutable::class)
- * @AC\DefinePolicy("Author", @AC\AllOf(@AC\IsOwner("authorId"), @AC\IsGranted("ROLE_ADMIN")), @Color("#4a0"))
- * @AC\DefinePolicy("Editor", @AC\IsGranted("ROLE_ADMIN"))
- * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"))
+ * @AC\DefinePolicy("Author", @AC\AllOf(@AC\IsOwner("authorId"), @AC\IsGranted("ROLE_ADMIN")), @Color("#a40"))
+ * @AC\DefinePolicy("Editor", @AC\IsGranted("ROLE_ADMIN"), @Color("#4a0"))
+ * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"), @Color("#888"))
  * @AC\DefaultPolicy("Author")
  */
 abstract class Post implements ReferenceInterface, PostData
@@ -64,7 +64,6 @@ abstract class Post implements ReferenceInterface, PostData
 
 	/**
 	 * @Transition("", {"Exists"})
-	 * @Color("#4a0")
 	 * @AC\UsePolicy("Editor")
 	 */
 	abstract public function create(PostDataImmutable $itemData, ?array $tags = null);
@@ -86,8 +85,6 @@ abstract class Post implements ReferenceInterface, PostData
 
 	/**
 	 * @Transition("Exists", {""})
-	 * @Color("#a40")
-	 * @AC\UsePolicy("Author")
 	 */
 	abstract public function delete();
 

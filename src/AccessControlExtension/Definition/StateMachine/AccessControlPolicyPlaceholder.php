@@ -16,33 +16,36 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
+namespace Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine;
 
 use Smalldb\StateMachine\AccessControlExtension\Predicate\Predicate;
+use Smalldb\StateMachine\Definition\Builder\ExtensiblePlaceholder;
 
 
-class AccessControlPolicy
+class AccessControlPolicyPlaceholder extends ExtensiblePlaceholder
 {
-	private string $name;
-	private Predicate $predicate;
+	public string $name;
+	public Predicate $predicate;
 
 
-	public function __construct(string $name, Predicate $predicate)
+	public function __construct()
 	{
-		$this->name = $name;
-		$this->predicate = $predicate;
+		parent::__construct([]);
 	}
 
 
-	public function getName(): string
+	public static function create($name, $predicate): self
 	{
-		return $this->name;
+		$self = new self();
+		$self->name = $name;
+		$self->predicate = $predicate;
+		return $self;
 	}
 
 
-	public function getPredicate(): Predicate
+	public function buildAccessPolicy(): AccessControlPolicy
 	{
-		return $this->predicate;
+		return new AccessControlPolicy($this->name, $this->predicate, $this->buildExtensions());
 	}
 
 }

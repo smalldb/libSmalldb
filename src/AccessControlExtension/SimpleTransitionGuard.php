@@ -18,8 +18,8 @@
 
 namespace Smalldb\StateMachine\AccessControlExtension;
 
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessControlExtension;
-use Smalldb\StateMachine\AccessControlExtension\Definition\AccessPolicyExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtension;
+use Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtension;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\ContainerAdapter;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\PredicateCompiled;
 use Smalldb\StateMachine\AccessControlExtension\Predicate\SymfonyContainerAdapter;

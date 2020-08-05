@@ -16,18 +16,17 @@
  *
  */
 
-namespace Smalldb\StateMachine\AccessControlExtension\Definition;
-
+namespace Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine;
 
 use Smalldb\StateMachine\Definition\Builder\ExtensionPlaceholderInterface;
-use Smalldb\StateMachine\Definition\ExtensionInterface;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\LogicException;
 
 
 class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 {
-	/** @var AccessControlPolicy[] */
-	public array $policies = [];
+	/** @var AccessControlPolicyPlaceholder[] */
+	public array $policyPlaceholders = [];
 
 	public ?string $defaultPolicyName = null;
 
@@ -37,20 +36,31 @@ class AccessControlExtensionPlaceholder implements ExtensionPlaceholderInterface
 	}
 
 
-	public function addPolicy(AccessControlPolicy $policy): void
+	public function addPolicy(AccessControlPolicyPlaceholder $policy): void
 	{
-		$name = $policy->getName();
-		if (isset($this->policies[$name])) {
-			throw new InvalidArgumentException("Duplicate access policy: $name");
+		if ($policy->name == '') {
+			throw new InvalidArgumentException("Unnamed access policy.");
 		}
-		$this->policies[$name] = $policy;
+		if (isset($this->policyPlaceholders[$policy->name])) {
+			throw new InvalidArgumentException("Duplicate access policy: $policy->name");
+		}
+		$this->policyPlaceholders[$policy->name] = $policy;
 	}
 
 
 	public function buildExtension(): ?AccessControlExtension
 	{
-		return empty($this->policies) && $this->defaultPolicyName === null ? null
-			: new AccessControlExtension($this->policies, $this->defaultPolicyName);
+		$policies = [];
+		foreach ($this->policyPlaceholders as $policyName => $policyPlaceholder) {
+			if ($policyName !== $policyPlaceholder->name) {
+				throw new LogicException("Access policy name has changed.");
+			}
+			$policy = $policyPlaceholder->buildAccessPolicy();
+			$policies[$policy->getName()] = $policy;
+		}
+
+		return empty($policies) && $this->defaultPolicyName === null ? null
+			: new AccessControlExtension($policies, $this->defaultPolicyName);
 	}
 
 }
