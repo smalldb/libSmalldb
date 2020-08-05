@@ -19,42 +19,46 @@
 namespace Smalldb\StateMachine\StyleExtension\Definition;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
-use Smalldb\StateMachine\Definition\Renderer\StateMachineEdgeProcessor;
 use Smalldb\StateMachine\Definition\Renderer\StateMachineGraphProcessor;
-use Smalldb\StateMachine\Definition\Renderer\StateMachineNodeProcessor;
-use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
-use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineGraph;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class StyleExtension implements ExtensionInterface, StateMachineNodeProcessor, StateMachineEdgeProcessor
+class GraphLayoutExtension implements ExtensionInterface, StateMachineGraphProcessor
 {
 	use SimpleJsonSerializableTrait;
 
-	private ?string $color;
+	private ?string $layout;
+	private ?array $layoutOptions;
 
 
-	public function __construct(?string $color)
+	public function __construct(?string $layout, ?array $layoutOptions)
 	{
-		$this->color = $color;
+		$this->layout = $layout;
+		$this->layoutOptions = $layoutOptions;
 	}
 
 
-	public function getColor(): ?string
+	public function getLayout(): ?string
 	{
-		return $this->color;
+		return $this->layout;
 	}
 
 
-	public function processNodeAttrs(StateMachineNode $node, array &$exportedNode)
+	public function getLayoutOptions(): ?array
 	{
-		$exportedNode['fill'] = $this->getColor() ?? "#eee";
+		return $this->layoutOptions;
 	}
 
 
-	public function processEdgeAttrs(StateMachineEdge $edge, array &$exportedEdge)
+	public function processGraphAttrs(StateMachineGraph $graph, array &$exportedGraph)
 	{
-		$exportedEdge['color'] = $this->getColor() ?? "#000";
+		if (($layout = $this->getLayout()) !== null) {
+			$exportedGraph['layout'] = $layout;
+		}
+		if (($layoutOptions = $this->getLayoutOptions()) !== null) {
+			$exportedGraph['layoutOptions'] = $layoutOptions;
+		}
 	}
 
 }

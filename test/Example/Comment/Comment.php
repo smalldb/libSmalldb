@@ -28,6 +28,7 @@ use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\ReferenceProtectedAPI;
 use Smalldb\StateMachine\StyleExtension\Annotation\Color;
+use Smalldb\StateMachine\StyleExtension\Annotation\GraphLayout;
 use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentData;
 use Smalldb\StateMachine\Test\Example\Comment\CommentData\CommentDataImmutable;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -41,6 +42,7 @@ use Smalldb\StateMachine\Test\Example\User\User;
  * @UseTransitions(CommentTransitions::class)
  * @AC\DefinePolicy("User", @AC\IsGranted("IS_AUTHENTICATED_FULLY"))
  * @AC\DefaultPolicy("User")
+ * @GraphLayout(layout = "row", layoutOptions = {"spacing": "2"})
  */
 abstract class Comment implements ReferenceInterface, CommentData
 {
