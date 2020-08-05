@@ -40,13 +40,13 @@ abstract class AbstractSmalldbRepository implements SmalldbRepositoryInterface
 	}
 
 
-	public function getMachineProvider(): SmalldbProviderInterface
+	protected function getMachineProvider(): SmalldbProviderInterface
 	{
 		return $this->machineProvider ?? ($this->machineProvider = $this->smalldb->getMachineProvider(static::REF_CLASS));
 	}
 
 
-	public function getReferenceClass(): string
+	protected function getReferenceClass(): string
 	{
 		return $this->refClass ?? ($this->refClass = $this->getMachineProvider()->getReferenceClass());
 	}
