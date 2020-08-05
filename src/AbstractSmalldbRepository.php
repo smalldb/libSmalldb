@@ -34,7 +34,7 @@ abstract class AbstractSmalldbRepository implements SmalldbRepositoryInterface
 	public function __construct(Smalldb $smalldb)
 	{
 		if (static::REF_CLASS === null) {
-			throw new \LogicException("Reference class not configured in " . __CLASS__ . "::REF_CLASS constant.");
+			throw new LogicException("Reference class not configured in " . __CLASS__ . "::REF_CLASS constant.");
 		}
 		$this->smalldb = $smalldb;
 	}
