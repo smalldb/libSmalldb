@@ -19,10 +19,14 @@
 namespace Smalldb\StateMachine\StyleExtension\Definition;
 
 use Smalldb\StateMachine\Definition\ExtensionInterface;
+use Smalldb\StateMachine\Definition\Renderer\StateMachineEdgeProcessor;
+use Smalldb\StateMachine\Definition\Renderer\StateMachineNodeProcessor;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineEdge;
+use Smalldb\StateMachine\Definition\StateMachineGraph\StateMachineNode;
 use Smalldb\StateMachine\Utils\SimpleJsonSerializableTrait;
 
 
-class StyleExtension implements ExtensionInterface
+class StyleExtension implements ExtensionInterface, StateMachineNodeProcessor, StateMachineEdgeProcessor
 {
 	use SimpleJsonSerializableTrait;
 
@@ -38,6 +42,18 @@ class StyleExtension implements ExtensionInterface
 	public function getColor(): ?string
 	{
 		return $this->color;
+	}
+
+
+	public function processNodeAttrs(StateMachineNode $node, array &$exportedNode)
+	{
+		$exportedNode['fill'] = $this->getColor() ?? "#eee";
+	}
+
+
+	public function processEdgeAttrs(StateMachineEdge $edge, array &$exportedEdge)
+	{
+		$exportedEdge['color'] = $this->getColor() ?? "#000";
 	}
 
 }
