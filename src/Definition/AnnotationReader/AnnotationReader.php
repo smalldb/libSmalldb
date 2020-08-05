@@ -60,6 +60,7 @@ class AnnotationReader
 	{
 		$builder = $this->definitionBuilderFactory->createDefinitionBuilder();
 		$this->processClassReflection($reflectionClass, $this->annotationReader, $builder);
+		$builder->sortPlaceholders();
 		return $builder->build();
 	}
 
