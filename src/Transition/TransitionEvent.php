@@ -19,7 +19,6 @@
 namespace Smalldb\StateMachine\Transition;
 
 use Smalldb\StateMachine\ReferenceInterface;
-use Smalldb\StateMachine\Utils\Hook;
 
 
 class TransitionEvent
@@ -31,8 +30,6 @@ class TransitionEvent
 
 	/** @var mixed */
 	private $newId = null;
-
-	private ?Hook $onNewIdHook = null;
 
 	/** @var mixed */
 	private $returnValue = null;
@@ -80,10 +77,6 @@ class TransitionEvent
 	{
 		$this->hasNewId = true;
 		$this->newId = $newId;
-
-		if ($this->onNewIdHook) {
-			$this->onNewIdHook->emit($newId);
-		}
 	}
 
 
@@ -102,14 +95,6 @@ class TransitionEvent
 	public function getNewId()
 	{
 		return $this->newId;
-	}
-
-
-	public function onNewId(callable $callback): Hook
-	{
-		$hook = $this->onNewIdHook ?? ($this->onNewIdHook = new Hook());
-		$hook->addListener($callback);
-		return $hook;
 	}
 
 

@@ -118,27 +118,15 @@ trait ReferenceTrait // implements ReferenceInterface
 	 */
 	final public function invokeTransition(string $transitionName, ...$args): TransitionEvent
 	{
-		// TODO: Hooks ?
-		//if ($this->before_transition) {
-		//	$this->before_transition->emit($this, $transitionName, $args);
-		//}
-		$oldId = $this->getMachineId();
-
+		// TODO: Generate events before and after the transition?
 		$this->invalidateCache();
 
 		$transitionEvent = new TransitionEvent($this, $transitionName, $args);
-		$transitionEvent->onNewId(function($newId) use ($oldId) {
-			$this->setMachineId($newId);
-
-			//if ($this->after_pk_changed) {
-			//	$this->after_pk_changed->emit($this, $oldId, $this->id);
-			//}
-		});
 		$this->machineProvider->getTransitionsDecorator()->invokeTransition($transitionEvent, $this->smalldb->getDebugLogger());
 
-		//if ($this->after_transition) {
-		//	$this->after_transition->emit($this, $transitionName, $args, $transitionEvent);
-		//}
+		if ($transitionEvent->hasNewId()) {
+			$this->setMachineId($transitionEvent->getNewId());
+		}
 
 		return $transitionEvent;
 	}
