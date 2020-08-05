@@ -17,6 +17,9 @@
  */
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\Graph\Graph;
+use Smalldb\Graph\NestedGraph;
+use Smalldb\Graph\Node;
 use Smalldb\StateMachine\Definition\ActionDefinition;
 use Smalldb\StateMachine\Definition\PropertyDefinition;
 use Smalldb\StateMachine\Definition\StateDefinition;
@@ -30,6 +33,7 @@ use Smalldb\StateMachine\Definition\UndefinedPropertyException;
 use Smalldb\StateMachine\Definition\UndefinedStateException;
 use Smalldb\StateMachine\Definition\UndefinedTransitionException;
 use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
+use Smalldb\StateMachine\LogicException;
 
 
 class DefinitionTest extends TestCase
@@ -232,6 +236,30 @@ class DefinitionTest extends TestCase
 
 		$jsonObject = (new GrafovatkoExporter($g))->export();
 		$this->assertIsArray($jsonObject);
+	}
+
+
+	public function testInvalidRootGraphFromNode()
+	{
+		$g = new Graph();
+		$node = new StateMachineNode(new StateDefinition("foo", []), StateMachineNode::SOURCE_AND_TARGET, $g, "foo", []);
+
+		$this->expectException(LogicException::class);
+		$node->getStateMachine();
+	}
+
+
+	public function testInvalidRootGraphFromEdge()
+	{
+		$g = new Graph();
+		$sFoo = new StateDefinition("foo", []);
+		$sBar = new StateDefinition("bar", []);
+		$node1 = new StateMachineNode($sFoo, StateMachineNode::SOURCE, $g, "foo", []);
+		$node2 = new StateMachineNode($sBar, StateMachineNode::TARGET, $g, "bar", []);
+		$edge = new StateMachineEdge(new TransitionDefinition("edge", $sFoo, [$sBar]), $g, "edge", $node1, $node2, []);
+
+		$this->expectException(LogicException::class);
+		$edge->getStateMachine();
 	}
 
 }
