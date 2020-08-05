@@ -32,6 +32,8 @@ use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\Definition\TransitionDefinition;
 use Smalldb\StateMachine\InvalidArgumentException;
+use Smalldb\StateMachine\LogicException;
+use Smalldb\StateMachine\MachineIdentifierInterface;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
 use Smalldb\StateMachine\Test\Example\Post\Post;
@@ -190,6 +192,33 @@ class AccessControlTest extends TestCaseWithDemoContainer
 
 		$this->expectException(InvalidArgumentException::class);
 		$ext->addPolicy(AccessControlPolicyPlaceholder::create("Foo", new P\Deny()));
+	}
+
+
+	public function testUnnamedAccessPolicyInPlaceholder()
+	{
+		$policy = new AccessControlPolicyPlaceholder();
+		$policy->name = "";
+
+		$ext = new AccessControlExtensionPlaceholder();
+		$this->expectException(InvalidArgumentException::class);
+		$ext->addPolicy($policy);
+	}
+
+
+	public function testChangedNameOfAccessPolicyInPlaceholder()
+	{
+		$policy = new AccessControlPolicyPlaceholder();
+		$policy->name = "Foo";
+		$policy->predicate = new P\Allow();
+
+		$ext = new AccessControlExtensionPlaceholder();
+		$ext->addPolicy($policy);
+
+		$policy->name = "Bar";
+
+		$this->expectException(LogicException::class);
+		$ext->buildExtension();
 	}
 
 
@@ -477,5 +506,59 @@ class AccessControlTest extends TestCaseWithDemoContainer
 		// Check transition with no predicate but with other defined transitions
 		$this->assertFalse($guard->isAccessAllowed('foo', 'something', $this->getRef()));
 	}
+
+
+	/**
+	 * @dataProvider userProvider
+	 */
+	public function testIsOwnerWithUser(UserInterface $user)
+	{
+		$security = $this->createMock(Security::class);
+		$security->method('getUser')->willReturn($user);
+
+		$predicate = new P\IsOwnerCompiled("userId", $security);
+
+		$ref = $this->createMock(ReferenceInterface::class);
+		$ref->method('get')->willReturnCallback(function($prop) {
+			if ($prop === 'userId') {
+				return 123;
+			} else {
+				throw new \InvalidArgumentException("Invalid property: $prop");
+			}
+		});
+
+		$this->assertTrue($predicate->evaluate($ref));
+	}
+
+
+	public function userProvider()
+	{
+		yield "User Machine" => [new class implements MachineIdentifierInterface, UserInterface {
+			public function getMachineId() {
+				return 123;
+			}
+			public function getMachineType(): string {
+				return "user";
+			}
+
+			public function getRoles() { }
+			public function getPassword() { }
+			public function getSalt() { }
+			public function getUsername() { }
+			public function eraseCredentials() { }
+		}];
+		yield "User with ID" => [new class implements UserInterface {
+			public function getId() {
+				return 123;
+			}
+
+			public function getRoles() { }
+			public function getPassword() { }
+			public function getSalt() { }
+			public function getUsername() { }
+			public function eraseCredentials() { }
+		}];
+	}
+
 
 }
