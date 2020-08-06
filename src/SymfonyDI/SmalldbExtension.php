@@ -35,6 +35,7 @@ use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\ClassLocator\ComposerClassLocator;
 use Smalldb\ClassLocator\Psr4ClassLocator;
 use Smalldb\ClassLocator\RealPathList;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtension;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
@@ -80,13 +81,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 		// Code Cooker: Generate classes
 		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
-			$cookbook = new Cookbook();
-			$recipeLocator = new RecipeLocator($classLocator);
-			$recipeLocator->onRecipeClass(function (\ReflectionClass $sourceClass) use ($container) {
-				$container->addResource(new ReflectionClassResource($sourceClass));
-			});
-			$cookbook->addRecipes($recipeLocator->locateRecipes());
-			$cheff = new Chef($cookbook, $classLocator);
+			$cheff = $this->createCheff($classLocator, $container);
 
 			// FIXME: Cook on demand only
 			$cheff->cookAllRecipes();
@@ -117,6 +112,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 		// Generate everything
 		$this->generateClasses($container, $smalldb, $definitionBag, $genNamespace, $genPath);
+
+		// Register source files for automatic container reload
+		$this->registerSources($definitionBag, $container);
 
 		// Register Guard
 		$container->autowire(TransitionGuard::class, SimpleTransitionGuard::class)
@@ -223,6 +221,30 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		}
 
 		return $classLocator;
+	}
+
+
+	private function registerSources(SmalldbDefinitionBag $definitionBag, ContainerBuilder $container)
+	{
+		foreach ($definitionBag->getAllDefinitions() as $definition) {
+			if (($ext = $definition->findExtension(SourcesExtension::class))) {
+				foreach ($ext->getSourceFiles() as $source) {
+					$container->addResource(new FileResource($source->getFilename()));
+				}
+			}
+		}
+	}
+
+
+	private function createCheff(ClassLocator $classLocator, ContainerBuilder $container): Chef
+	{
+		$cookbook = new Cookbook();
+		$recipeLocator = new RecipeLocator($classLocator);
+		$recipeLocator->onRecipeClass(function (\ReflectionClass $sourceClass) use ($container) {
+			$container->addResource(new ReflectionClassResource($sourceClass));
+		});
+		$cookbook->addRecipes($recipeLocator->locateRecipes());
+		return new Chef($cookbook, $classLocator);
 	}
 
 }
