@@ -18,13 +18,16 @@
 
 namespace Smalldb\StateMachine\BpmnExtension;
 
+use DOMDocument;
+use DomElement;
+use DOMXPath;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\Graph\Edge;
 use Smalldb\Graph\Graph;
 use Smalldb\Graph\GraphSearch;
 use Smalldb\Graph\MissingElementException;
 use Smalldb\Graph\Node;
-use Smalldb\StateMachine\RuntimeException;
+use Smalldb\StateMachine\Definition\DefinitionError;
 
 
 /**
@@ -123,11 +126,11 @@ class BpmnReader
 	private function parseBpmnFile(string $bpmnFileName): Graph
 	{
 		// Load GraphML into DOM
-		$dom = new \DOMDocument;
+		$dom = new DOMDocument;
 		$dom->load($bpmnFileName);
 
 		// Prepare XPath query engine
-		$xpath = new \DOMXPath($dom);
+		$xpath = new DOMXPath($dom);
 		$xpath->registerNameSpace('bpmn', 'http://www.omg.org/spec/BPMN/20100524/MODEL');
 
 		// Create the Graph
@@ -142,7 +145,7 @@ class BpmnReader
 
 		// Get participants and their processes
 		foreach ($xpath->query('//bpmn:participant[@id]') as $el) {
-			/** @var \DomElement $el */
+			/** @var DomElement $el */
 			$id = trim($el->getAttribute('id'));
 			$name = trim($el->getAttribute('name'));
 			$process_id = $el->getAttribute('processRef');
@@ -199,7 +202,7 @@ class BpmnReader
 			'textAnnotation'] as $type
 		) {
 			foreach ($xpath->query('//bpmn:' . $type . '[@id]') as $el) {
-				/** @var \DomElement $el */
+				/** @var DomElement $el */
 				$id = trim($el->getAttribute('id'));
 				$name = trim($el->getAttribute('name'));
 				if ($name == '') {
@@ -228,7 +231,7 @@ class BpmnReader
 				}
 
 				if (!isset($processNestedGraphs[$process_id])) {
-					throw new RuntimeException("Process graph \"$process_id\" not found for node \"$id\".");
+					throw new BpmnException("Process graph \"$process_id\" not found for node \"$id\".");
 				}
 
 				$nodeGraph = $processNestedGraphs[$process_id];
@@ -252,7 +255,7 @@ class BpmnReader
 		// Get arrows
 		foreach (['sequenceFlow', 'messageFlow'] as $type) {
 			foreach ($xpath->query('//bpmn:' . $type . '[@id][@sourceRef][@targetRef]') as $el) {
-				/** @var \DomElement $el */
+				/** @var DomElement $el */
 
 				// Arrow properties
 				$id = trim($el->getAttribute('id'));
@@ -279,7 +282,7 @@ class BpmnReader
 
 		// Get annotations' associations
 		foreach ($xpath->query('//bpmn:association[@id]') as $el) {
-			/** @var \DomElement $el */
+			/** @var DomElement $el */
 			try {
 				$source = $bpmnGraph->getNodeById(trim($el->getAttribute('sourceRef')));
 				$target = $bpmnGraph->getNodeById(trim($el->getAttribute('targetRef')));
@@ -540,7 +543,7 @@ class BpmnReader
 
 					if ($rewriteGraph && $rcv_arrow && $rcv_arrow->getStart()->getId() == $state_machine_participant_id) {
 						if ($invoking_arrow === null) {
-							throw new \LogicException("Missing invoking arrow. This should not happen.");
+							throw new BpmnException("Missing invoking arrow. This should not happen.");  // @codeCoverageIgnore
 						}
 						$rcv_arrow->setStart($invoking_arrow->getEnd());
 					}
@@ -566,14 +569,12 @@ class BpmnReader
 		/** @var Node[] $active_receiving_nodes */
 		$active_receiving_nodes = [];
 		foreach ($this->bpmnGraph->getNodesByAttr('_invoking', true) as $id => $node) {
-			/** @var Node $node */
 			foreach ($node['_receiving_nodes'] as $rcv_node) {
 				/** @var Node $rcv_node */
 				$active_receiving_nodes[$rcv_node->getId()] = $rcv_node;
 			}
 		}
 		foreach ($this->bpmnGraph->getNodesByAttr('_receiving', true) as $id => $node) {
-			/** @var Node $node */
 			if (empty($active_receiving_nodes[$id])) {
 				$node->setAttr('_receiving', false);
 			}
@@ -592,7 +593,7 @@ class BpmnReader
 		// Stage 3: Collect name states from annotations
 		$custom_state_names = [];
 		foreach ($this->bpmnGraph->getAllNodes() as $n_id => $node) {
-			if ($node['type'] == 'participant' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
+			if ($node['type'] == 'participant' || $node['type'] == 'error' || $node['type'] == 'annotation' || $node['process'] == $state_machine_process_id) {
 				continue;
 			}
 
@@ -630,6 +631,8 @@ class BpmnReader
 			}
 
 			// Check if there is only one state specified
+			sort($ann_state_names);
+			$ann_state_names = array_unique($ann_state_names);
 			$c = count($ann_state_names);
 			if ($c == 1) {
 				$annotation_state_name = reset($ann_state_names);
@@ -865,7 +868,7 @@ class BpmnReader
 
 		// Add errors to $builder so we won't use broken state machines
 		foreach ($errors as $error) {
-			$builder->addError($error['text']);
+			$builder->addError(new DefinitionError($error['text']));
 		}
 
 		$builder->sortPlaceholders();

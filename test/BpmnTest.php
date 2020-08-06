@@ -18,6 +18,8 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use Smalldb\StateMachine\BpmnExtension\BpmnAnnotationException;
+use Smalldb\StateMachine\BpmnExtension\BpmnException;
 use Smalldb\StateMachine\BpmnExtension\Definition\BpmnExtension;
 use Smalldb\StateMachine\BpmnExtension\Definition\BpmnExtensionPlaceholder;
 use Smalldb\StateMachine\BpmnExtension\GrafovatkoProcessor;
@@ -31,6 +33,8 @@ use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\Graph\Graph;
 use Smalldb\Graph\NestedGraph;
 use Smalldb\Graph\Node;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
+use Smalldb\StateMachine\Test\Example\Bpmn\PizzaDelivery;
 use Smalldb\StateMachine\Test\TestTemplate\Html;
 use Smalldb\StateMachine\Test\TestTemplate\TestOutputTemplate;
 
@@ -786,5 +790,183 @@ class BpmnTest extends TestCase
 			}
 		}
 	}
+
+
+	public function testGraphMLDefinition()
+	{
+
+		$dbr = new SmalldbDefinitionBagReader();
+		$dbr->addFromAnnotatedClass(PizzaDelivery::class);
+		$db = $dbr->getDefinitionBag();
+		$stateMachineDefinition = $db->getDefinition(PizzaDelivery::class);
+
+		/** @var BpmnExtension $bpmnExt */
+		$bpmnExt = $stateMachineDefinition->getExtension(BpmnExtension::class);
+		[$diagramInfo] = $bpmnExt->getDiagramInfo();
+		$bpmnGraph = $diagramInfo->getBpmnGraph();
+
+		$renderer = new GrafovatkoExporter($bpmnGraph);
+		$renderer->addProcessor(new GrafovatkoProcessor('Participant_StateMachine'));
+		$svg = $renderer->exportSvgElement();
+
+		$dom = new \DOMDocument();
+		$dom->loadXML($svg);
+		$this->assertEquals('svg', $dom->documentElement->tagName);
+		$jsonDataGraph = $dom->documentElement->getAttribute('data-graph');
+		$this->assertJson($jsonDataGraph);
+	}
+
+
+	public function testBpmnReader()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("pizza-delivery");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/Example/Bpmn/PizzaDelivery.bpmn');
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+		$stateMachineDefinition = $builder->build();
+		$this->assertNotEmpty($stateMachineDefinition->getStates());
+		$this->assertNotEmpty($stateMachineDefinition->getTransitions());
+	}
+
+
+	/**
+	 * @depends testBpmnReader
+	 */
+	public function testGraphRewrite()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("pizza-delivery");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/Example/Bpmn/PizzaDelivery.bpmn');
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine', true);
+		$stateMachineDefinition = $builder->build();
+		$this->assertNotEmpty($stateMachineDefinition->getStates());
+		$this->assertNotEmpty($stateMachineDefinition->getTransitions());
+	}
+
+
+	/**
+	 * @depends testBpmnReader
+	 */
+	public function testMissingStateMachineParticipant()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("pizza-delivery");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/Example/Bpmn/PizzaDelivery.bpmn');
+
+		$this->expectException(BpmnException::class);
+		$this->expectExceptionMessage('Participant representing the state machine not found: Foo');
+		$bpmnReader->inferStateMachine($builder, 'Foo');
+	}
+
+
+	/**
+	 * @depends testBpmnReader
+	 */
+	public function testTwoWaysOfAnnotationAssignment()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/StateAnnotation.bpmn');
+
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+
+		$stateMachineDefinition = $builder->build();
+		$this->assertNotEmpty($stateMachineDefinition->getStates());
+		$this->assertNotEmpty($stateMachineDefinition->getTransitions());
+	}
+
+
+	public function testInvalidParticipant()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/StateAnnotation.bpmn');
+
+		$this->expectException(BpmnException::class);
+		$this->expectExceptionMessageMatches('/^Invalid participant ID provided.*/');
+		$bpmnReader->inferStateMachine($builder, ':)');
+	}
+
+
+	public function testConflictingAnnotations()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/ConflictingAnnotations.bpmn');
+
+		$this->expectException(BpmnAnnotationException::class);
+		$this->expectExceptionMessageMatches('/^Annotations define multiple names .*/');
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+	}
+
+
+	public function testConflictingAnnotationsInDistance()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/ConflictingAnnotationsInDistance.bpmn');
+
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+
+		$this->assertTrue($builder->hasErrors());
+	}
+
+
+	public function testMultipleInvokingArrows()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/MultipleInvokingArrows.bpmn');
+
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+
+		$this->assertTrue($builder->hasErrors());
+	}
+
+	public function testMultipleReceivingArrows()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/MultipleReceivingArrows.bpmn');
+
+		$bpmnReader->inferStateMachine($builder, 'Participant_StateMachine');
+
+		$this->assertTrue($builder->hasErrors());
+	}
+
+
+	public function testTwoStateMachines()
+	{
+		$fooBpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/TwoStateMachines.bpmn');
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("foo");
+		$fooBpmnReader->inferStateMachine($builder, 'Participant_F');
+		$fooStateMachine = $builder->build();
+
+		$this->assertNotEmpty($fooStateMachine->getStates());
+		$this->assertNotEmpty($fooStateMachine->getTransitions());
+		$fooReachableStates = $fooStateMachine->findReachableStates();
+		$this->assertEquals(["SF"], array_keys($fooReachableStates));
+
+		$barBpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/BadExample/Bpmn/TwoStateMachines.bpmn');
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType("bar");
+		$barBpmnReader->inferStateMachine($builder, 'Participant_B');
+		$barStateMachine = $builder->build();
+
+		$this->assertNotEmpty($barStateMachine->getStates());
+		$this->assertNotEmpty($barStateMachine->getTransitions());
+		$barReachableStates = $barStateMachine->findReachableStates();
+		$this->assertEquals(["SB"], array_keys($barReachableStates));
+	}
+
+
+	public function testGetSetSvgFile()
+	{
+		$bpmnReader = BpmnReader::readBpmnFile(__DIR__ . '/Example/Bpmn/PizzaDelivery.bpmn');
+		$bpmnReader->setSvgFileName(__DIR__ . '/Example/Bpmn/PizzaDelivery.svg');
+		$this->assertEquals(__DIR__ . '/Example/Bpmn/PizzaDelivery.svg', $bpmnReader->getSvgFileName());
+	}
+
 
 }
