@@ -18,28 +18,48 @@
 
 namespace Smalldb\StateMachine\Test;
 
-use PHPUnit\Util\Xml;
 use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
 use Smalldb\StateMachine\GraphMLExtension\GrafovatkoProcessor;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLException;
+use Smalldb\StateMachine\GraphMLExtension\GraphMLExtension;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLReader;
+use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\StateMachine\StyleExtension\Definition\StyleExtension;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcess;
 
 
 class GraphMLTest extends TestCase
 {
+	const SupervisorProcessGraphmlFile = __DIR__ . '/Example/SupervisorProcess/SupervisorProcess.graphml';
 
 	public function testGraphMLReader()
 	{
 		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
 		$builder->setMachineType('Foo');
 		$reader = new GraphMLReader($builder);
-		$reader->parseGraphMLFile(__DIR__ . '/Example/SupervisorProcess/SupervisorProcess.graphml');
+		$reader->parseGraphMLFile(self::SupervisorProcessGraphmlFile);
 		$stateMachineDefinition = $builder->build();
 		$this->assertEmpty($stateMachineDefinition->getErrors());
 		$this->assertCount(8, $stateMachineDefinition->getStates());
-		$this->assertCount(12, $stateMachineDefinition->getTransitions());
+		$this->assertCount(13, $stateMachineDefinition->getTransitions());
+	}
+
+
+	public function testGraphMLDefinition()
+	{
+
+		$dbr = new SmalldbDefinitionBagReader();
+		$dbr->addFromAnnotatedClass(SupervisorProcess::class);
+		$db = $dbr->getDefinitionBag();
+		$stateMachineDefinition = $db->getDefinition(SupervisorProcess::class);
+
+		/** @var GraphMLExtension $graphmlExt */
+		$graphmlExt = $stateMachineDefinition->getExtension(GraphMLExtension::class);
+		[$diagramInfo] = $graphmlExt->getDiagramInfo();
+		$this->assertEquals(realpath(self::SupervisorProcessGraphmlFile), realpath($diagramInfo->getGraphmlFileName()));
+		$this->assertNull($diagramInfo->getGroup());
+		$this->assertNotEmpty($diagramInfo->getGraph()->getAllNodes());
 	}
 
 
