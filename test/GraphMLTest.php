@@ -18,7 +18,10 @@
 
 namespace Smalldb\StateMachine\Test;
 
+use PHPUnit\Util\Xml;
+use Smalldb\Graph\Grafovatko\GrafovatkoExporter;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilderFactory;
+use Smalldb\StateMachine\GraphMLExtension\GrafovatkoProcessor;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLException;
 use Smalldb\StateMachine\GraphMLExtension\GraphMLReader;
 use Smalldb\StateMachine\StyleExtension\Definition\StyleExtension;
@@ -143,6 +146,38 @@ class GraphMLTest extends TestCase
 		$this->assertNotEmpty($graphAttrs['properties']);
 		$this->assertEqualsIgnoringCase('foo', $graphAttrs['properties']['foo']['name']);
 		$this->assertEqualsIgnoringCase('bar', $graphAttrs['properties']['bar']['name']);
+	}
+
+
+	public function testGraphProcessor()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType('Foo');
+		$reader = new GraphMLReader($builder);
+		$reader->parseGraphMLFile(__DIR__ . '/Example/SupervisorProcess/SupervisorProcess.graphml');
+		$graph = $reader->getGraph();
+
+		$renderer = new GrafovatkoExporter($graph);
+		$renderer->setPrefix('graphml_');
+		$renderer->addProcessor(new GrafovatkoProcessor());
+		$svg = $renderer->exportSvgElement();
+
+		$dom = new \DOMDocument();
+		$dom->loadXML($svg);
+		$this->assertEquals('svg', $dom->documentElement->tagName);
+		$jsonDataGraph = $dom->documentElement->getAttribute('data-graph');
+		$this->assertJson($jsonDataGraph);
+
+		$dataGraph = json_decode($jsonDataGraph, true);
+		$nodeShapeCount = [];
+		foreach ($dataGraph['nodes'] as $n) {
+			$shape = $n['attrs']['shape'];
+			$nodeShapeCount[$shape] = ($nodeShapeCount[$shape] ?? 0) + 1;
+		}
+		$this->assertEquals(1, $nodeShapeCount['uml.initial_state']);
+		$this->assertGreaterThanOrEqual(5, $nodeShapeCount['uml.state']);
+
+		$this->assertNotEmpty($dataGraph['edges']);
 	}
 
 }
