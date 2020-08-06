@@ -18,18 +18,15 @@
 
 namespace Smalldb\StateMachine\SymfonyDI;
 
+use Smalldb\ClassLocator\BrokenClassLogger;
 use Smalldb\ClassLocator\ClassLocator;
 use Smalldb\ClassLocator\CompositeClassLocator;
 use Smalldb\CodeCooker\Chef;
 use Smalldb\CodeCooker\Cookbook;
 use Smalldb\CodeCooker\RecipeLocator;
-use Smalldb\StateMachine\AccessControlExtension\Definition\StateMachine\AccessControlExtension;
-use Smalldb\StateMachine\AccessControlExtension\Definition\Transition\AccessPolicyExtension;
-use Smalldb\StateMachine\AccessControlExtension\Predicate\SymfonyContainerAdapter;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
 use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
 use Smalldb\StateMachine\ClassGenerator\SmalldbClassGenerator;
-use Smalldb\StateMachine\InvalidArgumentException;
 use Smalldb\StateMachine\Provider\LambdaProvider;
 use Smalldb\StateMachine\Smalldb;
 use Smalldb\StateMachine\SmalldbDefinitionBag;
@@ -38,8 +35,8 @@ use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\ClassLocator\ComposerClassLocator;
 use Smalldb\ClassLocator\Psr4ClassLocator;
 use Smalldb\ClassLocator\RealPathList;
-use Smalldb\StateMachine\Transition\AllowingTransitionGuard;
 use Smalldb\StateMachine\Transition\TransitionGuard;
+use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ReflectionClassResource;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -52,8 +49,8 @@ use Symfony\Component\DependencyInjection\Reference;
 class SmalldbExtension extends Extension implements CompilerPassInterface
 {
 	protected const PROVIDER_CLASS = LambdaProvider::class;
-
 	protected array $config;
+	private BrokenClassLogger $brokenClassLogger;
 
 
 	/**
@@ -79,6 +76,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 		$baseDir = $container->getParameter('kernel.project_dir');
 		$classLocator = $this->createClassLocator($baseDir);
+		$classLocator->setBrokenClassHandler($this->brokenClassLogger = new BrokenClassLogger());
 
 		// Code Cooker: Generate classes
 		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
@@ -131,6 +129,13 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 	public function process(ContainerBuilder $container)
 	{
+		foreach ($this->brokenClassLogger->getBrokenClasses()
+			as ['className' => $className, 'fileAbsPath' => $fileAbsPath, 'reason' => $reason])
+		{
+			$container->log($this, sprintf("Ignoring a broken class \"%s\": %s", $className, $reason->getMessage()));
+			$container->addResource(new FileResource($fileAbsPath));  // Rebuild the container if the broken file gets fixed.
+		}
+
 		// ...
 	}
 

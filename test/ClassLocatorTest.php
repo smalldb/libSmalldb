@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine\Test;
 
 use ReflectionClass;
+use Smalldb\ClassLocator\BrokenClassLogger;
 use Smalldb\StateMachine\Annotation\StateMachine;
 use Smalldb\Graph\Graph;
 use Smalldb\StateMachine\InvalidArgumentException;
@@ -87,6 +88,7 @@ class ClassLocatorTest extends TestCase
 	public function testPsr4Locator()
 	{
 		$locator = new Psr4ClassLocator(__NAMESPACE__, __DIR__, [], ["BadExample", "Database", "output"]);
+		$locator->setBrokenClassHandler($brokenClassLogger = new BrokenClassLogger());
 		$classes = iterator_to_array($locator->getClasses(), false);
 
 		// A plain class
@@ -104,6 +106,9 @@ class ClassLocatorTest extends TestCase
 		// Excluded class
 		$this->assertClassExists(SymfonyDemoDatabase::class);
 		$this->assertNotContainsEquals(SymfonyDemoDatabase::class, $classes);
+
+		$brokenClasses = $brokenClassLogger->getBrokenClasses();
+		$this->assertEmpty($brokenClasses);
 	}
 
 

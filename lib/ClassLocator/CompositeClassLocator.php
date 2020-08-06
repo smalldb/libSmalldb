@@ -21,7 +21,8 @@ namespace Smalldb\ClassLocator;
 class CompositeClassLocator implements ClassLocator
 {
 	/** @var ClassLocator[] */
-	private array $classLocators;
+	private array $classLocators = [];
+	private ?BrokenClassHandlerInterface $brokenClassHandler = null;
 
 
 	/**
@@ -35,9 +36,19 @@ class CompositeClassLocator implements ClassLocator
 	}
 
 
+	public function setBrokenClassHandler(?BrokenClassHandlerInterface $brokenClassHandler)
+	{
+		$this->brokenClassHandler = $brokenClassHandler;
+		foreach ($this->classLocators as $classLocator) {
+			$classLocator->setBrokenClassHandler($this->brokenClassHandler);
+		}
+	}
+
+
 	public function addClassLocator(ClassLocator $classLocator)
 	{
 		$this->classLocators[] = $classLocator;
+		$classLocator->setBrokenClassHandler($this->brokenClassHandler);
 	}
 
 

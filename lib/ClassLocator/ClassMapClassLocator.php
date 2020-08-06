@@ -21,6 +21,7 @@ namespace Smalldb\ClassLocator;
 
 class ClassMapClassLocator implements ClassLocator
 {
+	use BrokenClassHandlerTrait;
 
 	/** @var string[] */
 	private array $classToFilenameMap;

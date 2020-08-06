@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /*
- * Copyright (c) 2019-2020, Josef Kufner  <josef@kufner.cz>
+ * Copyright (c) 2020, Josef Kufner  <josef@kufner.cz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,21 @@
 
 namespace Smalldb\ClassLocator;
 
-
-interface ClassLocator
+trait BrokenClassHandlerTrait
 {
-	public function getClasses(): \Generator;
-	public function setBrokenClassHandler(BrokenClassHandlerInterface $brokenClassHandler);
-	public function mapClassNameToFileName(string $className): ?string;
-	public function mapFileNameToClassName(string $fileName): ?string;
+	private ?BrokenClassHandlerInterface $brokenClassHandler = null;
+
+	public function setBrokenClassHandler(?BrokenClassHandlerInterface $brokenClassHandler)
+	{
+		$this->brokenClassHandler = $brokenClassHandler;
+	}
+
+
+	public function handleBrokenClass(string $className, string $fileAbsPath, \Throwable $reason)
+	{
+		if ($this->brokenClassHandler) {
+			$this->brokenClassHandler->handleBrokenClass($className, $fileAbsPath, $reason);
+		}
+	}
+
 }

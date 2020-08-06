@@ -23,6 +23,7 @@ use Smalldb\StateMachine\InvalidArgumentException;
 
 class Psr4ClassLocator implements ClassLocator
 {
+	use BrokenClassHandlerTrait;
 
 	private string $namespace;
 	private string $directory;
@@ -85,7 +86,8 @@ class Psr4ClassLocator implements ClassLocator
 					}
 				}
 				catch (\Throwable $ex) {
-					// Ignore errors; just don't enumerate the broken class.
+					// Ignore errors, but keep track of them if desired.
+					$this->handleBrokenClass($className, $fileAbsPath, $ex);
 				}
 			}
 		}
