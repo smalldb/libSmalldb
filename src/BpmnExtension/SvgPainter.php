@@ -25,66 +25,6 @@ use Smalldb\Graph\Node;
 class SvgPainter
 {
 
-	// TODO
-	protected function renderBpmnJson(array & $machine_def, $prefix, $fragment_file, $fragment, $errors)
-	{
-		/** @var Graph $graph */
-		$graph = $fragment['graph'];
-
-		// Draw provided SVG file as a node (for SVG export from Camunda Modeler)
-		if (isset($fragment['svg_file_contents'])) {
-			$svg_contents_with_style = $this->colorizeSvgFile($fragment['svg_file_contents'], $graph, null, $errors, $prefix);
-
-			// Build extras wrapper node
-			$svg_diagram_node = [
-				'id' => $prefix . '__svg',
-				'label' => "BPMN: " . basename($fragment_file) . ' [' . basename($fragment['svg_file_name']) . ']',
-				'color' => "#5373B4",
-				'graph' => [
-					'layout' => 'column',
-					'layoutOptions' => [
-						'sortNodes' => false,
-					],
-					'nodes' => [
-					],
-					'edges' => [],
-				],
-			];
-
-			// Render errors (somehow)
-			foreach ($errors as $err) {
-				$err_node_id = $prefix . '__svg_error_' . md5($err['text']);
-				$svg_diagram_node['graph']['nodes'][] = [
-					'id' => $err_node_id,
-					'color' => "#f00",
-					'fill' => "#fee",
-					'label' => 'Error: ' . $err['text'],
-				];
-			}
-
-			// Warn if SVG file is obsolete
-			if ($fragment['svg_file_is_obsolete']) {
-				$svg_diagram_node['graph']['nodes'][] = [
-					'id' => $prefix . '__svg_img_obsolete_warning',
-					'shape' => 'label',
-					'label' => 'Warning: Exported SVG file is older than source BPMN file.',
-					'color' => '#aa2200',
-				];
-			}
-
-			// Create image node
-			$svg_diagram_node['graph']['nodes'][] = [
-				'id' => $prefix . '__svg_img',
-				'shape' => 'svg',
-				'svg' => $svg_contents_with_style,
-			];
-
-			$machine_def['state_diagram_extras_json']['nodes'][] = $svg_diagram_node;
-		}
-
-	}
-
-
 	public function colorizeSvgFile(string $svgFileContent, Graph $bpmnGraph, ?string $participantId, array $errors, string $prefix): string
 	{
 		$svg_style = '';
