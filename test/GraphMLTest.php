@@ -104,6 +104,7 @@ class GraphMLTest extends TestCase
 		$this->assertEqualsIgnoringCase("#44aa00", $tCreate->getExtension(StyleExtension::class)->getColor());
 	}
 
+
 	public function testWithProperties()
 	{
 		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
@@ -112,8 +113,36 @@ class GraphMLTest extends TestCase
 		$reader->parseGraphMLFile(__DIR__ . '/BadExample/GraphML/WithProperties.graphml');
 		$stateMachineDefinition = $builder->build();
 		$this->assertEmpty($stateMachineDefinition->getErrors());
+		// TODO: We should handle the properties somehow.
+	}
 
 
+	public function testNestedWithProperties()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType('Foo');
+		$reader = new GraphMLReader($builder);
+		$reader->parseGraphMLFile(__DIR__ . '/BadExample/GraphML/NestedWithProperties.graphml', 'Nested Graph');
+		$stateMachineDefinition = $builder->build();
+		$this->assertEmpty($stateMachineDefinition->getErrors());
+		// TODO: We should handle the properties somehow.
+	}
+
+
+	public function testProperties()
+	{
+		$builder = StateMachineDefinitionBuilderFactory::createDefaultFactory()->createDefinitionBuilder();
+		$builder->setMachineType('Foo');
+		$reader = new GraphMLReader($builder);
+		$reader->parseGraphMLFile(__DIR__ . '/BadExample/GraphML/Properties.graphml');
+		$stateMachineDefinition = $builder->build();
+		$this->assertEmpty($stateMachineDefinition->getErrors());
+
+		// TODO: We should handle the properties somehow.
+		$graphAttrs = $reader->getGraph()->getAttributes();
+		$this->assertNotEmpty($graphAttrs['properties']);
+		$this->assertEqualsIgnoringCase('foo', $graphAttrs['properties']['foo']['name']);
+		$this->assertEqualsIgnoringCase('bar', $graphAttrs['properties']['bar']['name']);
 	}
 
 }

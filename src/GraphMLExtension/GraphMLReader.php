@@ -100,6 +100,7 @@ class GraphMLReader
 			if (isset($keys[$k])) {
 				if ($keys[$k] == 'Properties') {
 					// Special handling of machine properties
+					// (XML property named "Properties" of the root graph)
 					$properties = array();
 					foreach ($xpath->query('./property[@name]', $data_el) as $property_el) {
 						$property_name = $property_el->attributes->getNamedItem('name')->value;
