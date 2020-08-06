@@ -33,19 +33,12 @@ class SmalldbDefinitionBagReader
 	private SmalldbDefinitionBag $definitionBag;
 	private StateMachineDefinitionBuilderFactory $definitionBuilderFactory;
 	private AnnotationReader $annotationReader;
-	private ?Closure $onDefinitionClassCallback = null;
 
 	public function __construct()
 	{
 		$this->definitionBag = new SmalldbDefinitionBag();
 		$this->definitionBuilderFactory = StateMachineDefinitionBuilderFactory::createDefaultFactory();
 		$this->annotationReader = new AnnotationReader($this->definitionBuilderFactory);
-	}
-
-
-	public function onDefinitionClass(?Closure $callback)
-	{
-		$this->onDefinitionClassCallback = $callback;
 	}
 
 
@@ -69,9 +62,6 @@ class SmalldbDefinitionBagReader
 			$machineType = $this->definitionBag->addDefinition($definition);
 			if ($machineType !== $className) {
 				$this->definitionBag->addAlias($className, $machineType);
-			}
-			if ($this->onDefinitionClassCallback) {
-				($this->onDefinitionClassCallback)($reflectionClass);
 			}
 		}
 		catch(InvalidArgumentException $ex) {

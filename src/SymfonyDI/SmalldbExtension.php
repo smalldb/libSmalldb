@@ -35,6 +35,7 @@ use Smalldb\StateMachine\SmalldbDefinitionBagReader;
 use Smalldb\ClassLocator\ComposerClassLocator;
 use Smalldb\ClassLocator\Psr4ClassLocator;
 use Smalldb\ClassLocator\RealPathList;
+use Smalldb\StateMachine\SourcesExtension\Definition\SourceClassFile;
 use Smalldb\StateMachine\SourcesExtension\Definition\SourcesExtension;
 use Smalldb\StateMachine\Transition\TransitionGuard;
 use Symfony\Component\Config\Resource\FileResource;
@@ -100,9 +101,6 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 
 		// Load all state machine definitions
 		$definitionReader = new SmalldbDefinitionBagReader();
-		$definitionReader->onDefinitionClass(function (\ReflectionClass $sourceClass) use ($container) {
-			$container->addResource(new ReflectionClassResource($sourceClass));
-		});
 		if (empty($this->config['definition_classes'])) {
 			$definitionReader->addFromClassLocator($classLocator);
 		} else {
@@ -229,7 +227,11 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		foreach ($definitionBag->getAllDefinitions() as $definition) {
 			if (($ext = $definition->findExtension(SourcesExtension::class))) {
 				foreach ($ext->getSourceFiles() as $source) {
-					$container->addResource(new FileResource($source->getFilename()));
+					if ($source instanceof SourceClassFile) {
+						$container->addResource(new ReflectionClassResource(new \ReflectionClass($source->getClassname())));
+					} else {
+						$container->addResource(new FileResource($source->getFilename()));
+					}
 				}
 			}
 		}
