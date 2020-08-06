@@ -19,14 +19,17 @@
 namespace Smalldb\StateMachine\Test\Example\SupervisorProcess;
 
 use Smalldb\StateMachine\Annotation\StateMachine;
+use Smalldb\StateMachine\DtoExtension\Annotation\WrapDTO;
 use Smalldb\StateMachine\GraphMLExtension\Annotation\IncludeGraphML;
 use Smalldb\StateMachine\ReferenceInterface;
 use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessData;
+use Smalldb\StateMachine\Test\Example\SupervisorProcess\SupervisorProcessData\SupervisorProcessDataImmutable;
 
 
 /**
  * @StateMachine("supervisor-process")
  * @IncludeGraphML("SupervisorProcess.graphml")
+ * @WrapDTO(SupervisorProcessDataImmutable::class)
  */
 abstract class SupervisorProcess implements ReferenceInterface, SupervisorProcessData
 {
