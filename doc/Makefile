@@ -3,7 +3,9 @@ all: doc
 .PHONY: all clean doc schema
 
 doc: figures schema
-	cd .. && ./vendor/smalldb/doc-tools/bin/build-documentation
+	cd .. \
+		&& ./vendor/smalldb/doc-tools/bin/collect-namespaces \
+		&& ./vendor/smalldb/doc-tools/bin/build-documentation
 
 figures:
 	make -C figures all

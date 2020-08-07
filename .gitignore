@@ -4,3 +4,4 @@ test/coverage/
 test/output/
 .phpunit.result.cache
 
+doc/_namespaces-gen.dox

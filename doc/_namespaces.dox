@@ -13,13 +13,6 @@ Implementation of %Smalldb state machine, the nondeterministic parametric finite
 */
 
 /*!
-	@namespace Smalldb::StateMachine::Auth
-
-Authentication and authorization
-
-*/
-
-/*!
 	@namespace Smalldb::StateMachine::Utils
 
 Utility and helper classes
