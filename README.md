@@ -1,17 +1,18 @@
 libSmalldb
 ==========
 
+Smalldb, the state machine abstraction layer, is the framework to build a model
+layer of a web application using state machines. Smalldb combines formal finite
+automata, simple PHP code, and powerful SQL database into a single elegant
+package.
+
 `libSmalldb` is the core library of the Smalldb framework. It provides
 implementation of Smalldb state machines and if used with flupdo, it can
 provide CRUD operations on SQL database out-of-the-box.
 
-For more details see the project website: https://smalldb.org/
+For more details check the project website:
 
-
-Documentation
--------------
-
-See https://smalldb.org/doc/libsmalldb/master/
+  * https://smalldb.org/
 
 
 License
