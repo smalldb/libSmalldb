@@ -91,7 +91,9 @@ class ComposerClassLocator extends CompositeClassLocator implements ClassLocator
 				if ($this->excludePaths->contains($dir)) {
 					continue;
 				}
-				$this->addClassLocator(new Psr4ClassLocator($prefix, $dir, $this->includePaths, $this->excludePaths));
+				if (is_dir($dir)) {
+					$this->addClassLocator(new Psr4ClassLocator($prefix, $dir, $this->includePaths, $this->excludePaths));
+				}
 			}
 		}
 
@@ -101,7 +103,9 @@ class ComposerClassLocator extends CompositeClassLocator implements ClassLocator
 				if ($this->excludePaths->contains($dir)) {
 					continue;
 				}
-				$this->addClassLocator(new Psr0ClassLocator($dir, $this->includePaths, $this->excludePaths));
+				if (is_dir($dir)) {
+					$this->addClassLocator(new Psr0ClassLocator($dir, $this->includePaths, $this->excludePaths));
+				}
 			}
 		}
 
