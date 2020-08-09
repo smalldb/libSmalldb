@@ -81,7 +81,8 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		$classLocator->setBrokenClassHandler($this->brokenClassLogger = new BrokenClassLogger());
 
 		// Code Cooker: Generate classes
-		if (!empty($this->config['code_cooker']) && ($this->config['code_cooker']['enable'] ?? false)) {
+		$kernelDebug = $container->getParameter('kernel.debug');
+		if (isset($this->config['code_cooker']) ? ($this->config['code_cooker']['enable'] ?? false) : $kernelDebug) {
 			$cheff = $this->createCheff($classLocator, $container);
 
 			// FIXME: Cook on demand only
