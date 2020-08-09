@@ -47,6 +47,12 @@ class SmalldbDefinitionBag implements SmalldbDefinitionBagInterface
 	}
 
 
+	public function hasDefinition(string $machineType): bool
+	{
+		return isset($this->definitionBag[$machineType]) || isset($this->aliases[$machineType]);
+	}
+
+
 	/**
 	 * @return StateMachineDefinition[]
 	 */

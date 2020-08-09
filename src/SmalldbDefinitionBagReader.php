@@ -80,7 +80,7 @@ class SmalldbDefinitionBagReader
 
 		foreach ($classNames as $className) {
 			try {
-				if (isset($foundDefinitions[$className])) {
+				if ($this->definitionBag->hasDefinition($className)) {
 					// Ignore duplicates in the list of $classNames
 					// (e.g., an optimized map class locator and a PSR4 class locator used at once)
 					continue;

@@ -189,4 +189,23 @@ class DefinitionBagTest extends TestCase
 		$reader->addFromClassLocator(new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Nonexistent-Directory', []));
 	}
 
+
+	public function testAddFromPsr4DirectoryTwice()
+	{
+		$reader = new SmalldbDefinitionBagReader();
+
+		// Read everything twice. The second time it shoud be ignored.
+		for ($i = 0; $i < 2; $i++) {
+			$classLocator = new Psr4ClassLocator('Smalldb\StateMachine\Test\Example', __DIR__ . '/Example', []);
+			$reader->addFromClassLocator($classLocator);
+		}
+
+		$bag = $reader->getDefinitionBag();
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(CrudItem::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition('crud-item'));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(Post::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(PizzaDelivery::class));
+		$this->assertInstanceOf(StateMachineDefinition::class, $bag->getDefinition(SupervisorProcess::class));
+	}
+
 }
