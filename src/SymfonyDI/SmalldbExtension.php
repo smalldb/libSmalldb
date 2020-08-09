@@ -227,10 +227,9 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		foreach ($definitionBag->getAllDefinitions() as $definition) {
 			if (($ext = $definition->findExtension(SourcesExtension::class))) {
 				foreach ($ext->getSourceFiles() as $source) {
+					$container->addResource(new FileResource($source->getFilename()));
 					if ($source instanceof SourceClassFile) {
 						$container->addResource(new ReflectionClassResource(new \ReflectionClass($source->getClassname())));
-					} else {
-						$container->addResource(new FileResource($source->getFilename()));
 					}
 				}
 			}
