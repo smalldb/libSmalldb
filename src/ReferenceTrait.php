@@ -19,6 +19,7 @@
 namespace Smalldb\StateMachine;
 
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Definition\UndefinedTransitionException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\ReferenceDataSourceInterface;
 use Smalldb\StateMachine\Transition\TransitionEvent;
@@ -107,9 +108,14 @@ trait ReferenceTrait // implements ReferenceInterface
 
 	final public function isTransitionAllowed(string $transitionName): bool
 	{
-		$provider = $this->getMachineProvider();
-		$transition = $provider->getDefinition()->getTransition($transitionName, $this->getState());
-		return $provider->getTransitionsDecorator()->isTransitionAllowed($this, $transition);
+		try {
+			$provider = $this->getMachineProvider();
+			$transition = $provider->getDefinition()->getTransition($transitionName, $this->getState());
+			return $provider->getTransitionsDecorator()->isTransitionAllowed($this, $transition);
+		}
+		catch (UndefinedTransitionException $ex) {
+			return false;
+		}
 	}
 
 
