@@ -119,7 +119,8 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		$container->autowire(TransitionGuard::class, SimpleTransitionGuard::class)
 			->setArguments([
 				SimpleTransitionGuard::compileTransitionPredicatesSymfony($definitionBag, $container),
-				!empty($this->config['access_control']['default_allow'])
+				isset($this->config['access_control']['default_allow'])
+					? (bool) $this->config['access_control']['default_allow'] : true,
 			]);
 	}
 
