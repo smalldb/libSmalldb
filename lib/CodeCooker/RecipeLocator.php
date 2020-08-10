@@ -30,19 +30,12 @@ class RecipeLocator
 {
 	private ClassLocator $classLocator;
 	private AnnotationReaderInterface $annotationReader;
-	private ?Closure $onRecipeClassCallback = null;
 
 
 	public function __construct(ClassLocator $classLocator, AnnotationReaderInterface $annotationReader = null)
 	{
 		$this->classLocator = $classLocator;
 		$this->annotationReader = $annotationReader ?? (new AnnotationReader());
-	}
-
-
-	public function onRecipeClass(?Closure $callback)
-	{
-		$this->onRecipeClassCallback = $callback;
 	}
 
 
@@ -81,15 +74,8 @@ class RecipeLocator
 		}
 
 		// Convert annotations to recipes
-		$hasRecipe = false;
 		foreach ($annotations as $annotation) {
 			if ($annotation instanceof AnnotationRecipeBuilder) {
-				if (!$hasRecipe) {
-					$hasRecipe = true;
-					if ($this->onRecipeClassCallback) {
-						($this->onRecipeClassCallback)($sourceClass);
-					}
-				}
 				yield $annotation->buildRecipe($sourceClass);
 			}
 		}

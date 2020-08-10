@@ -25,14 +25,12 @@ use Smalldb\ClassLocator\ClassLocator;
 
 class DtoRecipe extends ClassRecipe
 {
-	private string $sourceClassName;
 	private ?string $targetName;
 
 
 	public function __construct(array $targetClassNames, string $sourceClassName, string $targetName = null)
 	{
-		parent::__construct($targetClassNames);
-		$this->sourceClassName = $sourceClassName;
+		parent::__construct($sourceClassName, $targetClassNames);
 		$this->targetName = $targetName;
 	}
 
@@ -48,18 +46,6 @@ class DtoRecipe extends ClassRecipe
 	{
 		$generator = new DtoGenerator($classLocator);
 		return $generator->generateDtoClasses($this->getSourceClass(), $this->getTargetName());
-	}
-
-
-	public function getSourceClassName(): string
-	{
-		return $this->sourceClassName;
-	}
-
-
-	public function getSourceClass(): ReflectionClass
-	{
-		return new ReflectionClass($this->sourceClassName);
 	}
 
 

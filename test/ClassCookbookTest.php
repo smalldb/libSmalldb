@@ -32,8 +32,8 @@ class ClassCookbookTest extends TestCase
 	public function testCookbookAddRecipe()
 	{
 		$cookbook = new Cookbook();
-		$recipeFoo = new DummyRecipe(["foo"]);
-		$recipeBar = new DummyRecipe(["bar", "baz"]);
+		$recipeFoo = new DummyRecipe("sFoo", ["foo"]);
+		$recipeBar = new DummyRecipe("sBar", ["bar", "baz"]);
 
 		$cookbook->addRecipe($recipeFoo);
 		$cookbook->addRecipe($recipeBar);
@@ -47,8 +47,8 @@ class ClassCookbookTest extends TestCase
 	public function testCookbookAddDuplicateRecipe()
 	{
 		$cookbook = new Cookbook();
-		$recipeFoo = new DummyRecipe(["foo"]);
-		$recipeBar = new DummyRecipe(["bar", "baz", "foo"]);
+		$recipeFoo = new DummyRecipe("sFoo", ["foo"]);
+		$recipeBar = new DummyRecipe("sBar", ["bar", "baz", "foo"]);
 
 		$cookbook->addRecipe($recipeFoo);
 
@@ -60,8 +60,8 @@ class ClassCookbookTest extends TestCase
 	public function testCookbookAddRecipes()
 	{
 		$cookbook = new Cookbook();
-		$recipeFoo = new DummyRecipe(["foo"]);
-		$recipeBar = new DummyRecipe(["bar", "baz"]);
+		$recipeFoo = new DummyRecipe("sFoo", ["foo"]);
+		$recipeBar = new DummyRecipe("sBar", ["bar", "baz"]);
 
 		$generator = function () use ($recipeFoo, $recipeBar) {
 			yield $recipeFoo;
@@ -79,8 +79,8 @@ class ClassCookbookTest extends TestCase
 	public function testCookbookGetTargetClassNames()
 	{
 		$cookbook = new Cookbook();
-		$cookbook->addRecipe(new DummyRecipe(["foo"]));
-		$cookbook->addRecipe(new DummyRecipe(["bar", "baz"]));
+		$cookbook->addRecipe(new DummyRecipe("sFoo", ["foo"]));
+		$cookbook->addRecipe(new DummyRecipe("sBar", ["bar", "baz"]));
 
 		$targetClassNames = iterator_to_array($cookbook->getAllTargetClassNames());
 		$this->assertEquals(["foo", "bar", "baz"], $targetClassNames);

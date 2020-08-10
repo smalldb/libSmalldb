@@ -18,12 +18,12 @@
 
 namespace Smalldb\CodeCooker;
 
-use Smalldb\CodeCooker\Recipe\ClassRecipe;
+use Smalldb\CodeCooker\Recipe\Recipe;
 
 
 class Cookbook
 {
-	/** @var ClassRecipe[] */
+	/** @var Recipe[] */
 	private array $recipes;
 
 	private array $knownClasses = [];
@@ -43,7 +43,13 @@ class Cookbook
 	}
 
 
-	public function addRecipe(ClassRecipe $recipe): void
+	public function hasRecipe(string $targetClassName): bool
+	{
+		return isset($this->knownClasses[$targetClassName]);
+	}
+
+
+	public function addRecipe(Recipe $recipe): void
 	{
 		$this->recipes[] = $recipe;
 		foreach ($recipe->getTargetClassNames() as $targetClassName) {
@@ -61,7 +67,7 @@ class Cookbook
 	}
 
 
-	public function findRecipe(string $targetClassName): ?ClassRecipe
+	public function findRecipe(string $targetClassName): ?Recipe
 	{
 		return $this->knownClasses[$targetClassName] ?? null;
 	}

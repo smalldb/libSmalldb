@@ -23,6 +23,7 @@ use Smalldb\ClassLocator\ClassLocator;
 use Smalldb\ClassLocator\CompositeClassLocator;
 use Smalldb\CodeCooker\Chef;
 use Smalldb\CodeCooker\Cookbook;
+use Smalldb\CodeCooker\Recipe\ClassRecipe;
 use Smalldb\CodeCooker\RecipeLocator;
 use Smalldb\StateMachine\AccessControlExtension\SimpleTransitionGuard;
 use Smalldb\StateMachine\ClassGenerator\GeneratedClassAutoloader;
@@ -243,10 +244,12 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 	{
 		$cookbook = new Cookbook();
 		$recipeLocator = new RecipeLocator($classLocator);
-		$recipeLocator->onRecipeClass(function (\ReflectionClass $sourceClass) use ($container) {
-			$container->addResource(new ReflectionClassResource($sourceClass));
-		});
 		$cookbook->addRecipes($recipeLocator->locateRecipes());
+		foreach ($cookbook->getRecipes() as $recipe) {
+			if ($recipe instanceof ClassRecipe) {
+				$container->addResource(new ReflectionClassResource($recipe->getSourceClass()));
+			}
+		}
 		return new Chef($cookbook, $classLocator);
 	}
 

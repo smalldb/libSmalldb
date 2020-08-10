@@ -18,21 +18,37 @@
 
 namespace Smalldb\CodeCooker\Recipe;
 
+use ReflectionClass;
 use Smalldb\ClassLocator\ClassLocator;
 
 
 /**
  * ClassRecipe: an empty recipe, a base class for other recipes.
  */
-abstract class ClassRecipe
+abstract class ClassRecipe implements Recipe
 {
+	private string $sourceClassName;
+
 	/** @var string[] */
 	private array $targetClassNames;
 
 
-	public function __construct(array $targetClassNames)
+	public function __construct(string $sourceClassName, array $targetClassNames)
 	{
 		$this->targetClassNames = $targetClassNames;
+		$this->sourceClassName = $sourceClassName;
+	}
+
+
+	public function getSourceClassName(): string
+	{
+		return $this->sourceClassName;
+	}
+
+
+	public function getSourceClass(): ReflectionClass
+	{
+		return new ReflectionClass($this->sourceClassName);
 	}
 
 
