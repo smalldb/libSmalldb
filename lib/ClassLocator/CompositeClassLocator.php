@@ -63,8 +63,15 @@ class CompositeClassLocator implements ClassLocator
 
 	public function getClasses(): \Generator
 	{
+		$foundClasses = [];
+
 		foreach ($this->classLocators as $classLocator) {
-			yield from $classLocator->getClasses();
+			foreach ($classLocator->getClasses() as $fileName => $className) {
+				if (!isset($foundClasses[$className])) {
+					$foundClasses[$className] = true;
+					yield $fileName => $className;
+				}
+			}
 		}
 	}
 
