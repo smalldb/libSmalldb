@@ -24,7 +24,7 @@
         "php": ">=7.4",
         "ext-dom": "*",
         "ext-json": "*",
-        "smalldb/annotations": "dev-master|~2.0"
+        "smalldb/annotations": "^2.0+1.10.4"
     },
     "conflict": {
         "smalldb/smalldb-symfony-bundle": "<0.2-dev"
