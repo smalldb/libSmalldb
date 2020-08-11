@@ -117,7 +117,12 @@ class ReferenceQueryBuilder extends DoctrineQueryBuilder
 		$table = $ext->getSqlTable();
 		$this->from($table, $this->tableAlias);
 		$stateSelect = $ext->getSqlStateSelect();
-		$this->addSelect("($stateSelect) as state");
+
+		if ($stateSelect !== null) {
+			$this->addSelect("($stateSelect) as state");
+		} else if ($stateOnly) {
+			throw new LogicException("Trying to read state using SQL query but the state select is not configured.");
+		}
 
 		$properties = $this->definition->getProperties();
 		foreach ($properties as $property) {

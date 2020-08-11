@@ -27,10 +27,10 @@ class SqlTableExtension implements ExtensionInterface
 	use SimpleJsonSerializableTrait;
 
 	private string $sqlTable;
-	private string $sqlStateSelect;
+	private ?string $sqlStateSelect;
 
 
-	public function __construct(string $sqlTable, string $sqlStateSelect)
+	public function __construct(string $sqlTable, ?string $sqlStateSelect)
 	{
 		$this->sqlTable = $sqlTable;
 		$this->sqlStateSelect = $sqlStateSelect;
@@ -43,7 +43,7 @@ class SqlTableExtension implements ExtensionInterface
 	}
 
 
-	public function getSqlStateSelect(): string
+	public function getSqlStateSelect(): ?string
 	{
 		return $this->sqlStateSelect;
 	}
