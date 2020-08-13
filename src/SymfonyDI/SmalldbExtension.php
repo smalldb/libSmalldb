@@ -78,7 +78,7 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 			->setPublic(true);
 
 		$baseDir = $container->getParameter('kernel.project_dir');
-		$classLocator = $this->createClassLocator($baseDir);
+		$classLocator = $this->createClassLocator($baseDir, $this->config['class_locator'] ?? null);
 		$classLocator->setBrokenClassHandler($this->brokenClassLogger = new BrokenClassLogger());
 
 		// Code Cooker: Generate classes
@@ -188,40 +188,38 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 	}
 
 
-	protected function createClassLocator(string $baseDir): ClassLocator
+	protected function createClassLocator(string $baseDir, ?array $config): ClassLocator
 	{
-		$classLocator = new CompositeClassLocator();
+		if (!empty($config)) {
+			$classLocator = new CompositeClassLocator();
 
-		if (!empty($this->config['class_locator'])) {
-			$classLocatorConfig = $this->config['class_locator'];
-
-			if (!empty($classLocatorConfig['include_dirs'])) {
-				$includeList = new RealPathList($baseDir, $classLocatorConfig['include_dirs']);
+			if (!empty($config['include_dirs'])) {
+				$includeList = new RealPathList($baseDir, $config['include_dirs']);
 			} else {
 				$includeList = null;
 			}
 
-			if (!empty($classLocatorConfig['exclude_dirs'])) {
-				$excludeList = new RealPathList($baseDir, $classLocatorConfig['exclude_dirs']);
+			if (!empty($config['exclude_dirs'])) {
+				$excludeList = new RealPathList($baseDir, $config['exclude_dirs']);
 			} else {
 				$excludeList = null;
 			}
 
-			if (!empty($classLocatorConfig['psr4_dirs'])) {
-				foreach ($classLocatorConfig['psr4_dirs'] as $namespace => $dir) {
+			if (!empty($config['psr4_dirs'])) {
+				foreach ($config['psr4_dirs'] as $namespace => $dir) {
 					$classLocator->addClassLocator(new Psr4ClassLocator($namespace, $dir));
 				}
 			}
 
-			if (!empty($classLocatorConfig['use_composer'])) {
-				$excludeVendorDir = !empty($classLocatorConfig['ignore_vendor_dir']);
+			if (!empty($config['use_composer'])) {
+				$excludeVendorDir = !empty($config['ignore_vendor_dir']);
 				$classLocator->addClassLocator(new ComposerClassLocator($baseDir, $includeList, $excludeList, $excludeVendorDir));
 			}
-		} else {
-			$classLocator->addClassLocator(new ComposerClassLocator($baseDir, [], [], true));
-		}
 
-		return $classLocator;
+			return $classLocator;
+		} else {
+			return new ComposerClassLocator($baseDir, [], [], true);
+		}
 	}
 
 
