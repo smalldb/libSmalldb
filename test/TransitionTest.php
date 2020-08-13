@@ -22,6 +22,7 @@ use Smalldb\StateMachine\Definition\Builder\PreprocessorList;
 use Smalldb\StateMachine\Definition\Builder\StateMachineDefinitionBuilder;
 use Smalldb\StateMachine\Definition\DefinitionError;
 use Smalldb\StateMachine\Definition\StateMachineDefinition;
+use Smalldb\StateMachine\Definition\UndefinedTransitionException;
 use Smalldb\StateMachine\Provider\SmalldbProviderInterface;
 use Smalldb\StateMachine\ReferenceDataSource\DummyDataSource;
 use Smalldb\StateMachine\ReferenceInterface;
@@ -61,6 +62,20 @@ class TransitionTest extends TestCase
 
 		$this->expectException(TransitionAccessException::class);
 		$ref->invokeTransition('create');
+	}
+
+
+	public function testInvalidTransitionButValidAction()
+	{
+		$builder = $this->createBuilder();
+		$builder->addAction('foo');
+		$definition = $builder->build();
+
+		$ref = $this->createReference($definition, false, null);
+		$this->assertFalse($ref->isTransitionAllowed('foo'));
+
+		$this->expectException(UndefinedTransitionException::class);
+		$ref->invokeTransition('foo');
 	}
 
 

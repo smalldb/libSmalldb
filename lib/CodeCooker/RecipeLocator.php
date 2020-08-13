@@ -18,7 +18,6 @@
 
 namespace Smalldb\CodeCooker;
 
-use Closure;
 use ReflectionClass;
 use Smalldb\CodeCooker\Annotation\GeneratedClass;
 use Smalldb\StateMachine\Utils\AnnotationReader\AnnotationReaderInterface;
