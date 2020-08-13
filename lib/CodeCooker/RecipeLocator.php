@@ -54,7 +54,16 @@ class RecipeLocator
 	public function locateRecipes(): \Generator
 	{
 		foreach ($this->classLocator->getClasses() as $filename => $className) {
-			yield from $this->locateClassRecipes(new ReflectionClass($className));
+			if (file_exists($filename)) {
+				try {
+					$reflectionClass = new ReflectionClass($className);
+				}
+				catch (\Throwable $ex) {
+					// Skip broken file
+					continue;
+				}
+				yield from $this->locateClassRecipes($reflectionClass);
+			}
 		}
 	}
 
