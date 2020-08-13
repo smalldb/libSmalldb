@@ -73,26 +73,14 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		// Get configuration
 		$this->config = $this->processConfiguration($this->getConfiguration($configs, $container), $configs);
 
-		// Define Smalldb entry point
-		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
-			->setPublic(true);
-
+		// Setup Class Locator
 		$baseDir = $container->getParameter('kernel.project_dir');
 		$classLocator = $this->createClassLocator($baseDir, $this->config['class_locator'] ?? null);
 		$classLocator->setBrokenClassHandler($this->brokenClassLogger = new BrokenClassLogger());
 
-		// Code Cooker: Generate classes
-		$kernelDebug = $container->getParameter('kernel.debug');
-		if (isset($this->config['code_cooker']) ? ($this->config['code_cooker']['enable'] ?? false) : $kernelDebug) {
-			$cheff = $this->createCheff($classLocator, $container);
-
-			// FIXME: Cook on demand only
-			$cheff->cookAllRecipes();
-
-			if ($this->config['code_cooker']['enable_autoloader_generator'] ?? false) {
-				$cheff->registerLoadingAutoloader();
-			}
-		}
+		// Define Smalldb entry point
+		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
+			->setPublic(true);
 
 		// Register autoloader for generated classes
 		$genNamespace = $this->config['class_generator']['namespace'] ?? 'Smalldb\\GeneratedCode\\';

@@ -37,9 +37,31 @@ class Chef
 	}
 
 
+	public static function autoconfigure(ClassLocator $classLocator): self
+	{
+		$cookbook = new Cookbook();
+
+		$chef = new Chef($cookbook, $classLocator);
+		$chef->registerLoadingAutoloader();
+
+		$recipeLocator = new RecipeLocator($classLocator);
+		$cookbook->addRecipes($recipeLocator->locateRecipes());
+
+		$chef->cookAllRecipes();
+
+		return $chef;
+	}
+
+
 	public function __destruct()
 	{
 		$this->unregisterAutoloader();
+	}
+
+
+	public function getCookbook(): Cookbook
+	{
+		return $this->cookbook;
 	}
 
 
