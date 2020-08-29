@@ -62,6 +62,14 @@ class Smalldb
 	}
 
 
+	public static function createWithGeneratedClassAutoloader(string $namespace, string $directory, bool $prependAutoloader = false): self
+	{
+		$t = new static();
+		$t->registerGeneratedClassAutoloader($namespace, $directory, $prependAutoloader);
+		return $t;
+	}
+
+
 	/**
 	 * Helper method to register autoloader for generated classes when setting up a DI container.
 	 */

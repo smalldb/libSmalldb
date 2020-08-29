@@ -78,16 +78,18 @@ class SmalldbExtension extends Extension implements CompilerPassInterface
 		$classLocator = $this->createClassLocator($baseDir, $this->config['class_locator'] ?? null);
 		$classLocator->setBrokenClassHandler($this->brokenClassLogger = new BrokenClassLogger());
 
-		// Define Smalldb entry point
-		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
-			->setPublic(true);
-
 		// Register autoloader for generated classes
 		$genNamespace = $this->config['class_generator']['namespace'] ?? 'Smalldb\\GeneratedCode\\';
 		$genPath = $this->config['class_generator']['path'] ?? $container->getParameter('kernel.cache_dir') . '/smalldb';
-		$smalldb->addMethodCall('registerGeneratedClassAutoloader', [$genNamespace, $genPath]);
 		$autoloader = new GeneratedClassAutoloader($genNamespace, $genPath);
 		$autoloader->registerLoader();
+
+		// Define Smalldb entry point
+		$smalldb = $container->autowire(Smalldb::class, Smalldb::class)
+			->setFactory(Smalldb::class . '::createWithGeneratedClassAutoloader')
+			->setArguments([$genNamespace, $genPath])
+			->setPublic(true);
+
 
 		// Load all state machine definitions
 		$definitionReader = new SmalldbDefinitionBagReader();
